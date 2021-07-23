@@ -20,6 +20,10 @@ export class MerchantService {
     private readonly responseService: ResponseService,
   ) {}
 
+  async findMerchantById(id: string): Promise<GroupDocument> {
+    return await this.groupRepository.findOne({ id_group: id });
+  }
+
   async findMerchantByPhone(phone: string): Promise<GroupDocument> {
     return await this.groupRepository.findOne({ where: { group_hp: phone } });
   }

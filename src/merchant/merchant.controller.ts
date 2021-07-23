@@ -121,7 +121,7 @@ export class MerchantController {
     }
   }
 
-  @Put('groups')
+  @Put('groups/:id')
   @UseInterceptors(
     FileInterceptor('upload_photo_ktp', {
       storage: diskStorage({
@@ -134,10 +134,12 @@ export class MerchantController {
   async updategroups(
     @Body(RequestValidationPipe(MerchantGroupValidation))
     data: MerchantGroupValidation,
+    @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
   ): Promise<any> {
-    const result: GroupDocument =
-      await this.merchantService.findMerchantByPhone(data.group_hp);
+    const result: GroupDocument = await this.merchantService.findMerchantById(
+      id,
+    );
 
     if (!result) {
       const errors: RMessage = {
