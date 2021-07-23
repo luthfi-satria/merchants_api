@@ -31,7 +31,7 @@ export class GroupDocument {
   @Column()
   owner_group_name: string;
 
-  @Column()
+  @Column({ nullable: true })
   upload_photo_ktp: string;
 
   @Column()

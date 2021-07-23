@@ -30,7 +30,6 @@ import { MerchantMerchantValidation } from './validation/merchant.merchant.valid
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantStoreValidation } from './validation/merchant.store.validation';
 import { StoreDocument } from 'src/database/entities/store.entity';
-// import { editFileName, imageFileFilter } from 'src/utils/general-utils';
 
 export const editFileName = (req: any, file: any, callback: any) => {
   const name = file.originalname.split('.')[0];

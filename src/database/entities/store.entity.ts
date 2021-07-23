@@ -47,7 +47,7 @@ export class StoreDocument {
   @Column()
   upload_photo_store: string;
 
-  @Column()
+  @Column({ nullable: true })
   services_addon: string;
 
   @Column()

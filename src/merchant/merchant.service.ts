@@ -17,7 +17,7 @@ export class MerchantService {
     @InjectRepository(StoreDocument)
     private readonly storeRepository: Repository<StoreDocument>,
     private readonly messageService: MessageService,
-    private readonly responseService: ResponseService, // @Hash() private readonly hashService: HashService,
+    private readonly responseService: ResponseService,
   ) {}
 
   async findMerchantByPhone(phone: string): Promise<GroupDocument> {
@@ -41,7 +41,6 @@ export class MerchantService {
   ): Promise<GroupDocument> {
     const create_group: Partial<GroupDocument> = {
       group_name: data.group_name,
-      upload_photo_ktp: data.upload_photo_ktp,
       owner_group_name: data.owner_group_name,
       group_email: data.group_email,
       group_hp: data.group_hp,
@@ -50,7 +49,8 @@ export class MerchantService {
     };
     if (data.group_status != '' && typeof data.group_status != 'undefined')
       create_group.group_status = data.group_status;
-
+    if (typeof data.upload_photo_ktp != 'undefined')
+      create_group.upload_photo_ktp = data.upload_photo_ktp;
     return await this.groupRepository.save(create_group);
   }
 
@@ -60,7 +60,6 @@ export class MerchantService {
     const create_group: Partial<GroupDocument> = {
       id_group: data.id_group,
       group_name: data.group_name,
-      upload_photo_ktp: data.upload_photo_ktp,
       owner_group_name: data.owner_group_name,
       group_email: data.group_email,
       group_hp: data.group_hp,
@@ -70,6 +69,8 @@ export class MerchantService {
     };
     if (data.group_status != '' && typeof data.group_status != 'undefined')
       create_group.group_status = data.group_status;
+    if (typeof data.upload_photo_ktp != 'undefined')
+      create_group.upload_photo_ktp = data.upload_photo_ktp;
     return await this.groupRepository.save(create_group);
   }
 
@@ -103,7 +104,6 @@ export class MerchantService {
       typeof data.merchant_status != 'undefined'
     )
       create_merchant.merchant_status = data.merchant_status;
-
     return await this.merchantRepository.save(create_merchant);
   }
 
@@ -177,10 +177,11 @@ export class MerchantService {
       guidance: data.guidance,
       longitude_latitude: data.longitude_latitude,
       upload_photo_store: data.upload_photo_store,
-      services_addon: data.services_addon,
       toc: data.toc,
       create_date: data.create_date,
     };
+    if (data.services_addon != '' && typeof data.services_addon != 'undefined')
+      create_store.services_addon = data.services_addon;
     return await this.storeRepository.save(create_store);
   }
 
@@ -200,7 +201,6 @@ export class MerchantService {
       post_code: data.post_code,
       guidance: data.guidance,
       longitude_latitude: data.longitude_latitude,
-      services_addon: data.services_addon,
       toc: data.toc,
       create_date: data.create_date,
       approval_date: data.approval_date,
@@ -212,6 +212,8 @@ export class MerchantService {
       typeof data.upload_photo_store != 'undefined'
     )
       create_store.upload_photo_store = data.upload_photo_store;
+    if (data.services_addon != '' && typeof data.services_addon != 'undefined')
+      create_store.services_addon = data.services_addon;
     return await this.storeRepository.save(create_store);
   }
 

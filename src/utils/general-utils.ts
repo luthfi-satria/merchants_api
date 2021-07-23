@@ -1,5 +1,3 @@
-import { extname } from 'path';
-
 export function CreateRandomNumber(pjg: number): string {
   if (pjg == 4) {
     const key: number = Math.floor(1000 + Math.random() * 9000);

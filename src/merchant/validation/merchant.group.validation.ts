@@ -4,8 +4,6 @@ export class MerchantGroupValidation {
   @IsNotEmpty()
   group_name: string;
 
-  @IsNumberString()
-  // @IsNotEmpty()/
   group_status: string;
 
   @IsNotEmpty()

@@ -21,8 +21,8 @@ async function bootstrap() {
     }),
   );
 
-  app.listen(process.env.PORT || 4002, () => {
-    logger.log(`Running on ${process.env.PORT || 4002}`);
+  app.listen(process.env.HTTP_PORT || 4002, () => {
+    logger.log(`Running on ${process.env.HTTP_PORT || 4002}`);
   });
 }
 bootstrap();
