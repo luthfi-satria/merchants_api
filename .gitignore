@@ -1,9 +1,6 @@
 # compiled output
 /dist
 /node_modules
-/upload_groups
-/upload_merchants
-/upload_stores
 
 # Logs
 logs
@@ -19,6 +16,10 @@ lerna-debug.log*
 # Tests
 /coverage
 /.nyc_output
+/upload_groups/*
+/upload_merchants/*
+/upload_stores/*
+
 
 # IDEs and editors
 /.idea

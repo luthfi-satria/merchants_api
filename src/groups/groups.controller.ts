@@ -27,6 +27,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { GroupsService } from './groups.service';
 import { MerchantGroupValidation } from './validation/groups.validation';
 import { catchError, map } from 'rxjs';
+import { DeleteResult } from 'typeorm';
 
 // const defaultJsonHeader: Record<string, any> = {
 //   'Content-Type': 'application/json',
@@ -58,6 +59,23 @@ export class GroupsController {
     @Headers('Authorization') token: string,
   ): Promise<any> {
     const logger = new Logger();
+    if (typeof token == 'undefined' || token == 'undefined') {
+      const errors: RMessage = {
+        value: '',
+        property: 'token',
+        constraint: [
+          this.messageService.get('merchant.creategroup.invalid_token'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -96,12 +114,12 @@ export class GroupsController {
         }
 
         const result: GroupDocument =
-          await this.groupsService.findMerchantByPhone(data.group_hp);
+          await this.groupsService.findMerchantByPhone(data.phone);
 
         if (result) {
           const errors: RMessage = {
-            value: data.group_hp,
-            property: 'group_hp',
+            value: data.phone,
+            property: 'phone',
             constraint: [
               this.messageService.get('merchant.creategroup.phoneExist'),
             ],
@@ -116,12 +134,12 @@ export class GroupsController {
         }
 
         const cekemail: GroupDocument =
-          await this.groupsService.findMerchantByEmail(data.group_email);
+          await this.groupsService.findMerchantByEmail(data.email);
 
         if (cekemail) {
           const errors: RMessage = {
-            value: data.group_email,
-            property: 'group_email',
+            value: data.email,
+            property: 'email',
             constraint: [
               this.messageService.get('merchant.creategroup.emailExist'),
             ],
@@ -141,7 +159,7 @@ export class GroupsController {
           const result_db: GroupDocument =
             await this.groupsService.createMerchantGroupProfile(data);
           const rdata: Record<string, any> = {
-            name: result_db.group_name,
+            name: result_db.name,
           };
           return this.responseService.success(
             true,
@@ -187,6 +205,22 @@ export class GroupsController {
     @UploadedFile() file: Express.Multer.File,
     @Headers('Authorization') token: string,
   ): Promise<any> {
+    if (typeof token == 'undefined' || token == 'undefined') {
+      const errors: RMessage = {
+        value: '',
+        property: 'token',
+        constraint: [
+          this.messageService.get('merchant.creategroup.invalid_token'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
     const result: GroupDocument = await this.groupsService.findMerchantById(id);
 
     if (!result) {
@@ -243,12 +277,12 @@ export class GroupsController {
         }
 
         const cekphone: GroupDocument =
-          await this.groupsService.findMerchantByPhone(data.group_hp);
+          await this.groupsService.findMerchantByPhone(data.phone);
 
-        if (cekphone && cekphone.group_hp != result.group_hp) {
+        if (cekphone && cekphone.phone != result.phone) {
           const errors: RMessage = {
-            value: data.group_hp,
-            property: 'group_hp',
+            value: data.phone,
+            property: 'phone',
             constraint: [
               this.messageService.get('merchant.creategroup.phoneExist'),
             ],
@@ -263,12 +297,11 @@ export class GroupsController {
         }
 
         const cekemail: GroupDocument =
-          await this.groupsService.findMerchantByEmail(data.group_email);
-
-        if (cekemail && cekemail.group_email != result.group_email) {
+          await this.groupsService.findMerchantByEmail(data.email);
+        if (cekemail && cekemail.email != result.email) {
           const errors: RMessage = {
-            value: data.group_email,
-            property: 'group_email',
+            value: data.email,
+            property: 'email',
             constraint: [
               this.messageService.get('merchant.creategroup.emailExist'),
             ],
@@ -288,13 +321,13 @@ export class GroupsController {
             true,
             this.messageService.get('merchant.updategroup.success'),
             {
-              name: result.group_name,
+              name: result.name,
             },
           );
         } catch (err) {
           const errors: RMessage = {
             value: err.message,
-            property: 'updategroup',
+            property: '',
             constraint: [this.messageService.get('merchant.updategroup.fail')],
           };
           throw new BadRequestException(
@@ -318,6 +351,22 @@ export class GroupsController {
     @Param('id') id: string,
     @Headers('Authorization') token: string,
   ): Promise<any> {
+    if (typeof token == 'undefined' || token == 'undefined') {
+      const errors: RMessage = {
+        value: '',
+        property: 'token',
+        constraint: [
+          this.messageService.get('merchant.creategroup.invalid_token'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -355,19 +404,36 @@ export class GroupsController {
           );
         }
         try {
-          const result: GroupDocument =
+          const result: DeleteResult =
             await this.groupsService.deleteMerchantGroupProfile(id);
-          const logger = new Logger();
-          logger.debug(result.group_name, 'result');
+          console.log(result);
+          if (result && result.affected == 0) {
+            const errors: RMessage = {
+              value: id,
+              property: 'id',
+              constraint: [
+                this.messageService.get('merchant.deletegroup.invalid_id'),
+              ],
+            };
+            throw new BadRequestException(
+              this.responseService.error(
+                HttpStatus.BAD_REQUEST,
+                errors,
+                'Bad Request',
+              ),
+            );
+          }
           return this.responseService.success(
             true,
             this.messageService.get('merchant.deletegroup.success'),
           );
         } catch (err) {
           const errors: RMessage = {
-            value: err.message,
-            property: 'deletegroup',
-            constraint: [this.messageService.get('merchant.deletegroup.fail')],
+            value: id,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.deletegroup.invalid_id'),
+            ],
           };
           throw new BadRequestException(
             this.responseService.error(
@@ -390,6 +456,22 @@ export class GroupsController {
     @Query() data: string[],
     @Headers('Authorization') token: string,
   ): Promise<any> {
+    if (typeof token == 'undefined' || token == 'undefined') {
+      const errors: RMessage = {
+        value: '',
+        property: 'token',
+        constraint: [
+          this.messageService.get('merchant.creategroup.invalid_token'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {

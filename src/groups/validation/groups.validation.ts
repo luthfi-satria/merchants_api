@@ -2,27 +2,27 @@ import { IsEmail, IsNotEmpty, IsNumberString, Length } from 'class-validator';
 
 export class MerchantGroupValidation {
   @IsNotEmpty()
-  group_name: string;
+  name: string;
 
-  group_status: string;
+  status: string;
 
   @IsNotEmpty()
-  owner_group_name: string;
+  owner_name: string;
 
   @IsNotEmpty()
   @IsEmail()
-  group_email: string;
+  email: string;
 
   @IsNotEmpty()
   @IsNumberString()
   @Length(10, 15)
-  group_hp: string;
+  phone: string;
 
   @IsNotEmpty()
-  address_group: string;
+  address: string;
 
-  create_date: string;
-  approval_date: string;
+  created_at: string;
+  approved_at: string;
   id_group: string;
   upload_photo_ktp: string;
 }

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { GroupDocument } from 'src/database/entities/group.entity';
-import { Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { AxiosResponse } from 'axios';
 
 @Injectable()
@@ -19,12 +19,12 @@ export class GroupsService {
   }
 
   async findMerchantByPhone(phone: string): Promise<GroupDocument> {
-    return await this.groupRepository.findOne({ where: { group_hp: phone } });
+    return await this.groupRepository.findOne({ where: { phone: phone } });
   }
 
   async findMerchantByEmail(email: string): Promise<GroupDocument> {
     return await this.groupRepository.findOne({
-      where: { group_email: email },
+      where: { email: email },
     });
   }
 
@@ -32,15 +32,15 @@ export class GroupsService {
     data: Record<string, any>,
   ): Promise<GroupDocument> {
     const create_group: Partial<GroupDocument> = {
-      group_name: data.group_name,
-      owner_group_name: data.owner_group_name,
-      group_email: data.group_email,
-      group_hp: data.group_hp,
-      address_group: data.address_group,
-      create_date: data.create_date,
+      name: data.name,
+      owner_name: data.owner_name,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      created_at: data.created_at,
     };
-    if (data.group_status != '' && typeof data.group_status != 'undefined')
-      create_group.group_status = data.group_status;
+    if (data.status != '' && typeof data.status != 'undefined')
+      create_group.status = data.status;
     if (typeof data.upload_photo_ktp != 'undefined')
       create_group.upload_photo_ktp = data.upload_photo_ktp;
     return await this.groupRepository.save(create_group);
@@ -50,37 +50,23 @@ export class GroupsService {
     data: Record<string, any>,
   ): Promise<UpdateResult> {
     const create_group: Partial<GroupDocument> = {};
-    // const create_group: Partial<GroupDocument> = {
-    //   id_group: data.id_group,
-    //   group_name: data.group_name,
-    //   owner_group_name: data.owner_group_name,
-    //   group_email: data.group_email,
-    //   group_hp: data.group_hp,
-    //   address_group: data.address_group,
-    //   create_date: data.create_date,
-    //   approval_date: data.approval_date,
-    // };
+    if (typeof data.name != 'undefined' && data.name != null && data.name != '')
+      create_group.name = data.name;
     if (
-      typeof data.group_name != 'undefined' &&
-      data.group_name != null &&
-      data.group_name != ''
+      typeof data.status != 'undefined' &&
+      data.status != null &&
+      data.status != ''
     )
-      create_group.group_name = data.group_name;
-    if (
-      typeof data.group_status != 'undefined' &&
-      data.group_status != null &&
-      data.group_status != ''
-    )
-      create_group.group_status = data.group_status;
-    if (data.group_status == 'APPROVED') {
-      create_group.approval_date = new Date();
+      create_group.status = data.status;
+    if (data.status == 'APPROVED') {
+      create_group.approved_at = new Date();
     }
     if (
-      typeof data.owner_group_name != 'undefined' &&
-      data.owner_group_name != null &&
-      data.owner_group_name != ''
+      typeof data.owner_name != 'undefined' &&
+      data.owner_name != null &&
+      data.owner_name != ''
     )
-      create_group.owner_group_name = data.owner_group_name;
+      create_group.owner_name = data.owner_name;
     if (
       typeof data.upload_photo_ktp != 'undefined' &&
       data.upload_photo_ktp != null &&
@@ -88,23 +74,23 @@ export class GroupsService {
     )
       create_group.upload_photo_ktp = data.upload_photo_ktp;
     if (
-      typeof data.group_email != 'undefined' &&
-      data.group_email != null &&
-      data.group_email != ''
+      typeof data.email != 'undefined' &&
+      data.email != null &&
+      data.email != ''
     )
-      create_group.group_email = data.group_email;
+      create_group.email = data.email;
     if (
-      typeof data.group_hp != 'undefined' &&
-      data.group_hp != null &&
-      data.group_hp != ''
+      typeof data.phone != 'undefined' &&
+      data.phone != null &&
+      data.phone != ''
     )
-      create_group.group_hp = data.group_hp;
+      create_group.phone = data.phone;
     if (
-      typeof data.address_group != 'undefined' &&
-      data.address_group != null &&
-      data.address_group != ''
+      typeof data.address != 'undefined' &&
+      data.address != null &&
+      data.address != ''
     )
-      create_group.address_group = data.address_group;
+      create_group.address = data.address;
 
     return await this.groupRepository
       .createQueryBuilder('merchant_group')
@@ -121,28 +107,26 @@ export class GroupsService {
     return this.groupRepository.delete(delete_group);
   }
 
-  async listGroup(
-    data: Record<string, any>,
-  ): Promise<Promise<GroupDocument>[]> {
+  async listGroup(data: Record<string, any>): Promise<Promise<DeleteResult>[]> {
     return await this.groupRepository
       .createQueryBuilder('merchant_group')
       .select('*')
-      .where('group_name like :name', { name: '%' + data.search + '%' })
-      .orWhere('owner_group_name like :oname', {
+      .where('name like :name', { name: '%' + data.search + '%' })
+      .orWhere('owner_name like :oname', {
         oname: '%' + data.search + '%',
       })
-      .orWhere('group_email like :email', {
+      .orWhere('email like :email', {
         email: '%' + data.search + '%',
       })
-      .orWhere('group_hp like :ghp', {
+      .orWhere('phone like :ghp', {
         ghp: '%' + data.search + '%',
       })
-      .orWhere('address_group like :adg', {
+      .orWhere('address like :adg', {
         adg: '%' + data.search + '%',
       })
+      .orderBy('created_at', 'DESC')
       .limit(data.limit)
       .offset(data.page)
-      .printSql()
       .getRawMany();
   }
 

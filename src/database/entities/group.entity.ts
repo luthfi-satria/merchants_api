@@ -20,35 +20,35 @@ export class GroupDocument {
   id_group: string;
 
   @Column()
-  group_name: string;
+  name: string;
 
   @Column({
     type: 'enum',
     enum: GroupStatus,
     default: GroupStatus.Waiting_approval,
   })
-  group_status: GroupStatus;
+  status: GroupStatus;
 
   @Column()
-  owner_group_name: string;
+  owner_name: string;
 
   @Column({ nullable: true })
   upload_photo_ktp: string;
 
   @Column()
-  group_email: string;
+  email: string;
 
   @Column()
-  group_hp: string;
+  phone: string;
 
   @Column()
-  address_group: string;
+  address: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  approval_date: Date;
+  approved_at: Date;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  create_date: Date;
+  created_at: Date;
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;

@@ -14,7 +14,7 @@ import { MessageService } from 'src/message/message.service';
 export class ResponseFilter implements ExceptionFilter {
   constructor(@Message() private readonly messageService: MessageService) {}
 
-  catch(exception: unknown, host: ArgumentsHost): void {
+  catch(exception: any, host: ArgumentsHost): void {
     const ctx: HttpArgumentsHost = host.switchToHttp();
     const response: any = ctx.getResponse();
 
@@ -23,13 +23,20 @@ export class ResponseFilter implements ExceptionFilter {
       const exceptionHttp: Record<string, any> = exception;
       const exceptionData: Record<string, any> = exceptionHttp.response;
 
-      console.log('statustus: ' + status);
       response.status(status).json({
         statusCode: status,
         message: exceptionData.message,
         errors: exceptionData.errors,
       });
     } else {
+      if (exception.statusCode) {
+        response.status(exception.statusCode).json({
+          statusCode: exception.statusCode,
+          message: exception.message,
+          errors: exception.error,
+        });
+      }
+      console.log(exception);
       // if error is not http cause
       const status: number = HttpStatus.INTERNAL_SERVER_ERROR;
       const message: string = this.messageService.get(
@@ -38,7 +45,12 @@ export class ResponseFilter implements ExceptionFilter {
 
       response.status(status).json({
         statusCode: status,
-        message: exception || message,
+        message: {
+          value: '',
+          property: '',
+          constraint: [message],
+        },
+        errors: message,
       });
     }
   }
