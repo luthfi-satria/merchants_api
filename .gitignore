@@ -1,6 +1,9 @@
 # compiled output
 /dist
 /node_modules
+/upload_groups
+/upload_merchants
+/upload_stores
 
 # Logs
 logs

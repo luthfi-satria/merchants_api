@@ -1,3 +1,5 @@
+import { extname } from 'path';
+
 export function CreateRandomNumber(pjg: number): string {
   if (pjg == 4) {
     const key: number = Math.floor(1000 + Math.random() * 9000);
@@ -6,3 +8,20 @@ export function CreateRandomNumber(pjg: number): string {
   const key: number = Math.floor(100000 + Math.random() * 900000);
   return key + '';
 }
+
+export const editFileName = (req: any, file: any, callback: any) => {
+  const name = file.originalname.split('.')[0];
+  const fileExtName = extname(file.originalname);
+  const randomName = Array(4)
+    .fill(null)
+    .map(() => Math.round(Math.random() * 16).toString(16))
+    .join('');
+  callback(null, `${name}-${randomName}${fileExtName}`);
+};
+
+export const imageFileFilter = (req: any, file: any, callback) => {
+  if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+    return callback(new Error('Only image files are allowed!'), false);
+  }
+  callback(null, true);
+};

@@ -2,11 +2,13 @@ import { HttpModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MerchantModule } from './merchant/merchant.module';
+import { MerchantsModule } from './merchants/merchants.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseService } from './database/database.service';
 import { MessageModule } from './message/message.module';
 import { ResponseModule } from './response/response.module';
+import { StoresModule } from './stores/stores.module';
+import { GroupsModule } from './groups/groups.module';
 
 @Module({
   imports: [
@@ -14,10 +16,13 @@ import { ResponseModule } from './response/response.module';
     TypeOrmModule.forRootAsync({
       useClass: DatabaseService,
     }),
-    MerchantModule,
+    MerchantsModule,
     MessageModule,
     ResponseModule,
     HttpModule,
+    StoresModule,
+    GroupsModule,
+    StoresModule,
   ],
   controllers: [AppController],
   providers: [AppService],

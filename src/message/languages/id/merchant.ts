@@ -2,12 +2,15 @@ export default {
   creategroup: {
     success: 'Create Merchant Group Success.',
     fail: 'Create Merchant Group Gagal.',
-    phoneExist: 'Nomor Telepon Pemilik sudah terdaftar',
+    phoneExist: 'Nomor telepon sudah digunakan oleh corporate lain',
+    emailExist: 'Email sudah digunakan oleh corporate lain',
+    invalid_token: 'Kode Token yang Anda masukan tidak valid.',
   },
   updategroup: {
     success: 'Update Merchant Group Success.',
     fail: 'Update Merchant Group Gagal.',
     phoneUnreg: 'Nomor Telepon Pemilik tidak terdaftar',
+    unreg: 'ID tidak valid.',
   },
   deletegroup: {
     success: 'Delete Merchant Group Success.',
@@ -47,16 +50,16 @@ export default {
   updatestore: {
     success: 'Update Merchant Store Success.',
     fail: 'Update Merchant Store Gagal.',
-    phoneUnreg: 'Nomor Telepon Pemilik tidak terdaftar',
+    unreg: 'Nomor Telepon Pemilik tidak terdaftar',
   },
   deletestore: {
     success: 'Delete Merchant Store Success.',
     fail: 'Delete Merchant Store Gagal.',
-    phoneUnreg: 'Nomor Telepon Pemilik tidak terdaftar',
+    unreg: 'Nomor Telepon Pemilik tidak terdaftar',
   },
   liststore: {
     success: 'Get List Merchant Store Success.',
     fail: 'Get List Merchant Store Gagal.',
-    phoneUnreg: 'Nomor Telepon Pemilik tidak terdaftar',
+    unreg: 'Nomor Telepon Pemilik tidak terdaftar',
   },
 };

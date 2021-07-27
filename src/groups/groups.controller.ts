@@ -1,0 +1,455 @@
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpStatus,
+  Logger,
+  Param,
+  Post,
+  Put,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+  Headers,
+} from '@nestjs/common';
+import { MessageService } from 'src/message/message.service';
+import { ResponseService } from 'src/response/response.service';
+import { Response, ResponseStatusCode } from 'src/response/response.decorator';
+import { Message } from 'src/message/message.decorator';
+import { RequestValidationPipe } from './validation/request-validation.pipe';
+import { GroupDocument } from 'src/database/entities/group.entity';
+import { RMessage } from 'src/response/response.interface';
+import { diskStorage } from 'multer';
+import { editFileName, imageFileFilter } from 'src/utils/general-utils';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { GroupsService } from './groups.service';
+import { MerchantGroupValidation } from './validation/groups.validation';
+import { catchError, map } from 'rxjs';
+
+// const defaultJsonHeader: Record<string, any> = {
+//   'Content-Type': 'application/json',
+// };
+
+@Controller('api/v1/merchants')
+export class GroupsController {
+  constructor(
+    private readonly groupsService: GroupsService,
+    @Response() private readonly responseService: ResponseService,
+    @Message() private readonly messageService: MessageService,
+  ) {}
+
+  @Post('groups')
+  @ResponseStatusCode()
+  @UseInterceptors(
+    FileInterceptor('upload_photo_ktp', {
+      storage: diskStorage({
+        destination: './upload_groups',
+        filename: editFileName,
+      }),
+      fileFilter: imageFileFilter,
+    }),
+  )
+  async creategroups(
+    @Body(RequestValidationPipe(MerchantGroupValidation))
+    data: MerchantGroupValidation,
+    @UploadedFile() file: Express.Multer.File,
+    @Headers('Authorization') token: string,
+  ): Promise<any> {
+    const logger = new Logger();
+    const url: string =
+      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
+    const headersRequest: Record<string, any> = {
+      'Content-Type': 'application/json',
+      Authorization: token,
+    };
+
+    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
+      map(async (response) => {
+        const rsp: Record<string, any> = response;
+
+        if (rsp.statusCode) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              rsp.message[0],
+              'Bad Request',
+            ),
+          );
+        }
+        if (response.data.payload.user_type != 'admin') {
+          const errors: RMessage = {
+            value: token.replace('Bearer ', ''),
+            property: 'token',
+            constraint: [
+              this.messageService.get('merchant.creategroup.invalid_token'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+
+        const result: GroupDocument =
+          await this.groupsService.findMerchantByPhone(data.group_hp);
+
+        if (result) {
+          const errors: RMessage = {
+            value: data.group_hp,
+            property: 'group_hp',
+            constraint: [
+              this.messageService.get('merchant.creategroup.phoneExist'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+
+        const cekemail: GroupDocument =
+          await this.groupsService.findMerchantByEmail(data.group_email);
+
+        if (cekemail) {
+          const errors: RMessage = {
+            value: data.group_email,
+            property: 'group_email',
+            constraint: [
+              this.messageService.get('merchant.creategroup.emailExist'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+
+        try {
+          logger.debug(file, 'file');
+          if (file) data.upload_photo_ktp = '/upload_groups/' + file.filename;
+          const result_db: GroupDocument =
+            await this.groupsService.createMerchantGroupProfile(data);
+          const rdata: Record<string, any> = {
+            name: result_db.group_name,
+          };
+          return this.responseService.success(
+            true,
+            this.messageService.get('merchant.creategroup.success'),
+            rdata,
+          );
+        } catch (err) {
+          const errors: RMessage = {
+            value: err.message,
+            property: 'creategroup',
+            constraint: [this.messageService.get('merchant.creategroup.fail')],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+      }),
+      catchError((err) => {
+        throw err.response.data;
+      }),
+    );
+  }
+
+  @Put('groups/:id')
+  @ResponseStatusCode()
+  @UseInterceptors(
+    FileInterceptor('upload_photo_ktp', {
+      storage: diskStorage({
+        destination: './upload_groups',
+        filename: editFileName,
+      }),
+      fileFilter: imageFileFilter,
+    }),
+  )
+  async updategroups(
+    @Body()
+    data: Record<string, any>,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Headers('Authorization') token: string,
+  ): Promise<any> {
+    const result: GroupDocument = await this.groupsService.findMerchantById(id);
+
+    if (!result) {
+      const errors: RMessage = {
+        value: id,
+        property: 'id_group',
+        constraint: [this.messageService.get('merchant.updategroup.unreg')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    data.id_group = result.id_group;
+    const url: string =
+      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
+    const headersRequest: Record<string, any> = {
+      'Content-Type': 'application/json',
+      Authorization: token,
+    };
+
+    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
+      map(async (response) => {
+        const rsp: Record<string, any> = response;
+
+        if (rsp.statusCode) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              rsp.message[0],
+              'Bad Request',
+            ),
+          );
+        }
+        if (response.data.payload.user_type != 'admin') {
+          const errors: RMessage = {
+            value: token.replace('Bearer ', ''),
+            property: 'token',
+            constraint: [
+              this.messageService.get('merchant.creategroup.invalid_token'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+
+        const cekphone: GroupDocument =
+          await this.groupsService.findMerchantByPhone(data.group_hp);
+
+        if (cekphone && cekphone.group_hp != result.group_hp) {
+          const errors: RMessage = {
+            value: data.group_hp,
+            property: 'group_hp',
+            constraint: [
+              this.messageService.get('merchant.creategroup.phoneExist'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+
+        const cekemail: GroupDocument =
+          await this.groupsService.findMerchantByEmail(data.group_email);
+
+        if (cekemail && cekemail.group_email != result.group_email) {
+          const errors: RMessage = {
+            value: data.group_email,
+            property: 'group_email',
+            constraint: [
+              this.messageService.get('merchant.creategroup.emailExist'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        try {
+          if (file) data.upload_photo_ktp = '/upload_groups/' + file.filename;
+          await this.groupsService.updateMerchantGroupProfile(data);
+          return this.responseService.success(
+            true,
+            this.messageService.get('merchant.updategroup.success'),
+            {
+              name: result.group_name,
+            },
+          );
+        } catch (err) {
+          const errors: RMessage = {
+            value: err.message,
+            property: 'updategroup',
+            constraint: [this.messageService.get('merchant.updategroup.fail')],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+      }),
+      catchError((err) => {
+        throw err.response.data;
+      }),
+    );
+  }
+
+  @Delete('groups/:id')
+  @ResponseStatusCode()
+  async deletegroups(
+    @Param('id') id: string,
+    @Headers('Authorization') token: string,
+  ): Promise<any> {
+    const url: string =
+      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
+    const headersRequest: Record<string, any> = {
+      'Content-Type': 'application/json',
+      Authorization: token,
+    };
+
+    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
+      map(async (response) => {
+        const rsp: Record<string, any> = response;
+
+        if (rsp.statusCode) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              rsp.message[0],
+              'Bad Request',
+            ),
+          );
+        }
+        if (response.data.payload.user_type != 'admin') {
+          const errors: RMessage = {
+            value: token.replace('Bearer ', ''),
+            property: 'token',
+            constraint: [
+              this.messageService.get('merchant.creategroup.invalid_token'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        try {
+          const result: GroupDocument =
+            await this.groupsService.deleteMerchantGroupProfile(id);
+          const logger = new Logger();
+          logger.debug(result.group_name, 'result');
+          return this.responseService.success(
+            true,
+            this.messageService.get('merchant.deletegroup.success'),
+          );
+        } catch (err) {
+          const errors: RMessage = {
+            value: err.message,
+            property: 'deletegroup',
+            constraint: [this.messageService.get('merchant.deletegroup.fail')],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+      }),
+      catchError((err) => {
+        throw err.response.data;
+      }),
+    );
+  }
+
+  @Get('groups')
+  @ResponseStatusCode()
+  async getgroups(
+    @Query() data: string[],
+    @Headers('Authorization') token: string,
+  ): Promise<any> {
+    const url: string =
+      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
+    const headersRequest: Record<string, any> = {
+      'Content-Type': 'application/json',
+      Authorization: token,
+    };
+
+    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
+      map(async (response) => {
+        const rsp: Record<string, any> = response;
+
+        if (rsp.statusCode) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              rsp.message[0],
+              'Bad Request',
+            ),
+          );
+        }
+        if (response.data.payload.user_type != 'admin') {
+          const errors: RMessage = {
+            value: token.replace('Bearer ', ''),
+            property: 'token',
+            constraint: [
+              this.messageService.get('merchant.creategroup.invalid_token'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        const listgroup: any = await this.groupsService.listGroup(data);
+        if (!listgroup) {
+          const errors: RMessage = {
+            value: '',
+            property: 'listgroup',
+            constraint: [this.messageService.get('merchant.listgroup.fail')],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.listgroup.success'),
+          listgroup,
+        );
+      }),
+      catchError((err) => {
+        throw err.response.data;
+      }),
+    );
+  }
+}

@@ -11,6 +11,7 @@ export enum GroupStatus {
   Active = 'ACTIVE',
   Banned = 'BANNED',
   Rejected = 'REJECTED',
+  Approved = 'APPROVED',
 }
 
 @Entity({ name: 'merchant_group' })
@@ -43,15 +44,12 @@ export class GroupDocument {
   @Column()
   address_group: string;
 
-  @Column({ type: 'date' })
-  create_date: string;
+  @Column({ type: 'timestamp', nullable: true })
+  approval_date: Date;
 
-  @Column({ type: 'date', nullable: true })
-  approval_date: string;
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  create_date: Date;
 
-  @CreateDateColumn({ nullable: true })
-  created_at: Date;
-
-  @UpdateDateColumn({ nullable: true })
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 }
