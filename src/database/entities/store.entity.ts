@@ -9,31 +9,28 @@ import {
 @Entity({ name: 'merchant_store' })
 export class StoreDocument {
   @PrimaryGeneratedColumn('uuid')
-  id_store: string;
+  store_id: string;
+
+  @Column('uuid')
+  merchant_id: string;
 
   @Column()
-  group_name: string;
+  name: string;
 
   @Column()
-  merchant_name: string;
+  phone: string;
 
   @Column()
-  store_name: string;
+  owner_phone: string;
 
   @Column()
-  store_phone: string;
+  owner_email: string;
 
   @Column()
-  store_hp: string;
+  owner_password: string;
 
   @Column()
-  store_email: string;
-
-  @Column()
-  email_settlement: string;
-
-  @Column()
-  address_store: string;
+  address: string;
 
   @Column()
   post_code: string;
@@ -42,26 +39,23 @@ export class StoreDocument {
   guidance: string;
 
   @Column()
-  longitude_latitude: string;
+  location_longitude: string;
 
   @Column()
-  upload_photo_store: string;
-
-  @Column({ nullable: true })
-  services_addon: string;
+  location_latitude: string;
 
   @Column()
-  toc: string;
+  upload_photo: string;
 
-  @Column({ type: 'date' })
-  create_date: string;
+  @Column()
+  service_addon: string;
 
-  @Column({ type: 'date', nullable: true })
-  approval_date: string;
+  @Column({ type: 'timestamp', nullable: true })
+  approved_at: Date;
 
-  @CreateDateColumn({ nullable: true })
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
-  @UpdateDateColumn({ nullable: true })
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 }

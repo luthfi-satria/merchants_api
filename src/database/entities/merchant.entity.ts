@@ -16,81 +16,75 @@ export enum GroupStatus {
 @Entity({ name: 'merchant_merchant' })
 export class MerchantDocument {
   @PrimaryGeneratedColumn('uuid')
-  id_merchant: string;
+  merchant_id: string;
+
+  @Column('uuid')
+  group_id: string;
 
   @Column()
-  group_name: string;
+  name: string;
 
-  @Column()
-  merchant_name: string;
+  @Column('uuid')
+  lob_id: string;
 
   @Column({
     type: 'enum',
     enum: GroupStatus,
     default: GroupStatus.Waiting_approval,
   })
-  merchant_status: GroupStatus;
+  status: GroupStatus;
 
   @Column()
-  owner_merchant_name: string;
+  address: string;
 
   @Column()
-  merchant_email: string;
+  owner_name: string;
 
   @Column()
-  merchant_hp: string;
+  owner_email: string;
 
   @Column()
-  merchant_address: string;
+  owner_phone: string;
 
   @Column()
-  upload_photo_ktp: string;
+  owner_password: string;
 
   @Column()
-  nik: string;
+  owner_nik: string;
+
+  @Column({ type: 'date', nullable: true })
+  owner_dob: Date;
 
   @Column()
-  birth_city: string;
+  owner_dob_city: string;
 
   @Column()
-  dob: string;
+  owner_address: string;
 
   @Column()
-  address_ktp: string;
+  owner_ktp: string;
 
   @Column()
-  upload_photo_yourself_with_ktp: string;
+  owner_face_ktp: string;
 
   @Column()
-  bank_name: string;
+  bank_id: string;
 
   @Column()
-  acc_number: string;
+  bank_acc_name: string;
 
   @Column()
-  acc_name: string;
-
-  @Column()
-  upload_bankbook: string;
-
-  @Column()
-  business_name: string;
-
-  @Column()
-  business_fields: string;
+  bank_acc_number: string;
 
   @Column()
   tarif_pb1: string;
 
-  @Column({ type: 'date' })
-  create_date: string;
+  @Column({ type: 'timestamp', nullable: true })
+  approved_at: Date;
 
-  @Column({ type: 'date', nullable: true })
-  approval_date: string;
-
-  @CreateDateColumn({ nullable: true })
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
-  @UpdateDateColumn({ nullable: true })
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 }

@@ -1,65 +1,60 @@
-import { IsEmail, IsNotEmpty, IsNumberString, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsNumberString,
+  IsUUID,
+  Length,
+} from 'class-validator';
 
 export class MerchantMerchantValidation {
-  @IsNotEmpty()
-  group_name: string;
+  id_merchant: string;
 
-  merchant_status: string;
+  @IsUUID()
+  group_id: string;
 
-  @IsNotEmpty()
-  owner_merchant_name: string;
+  name: string;
+
+  @IsUUID()
+  lob_id: string;
+
+  status: string;
+
+  address: string;
+
+  owner_name: string;
 
   @IsNotEmpty()
   @IsEmail()
-  merchant_email: string;
+  owner_email: string;
 
   @IsNotEmpty()
   @IsNumberString()
   @Length(10, 15)
-  merchant_hp: string;
+  owner_phone: string;
 
-  @IsNotEmpty()
-  merchant_address: string;
+  owner_password: string;
 
-  upload_photo_ktp: string;
+  owner_nik: string;
 
-  @IsNotEmpty()
-  nik: string;
+  owner_dob: string;
 
-  @IsNotEmpty()
-  birth_city: string;
+  owner_dob_city: string;
 
-  @IsNotEmpty()
-  dob: string;
+  owner_address: string;
 
-  @IsNotEmpty()
-  address_ktp: string;
+  owner_ktp: string;
 
-  upload_photo_yourself_with_ktp: string;
+  owner_face_ktp: string;
 
-  @IsNotEmpty()
-  bank_name: string;
+  bank_id: string;
 
-  @IsNotEmpty()
-  acc_number: string;
+  bank_acc_name: string;
 
-  @IsNotEmpty()
-  acc_name: string;
+  bank_acc_number: string;
 
-  upload_bankbook: string;
-
-  @IsNotEmpty()
-  business_name: string;
-
-  @IsNotEmpty()
-  business_fields: string;
-
-  @IsNotEmpty()
   tarif_pb1: string;
 
-  @IsNotEmpty()
-  create_date: string;
+  created_at: string;
 
-  approval_date: string;
-  id_merchant: string;
+  approved_at: string;
 }

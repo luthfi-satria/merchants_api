@@ -5,66 +5,48 @@ import {
   Delete,
   Get,
   HttpStatus,
-  Logger,
   Param,
   Post,
   Put,
   Query,
-  UploadedFile,
-  UseInterceptors,
   Headers,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
-import { RequestValidationPipe } from './validation/request-validation.pipe';
-import { GroupDocument } from 'src/database/entities/group.entity';
 import { RMessage } from 'src/response/response.interface';
-import { diskStorage } from 'multer';
-import { editFileName, imageFileFilter } from 'src/utils/general-utils';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { GroupsService } from './groups.service';
-import { MerchantGroupValidation } from './validation/groups.validation';
 import { catchError, map } from 'rxjs';
 import { DeleteResult } from 'typeorm';
-
-// const defaultJsonHeader: Record<string, any> = {
-//   'Content-Type': 'application/json',
-// };
+import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
+// import { AddonDocument } from 'src/database/entities/lob.entity';
+import { AddonsService } from './addons.service';
+import { MerchantAddonsValidation } from './validation/addons.validation';
+import { AddonDocument } from 'src/database/entities/addons.entity';
 
 @Controller('api/v1/merchants')
-export class GroupsController {
+export class AddonsController {
   constructor(
-    private readonly groupsService: GroupsService,
+    private readonly addonService: AddonsService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
   ) {}
 
-  @Post('groups')
+  @Post('addons')
   @ResponseStatusCode()
-  @UseInterceptors(
-    FileInterceptor('owner_ktp', {
-      storage: diskStorage({
-        destination: './upload_groups',
-        filename: editFileName,
-      }),
-      fileFilter: imageFileFilter,
-    }),
-  )
-  async creategroups(
-    @Body(RequestValidationPipe(MerchantGroupValidation))
-    data: MerchantGroupValidation,
-    @UploadedFile() file: Express.Multer.File,
+  async createaddon(
+    @Body(RequestValidationPipe(MerchantAddonsValidation))
+    data: MerchantAddonsValidation,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    const logger = new Logger();
+    data.name = data.name.toLowerCase();
+
     if (typeof token == 'undefined' || token == 'undefined') {
       const errors: RMessage = {
         value: '',
         property: 'token',
         constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
+          this.messageService.get('merchant.createaddon.invalid_token'),
         ],
       };
       throw new BadRequestException(
@@ -83,7 +65,7 @@ export class GroupsController {
       Authorization: token,
     };
 
-    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
+    return (await this.addonService.getHttp(url, headersRequest)).pipe(
       map(async (response) => {
         const rsp: Record<string, any> = response;
 
@@ -101,7 +83,7 @@ export class GroupsController {
             value: token.replace('Bearer ', ''),
             property: 'token',
             constraint: [
-              this.messageService.get('merchant.creategroup.invalid_token'),
+              this.messageService.get('merchant.createaddon.invalid_token'),
             ],
           };
           throw new BadRequestException(
@@ -113,35 +95,15 @@ export class GroupsController {
           );
         }
 
-        const result: GroupDocument =
-          await this.groupsService.findMerchantByPhone(data.phone);
+        const result: AddonDocument =
+          await this.addonService.findMerchantByName(data.name);
 
         if (result) {
           const errors: RMessage = {
-            value: data.phone,
-            property: 'phone',
+            value: data.name,
+            property: 'name',
             constraint: [
-              this.messageService.get('merchant.creategroup.phoneExist'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-
-        const cekemail: GroupDocument =
-          await this.groupsService.findMerchantByEmail(data.email);
-
-        if (cekemail) {
-          const errors: RMessage = {
-            value: data.email,
-            property: 'email',
-            constraint: [
-              this.messageService.get('merchant.creategroup.emailExist'),
+              this.messageService.get('merchant.createaddon.nameExist'),
             ],
           };
           throw new BadRequestException(
@@ -154,23 +116,18 @@ export class GroupsController {
         }
 
         try {
-          logger.debug(file, 'file');
-          if (file) data.owner_ktp = '/upload_groups/' + file.filename;
-          const result_db: GroupDocument =
-            await this.groupsService.createMerchantGroupProfile(data);
-          // const rdata: Record<string, any> = {
-          //   name: result_db.name,
-          // };
+          const result_db: AddonDocument =
+            await this.addonService.createMerchantAddonProfile(data);
           return this.responseService.success(
             true,
-            this.messageService.get('merchant.creategroup.success'),
+            this.messageService.get('merchant.createaddon.success'),
             result_db,
           );
         } catch (err) {
           const errors: RMessage = {
             value: err.message,
-            property: 'creategroup',
-            constraint: [this.messageService.get('merchant.creategroup.fail')],
+            property: 'name',
+            constraint: [this.messageService.get('merchant.createaddon.fail')],
           };
           throw new BadRequestException(
             this.responseService.error(
@@ -187,30 +144,21 @@ export class GroupsController {
     );
   }
 
-  @Put('groups/:id')
+  @Put('addons/:id')
   @ResponseStatusCode()
-  @UseInterceptors(
-    FileInterceptor('owner_ktp', {
-      storage: diskStorage({
-        destination: './upload_groups',
-        filename: editFileName,
-      }),
-      fileFilter: imageFileFilter,
-    }),
-  )
-  async updategroups(
-    @Body()
-    data: Record<string, any>,
+  async updateaddon(
+    @Body(RequestValidationPipe(MerchantAddonsValidation))
+    data: MerchantAddonsValidation,
     @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
     @Headers('Authorization') token: string,
   ): Promise<any> {
+    data.name = data.name.toLowerCase();
     if (typeof token == 'undefined' || token == 'undefined') {
       const errors: RMessage = {
         value: '',
         property: 'token',
         constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
+          this.messageService.get('merchant.createaddon.invalid_token'),
         ],
       };
       throw new BadRequestException(
@@ -221,13 +169,13 @@ export class GroupsController {
         ),
       );
     }
-    const result: GroupDocument = await this.groupsService.findMerchantById(id);
+    const result: AddonDocument = await this.addonService.findMerchantById(id);
 
     if (!result) {
       const errors: RMessage = {
         value: id,
-        property: 'group_id',
-        constraint: [this.messageService.get('merchant.updategroup.unreg')],
+        property: 'addon_id',
+        constraint: [this.messageService.get('merchant.updateaddon.unreg')],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -238,7 +186,7 @@ export class GroupsController {
       );
     }
 
-    data.group_id = result.group_id;
+    data.addon_id = result.addon_id;
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -246,7 +194,7 @@ export class GroupsController {
       Authorization: token,
     };
 
-    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
+    return (await this.addonService.getHttp(url, headersRequest)).pipe(
       map(async (response) => {
         const rsp: Record<string, any> = response;
 
@@ -264,7 +212,7 @@ export class GroupsController {
             value: token.replace('Bearer ', ''),
             property: 'token',
             constraint: [
-              this.messageService.get('merchant.creategroup.invalid_token'),
+              this.messageService.get('merchant.createaddon.invalid_token'),
             ],
           };
           throw new BadRequestException(
@@ -276,15 +224,15 @@ export class GroupsController {
           );
         }
 
-        const cekphone: GroupDocument =
-          await this.groupsService.findMerchantByPhone(data.phone);
+        const cekname: AddonDocument =
+          await this.addonService.findMerchantByName(data.name);
 
-        if (cekphone && cekphone.phone != result.phone) {
+        if (cekname && cekname.name != result.name) {
           const errors: RMessage = {
-            value: data.phone,
-            property: 'phone',
+            value: data.name,
+            property: 'name',
             constraint: [
-              this.messageService.get('merchant.creategroup.phoneExist'),
+              this.messageService.get('merchant.createaddon.nameExist'),
             ],
           };
           throw new BadRequestException(
@@ -296,38 +244,19 @@ export class GroupsController {
           );
         }
 
-        const cekemail: GroupDocument =
-          await this.groupsService.findMerchantByEmail(data.email);
-        if (cekemail && cekemail.email != result.email) {
-          const errors: RMessage = {
-            value: data.email,
-            property: 'email',
-            constraint: [
-              this.messageService.get('merchant.creategroup.emailExist'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
         try {
-          if (file) data.owner_ktp = '/upload_groups/' + file.filename;
           const updateresult: Record<string, any> =
-            await this.groupsService.updateMerchantGroupProfile(data);
+            await this.addonService.updateMerchantAddonProfile(data);
           return this.responseService.success(
             true,
-            this.messageService.get('merchant.updategroup.success'),
+            this.messageService.get('merchant.updateaddon.success'),
             updateresult,
           );
         } catch (err) {
           const errors: RMessage = {
             value: err.message,
             property: '',
-            constraint: [this.messageService.get('merchant.updategroup.fail')],
+            constraint: [this.messageService.get('merchant.updateaddon.fail')],
           };
           throw new BadRequestException(
             this.responseService.error(
@@ -344,7 +273,7 @@ export class GroupsController {
     );
   }
 
-  @Delete('groups/:id')
+  @Delete('addons/:id')
   @ResponseStatusCode()
   async deletegroups(
     @Param('id') id: string,
@@ -355,7 +284,7 @@ export class GroupsController {
         value: '',
         property: 'token',
         constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
+          this.messageService.get('merchant.createaddon.invalid_token'),
         ],
       };
       throw new BadRequestException(
@@ -373,7 +302,7 @@ export class GroupsController {
       Authorization: token,
     };
 
-    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
+    return (await this.addonService.getHttp(url, headersRequest)).pipe(
       map(async (response) => {
         const rsp: Record<string, any> = response;
 
@@ -391,7 +320,7 @@ export class GroupsController {
             value: token.replace('Bearer ', ''),
             property: 'token',
             constraint: [
-              this.messageService.get('merchant.creategroup.invalid_token'),
+              this.messageService.get('merchant.createaddon.invalid_token'),
             ],
           };
           throw new BadRequestException(
@@ -404,14 +333,13 @@ export class GroupsController {
         }
         try {
           const result: DeleteResult =
-            await this.groupsService.deleteMerchantGroupProfile(id);
-          console.log(result);
+            await this.addonService.deleteMerchantAddonProfile(id);
           if (result && result.affected == 0) {
             const errors: RMessage = {
               value: id,
               property: 'id',
               constraint: [
-                this.messageService.get('merchant.deletegroup.invalid_id'),
+                this.messageService.get('merchant.deleteaddon.invalid_id'),
               ],
             };
             throw new BadRequestException(
@@ -424,14 +352,14 @@ export class GroupsController {
           }
           return this.responseService.success(
             true,
-            this.messageService.get('merchant.deletegroup.success'),
+            this.messageService.get('merchant.deleteaddon.success'),
           );
         } catch (err) {
           const errors: RMessage = {
             value: id,
             property: 'id',
             constraint: [
-              this.messageService.get('merchant.deletegroup.invalid_id'),
+              this.messageService.get('merchant.deleteaddon.invalid_id'),
             ],
           };
           throw new BadRequestException(
@@ -449,19 +377,15 @@ export class GroupsController {
     );
   }
 
-  @Get('groups')
+  @Get('addons')
   @ResponseStatusCode()
-  async getgroups(
-    @Query() data: string[],
-    @Headers('Authorization') token: string,
-  ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
+  async getgroups(@Query() data: string[]): Promise<any> {
+    const listgroup: any = await this.addonService.listGroup(data);
+    if (!listgroup) {
       const errors: RMessage = {
         value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
-        ],
+        property: '',
+        constraint: [this.messageService.get('merchant.listaddon.fail')],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -471,66 +395,10 @@ export class GroupsController {
         ),
       );
     }
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-    };
-
-    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.creategroup.invalid_token'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        const listgroup: any = await this.groupsService.listGroup(data);
-        if (!listgroup) {
-          const errors: RMessage = {
-            value: '',
-            property: 'listgroup',
-            constraint: [this.messageService.get('merchant.listgroup.fail')],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.listgroup.success'),
-          listgroup,
-        );
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.listaddon.success'),
+      listgroup,
     );
   }
 }

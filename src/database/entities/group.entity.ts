@@ -11,13 +11,12 @@ export enum GroupStatus {
   Active = 'ACTIVE',
   Banned = 'BANNED',
   Rejected = 'REJECTED',
-  Approved = 'APPROVED',
 }
 
 @Entity({ name: 'merchant_group' })
 export class GroupDocument {
   @PrimaryGeneratedColumn('uuid')
-  id_group: string;
+  group_id: string;
 
   @Column()
   name: string;
@@ -33,7 +32,7 @@ export class GroupDocument {
   owner_name: string;
 
   @Column({ nullable: true })
-  upload_photo_ktp: string;
+  owner_ktp: string;
 
   @Column()
   email: string;

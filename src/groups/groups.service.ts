@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { GroupDocument } from 'src/database/entities/group.entity';
-import { DeleteResult, Repository, UpdateResult } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class GroupsService {
   ) {}
 
   async findMerchantById(id: string): Promise<GroupDocument> {
-    return await this.groupRepository.findOne({ id_group: id });
+    return await this.groupRepository.findOne({ group_id: id });
   }
 
   async findMerchantByPhone(phone: string): Promise<GroupDocument> {
@@ -37,18 +37,25 @@ export class GroupsService {
       email: data.email,
       phone: data.phone,
       address: data.address,
-      created_at: data.created_at,
     };
-    if (data.status != '' && typeof data.status != 'undefined')
+    if (
+      data.status != null &&
+      data.status != '' &&
+      typeof data.status != 'undefined'
+    )
       create_group.status = data.status;
-    if (typeof data.upload_photo_ktp != 'undefined')
-      create_group.upload_photo_ktp = data.upload_photo_ktp;
+    if (
+      data.owner_ktp != null &&
+      data.owner_ktp != '' &&
+      typeof data.owner_ktp != 'undefined'
+    )
+      create_group.owner_ktp = data.owner_ktp;
     return await this.groupRepository.save(create_group);
   }
 
   async updateMerchantGroupProfile(
     data: Record<string, any>,
-  ): Promise<UpdateResult> {
+  ): Promise<Record<string, any>> {
     const create_group: Partial<GroupDocument> = {};
     if (typeof data.name != 'undefined' && data.name != null && data.name != '')
       create_group.name = data.name;
@@ -58,7 +65,7 @@ export class GroupsService {
       data.status != ''
     )
       create_group.status = data.status;
-    if (data.status == 'APPROVED') {
+    if (data.status == 'ACTIVE') {
       create_group.approved_at = new Date();
     }
     if (
@@ -68,11 +75,11 @@ export class GroupsService {
     )
       create_group.owner_name = data.owner_name;
     if (
-      typeof data.upload_photo_ktp != 'undefined' &&
-      data.upload_photo_ktp != null &&
-      data.upload_photo_ktp != ''
+      typeof data.owner_ktp != 'undefined' &&
+      data.owner_ktp != null &&
+      data.owner_ktp != ''
     )
-      create_group.upload_photo_ktp = data.upload_photo_ktp;
+      create_group.owner_ktp = data.owner_ktp;
     if (
       typeof data.email != 'undefined' &&
       data.email != null &&
@@ -92,22 +99,37 @@ export class GroupsService {
     )
       create_group.address = data.address;
 
-    return await this.groupRepository
+    return this.groupRepository
       .createQueryBuilder('merchant_group')
       .update(GroupDocument)
       .set(create_group)
-      .where('id_group= :id', { id: data.id_group })
-      .execute();
+      .where('group_id= :id', { id: data.group_id })
+      .returning('*')
+      .execute()
+      .then((response) => {
+        console.log(response.raw[0]);
+        return response.raw[0];
+      });
   }
 
   async deleteMerchantGroupProfile(data: string): Promise<any> {
     const delete_group: Partial<GroupDocument> = {
-      id_group: data,
+      group_id: data,
     };
     return this.groupRepository.delete(delete_group);
   }
 
-  async listGroup(data: Record<string, any>): Promise<Promise<DeleteResult>[]> {
+  async listGroup(
+    data: Record<string, any>,
+  ): Promise<Promise<GroupDocument>[]> {
+    if (typeof data.search == 'undefined' || data.search == null)
+      data.search = '';
+    if (typeof data.limit == 'undefined' || data.limit == null) data.limit = 10;
+    if (typeof data.page == 'undefined' || data.page == null) {
+      data.page = 0;
+    } else {
+      data.page -= 1;
+    }
     return await this.groupRepository
       .createQueryBuilder('merchant_group')
       .select('*')

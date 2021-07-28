@@ -9,6 +9,9 @@ import { MessageModule } from './message/message.module';
 import { ResponseModule } from './response/response.module';
 import { StoresModule } from './stores/stores.module';
 import { GroupsModule } from './groups/groups.module';
+import { LobModule } from './lob/lob.module';
+import { BanksModule } from './banks/banks.module';
+import { AddonsModule } from './addons/addons.module';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { GroupsModule } from './groups/groups.module';
     StoresModule,
     GroupsModule,
     StoresModule,
+    LobModule,
+    BanksModule,
+    AddonsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

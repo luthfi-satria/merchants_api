@@ -1,54 +1,38 @@
-import { IsEmail, IsNotEmpty, IsNumberString, Length } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsUUID } from 'class-validator';
 
 export class MerchantStoreValidation {
+  @IsUUID()
   @IsNotEmpty()
-  group_name: string;
+  merchant_id: string;
 
   @IsNotEmpty()
-  merchant_name: string;
+  name: string;
+
+  phone: string;
 
   @IsNotEmpty()
-  store_name: string;
-
-  @IsNotEmpty()
-  store_phone: string;
-
-  @IsNotEmpty()
-  @IsNumberString()
-  @Length(10, 15)
-  store_hp: string;
+  owner_phone: string;
 
   @IsNotEmpty()
   @IsEmail()
-  store_email: string;
+  owner_email: string;
 
   @IsNotEmpty()
-  @IsEmail()
-  email_settlement: string;
+  owner_password: string;
 
-  @IsNotEmpty()
-  address_store: string;
+  address: string;
 
-  @IsNotEmpty()
   post_code: string;
 
-  @IsNotEmpty()
   guidance: string;
 
-  @IsNotEmpty()
-  longitude_latitude: string;
+  location_longitude: string;
 
-  upload_photo_store: string;
+  location_latitude: string;
 
-  @IsNotEmpty()
-  services_addon: string;
+  upload_photo: string;
 
-  @IsNotEmpty()
-  toc: string;
+  service_addon: string;
 
-  @IsNotEmpty()
-  create_date: string;
-
-  approval_date: string;
-  id_store: string;
+  store_id: string;
 }

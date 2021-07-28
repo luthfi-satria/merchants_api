@@ -24,5 +24,5 @@ export class MerchantGroupValidation {
   created_at: string;
   approved_at: string;
   id_group: string;
-  upload_photo_ktp: string;
+  owner_ktp: string;
 }
