@@ -1,10 +1,21 @@
-import { HttpService, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpService,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
+import { RMessage } from 'src/response/response.interface';
+import { ResponseService } from 'src/response/response.service';
+import { Response } from 'src/response/response.decorator';
+import { Message } from 'src/message/message.decorator';
+import { MessageService } from 'src/message/message.service';
+import { dbOutputTime } from 'src/utils/general-utils';
 
 @Injectable()
 export class GroupsService {
@@ -12,10 +23,12 @@ export class GroupsService {
     @InjectRepository(GroupDocument)
     private readonly groupRepository: Repository<GroupDocument>,
     private httpService: HttpService,
+    @Response() private readonly responseService: ResponseService,
+    @Message() private readonly messageService: MessageService,
   ) {}
 
   async findMerchantById(id: string): Promise<GroupDocument> {
-    return await this.groupRepository.findOne({ group_id: id });
+    return await this.groupRepository.findOne({ id: id });
   }
 
   async findMerchantByPhone(phone: string): Promise<GroupDocument> {
@@ -50,7 +63,26 @@ export class GroupsService {
       typeof data.owner_ktp != 'undefined'
     )
       create_group.owner_ktp = data.owner_ktp;
-    return await this.groupRepository.save(create_group);
+    return await this.groupRepository
+      .save(create_group)
+      .then((result) => {
+        dbOutputTime(result);
+        return result;
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   async updateMerchantGroupProfile(
@@ -103,53 +135,109 @@ export class GroupsService {
       .createQueryBuilder('merchant_group')
       .update(GroupDocument)
       .set(create_group)
-      .where('group_id= :id', { id: data.group_id })
+      .where('id= :id', { id: data.id })
       .returning('*')
       .execute()
       .then((response) => {
-        console.log(response.raw[0]);
+        dbOutputTime(response.raw[0]);
         return response.raw[0];
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
       });
   }
 
   async deleteMerchantGroupProfile(data: string): Promise<any> {
     const delete_group: Partial<GroupDocument> = {
-      group_id: data,
+      id: data,
     };
     return this.groupRepository.delete(delete_group);
   }
 
-  async listGroup(
-    data: Record<string, any>,
-  ): Promise<Promise<GroupDocument>[]> {
-    if (typeof data.search == 'undefined' || data.search == null)
-      data.search = '';
-    if (typeof data.limit == 'undefined' || data.limit == null) data.limit = 10;
-    if (typeof data.page == 'undefined' || data.page == null) {
-      data.page = 0;
-    } else {
-      data.page -= 1;
-    }
+  async listGroup(data: Record<string, any>): Promise<Record<string, any>> {
+    let search = data.search || '';
+    search = search.toLowerCase();
+    const currentPage = data.page || 1;
+    const perPage = data.limit || 10;
+    let totalItems: number;
+
     return await this.groupRepository
-      .createQueryBuilder('merchant_group')
+      .createQueryBuilder()
       .select('*')
-      .where('name like :name', { name: '%' + data.search + '%' })
-      .orWhere('owner_name like :oname', {
-        oname: '%' + data.search + '%',
+      .where('lower(name) like :name', { name: '%' + search + '%' })
+      .orWhere('lower(owner_name) like :oname', {
+        oname: '%' + search + '%',
       })
-      .orWhere('email like :email', {
-        email: '%' + data.search + '%',
+      .orWhere('lower(email) like :email', {
+        email: '%' + search + '%',
       })
-      .orWhere('phone like :ghp', {
-        ghp: '%' + data.search + '%',
+      .orWhere('lower(phone) like :ghp', {
+        ghp: '%' + search + '%',
       })
-      .orWhere('address like :adg', {
-        adg: '%' + data.search + '%',
+      .orWhere('lower(address) like :adg', {
+        adg: '%' + search + '%',
       })
-      .orderBy('created_at', 'DESC')
-      .limit(data.limit)
-      .offset(data.page)
-      .getRawMany();
+      .getCount()
+      .then(async (counts) => {
+        totalItems = counts;
+        return await this.groupRepository
+          .createQueryBuilder('merchant_group')
+          .select('*')
+          .where('lower(name) like :name', { name: '%' + search + '%' })
+          .orWhere('lower(owner_name) like :oname', {
+            oname: '%' + search + '%',
+          })
+          .orWhere('lower(email) like :email', {
+            email: '%' + search + '%',
+          })
+          .orWhere('lower(phone) like :ghp', {
+            ghp: '%' + search + '%',
+          })
+          .orWhere('lower(address) like :adg', {
+            adg: '%' + search + '%',
+          })
+          .orderBy('created_at', 'DESC')
+          .offset((currentPage - 1) * perPage)
+          .limit(perPage)
+          .getRawMany();
+      })
+      .then((result) => {
+        result.forEach((row) => {
+          dbOutputTime(row);
+        });
+
+        return {
+          total_item: totalItems,
+          limit: perPage,
+          current_page: currentPage,
+          items: result,
+        };
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   //------------------------------------------------------------------------------

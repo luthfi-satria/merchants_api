@@ -1,10 +1,17 @@
-import { HttpService, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpService,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
+import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
+import { dbOutputTime } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -18,9 +25,24 @@ export class StoresService {
   ) {}
 
   async findMerchantById(id: string): Promise<StoreDocument> {
-    return await this.storeRepository.findOne({
-      where: { store_id: id },
-    });
+    return await this.storeRepository
+      .findOne({
+        where: { id: id },
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   async findMerchantStoreByPhone(hp: string): Promise<StoreDocument> {
@@ -54,7 +76,27 @@ export class StoresService {
     };
     if (data.upload_photo != '' && typeof data.upload_photo != 'undefined')
       create_store.upload_photo = data.upload_photo;
-    return await this.storeRepository.save(create_store);
+    return await this.storeRepository
+      .save(create_store)
+      .then((result) => {
+        dbOutputTime(result);
+        delete result.owner_password;
+        return result;
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   async updateMerchantStoreProfile(
@@ -140,71 +182,176 @@ export class StoresService {
       .createQueryBuilder('merchant_store')
       .update(StoreDocument)
       .set(create_store)
-      .where('store_id= :id', { id: data.store_id })
+      .where('id= :id', { id: data.id })
       .returning('*')
       .execute()
-      .then((response) => {
-        console.log(response.raw[0]);
-        return response.raw[0];
+      .then(async () => {
+        const result: Record<string, any> = await this.storeRepository.findOne({
+          where: { id: data.id },
+        });
+        dbOutputTime(result);
+        console.log(result);
+        delete result.owner_password;
+        return result;
+      })
+      .catch((err) => {
+        console.log(err);
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
       });
   }
 
   async deleteMerchantStoreProfile(data: string): Promise<any> {
     const delete_merchant: Partial<StoreDocument> = {
-      store_id: data,
+      id: data,
     };
-    return this.storeRepository.delete(delete_merchant);
+    return this.storeRepository
+      .delete(delete_merchant)
+      .then((result) => {
+        console.log(result);
+        return result;
+      })
+      .catch((err) => {
+        console.log(err);
+        const errors: RMessage = {
+          value: data,
+          property: 'id',
+          constraint: [
+            this.messageService.get('merchant.deletestore.invalid_id'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   async listGroupStore(
     data: Record<string, any>,
-  ): Promise<Promise<StoreDocument>[]> {
-    if (typeof data.search == 'undefined' || data.search == null)
-      data.search = '';
-    if (typeof data.limit == 'undefined' || data.limit == null) data.limit = 10;
-    if (typeof data.page == 'undefined' || data.page == null) {
-      data.page = 0;
-    } else {
-      data.page -= 1;
-    }
+  ): Promise<Record<string, any>> {
+    let search = data.search || '';
+    search = search.toLowerCase();
+    const currentPage = data.page || 1;
+    const perPage = data.limit || 10;
+    let totalItems: number;
+
     return await this.storeRepository
       .createQueryBuilder('merchant_store')
       .select('*')
-      .where('store_id like :mid', { mid: '%' + data.search + '%' })
-      .orWhere('name like :mname', {
-        mname: '%' + data.search + '%',
+      // .where('merchant_id like :mid', { mid: '%' + data.search + '%' })
+      .where('lower(name like :mname', {
+        mname: '%' + search + '%',
       })
-      .orWhere('phone like :sname', {
-        sname: '%' + data.search + '%',
+      .orWhere('lower(phone) like :sname', {
+        sname: '%' + search + '%',
       })
-      .orWhere('owner_phone like :shp', {
-        shp: '%' + data.search + '%',
+      .orWhere('lower(owner_phone) like :shp', {
+        shp: '%' + search + '%',
       })
-      .orWhere('owner_email like :smail', {
-        smail: '%' + data.search + '%',
+      .orWhere('lower(owner_email) like :smail', {
+        smail: '%' + search + '%',
       })
-      .orWhere('owner_password like :esettle', {
-        esettle: '%' + data.search + '%',
+      // .orWhere('lower(owner_password) like :esettle', {
+      //   esettle: '%' + search + '%',
+      // })
+      .orWhere('lower(address) like :astrore', {
+        astrore: '%' + search + '%',
       })
-      .orWhere('address like :astrore', {
-        astrore: '%' + data.search + '%',
+      .orWhere('lower(post_code) like :pcode', {
+        pcode: '%' + search + '%',
       })
-      .orWhere('post_code like :pcode', {
-        pcode: '%' + data.search + '%',
+      .orWhere('lower(guidance) like :guidance', {
+        guidance: '%' + search + '%',
       })
-      .orWhere('guidance like :guidance', {
-        guidance: '%' + data.search + '%',
+      .orWhere('lower(location_longitude) like :lat', {
+        lat: '%' + search + '%',
       })
-      .orWhere('location_longitude like :lat', {
-        lat: '%' + data.search + '%',
+      .orWhere('lower(location_latitude) like :lat', {
+        lat: '%' + search + '%',
       })
-      .orWhere('location_latitude like :lat', {
-        lat: '%' + data.search + '%',
+      .getCount()
+      .then(async (counts) => {
+        totalItems = counts;
+        return await this.storeRepository
+          .createQueryBuilder('merchant_store')
+          .select('*')
+          // .where('merchant_id like :mid', { mid: '%' + data.search + '%' })
+          .where('lower(name like :mname', {
+            mname: '%' + search + '%',
+          })
+          .orWhere('lower(phone) like :sname', {
+            sname: '%' + search + '%',
+          })
+          .orWhere('lower(owner_phone) like :shp', {
+            shp: '%' + search + '%',
+          })
+          .orWhere('lower(owner_email) like :smail', {
+            smail: '%' + search + '%',
+          })
+          // .orWhere('lower(owner_password) like :esettle', {
+          //   esettle: '%' + search + '%',
+          // })
+          .orWhere('lower(address) like :astrore', {
+            astrore: '%' + search + '%',
+          })
+          .orWhere('lower(post_code) like :pcode', {
+            pcode: '%' + search + '%',
+          })
+          .orWhere('lower(guidance) like :guidance', {
+            guidance: '%' + search + '%',
+          })
+          .orWhere('lower(location_longitude) like :lat', {
+            lat: '%' + search + '%',
+          })
+          .orWhere('lower(location_latitude) like :lat', {
+            lat: '%' + search + '%',
+          })
+          .orderBy('created_at', 'DESC')
+          .offset((currentPage - 1) * perPage)
+          .limit(perPage)
+          .getRawMany();
       })
-      .orderBy('created_at', 'DESC')
-      .limit(data.limit)
-      .offset(data.page)
-      .getRawMany();
+      .then((result) => {
+        result.forEach((row) => {
+          dbOutputTime(row);
+          delete row.owner_password;
+        });
+
+        return {
+          total_item: totalItems,
+          limit: perPage,
+          current_page: currentPage,
+          items: result,
+        };
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   //------------------------------------------------------------------------------

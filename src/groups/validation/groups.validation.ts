@@ -23,6 +23,6 @@ export class MerchantGroupValidation {
 
   created_at: string;
   approved_at: string;
-  id_group: string;
+  id: string;
   owner_ktp: string;
 }

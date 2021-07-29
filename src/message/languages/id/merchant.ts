@@ -26,6 +26,7 @@ export default {
     fail: 'Get List Group Gagal.',
     phoneUnreg: 'Nomor Telepon Pemilik tidak terdaftar',
     empty_token: 'Kode Token tidak ada.',
+    query_fail: 'Syntax Error.',
   },
   createmerchant: {
     success: 'Create Merchant Success.',
@@ -34,8 +35,9 @@ export default {
     emailExist: 'Email sudah digunakan oleh merchant lain.',
     empty_token: 'Kode Token tidak ada.',
     invalid_token: 'Kode Token tidak valid.',
-    empty_groupid: 'ID Merchant Corporete tidak ditemukan.',
-    empty_lobid: 'ID Merchant Bidang Usaha tidak ditemukan.',
+    groupid_notfound: 'ID Merchant Corporete tidak ditemukan.',
+    lobid_notfound: 'ID Merchant Bidang Usaha tidak ditemukan.',
+    bankid_notfound: 'ID Bank tidak ditemukan.',
   },
   updatemerchant: {
     success: 'Update Merchant Success.',
@@ -74,6 +76,7 @@ export default {
     fail: 'Delete Merchant Store Gagal.',
     unreg: 'Nomor Telepon Pemilik tidak terdaftar',
     empty_token: 'Kode Token tidak ada.',
+    invalid_id: 'ID tidak valid.',
   },
   liststore: {
     success: 'Get List Merchant Store Success.',

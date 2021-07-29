@@ -1,6 +1,6 @@
-import { ListBankSeed } from './listbank.interface';
+// import { ListBankSeed } from './listbank.interface';
 
-export const listbanks: ListBankSeed[] = [
+export const listbanks: Record<string, any>[] = [
   {
     // bank_id: 'e8417b7a-fc8e-44db-83fa-8fdc3c137044',
     bank_code: '008',

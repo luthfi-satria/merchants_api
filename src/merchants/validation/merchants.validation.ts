@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 
 export class MerchantMerchantValidation {
-  id_merchant: string;
+  id: string;
 
   @IsUUID()
   group_id: string;
@@ -46,6 +46,7 @@ export class MerchantMerchantValidation {
 
   owner_face_ktp: string;
 
+  @IsUUID()
   bank_id: string;
 
   bank_acc_name: string;

@@ -16,7 +16,7 @@ export enum GroupStatus {
 @Entity({ name: 'merchant_merchant' })
 export class MerchantDocument {
   @PrimaryGeneratedColumn('uuid')
-  merchant_id: string;
+  id: string;
 
   @Column('uuid')
   group_id: string;
@@ -67,7 +67,7 @@ export class MerchantDocument {
   @Column()
   owner_face_ktp: string;
 
-  @Column()
+  @Column('uuid')
   bank_id: string;
 
   @Column()
@@ -79,12 +79,12 @@ export class MerchantDocument {
   @Column()
   tarif_pb1: string;
 
-  @Column({ type: 'timestamp', nullable: true })
-  approved_at: Date;
+  @Column({ type: 'timestamptz', nullable: true })
+  approved_at: Date | string;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  created_at: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at: Date | string;
 
-  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  updated_at: Date;
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_at: Date | string;
 }

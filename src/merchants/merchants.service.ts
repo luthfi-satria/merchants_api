@@ -1,19 +1,42 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { RMessage } from 'src/response/response.interface';
+import { dbOutputTime } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
+import { Response } from 'src/response/response.decorator';
+import { ResponseService } from 'src/response/response.service';
+import { MessageService } from 'src/message/message.service';
+import { Message } from 'src/message/message.decorator';
 
 @Injectable()
 export class MerchantsService {
   constructor(
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
+    @Response() private readonly responseService: ResponseService,
+    @Message() private readonly messageService: MessageService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
-    return await this.merchantRepository.findOne({
-      where: { merchant_id: id },
-    });
+    return await this.merchantRepository
+      .findOne({
+        where: { id: id },
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   async findMerchantMerchantByPhone(id: string): Promise<MerchantDocument> {
@@ -67,7 +90,27 @@ export class MerchantsService {
       typeof data.owner_face_ktp != 'undefined'
     )
       create_merchant.owner_face_ktp = data.owner_face_ktp;
-    return await this.merchantRepository.save(create_merchant);
+    return await this.merchantRepository
+      .save(create_merchant)
+      .then((result) => {
+        dbOutputTime(result);
+        delete result.owner_password;
+        return result;
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   async updateMerchantMerchantProfile(
@@ -191,84 +234,205 @@ export class MerchantsService {
       .createQueryBuilder('merchant_merchant')
       .update(MerchantDocument)
       .set(create_merchant)
-      .where('merchant_id= :id', { id: data.merchant_id })
+      .where('id= :id', { id: data.id })
       .execute()
-      .then((response) => {
-        console.log(response.raw[0]);
-        return response.raw[0];
+      .then(async () => {
+        const result: Record<string, any> =
+          await this.merchantRepository.findOne({
+            where: { id: data.id },
+          });
+        dbOutputTime(result);
+        console.log(result);
+        delete result.owner_password;
+        return result;
+      })
+      .catch((err) => {
+        console.log(err);
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
       });
   }
 
   async deleteMerchantMerchantProfile(data: string): Promise<any> {
     const delete_merchant: Partial<MerchantDocument> = {
-      merchant_id: data,
+      id: data,
     };
-    return this.merchantRepository.delete(delete_merchant);
+    return this.merchantRepository
+      .delete(delete_merchant)
+      .then((result) => {
+        console.log(result);
+        return result;
+      })
+      .catch((err) => {
+        console.log(err);
+        const errors: RMessage = {
+          value: data,
+          property: 'id',
+          constraint: [
+            this.messageService.get('merchant.deletemerchant.invalid_id'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   async listGroupMerchant(
     data: Record<string, any>,
-  ): Promise<Promise<MerchantDocument>[]> {
-    if (typeof data.search == 'undefined' || data.search == null)
-      data.search = '';
-    if (typeof data.limit == 'undefined' || data.limit == null) data.limit = 10;
-    if (typeof data.page == 'undefined' || data.page == null) {
-      data.page = 0;
-    } else {
-      data.page -= 1;
-    }
+  ): Promise<Record<string, any>> {
+    let search = data.search || '';
+    search = search.toLowerCase();
+    const currentPage = data.page || 1;
+    const perPage = data.limit || 10;
+    let totalItems: number;
+
     return await this.merchantRepository
       .createQueryBuilder('merchant_merchant')
       .select('*')
-      .where('group_id like :gid', { gid: '%' + data.search + '%' })
-      .orWhere('name like :mname', {
-        mname: '%' + data.search + '%',
+      // .where('group_id like :gid', { gid: '%' + search + '%' })
+      .orWhere('lower(name) like :mname', {
+        mname: '%' + search + '%',
       })
-      .orWhere('lob_id like :lid', {
-        lid: '%' + data.search + '%',
-      })
-      .orWhere('address like :addr', {
-        addr: '%' + data.search + '%',
-      })
-      .orWhere('owner_name like :oname', {
-        oname: '%' + data.search + '%',
-      })
-      .orWhere('owner_email like :omail', {
-        omail: '%' + data.search + '%',
-      })
-      .orWhere('owner_phone like :ophone', {
-        ophone: '%' + data.search + '%',
-      })
-      .orWhere('owner_password like :opass', {
-        opass: '%' + data.search + '%',
-      })
-      .orWhere('owner_nik like :onik', {
-        onik: '%' + data.search + '%',
-      })
-      // .orWhere('owner_dob like :odob', {
-      //   odob: '%' + data.search + '%',
+      // .orWhere('lob_id like :lid', {
+      //   lid: '%' + search + '%',
       // })
-      .orWhere('owner_dob_city like :odc', {
-        odc: '%' + data.search + '%',
+      .orWhere('lower(address) like :addr', {
+        addr: '%' + search + '%',
       })
-      .orWhere('owner_address like :oaddr', {
-        oaddr: '%' + data.search + '%',
+      .orWhere('lower(owner_name) like :oname', {
+        oname: '%' + search + '%',
       })
-      .orWhere('bank_id like :bid', {
-        bid: '%' + data.search + '%',
+      .orWhere('lower(owner_email) like :omail', {
+        omail: '%' + search + '%',
       })
-      .orWhere('bank_acc_name like :ban', {
-        ban: '%' + data.search + '%',
+      .orWhere('lower(owner_phone) like :ophone', {
+        ophone: '%' + search + '%',
       })
-      .orWhere('bank_acc_number like :banu', {
-        banu: '%' + data.search + '%',
+      .orWhere('lower(owner_password) like :opass', {
+        opass: '%' + search + '%',
       })
-      .orWhere('tarif_pb1 like :tpb', {
-        tpb: '%' + data.search + '%',
+      .orWhere('lower(owner_nik) like :onik', {
+        onik: '%' + search + '%',
       })
-      .orderBy('created_at', 'DESC')
-      .limit(data.limit)
-      .offset(data.page)
-      .getRawMany();
+      // .orWhere('lower(owner_dob) like :odob', {
+      //   odob: '%' + search + '%',
+      // })
+      .orWhere('lower(owner_dob_city) like :odc', {
+        odc: '%' + search + '%',
+      })
+      .orWhere('lower(owner_address) like :oaddr', {
+        oaddr: '%' + search + '%',
+      })
+      // .orWhere('bank_id like :bid', {
+      //   bid: '%' + search + '%',
+      // })
+      .orWhere('lower(bank_acc_name) like :ban', {
+        ban: '%' + search + '%',
+      })
+      .orWhere('lower(bank_acc_number) like :banu', {
+        banu: '%' + search + '%',
+      })
+      .orWhere('lower(tarif_pb1) like :tpb', {
+        tpb: '%' + search + '%',
+      })
+      .getCount()
+      .then(async (counts) => {
+        totalItems = counts;
+        return await this.merchantRepository
+          .createQueryBuilder('merchant_merchant')
+          .select('*')
+          // .where('group_id like :gid', { gid: '%' + search + '%' })
+          .where('lower(name) like :mname', {
+            mname: '%' + search + '%',
+          })
+          // .orWhere('lob_id like :lid', {
+          //   lid: '%' + search + '%',
+          // })
+          .orWhere('lower(address) like :addr', {
+            addr: '%' + search + '%',
+          })
+          .orWhere('lower(owner_name) like :oname', {
+            oname: '%' + search + '%',
+          })
+          .orWhere('lower(owner_email) like :omail', {
+            omail: '%' + search + '%',
+          })
+          .orWhere('lower(owner_phone) like :ophone', {
+            ophone: '%' + search + '%',
+          })
+          .orWhere('lower(owner_password) like :opass', {
+            opass: '%' + search + '%',
+          })
+          .orWhere('lower(owner_nik) like :onik', {
+            onik: '%' + search + '%',
+          })
+          // .orWhere('lower(owner_dob) like :odob', {
+          //   odob: '%' + search + '%',
+          // })
+          .orWhere('lower(owner_dob_city) like :odc', {
+            odc: '%' + search + '%',
+          })
+          .orWhere('lower(owner_address) like :oaddr', {
+            oaddr: '%' + search + '%',
+          })
+          // .orWhere('bank_id like :bid', {
+          //   bid: '%' + search + '%',
+          // })
+          .orWhere('lower(bank_acc_name) like :ban', {
+            ban: '%' + search + '%',
+          })
+          .orWhere('lower(bank_acc_number) like :banu', {
+            banu: '%' + search + '%',
+          })
+          .orWhere('lower(tarif_pb1) like :tpb', {
+            tpb: '%' + search + '%',
+          })
+          .orderBy('created_at', 'DESC')
+          .offset((currentPage - 1) * perPage)
+          .limit(perPage)
+          .getRawMany();
+      })
+      .then((result) => {
+        result.forEach((row) => {
+          dbOutputTime(row);
+          delete row.owner_password;
+        });
+
+        return {
+          total_item: totalItems,
+          limit: perPage,
+          current_page: currentPage,
+          items: result,
+        };
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 }

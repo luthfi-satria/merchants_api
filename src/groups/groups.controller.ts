@@ -18,7 +18,6 @@ import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
-import { RequestValidationPipe } from './validation/request-validation.pipe';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { RMessage } from 'src/response/response.interface';
 import { diskStorage } from 'multer';
@@ -28,10 +27,7 @@ import { GroupsService } from './groups.service';
 import { MerchantGroupValidation } from './validation/groups.validation';
 import { catchError, map } from 'rxjs';
 import { DeleteResult } from 'typeorm';
-
-// const defaultJsonHeader: Record<string, any> = {
-//   'Content-Type': 'application/json',
-// };
+import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -158,9 +154,6 @@ export class GroupsController {
           if (file) data.owner_ktp = '/upload_groups/' + file.filename;
           const result_db: GroupDocument =
             await this.groupsService.createMerchantGroupProfile(data);
-          // const rdata: Record<string, any> = {
-          //   name: result_db.name,
-          // };
           return this.responseService.success(
             true,
             this.messageService.get('merchant.creategroup.success'),
@@ -168,9 +161,9 @@ export class GroupsController {
           );
         } catch (err) {
           const errors: RMessage = {
-            value: err.message,
-            property: 'creategroup',
-            constraint: [this.messageService.get('merchant.creategroup.fail')],
+            value: '',
+            property: '',
+            constraint: [err.message],
           };
           throw new BadRequestException(
             this.responseService.error(
@@ -226,7 +219,7 @@ export class GroupsController {
     if (!result) {
       const errors: RMessage = {
         value: id,
-        property: 'group_id',
+        property: 'id',
         constraint: [this.messageService.get('merchant.updategroup.unreg')],
       };
       throw new BadRequestException(
@@ -238,7 +231,7 @@ export class GroupsController {
       );
     }
 
-    data.group_id = result.group_id;
+    data.id = result.id;
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {

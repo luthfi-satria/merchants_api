@@ -9,14 +9,14 @@ import {
 @Entity({ name: 'merchant_addons' })
 export class AddonDocument {
   @PrimaryGeneratedColumn('uuid')
-  addon_id: string;
+  id: string;
 
   @Column()
   name: string;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  created_at: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at: Date | string;
 
-  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  updated_at: Date;
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_at: Date | string;
 }

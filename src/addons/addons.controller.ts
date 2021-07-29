@@ -174,7 +174,7 @@ export class AddonsController {
     if (!result) {
       const errors: RMessage = {
         value: id,
-        property: 'addon_id',
+        property: 'id',
         constraint: [this.messageService.get('merchant.updateaddon.unreg')],
       };
       throw new BadRequestException(
@@ -186,7 +186,7 @@ export class AddonsController {
       );
     }
 
-    data.addon_id = result.addon_id;
+    data.id = result.id;
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {

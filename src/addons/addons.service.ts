@@ -15,7 +15,7 @@ export class AddonsService {
   ) {}
 
   async findMerchantById(id: string): Promise<AddonDocument> {
-    return await this.addonRepository.findOne({ addon_id: id });
+    return await this.addonRepository.findOne({ id: id });
   }
 
   async findMerchantByName(name: string): Promise<AddonDocument> {
@@ -42,7 +42,7 @@ export class AddonsService {
       .createQueryBuilder('merchant_addons')
       .update(AddonDocument)
       .set(create_lob)
-      .where('addon_id= :id', { id: data.addon_id })
+      .where('id= :id', { id: data.id })
       .returning('*')
       .execute()
       .then((response) => {
@@ -53,7 +53,7 @@ export class AddonsService {
 
   async deleteMerchantAddonProfile(id: string): Promise<any> {
     const delete_group: Partial<AddonDocument> = {
-      addon_id: id,
+      id: id,
     };
     return this.addonRepository.delete(delete_group);
   }

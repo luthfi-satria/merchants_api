@@ -38,8 +38,6 @@ export class LobController {
     data: MerchantLobValidation,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    data.name = data.name.toLowerCase();
-
     if (typeof token == 'undefined' || token == 'undefined') {
       const errors: RMessage = {
         value: '',
@@ -152,7 +150,6 @@ export class LobController {
     @Param('id') id: string,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    data.name = data.name.toLowerCase();
     if (typeof token == 'undefined' || token == 'undefined') {
       const errors: RMessage = {
         value: '',
@@ -174,7 +171,7 @@ export class LobController {
     if (!result) {
       const errors: RMessage = {
         value: id,
-        property: 'lob_id',
+        property: 'id',
         constraint: [this.messageService.get('merchant.updatelob.unreg')],
       };
       throw new BadRequestException(
@@ -186,7 +183,7 @@ export class LobController {
       );
     }
 
-    data.lob_id = result.lob_id;
+    data.id = result.id;
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {

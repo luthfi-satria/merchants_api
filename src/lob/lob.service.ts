@@ -1,10 +1,19 @@
-import { HttpService, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpService,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
 import { LobDocument } from 'src/database/entities/lob.entity';
+import { dbOutputTime } from 'src/utils/general-utils';
+import { RMessage } from 'src/response/response.interface';
+import { ResponseService } from 'src/response/response.service';
+import { Response } from 'src/response/response.decorator';
 
 @Injectable()
 export class LobService {
@@ -12,10 +21,11 @@ export class LobService {
     @InjectRepository(LobDocument)
     private readonly lobRepository: Repository<LobDocument>,
     private httpService: HttpService,
+    @Response() private readonly responseService: ResponseService,
   ) {}
 
   async findMerchantById(id: string): Promise<LobDocument> {
-    return await this.lobRepository.findOne({ lob_id: id });
+    return await this.lobRepository.findOne({ id: id });
   }
 
   async findMerchantByName(name: string): Promise<LobDocument> {
@@ -28,7 +38,26 @@ export class LobService {
     const create_lob: Partial<LobDocument> = {
       name: data.name,
     };
-    return await this.lobRepository.save(create_lob);
+    return await this.lobRepository
+      .save(create_lob)
+      .then((result) => {
+        dbOutputTime(result);
+        return result;
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   async updateMerchantLobProfile(
@@ -42,39 +71,85 @@ export class LobService {
       .createQueryBuilder('merchant_lob')
       .update(LobDocument)
       .set(create_lob)
-      .where('lob_id= :id', { id: data.lob_id })
+      .where('id= :id', { id: data.id })
       .returning('*')
       .execute()
       .then((response) => {
-        console.log(response.raw[0]);
+        dbOutputTime(response.raw[0]);
         return response.raw[0];
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
       });
   }
 
   async deleteMerchantLobProfile(id: string): Promise<any> {
     const delete_group: Partial<LobDocument> = {
-      lob_id: id,
+      id: id,
     };
     return this.lobRepository.delete(delete_group);
   }
 
-  async listGroup(data: Record<string, any>): Promise<Promise<LobDocument>[]> {
-    if (typeof data.search == 'undefined' || data.search == null)
-      data.search = '';
-    if (typeof data.limit == 'undefined' || data.limit == null) data.limit = 10;
-    if (typeof data.page == 'undefined' || data.page == null) {
-      data.page = 0;
-    } else {
-      data.page -= 1;
-    }
+  async listGroup(data: Record<string, any>): Promise<Record<string, any>> {
+    let search = data.search || '';
+    search = search.toLowerCase();
+    const currentPage = data.page || 1;
+    const perPage = data.limit || 10;
+    let totalItems: number;
+
     return await this.lobRepository
       .createQueryBuilder('merchant_lob')
       .select('*')
-      .where('name like :aname', { aname: '%' + data.search + '%' })
-      .orderBy('created_at', 'DESC')
-      .limit(data.limit)
-      .offset(data.page)
-      .getRawMany();
+      .where('lower(name) like :aname', { aname: '%' + search + '%' })
+      .getCount()
+      .then(async (counts) => {
+        totalItems = counts;
+        return await this.lobRepository
+          .createQueryBuilder('merchant_lob')
+          .select('*')
+          .where('lower(name) like :aname', { aname: '%' + search + '%' })
+          .orderBy('created_at', 'DESC')
+          .offset((currentPage - 1) * perPage)
+          .limit(perPage)
+          .getRawMany();
+      })
+      .then((result) => {
+        result.forEach((row) => {
+          dbOutputTime(row);
+        });
+
+        return {
+          total_item: totalItems,
+          limit: perPage,
+          current_page: currentPage,
+          items: result,
+        };
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   //------------------------------------------------------------------------------

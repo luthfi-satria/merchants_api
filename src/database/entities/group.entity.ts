@@ -16,7 +16,7 @@ export enum GroupStatus {
 @Entity({ name: 'merchant_group' })
 export class GroupDocument {
   @PrimaryGeneratedColumn('uuid')
-  group_id: string;
+  id: string;
 
   @Column()
   name: string;
@@ -43,12 +43,12 @@ export class GroupDocument {
   @Column()
   address: string;
 
-  @Column({ type: 'timestamp', nullable: true })
-  approved_at: Date;
+  @Column({ type: 'timestamptz', nullable: true })
+  approved_at: Date | string;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  created_at: Date;
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'LOCALTIMESTAMP' })
+  created_at: Date | string;
 
-  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  updated_at: Date;
+  @UpdateDateColumn({ type: 'timestamptz', default: () => 'LOCALTIMESTAMP' })
+  updated_at: Date | string;
 }

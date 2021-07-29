@@ -1,10 +1,9 @@
-import { ListBankSeed } from 'src/banks/listbank.interface';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'merchant_list_banks' })
-export class ListBankDocument implements ListBankSeed {
+export class ListBankDocument {
   @PrimaryGeneratedColumn('uuid')
-  bank_id: string;
+  id: string;
 
   @Column()
   bank_code: string;

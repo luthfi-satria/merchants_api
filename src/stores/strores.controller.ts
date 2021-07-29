@@ -183,6 +183,7 @@ export class StoresController {
   }
 
   @Put('stores/:id')
+  @ResponseStatusCode()
   @UseInterceptors(
     FileInterceptor('upload_photo', {
       storage: diskStorage({
@@ -197,6 +198,7 @@ export class StoresController {
     data: MerchantStoreValidation,
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
+    @Headers('Authorization') token: string,
   ): Promise<any> {
     const result: StoreDocument = await this.storesService.findMerchantById(id);
 
@@ -214,7 +216,7 @@ export class StoresController {
         ),
       );
     }
-    data.store_id = result.store_id;
+    data.id = result.id;
     try {
       if (file) data.upload_photo = '/upload_stores/' + file.filename;
       const updateresult: Record<string, any> =
@@ -241,19 +243,18 @@ export class StoresController {
   }
 
   @Delete('stores/:id')
-  async deletestores(@Param('id') id: string): Promise<any> {
-    try {
-      // const result: StoreDocument =
-      await this.storesService.deleteMerchantStoreProfile(id);
-      return this.responseService.success(
-        true,
-        this.messageService.get('merchant.deletestore.success'),
-      );
-    } catch (err) {
+  @ResponseStatusCode()
+  async deletestores(
+    @Param('id') id: string,
+    @Headers('Authorization') token: string,
+  ): Promise<any> {
+    if (typeof token == 'undefined' || token == 'undefined') {
       const errors: RMessage = {
-        value: err.message,
-        property: 'deletestore',
-        constraint: [this.messageService.get('merchant.deletestore.fail')],
+        value: '',
+        property: 'token',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.invalid_token'),
+        ],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -263,9 +264,73 @@ export class StoresController {
         ),
       );
     }
+
+    const url: string =
+      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
+    const headersRequest: Record<string, any> = {
+      'Content-Type': 'application/json',
+      Authorization: token,
+    };
+
+    return (await this.storesService.getHttp(url, headersRequest)).pipe(
+      map(async (response) => {
+        const rsp: Record<string, any> = response;
+
+        if (rsp.statusCode) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              rsp.message[0],
+              'Bad Request',
+            ),
+          );
+        }
+        if (response.data.payload.user_type != 'admin') {
+          const errors: RMessage = {
+            value: token.replace('Bearer ', ''),
+            property: 'token',
+            constraint: [
+              this.messageService.get('merchant.createmerchant.invalid_token'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        try {
+          // const result: StoreDocument =
+          await this.storesService.deleteMerchantStoreProfile(id);
+          return this.responseService.success(
+            true,
+            this.messageService.get('merchant.deletestore.success'),
+          );
+        } catch (err) {
+          const errors: RMessage = {
+            value: err.message,
+            property: 'deletestore',
+            constraint: [this.messageService.get('merchant.deletestore.fail')],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+      }),
+      catchError((err) => {
+        throw err.response.data;
+      }),
+    );
   }
 
   @Get('stores')
+  @ResponseStatusCode()
   async getsores(@Query() data: string[]): Promise<any> {
     const logger = new Logger();
     const listgroup: any = await this.storesService.listGroupStore(data);

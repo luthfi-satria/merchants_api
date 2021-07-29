@@ -34,5 +34,5 @@ export class MerchantStoreValidation {
 
   service_addon: string;
 
-  store_id: string;
+  id: string;
 }

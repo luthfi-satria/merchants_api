@@ -31,6 +31,8 @@ import { GroupDocument } from 'src/database/entities/group.entity';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { LobService } from 'src/lob/lob.service';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
+import { ListBankDocument } from 'src/database/entities/list_banks';
+import { BanksService } from 'src/banks/banks.service';
 
 @Controller('api/v1/merchants')
 export class MerchantsController {
@@ -38,6 +40,7 @@ export class MerchantsController {
     private readonly merchantsService: MerchantsService,
     private readonly groupsService: GroupsService,
     private readonly lobService: LobService,
+    private readonly bankService: BanksService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService, // private httpService: HttpService,
   ) {}
@@ -168,7 +171,9 @@ export class MerchantsController {
             value: data.group_id,
             property: 'group_id',
             constraint: [
-              this.messageService.get('merchant.createmerchant.empty_groupid'),
+              this.messageService.get(
+                'merchant.createmerchant.groupid_notfound',
+              ),
             ],
           };
           throw new BadRequestException(
@@ -182,13 +187,33 @@ export class MerchantsController {
         const ceklob: LobDocument = await this.lobService.findMerchantById(
           data.lob_id,
         );
-        console.log(ceklob);
         if (!ceklob) {
           const errors: RMessage = {
             value: data.lob_id,
             property: 'lob_id',
             constraint: [
-              this.messageService.get('merchant.createmerchant.empty_lobid'),
+              this.messageService.get('merchant.createmerchant.lobid_notfound'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        const cekbank: ListBankDocument = await this.bankService.findBankById(
+          data.bank_id,
+        );
+        if (!cekbank) {
+          const errors: RMessage = {
+            value: data.bank_id,
+            property: 'bank_id',
+            constraint: [
+              this.messageService.get(
+                'merchant.createmerchant.bankid_notfound',
+              ),
             ],
           };
           throw new BadRequestException(
@@ -211,9 +236,7 @@ export class MerchantsController {
           const errors: RMessage = {
             value: '',
             property: '',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.fail'),
-            ],
+            constraint: [err.message],
           };
           throw new BadRequestException(
             this.responseService.error(
@@ -231,6 +254,7 @@ export class MerchantsController {
   }
 
   @Put('merchants/:id')
+  @ResponseStatusCode()
   @UseInterceptors(
     AnyFilesInterceptor({
       storage: diskStorage({
@@ -269,7 +293,7 @@ export class MerchantsController {
     if (!cekid) {
       const errors: RMessage = {
         value: id,
-        property: 'merchant_id',
+        property: 'id',
         constraint: [this.messageService.get('merchant.updatemerchant.unreg')],
       };
       throw new BadRequestException(
@@ -281,7 +305,7 @@ export class MerchantsController {
       );
     }
 
-    data.merchant_id = cekid.merchant_id;
+    data.id = cekid.id;
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -364,22 +388,21 @@ export class MerchantsController {
           );
         }
         try {
-          await this.merchantsService.updateMerchantMerchantProfile(data);
-          const rdata: Record<string, any> = {
-            name: cekid.name,
-          };
+          const resData =
+            await this.merchantsService.updateMerchantMerchantProfile(data);
+          // const rdata: Record<string, any> = {
+          //   name: cekid.name,
+          // };
           return this.responseService.success(
             true,
             this.messageService.get('merchant.updatemerchant.success'),
-            rdata,
+            resData,
           );
         } catch (err) {
           const errors: RMessage = {
-            value: err.message,
-            property: 'updatemerchant',
-            constraint: [
-              this.messageService.get('merchant.updatemerchant.fail'),
-            ],
+            value: '',
+            property: '',
+            constraint: [err.message],
           };
           throw new BadRequestException(
             this.responseService.error(
@@ -397,6 +420,7 @@ export class MerchantsController {
   }
 
   @Delete('merchants/:id')
+  @ResponseStatusCode()
   async deletemerchants(
     @Param('id') id: string,
     @Headers('Authorization') token: string,
@@ -457,7 +481,7 @@ export class MerchantsController {
         try {
           const result: DeleteResult =
             await this.merchantsService.deleteMerchantMerchantProfile(id);
-          if (result && result.affected == 0) {
+          if (result.raw.length == 0 && result.affected == 0) {
             const errors: RMessage = {
               value: id,
               property: 'id',
@@ -479,11 +503,9 @@ export class MerchantsController {
           );
         } catch (err) {
           const errors: RMessage = {
-            value: err.message,
-            property: 'deletemerchant',
-            constraint: [
-              this.messageService.get('merchant.deletemerchant.fail'),
-            ],
+            value: id,
+            property: 'id',
+            constraint: [err.message],
           };
           throw new BadRequestException(
             this.responseService.error(
@@ -501,6 +523,7 @@ export class MerchantsController {
   }
 
   @Get('merchants')
+  @ResponseStatusCode()
   async getmerchants(
     @Query() data: string[],
     // @Headers('Authorization') token: string,
@@ -563,7 +586,7 @@ export class MerchantsController {
     if (!listgroup) {
       const errors: RMessage = {
         value: '',
-        property: 'listgroup',
+        property: '',
         constraint: [this.messageService.get('merchant.listmerchant.fail')],
       };
       throw new BadRequestException(
