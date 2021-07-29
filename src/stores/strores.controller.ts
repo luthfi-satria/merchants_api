@@ -438,9 +438,9 @@ export class StoresController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'UNAUTHORIZED',
         ),
       );
     }
@@ -475,9 +475,9 @@ export class StoresController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'UNAUTHORIZED',
             ),
           );
         }

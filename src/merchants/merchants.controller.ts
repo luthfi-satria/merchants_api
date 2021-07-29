@@ -72,9 +72,9 @@ export class MerchantsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'UNAUTHORIZED',
         ),
       );
     }
@@ -112,9 +112,9 @@ export class MerchantsController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'UNAUTHORIZED',
             ),
           );
         }
@@ -266,9 +266,9 @@ export class MerchantsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'UNAUTHORIZED',
         ),
       );
     }
@@ -321,9 +321,9 @@ export class MerchantsController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'UNAUTHORIZED',
             ),
           );
         }
@@ -402,9 +402,9 @@ export class MerchantsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'UNAUTHORIZED',
         ),
       );
     }
@@ -439,9 +439,9 @@ export class MerchantsController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'UNAUTHORIZED',
             ),
           );
         }
@@ -491,64 +491,7 @@ export class MerchantsController {
 
   @Get('merchants')
   @ResponseStatusCode()
-  async getmerchants(
-    @Query() data: string[],
-    // @Headers('Authorization') token: string,
-  ): Promise<any> {
-    // if (typeof token == 'undefined' || token == 'undefined') {
-    //   const errors: RMessage = {
-    //     value: '',
-    //     property: 'token',
-    //     constraint: [
-    //       this.messageService.get('merchant.createmerchant.invalid_token'),
-    //     ],
-    //   };
-    //   throw new BadRequestException(
-    //     this.responseService.error(
-    //       HttpStatus.BAD_REQUEST,
-    //       errors,
-    //       'Bad Request',
-    //     ),
-    //   );
-    // }
-
-    // const url: string =
-    //   process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    // const headersRequest: Record<string, any> = {
-    //   'Content-Type': 'application/json',
-    //   Authorization: token,
-    // };
-
-    // return (await this.groupsService.getHttp(url, headersRequest)).pipe(
-    //   map(async (response) => {
-    //     const rsp: Record<string, any> = response;
-
-    //     if (rsp.statusCode) {
-    //       throw new BadRequestException(
-    //         this.responseService.error(
-    //           HttpStatus.BAD_REQUEST,
-    //           rsp.message[0],
-    //           'Bad Request',
-    //         ),
-    //       );
-    //     }
-    //     if (response.data.payload.user_type != 'admin') {
-    //       const errors: RMessage = {
-    //         value: token.replace('Bearer ', ''),
-    //         property: 'token',
-    //         constraint: [
-    //           this.messageService.get('merchant.createmerchant.invalid_token'),
-    //         ],
-    //       };
-    //       throw new BadRequestException(
-    //         this.responseService.error(
-    //           HttpStatus.BAD_REQUEST,
-    //           errors,
-    //           'Bad Request',
-    //         ),
-    //       );
-    //     }
-
+  async getmerchants(@Query() data: string[]): Promise<any> {
     const listgroup: any = await this.merchantsService.listGroupMerchant(data);
     if (!listgroup) {
       const errors: RMessage = {
@@ -569,10 +512,5 @@ export class MerchantsController {
       this.messageService.get('merchant.listmerchant.success'),
       listgroup,
     );
-    //   }),
-    //   catchError((err) => {
-    //     throw err.response.data;
-    //   }),
-    // );
   }
 }
