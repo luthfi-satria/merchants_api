@@ -38,3 +38,10 @@ export type IApplyDecorator = <TFunction extends Function, Y>(
   propertyKey?: string | symbol,
   descriptor?: TypedPropertyDescriptor<Y>,
 ) => void;
+
+export interface ListResponse {
+  readonly total_item: number;
+  readonly limit: number;
+  readonly current_page: number;
+  readonly items: Record<string, any>[];
+}

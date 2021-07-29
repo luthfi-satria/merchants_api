@@ -224,28 +224,13 @@ export class MerchantsController {
             ),
           );
         }
-        try {
-          const result_db: MerchantDocument =
-            await this.merchantsService.createMerchantMerchantProfile(data);
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.createmerchant.success'),
-            result_db,
-          );
-        } catch (err) {
-          const errors: RMessage = {
-            value: '',
-            property: '',
-            constraint: [err.message],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
+        const result_db: MerchantDocument =
+          await this.merchantsService.createMerchantMerchantProfile(data);
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.createmerchant.success'),
+          result_db,
+        );
       }),
       catchError((err) => {
         throw err.response.data;
@@ -387,31 +372,13 @@ export class MerchantsController {
             ),
           );
         }
-        try {
-          const resData =
-            await this.merchantsService.updateMerchantMerchantProfile(data);
-          // const rdata: Record<string, any> = {
-          //   name: cekid.name,
-          // };
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.updatemerchant.success'),
-            resData,
-          );
-        } catch (err) {
-          const errors: RMessage = {
-            value: '',
-            property: '',
-            constraint: [err.message],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
+        const resData =
+          await this.merchantsService.updateMerchantMerchantProfile(data);
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.updatemerchant.success'),
+          resData,
+        );
       }),
       catchError((err) => {
         throw err.response.data;

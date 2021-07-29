@@ -39,8 +39,6 @@ export class AddonsController {
     data: MerchantAddonsValidation,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    data.name = data.name.toLowerCase();
-
     if (typeof token == 'undefined' || token == 'undefined') {
       const errors: RMessage = {
         value: '',
@@ -51,9 +49,9 @@ export class AddonsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'UNAUTHORIZED',
         ),
       );
     }
@@ -88,9 +86,9 @@ export class AddonsController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'UNAUTHORIZED',
             ),
           );
         }
@@ -152,7 +150,6 @@ export class AddonsController {
     @Param('id') id: string,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    data.name = data.name.toLowerCase();
     if (typeof token == 'undefined' || token == 'undefined') {
       const errors: RMessage = {
         value: '',
@@ -163,9 +160,9 @@ export class AddonsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'UNAUTHORIZED',
         ),
       );
     }
@@ -217,9 +214,9 @@ export class AddonsController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'UNAUTHORIZED',
             ),
           );
         }
@@ -289,9 +286,9 @@ export class AddonsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'UNAUTHORIZED',
         ),
       );
     }
@@ -325,9 +322,9 @@ export class AddonsController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'UNAUTHORIZED',
             ),
           );
         }

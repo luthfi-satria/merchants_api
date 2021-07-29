@@ -64,11 +64,14 @@ export default {
     phoneExist: 'Nomor telepon sudah digunakan oleh store lain',
     emailExist: 'Email sudah digunakan oleh store lain.',
     empty_token: 'Kode Token tidak ada.',
+    merchantid_notfound: 'ID Merchant tidak ditemukan.',
+    merchantid_notactive: 'ID Merchant tidak aktif',
   },
   updatestore: {
     success: 'Update Merchant Store Success.',
     fail: 'Update Merchant Store Gagal.',
     unreg: 'Nomor Telepon Pemilik tidak terdaftar',
+    id_notfound: 'ID Store tidak ditemukan',
     empty_token: 'Kode Token tidak ada.',
   },
   deletestore: {

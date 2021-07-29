@@ -1,13 +1,14 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
-import { RMessage } from 'src/response/response.interface';
+import { ListResponse, RMessage } from 'src/response/response.interface';
 import { dbOutputTime } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { Message } from 'src/message/message.decorator';
+import moment from 'moment';
 
 @Injectable()
 export class MerchantsService {
@@ -27,7 +28,7 @@ export class MerchantsService {
         const errors: RMessage = {
           value: '',
           property: '',
-          constraint: [err.message],
+          constraint: [err.routine],
         };
         throw new BadRequestException(
           this.responseService.error(
@@ -54,6 +55,23 @@ export class MerchantsService {
   async createMerchantMerchantProfile(
     data: Record<string, any>,
   ): Promise<MerchantDocument> {
+    if (data.owner_dob.split('/').length < 3) {
+      const errors: RMessage = {
+        value: data.owner_dob,
+        property: 'owner_dob',
+        constraint: ['Format tanggal tidak sesuai'],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    data.owner_dob = moment(moment(data.owner_dob, 'DD/MM/YYYY')).format(
+      'YYYY-MM-DD',
+    );
     const create_merchant: Partial<MerchantDocument> = {
       group_id: data.group_id,
       name: data.name,
@@ -98,10 +116,12 @@ export class MerchantsService {
         return result;
       })
       .catch((err) => {
+        console.log('err');
+        console.error(err.routine);
         const errors: RMessage = {
           value: '',
           property: '',
-          constraint: [err.message],
+          constraint: [err.routine],
         };
         throw new BadRequestException(
           this.responseService.error(
@@ -117,6 +137,30 @@ export class MerchantsService {
     data: Record<string, any>,
   ): Promise<Record<string, any>> {
     const create_merchant: Partial<MerchantDocument> = {};
+    if (
+      data.owner_dob != null &&
+      data.owner_dob != '' &&
+      typeof data.owner_dob != 'undefined'
+    ) {
+      if (data.owner_dob.split('/').length < 3) {
+        const errors: RMessage = {
+          value: data.owner_dob,
+          property: 'owner_dob',
+          constraint: ['Format tanggal tidak sesuai'],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+      data.owner_dob = moment(moment(data.owner_dob, 'DD/MM/YYYY')).format(
+        'YYYY-MM-DD',
+      );
+      create_merchant.owner_dob = data.owner_dob;
+    }
     if (
       data.group_id != null &&
       data.group_id != '' &&
@@ -167,12 +211,6 @@ export class MerchantsService {
       typeof data.owner_nik != 'undefined'
     )
       create_merchant.owner_nik = data.owner_nik;
-    if (
-      data.owner_dob != null &&
-      data.owner_dob != '' &&
-      typeof data.owner_dob != 'undefined'
-    )
-      create_merchant.owner_dob = data.owner_dob;
     if (
       data.owner_dob_city != null &&
       data.owner_dob_city != '' &&
@@ -251,7 +289,7 @@ export class MerchantsService {
         const errors: RMessage = {
           value: '',
           property: '',
-          constraint: [err.message],
+          constraint: [err.routine],
         };
         throw new BadRequestException(
           this.responseService.error(
@@ -413,12 +451,13 @@ export class MerchantsService {
           delete row.owner_password;
         });
 
-        return {
+        const list_result: ListResponse = {
           total_item: totalItems,
-          limit: perPage,
-          current_page: currentPage,
+          limit: Number(perPage),
+          current_page: Number(currentPage),
           items: result,
         };
+        return list_result;
       })
       .catch((err) => {
         const errors: RMessage = {

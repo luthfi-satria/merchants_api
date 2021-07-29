@@ -1,7 +1,7 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ListBankDocument } from 'src/database/entities/list_banks';
-import { RMessage } from 'src/response/response.interface';
+import { ListResponse, RMessage } from 'src/response/response.interface';
 import { Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
@@ -43,12 +43,13 @@ export class BanksService {
           .getRawMany();
       })
       .then((result) => {
-        return {
+        const list_result: ListResponse = {
           total_item: totalItems,
-          limit: perPage,
-          current_page: currentPage,
+          limit: Number(perPage),
+          current_page: Number(currentPage),
           items: result,
         };
+        return list_result;
       })
       .catch((err) => {
         const errors: RMessage = {

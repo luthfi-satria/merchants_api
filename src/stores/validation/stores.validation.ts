@@ -32,7 +32,7 @@ export class MerchantStoreValidation {
 
   upload_photo: string;
 
-  service_addon: string;
+  service_addon: string[] | string;
 
   id: string;
 }

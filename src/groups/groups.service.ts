@@ -10,18 +10,20 @@ import { catchError, map } from 'rxjs/operators';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
-import { RMessage } from 'src/response/response.interface';
+import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { dbOutputTime } from 'src/utils/general-utils';
+import { MerchantsService } from 'src/merchants/merchants.service';
 
 @Injectable()
 export class GroupsService {
   constructor(
     @InjectRepository(GroupDocument)
     private readonly groupRepository: Repository<GroupDocument>,
+    private readonly merchantService: MerchantsService,
     private httpService: HttpService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
@@ -159,10 +161,42 @@ export class GroupsService {
   }
 
   async deleteMerchantGroupProfile(data: string): Promise<any> {
+    const cekid = await this.merchantService.findMerchantById(data);
+    if (cekid) {
+      if (cekid.status == 'ACTIVE') {
+        const errors: RMessage = {
+          value: data,
+          property: 'id',
+          constraint: ['Merchant Masih Aktif'],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+    }
     const delete_group: Partial<GroupDocument> = {
       id: data,
     };
-    return this.groupRepository.delete(delete_group);
+    return this.groupRepository.delete(delete_group).catch(() => {
+      const errors: RMessage = {
+        value: data,
+        property: 'id',
+        constraint: [
+          this.messageService.get('merchant.deletegroup.invalid_id'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    });
   }
 
   async listGroup(data: Record<string, any>): Promise<Record<string, any>> {
@@ -217,12 +251,13 @@ export class GroupsService {
           dbOutputTime(row);
         });
 
-        return {
+        const list_result: ListResponse = {
           total_item: totalItems,
-          limit: perPage,
-          current_page: currentPage,
+          limit: Number(perPage),
+          current_page: Number(currentPage),
           items: result,
         };
+        return list_result;
       })
       .catch((err) => {
         const errors: RMessage = {

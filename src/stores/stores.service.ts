@@ -9,7 +9,7 @@ import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
-import { RMessage } from 'src/response/response.interface';
+import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
@@ -199,7 +199,7 @@ export class StoresService {
         const errors: RMessage = {
           value: '',
           property: '',
-          constraint: [err.message],
+          constraint: [err.routine],
         };
         throw new BadRequestException(
           this.responseService.error(
@@ -250,10 +250,10 @@ export class StoresService {
     let totalItems: number;
 
     return await this.storeRepository
-      .createQueryBuilder('merchant_store')
+      .createQueryBuilder('')
       .select('*')
       // .where('merchant_id like :mid', { mid: '%' + data.search + '%' })
-      .where('lower(name like :mname', {
+      .where('lower(name) like :mname', {
         mname: '%' + search + '%',
       })
       .orWhere('lower(phone) like :sname', {
@@ -277,8 +277,8 @@ export class StoresService {
       .orWhere('lower(guidance) like :guidance', {
         guidance: '%' + search + '%',
       })
-      .orWhere('lower(location_longitude) like :lat', {
-        lat: '%' + search + '%',
+      .orWhere('lower(location_longitude) like :long', {
+        long: '%' + search + '%',
       })
       .orWhere('lower(location_latitude) like :lat', {
         lat: '%' + search + '%',
@@ -287,10 +287,10 @@ export class StoresService {
       .then(async (counts) => {
         totalItems = counts;
         return await this.storeRepository
-          .createQueryBuilder('merchant_store')
+          .createQueryBuilder('')
           .select('*')
           // .where('merchant_id like :mid', { mid: '%' + data.search + '%' })
-          .where('lower(name like :mname', {
+          .where('lower(name) like :mname', {
             mname: '%' + search + '%',
           })
           .orWhere('lower(phone) like :sname', {
@@ -314,8 +314,8 @@ export class StoresService {
           .orWhere('lower(guidance) like :guidance', {
             guidance: '%' + search + '%',
           })
-          .orWhere('lower(location_longitude) like :lat', {
-            lat: '%' + search + '%',
+          .orWhere('lower(location_longitude) like :long', {
+            long: '%' + search + '%',
           })
           .orWhere('lower(location_latitude) like :lat', {
             lat: '%' + search + '%',
@@ -329,14 +329,15 @@ export class StoresService {
         result.forEach((row) => {
           dbOutputTime(row);
           delete row.owner_password;
+          // row.service_addon = JSON.parse(JSON.stringify(row.service_addon));
         });
-
-        return {
+        const list_result: ListResponse = {
           total_item: totalItems,
           limit: perPage,
           current_page: currentPage,
           items: result,
         };
+        return list_result;
       })
       .catch((err) => {
         const errors: RMessage = {

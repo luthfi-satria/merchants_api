@@ -11,7 +11,7 @@ import { Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { dbOutputTime } from 'src/utils/general-utils';
-import { RMessage } from 'src/response/response.interface';
+import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { Response } from 'src/response/response.decorator';
 
@@ -129,12 +129,13 @@ export class LobService {
           dbOutputTime(row);
         });
 
-        return {
+        const list_result: ListResponse = {
           total_item: totalItems,
-          limit: perPage,
-          current_page: currentPage,
+          limit: Number(perPage),
+          current_page: Number(currentPage),
           items: result,
         };
+        return list_result;
       })
       .catch((err) => {
         const errors: RMessage = {

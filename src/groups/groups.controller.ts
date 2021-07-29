@@ -65,9 +65,9 @@ export class GroupsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'Unauthorized',
         ),
       );
     }
@@ -102,9 +102,9 @@ export class GroupsController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'Unauthorized',
             ),
           );
         }
@@ -208,9 +208,9 @@ export class GroupsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'Unauthorized',
         ),
       );
     }
@@ -262,9 +262,9 @@ export class GroupsController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'UNAUTHORIZED',
             ),
           );
         }
@@ -353,9 +353,9 @@ export class GroupsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'UNAUTHORIZED',
         ),
       );
     }
@@ -389,37 +389,15 @@ export class GroupsController {
           };
           throw new BadRequestException(
             this.responseService.error(
-              HttpStatus.BAD_REQUEST,
+              HttpStatus.UNAUTHORIZED,
               errors,
-              'Bad Request',
+              'UNAUTHORIZED',
             ),
           );
         }
-        try {
-          const result: DeleteResult =
-            await this.groupsService.deleteMerchantGroupProfile(id);
-          console.log(result);
-          if (result && result.affected == 0) {
-            const errors: RMessage = {
-              value: id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.deletegroup.invalid_id'),
-              ],
-            };
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                errors,
-                'Bad Request',
-              ),
-            );
-          }
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.deletegroup.success'),
-          );
-        } catch (err) {
+        const result: DeleteResult =
+          await this.groupsService.deleteMerchantGroupProfile(id);
+        if (result && result.affected == 0) {
           const errors: RMessage = {
             value: id,
             property: 'id',
@@ -435,6 +413,10 @@ export class GroupsController {
             ),
           );
         }
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.deletegroup.success'),
+        );
       }),
       catchError((err) => {
         throw err.response.data;
@@ -458,9 +440,9 @@ export class GroupsController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'UNAUTHORIZED',
         ),
       );
     }
