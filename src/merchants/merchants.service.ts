@@ -9,6 +9,8 @@ import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { Message } from 'src/message/message.decorator';
 import moment from 'moment';
+import { HashService } from 'src/hash/hash.service';
+import { Hash } from 'src/hash/hash.decorator';
 
 @Injectable()
 export class MerchantsService {
@@ -17,6 +19,7 @@ export class MerchantsService {
     private readonly merchantRepository: Repository<MerchantDocument>,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
+    @Hash() private readonly hashService: HashService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -55,7 +58,7 @@ export class MerchantsService {
   async createMerchantMerchantProfile(
     data: Record<string, any>,
   ): Promise<MerchantDocument> {
-    if (data.owner_dob.split('/').length < 3) {
+    if (data.owner_dob.split('/').length != 3) {
       const errors: RMessage = {
         value: data.owner_dob,
         property: 'owner_dob',
@@ -72,6 +75,11 @@ export class MerchantsService {
     data.owner_dob = moment(moment(data.owner_dob, 'DD/MM/YYYY')).format(
       'YYYY-MM-DD',
     );
+    const salt: string = await this.hashService.randomSalt();
+    const passwordHash = await this.hashService.hashPassword(
+      data.owner_password,
+      salt,
+    );
     const create_merchant: Partial<MerchantDocument> = {
       group_id: data.group_id,
       name: data.name,
@@ -80,7 +88,7 @@ export class MerchantsService {
       owner_name: data.owner_name,
       owner_email: data.owner_email,
       owner_phone: data.owner_phone,
-      owner_password: data.owner_password,
+      owner_password: passwordHash,
       owner_nik: data.owner_nik,
       owner_dob: data.owner_dob,
       owner_dob_city: data.owner_dob_city,
@@ -116,8 +124,6 @@ export class MerchantsService {
         return result;
       })
       .catch((err) => {
-        console.log('err');
-        console.error(err.routine);
         const errors: RMessage = {
           value: '',
           property: '',
@@ -203,8 +209,14 @@ export class MerchantsService {
       data.owner_password != null &&
       data.owner_password != '' &&
       typeof data.owner_password != 'undefined'
-    )
-      create_merchant.owner_password = data.owner_password;
+    ) {
+      const salt: string = await this.hashService.randomSalt();
+      const passwordHash = await this.hashService.hashPassword(
+        data.owner_password,
+        salt,
+      );
+      create_merchant.owner_password = passwordHash;
+    }
     if (
       data.owner_nik != null &&
       data.owner_nik != '' &&
@@ -280,12 +292,10 @@ export class MerchantsService {
             where: { id: data.id },
           });
         dbOutputTime(result);
-        console.log(result);
         delete result.owner_password;
         return result;
       })
       .catch((err) => {
-        console.log(err);
         const errors: RMessage = {
           value: '',
           property: '',
@@ -308,11 +318,9 @@ export class MerchantsService {
     return this.merchantRepository
       .delete(delete_merchant)
       .then((result) => {
-        console.log(result);
         return result;
       })
-      .catch((err) => {
-        console.log(err);
+      .catch(() => {
         const errors: RMessage = {
           value: data,
           property: 'id',
@@ -448,6 +456,7 @@ export class MerchantsService {
       .then((result) => {
         result.forEach((row) => {
           dbOutputTime(row);
+          row.owner_dob = moment(row.owner_dob).format('YYYY-MM DD');
           delete row.owner_password;
         });
 

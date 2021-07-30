@@ -2,9 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { AddonDocument } from './addons.entity';
 
 @Entity({ name: 'merchant_store' })
 export class StoreDocument {
@@ -47,11 +50,12 @@ export class StoreDocument {
   @Column()
   upload_photo: string;
 
-  @Column()
-  service_addon: string;
+  @ManyToMany(() => AddonDocument)
+  @JoinTable({ name: 'merchant_store_addon' })
+  service_addon: AddonDocument[];
 
-  @Column({ type: 'timestamptz', nullable: true })
-  approved_at: Date | string;
+  // @Column({ type: 'timestamptz', nullable: true })
+  // approved_at: Date | string;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date | string;

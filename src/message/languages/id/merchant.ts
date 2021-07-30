@@ -66,6 +66,8 @@ export default {
     empty_token: 'Kode Token tidak ada.',
     merchantid_notfound: 'ID Merchant tidak ditemukan.',
     merchantid_notactive: 'ID Merchant tidak aktif',
+    empty_photo: 'File image kosong.',
+    addonid_unreg: 'ID Addon tidak terdaftar.',
   },
   updatestore: {
     success: 'Update Merchant Store Success.',

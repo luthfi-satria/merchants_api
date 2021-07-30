@@ -93,8 +93,9 @@ export class AddonsController {
           );
         }
 
-        const result: AddonDocument =
-          await this.addonService.findMerchantByName(data.name);
+        const result: AddonDocument = await this.addonService.findAddonByName(
+          data.name,
+        );
 
         if (result) {
           const errors: RMessage = {
@@ -166,7 +167,7 @@ export class AddonsController {
         ),
       );
     }
-    const result: AddonDocument = await this.addonService.findMerchantById(id);
+    const result: AddonDocument = await this.addonService.findAddonById(id);
 
     if (!result) {
       const errors: RMessage = {
@@ -221,8 +222,9 @@ export class AddonsController {
           );
         }
 
-        const cekname: AddonDocument =
-          await this.addonService.findMerchantByName(data.name);
+        const cekname: AddonDocument = await this.addonService.findAddonByName(
+          data.name,
+        );
 
         if (cekname && cekname.name != result.name) {
           const errors: RMessage = {

@@ -24,11 +24,11 @@ export class AddonsService {
     @Response() private readonly responseService: ResponseService,
   ) {}
 
-  async findMerchantById(id: string): Promise<AddonDocument> {
+  async findAddonById(id: string): Promise<AddonDocument> {
     return await this.addonRepository.findOne({ id: id });
   }
 
-  async findMerchantByName(name: string): Promise<AddonDocument> {
+  async findAddonByName(name: string): Promise<AddonDocument> {
     return await this.addonRepository.findOne({ where: { name: name } });
   }
 
@@ -75,7 +75,6 @@ export class AddonsService {
       .returning('*')
       .execute()
       .then((response) => {
-        console.log(response.raw[0]);
         dbOutputTime(response.raw[0]);
         return response.raw[0];
       });

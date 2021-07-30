@@ -189,29 +189,29 @@ export class StoresController {
             ),
           );
         }
-        try {
-          if (file) data.upload_photo = '/upload_stores/' + file.filename;
-          const result_db: StoreDocument =
-            await this.storesService.createMerchantStoreProfile(data);
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.createstore.success'),
-            result_db,
-          );
-        } catch (err) {
-          const errors: RMessage = {
-            value: err.message,
-            property: '',
-            constraint: [this.messageService.get('merchant.createstore.fail')],
-          };
+        if (!file) {
           throw new BadRequestException(
             this.responseService.error(
               HttpStatus.BAD_REQUEST,
-              errors,
+              {
+                value: null,
+                property: 'upload_photo',
+                constraint: [
+                  this.messageService.get('merchant.createstore.empty_photo'),
+                ],
+              },
               'Bad Request',
             ),
           );
         }
+        data.upload_photo = '/upload_stores/' + file.filename;
+        const result_db: StoreDocument =
+          await this.storesService.createMerchantStoreProfile(data);
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.createstore.success'),
+          result_db,
+        );
       }),
       catchError((err) => {
         throw err.response.data;
@@ -253,24 +253,6 @@ export class StoresController {
         ),
       );
     }
-    const result: StoreDocument = await this.storesService.findMerchantById(id);
-    if (!result) {
-      const errors: RMessage = {
-        value: id,
-        property: 'id',
-        constraint: [
-          this.messageService.get('merchant.updatestore.id_notfound'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    data.id = result.id;
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -310,104 +292,9 @@ export class StoresController {
             ),
           );
         }
-
-        if (
-          data.owner_phone != '' &&
-          data.owner_phone != null &&
-          typeof data.owner_phone != 'undefined'
-        ) {
-          const cekphone: StoreDocument =
-            await this.storesService.findMerchantStoreByPhone(data.owner_phone);
-
-          if (cekphone && cekphone.owner_phone != result.owner_phone) {
-            const errors: RMessage = {
-              value: data.owner_phone,
-              property: 'owner_phone',
-              constraint: [
-                this.messageService.get('merchant.createstore.phoneExist'),
-              ],
-            };
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                errors,
-                'Bad Request',
-              ),
-            );
-          }
-        }
-
-        if (
-          data.owner_email != '' &&
-          data.owner_email != null &&
-          typeof data.owner_email != 'undefined'
-        ) {
-          const cekemail: StoreDocument =
-            await this.storesService.findMerchantStoreByEmail(data.owner_email);
-
-          if (cekemail && cekemail.owner_email != result.owner_email) {
-            const errors: RMessage = {
-              value: data.owner_email,
-              property: 'owner_email',
-              constraint: [
-                this.messageService.get('merchant.createstore.emailExist'),
-              ],
-            };
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                errors,
-                'Bad Request',
-              ),
-            );
-          }
-        }
-
-        if (
-          data.merchant_id != '' &&
-          data.merchant_id != null &&
-          typeof data.merchant_id != 'undefined'
-        ) {
-          const cekmerchant: MerchantDocument =
-            await this.merchantService.findMerchantById(data.merchant_id);
-          if (!cekmerchant) {
-            const errors: RMessage = {
-              value: data.merchant_id,
-              property: 'merchant_id',
-              constraint: [
-                this.messageService.get(
-                  'merchant.createstore.merchantid_notfound',
-                ),
-              ],
-            };
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                errors,
-                'Bad Request',
-              ),
-            );
-          }
-          if (cekmerchant.status != 'ACTIVE') {
-            const errors: RMessage = {
-              value: data.merchant_id,
-              property: 'merchant_id',
-              constraint: [
-                this.messageService.get(
-                  'merchant.createstore.merchantid_notactive',
-                ),
-              ],
-            };
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                errors,
-                'Bad Request',
-              ),
-            );
-          }
-        }
         if (file) data.upload_photo = '/upload_stores/' + file.filename;
+
+        data.id = id;
         const updateresult: Record<string, any> =
           await this.storesService.updateMerchantStoreProfile(data);
         return this.responseService.success(

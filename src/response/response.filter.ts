@@ -36,7 +36,6 @@ export class ResponseFilter implements ExceptionFilter {
           errors: exception.error,
         });
       }
-      console.log(exception);
       // if error is not http cause
       const status: number = HttpStatus.INTERNAL_SERVER_ERROR;
       const message: string = this.messageService.get(
