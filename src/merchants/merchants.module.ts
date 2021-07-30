@@ -7,6 +7,7 @@ import { ListBankDocument } from 'src/database/entities/list_banks';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { GroupsService } from 'src/groups/groups.service';
+import { HashService } from 'src/hash/hash.service';
 import { LobService } from 'src/lob/lob.service';
 import { MerchantsController } from './merchants.controller';
 import { MerchantsService } from './merchants.service';
@@ -25,6 +26,12 @@ import { MerchantsService } from './merchants.service';
     HttpModule,
   ],
   controllers: [MerchantsController],
-  providers: [MerchantsService, GroupsService, LobService, BanksService],
+  providers: [
+    MerchantsService,
+    GroupsService,
+    LobService,
+    BanksService,
+    HashService,
+  ],
 })
 export class MerchantsModule {}

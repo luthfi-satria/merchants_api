@@ -35,7 +35,7 @@ export class StoresController {
     private readonly storesService: StoresService,
     private readonly merchantService: MerchantsService,
     @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService, // private httpService: HttpService,
+    @Message() private readonly messageService: MessageService,
   ) {}
 
   @Post('stores')

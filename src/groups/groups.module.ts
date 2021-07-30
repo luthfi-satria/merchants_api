@@ -3,6 +3,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { HashService } from 'src/hash/hash.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { GroupsController } from './groups.controller';
 import { GroupsService } from './groups.service';
@@ -16,6 +17,6 @@ import { GroupsService } from './groups.service';
     HttpModule,
   ],
   controllers: [GroupsController],
-  providers: [GroupsService, MerchantsService],
+  providers: [GroupsService, MerchantsService, HashService],
 })
 export class GroupsModule {}
