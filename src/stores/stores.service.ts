@@ -19,12 +19,19 @@ import { dbOutputTime } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
+import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+
+const defaultHeadersReq: Record<string, any> = {
+  'Content-Type': 'application/json',
+};
 
 @Injectable()
 export class StoresService {
   constructor(
     @InjectRepository(StoreDocument)
     private readonly storeRepository: Repository<StoreDocument>,
+    @InjectRepository(MerchantUsersDocument)
+    private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
     private readonly addonService: AddonsService,
@@ -122,8 +129,17 @@ export class StoresService {
 
     return await this.storeRepository
       .save(create_store)
-      .then((result) => {
+      .then(async (result) => {
         dbOutputTime(result);
+        const mUsers: Partial<MerchantUsersDocument> = {
+          name: result.name,
+          email: result.owner_email,
+          phone: result.owner_phone,
+          password: result.owner_password,
+          store_id: result.id,
+        };
+        await this.merchantUsersRepository.save(mUsers);
+
         delete result.owner_password;
         result.service_addon.forEach((sao) => {
           delete sao.created_at;
@@ -137,8 +153,8 @@ export class StoresService {
             HttpStatus.BAD_REQUEST,
             {
               value: '',
-              property: '',
-              constraint: [err.routine],
+              property: err.column,
+              constraint: [err.message],
             },
             'Bad Request',
           ),
@@ -149,6 +165,7 @@ export class StoresService {
   async updateMerchantStoreProfile(
     data: Record<string, any>,
   ): Promise<Record<string, any>> {
+    const updateMUsers: Partial<MerchantUsersDocument> = {};
     const store_exist: StoreDocument = await this.storeRepository
       .findOne(data.id, {
         relations: ['service_addon'],
@@ -285,9 +302,14 @@ export class StoresService {
       store_exist.merchant_id = data.merchant_id;
     }
 
-    if (data.name != null && data.name != '' && typeof data.name != 'undefined')
+    if (
+      data.name != null &&
+      data.name != '' &&
+      typeof data.name != 'undefined'
+    ) {
       store_exist.name = data.name;
-
+      updateMUsers.name = data.name;
+    }
     if (
       data.phone != null &&
       data.phone != '' &&
@@ -320,6 +342,7 @@ export class StoresService {
         );
       }
       store_exist.owner_phone = data.owner_phone;
+      updateMUsers.phone = data.owner_phone;
     }
 
     if (
@@ -347,6 +370,7 @@ export class StoresService {
         );
       }
       store_exist.owner_email = data.owner_email;
+      updateMUsers.email = data.owner_email;
     }
 
     if (
@@ -360,6 +384,7 @@ export class StoresService {
         salt,
       );
       store_exist.owner_password = passwordHash;
+      updateMUsers.password = passwordHash;
     }
     if (
       data.address != null &&
@@ -401,8 +426,14 @@ export class StoresService {
 
     return await this.storeRepository
       .save(store_exist)
-      .then((result) => {
+      .then(async (result) => {
         dbOutputTime(result);
+        await this.merchantUsersRepository
+          .createQueryBuilder('merchant_users')
+          .update(MerchantUsersDocument)
+          .set(updateMUsers)
+          .where('store_id= :gid', { gid: data.id })
+          .execute();
         delete result.owner_password;
         result.service_addon.forEach((sao) => {
           delete sao.created_at;
@@ -431,8 +462,8 @@ export class StoresService {
     };
     return this.storeRepository
       .delete(delete_merchant)
-      .then((result) => {
-        return result;
+      .then(() => {
+        return this.merchantUsersRepository.delete({ store_id: data });
       })
       .catch(() => {
         const errors: RMessage = {
@@ -575,6 +606,129 @@ export class StoresService {
       map((response) => response.data),
       catchError((err) => {
         throw err;
+      }),
+    );
+  }
+
+  async postHttp(
+    url: string,
+    body: Record<string, any>,
+    headers: Record<string, any>,
+  ): Promise<Observable<AxiosResponse<any>>> {
+    return this.httpService.post(url, body, { headers: headers }).pipe(
+      map((response) => response.data),
+      catchError((err) => {
+        throw err;
+      }),
+    );
+  }
+
+  async loginProcess(
+    data: Record<string, any>,
+  ): Promise<Observable<Promise<any>>> {
+    let existgroup;
+    if (data.access_type == 'email') {
+      existgroup = await this.storeRepository
+        .findOne({ where: { owner_email: data.email } })
+        .catch((err) => {
+          const errors: RMessage = {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        });
+    } else if (data.access_type == 'phone') {
+      existgroup = await this.storeRepository
+        .findOne({ where: { owner_phone: data.phone } })
+        .catch((err) => {
+          const errors: RMessage = {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        });
+    }
+
+    if (!existgroup) {
+      const errors: RMessage = {
+        value: data.email,
+        property: 'email',
+        constraint: [
+          this.messageService.get('merchant.loginstore.invalid_email'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    const validate: boolean = await this.hashService.validatePassword(
+      data.password,
+      existgroup.owner_password,
+    );
+    if (!validate) {
+      const errors: RMessage = {
+        value: data.password,
+        property: 'password',
+        constraint: [
+          this.messageService.get('merchant.loginstore.invalid_email'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    const { id } = existgroup;
+    const http_req: Record<string, any> = {
+      id_profile: id,
+      user_type: 'merchant',
+      level: 'store',
+      roles: ['merchant'],
+    };
+    const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
+    return (await this.postHttp(url, http_req, defaultHeadersReq)).pipe(
+      map(async (response) => {
+        const rsp: Record<string, any> = response;
+        if (rsp.statusCode) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              rsp.message[0],
+              'Bad Request',
+            ),
+          );
+        }
+        delete response.data.payload;
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.loginstore.success'),
+          response.data,
+        );
+      }),
+      catchError((err) => {
+        throw err.response.data;
       }),
     );
   }

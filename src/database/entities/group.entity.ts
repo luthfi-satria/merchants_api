@@ -31,6 +31,9 @@ export class GroupDocument {
   @Column()
   owner_name: string;
 
+  @Column()
+  owner_password: string;
+
   @Column({ nullable: true })
   owner_ktp: string;
 

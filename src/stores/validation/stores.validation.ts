@@ -8,6 +8,7 @@ export class MerchantStoreValidation {
   @IsNotEmpty()
   name: string;
 
+  @IsNotEmpty()
   phone: string;
 
   @IsNotEmpty()
@@ -20,18 +21,24 @@ export class MerchantStoreValidation {
   @IsNotEmpty()
   owner_password: string;
 
+  @IsNotEmpty()
   address: string;
 
+  @IsNotEmpty()
   post_code: string;
 
+  @IsNotEmpty()
   guidance: string;
 
+  @IsNotEmpty()
   location_longitude: string;
 
+  @IsNotEmpty()
   location_latitude: string;
 
   upload_photo: string;
 
+  @IsNotEmpty()
   service_addon: string[];
 
   id: string;

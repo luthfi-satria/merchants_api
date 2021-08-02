@@ -33,6 +33,8 @@ import { LobService } from 'src/lob/lob.service';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { ListBankDocument } from 'src/database/entities/list_banks';
 import { BanksService } from 'src/banks/banks.service';
+import { BrandLoginEmailValidation } from './validation/brand.login.email.validation';
+import { BrandLoginPhoneValidation } from './validation/brand.login.phone.validation';
 
 @Controller('api/v1/merchants')
 export class MerchantsController {
@@ -118,7 +120,6 @@ export class MerchantsController {
             ),
           );
         }
-
         if (files.length > 0) {
           files.forEach(function (file) {
             data[file.fieldname] = '/upload_merchants/' + file.filename;
@@ -173,6 +174,24 @@ export class MerchantsController {
             constraint: [
               this.messageService.get(
                 'merchant.createmerchant.groupid_notfound',
+              ),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        if (cekgroup.status != 'ACTIVE') {
+          const errors: RMessage = {
+            value: data.group_id,
+            property: 'group_id',
+            constraint: [
+              this.messageService.get(
+                'merchant.createmerchant.groupid_notactive',
               ),
             ],
           };
@@ -512,5 +531,25 @@ export class MerchantsController {
       this.messageService.get('merchant.listmerchant.success'),
       listgroup,
     );
+  }
+
+  @Post('merchants/login/email')
+  @ResponseStatusCode()
+  async loginByEmail(
+    @Body(RequestValidationPipe(BrandLoginEmailValidation))
+    data: BrandLoginEmailValidation,
+  ): Promise<any> {
+    data.access_type = 'email';
+    return await this.merchantsService.loginProcess(data);
+  }
+
+  @Post('merchants/login/phone')
+  @ResponseStatusCode()
+  async loginByPhone(
+    @Body(RequestValidationPipe(BrandLoginPhoneValidation))
+    data: BrandLoginPhoneValidation,
+  ): Promise<any> {
+    data.access_type = 'phone';
+    return await this.merchantsService.loginProcess(data);
   }
 }

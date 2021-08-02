@@ -28,6 +28,8 @@ import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { catchError, map } from 'rxjs';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { StoreLoginEmailValidation } from './validation/store.login.email.validation';
+import { StoreLoginPhoneValidation } from './validation/store.login.phone.validation';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -403,5 +405,25 @@ export class StoresController {
       this.messageService.get('merchant.listgroup.success'),
       listgroup,
     );
+  }
+
+  @Post('stores/login/email')
+  @ResponseStatusCode()
+  async loginByEmail(
+    @Body(RequestValidationPipe(StoreLoginEmailValidation))
+    data: StoreLoginEmailValidation,
+  ): Promise<any> {
+    data.access_type = 'email';
+    return await this.storesService.loginProcess(data);
+  }
+
+  @Post('stores/login/phone')
+  @ResponseStatusCode()
+  async loginByPhone(
+    @Body(RequestValidationPipe(StoreLoginPhoneValidation))
+    data: StoreLoginPhoneValidation,
+  ): Promise<any> {
+    data.access_type = 'phone';
+    return await this.storesService.loginProcess(data);
   }
 }

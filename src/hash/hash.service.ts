@@ -26,6 +26,13 @@ export class HashService {
     return compare(passwordString, passwordHashed);
   }
 
+  async validatePassword(
+    passwordString: string,
+    passwordHash: string,
+  ): Promise<boolean> {
+    return this.bcryptComparePassword(passwordString, passwordHash);
+  }
+
   // Base64
   async encryptBase64(data: string): Promise<string> {
     const buff: Buffer = Buffer.from(data);

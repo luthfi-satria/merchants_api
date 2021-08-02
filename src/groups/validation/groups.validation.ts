@@ -9,6 +9,8 @@ export class MerchantGroupValidation {
   @IsNotEmpty()
   owner_name: string;
 
+  owner_password: string;
+
   @IsNotEmpty()
   @IsEmail()
   email: string;

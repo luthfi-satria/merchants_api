@@ -5,7 +5,6 @@ import {
   Delete,
   Get,
   HttpStatus,
-  Logger,
   Param,
   Post,
   Put,
@@ -28,6 +27,8 @@ import { MerchantGroupValidation } from './validation/groups.validation';
 import { catchError, map } from 'rxjs';
 import { DeleteResult } from 'typeorm';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
+import { GroupLoginEmailValidation } from './validation/group.login.email.validation';
+import { GroupLoginPhoneValidation } from './validation/group.login.phone.validation';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -54,7 +55,6 @@ export class GroupsController {
     @UploadedFile() file: Express.Multer.File,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    const logger = new Logger();
     if (typeof token == 'undefined' || token == 'undefined') {
       const errors: RMessage = {
         value: '',
@@ -148,31 +148,29 @@ export class GroupsController {
             ),
           );
         }
-
-        try {
-          logger.debug(file, 'file');
-          if (file) data.owner_ktp = '/upload_groups/' + file.filename;
-          const result_db: GroupDocument =
-            await this.groupsService.createMerchantGroupProfile(data);
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.creategroup.success'),
-            result_db,
-          );
-        } catch (err) {
-          const errors: RMessage = {
-            value: '',
-            property: '',
-            constraint: [err.message],
-          };
+        if (!file) {
           throw new BadRequestException(
             this.responseService.error(
               HttpStatus.BAD_REQUEST,
-              errors,
+              {
+                value: null,
+                property: 'upload_photo',
+                constraint: [
+                  this.messageService.get('merchant.creategroup.empty_photo'),
+                ],
+              },
               'Bad Request',
             ),
           );
         }
+        data.owner_ktp = '/upload_groups/' + file.filename;
+        const result_db: GroupDocument =
+          await this.groupsService.createMerchantGroupProfile(data);
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.creategroup.success'),
+          result_db,
+        );
       }),
       catchError((err) => {
         throw err.response.data;
@@ -307,29 +305,15 @@ export class GroupsController {
             ),
           );
         }
-        try {
-          if (file) data.owner_ktp = '/upload_groups/' + file.filename;
-          const updateresult: Record<string, any> =
-            await this.groupsService.updateMerchantGroupProfile(data);
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.updategroup.success'),
-            updateresult,
-          );
-        } catch (err) {
-          const errors: RMessage = {
-            value: err.message,
-            property: '',
-            constraint: [this.messageService.get('merchant.updategroup.fail')],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
+
+        if (file) data.owner_ktp = '/upload_groups/' + file.filename;
+        const updateresult: Record<string, any> =
+          await this.groupsService.updateMerchantGroupProfile(data);
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.updategroup.success'),
+          updateresult,
+        );
       }),
       catchError((err) => {
         throw err.response.data;
@@ -507,5 +491,25 @@ export class GroupsController {
         throw err.response.data;
       }),
     );
+  }
+
+  @Post('groups/login/email')
+  @ResponseStatusCode()
+  async loginByEmail(
+    @Body(RequestValidationPipe(GroupLoginEmailValidation))
+    data: GroupLoginEmailValidation,
+  ): Promise<any> {
+    data.access_type = 'email';
+    return await this.groupsService.loginProcess(data);
+  }
+
+  @Post('groups/login/phone')
+  @ResponseStatusCode()
+  async loginByPhone(
+    @Body(RequestValidationPipe(GroupLoginPhoneValidation))
+    data: GroupLoginPhoneValidation,
+  ): Promise<any> {
+    data.access_type = 'phone';
+    return await this.groupsService.loginProcess(data);
   }
 }
