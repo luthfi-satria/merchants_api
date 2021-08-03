@@ -12,6 +12,7 @@ import { GroupsModule } from './groups/groups.module';
 import { LobModule } from './lob/lob.module';
 import { BanksModule } from './banks/banks.module';
 import { AddonsModule } from './addons/addons.module';
+import { LoginModule } from './login/login.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AddonsModule } from './addons/addons.module';
     LobModule,
     BanksModule,
     AddonsModule,
+    LoginModule,
   ],
   controllers: [AppController],
   providers: [AppService],

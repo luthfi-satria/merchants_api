@@ -10,6 +10,7 @@ import {
   Put,
   Query,
   Headers,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -47,7 +48,7 @@ export class AddonsController {
           this.messageService.get('merchant.createaddon.invalid_token'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
@@ -84,7 +85,7 @@ export class AddonsController {
               this.messageService.get('merchant.createaddon.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,
@@ -159,7 +160,7 @@ export class AddonsController {
           this.messageService.get('merchant.createaddon.invalid_token'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
@@ -213,7 +214,7 @@ export class AddonsController {
               this.messageService.get('merchant.createaddon.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,
@@ -286,7 +287,7 @@ export class AddonsController {
           this.messageService.get('merchant.createaddon.invalid_token'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
@@ -322,7 +323,7 @@ export class AddonsController {
               this.messageService.get('merchant.createaddon.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,

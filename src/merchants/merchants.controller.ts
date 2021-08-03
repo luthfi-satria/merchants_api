@@ -12,6 +12,7 @@ import {
   UploadedFiles,
   UseInterceptors,
   Headers,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -33,8 +34,6 @@ import { LobService } from 'src/lob/lob.service';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { ListBankDocument } from 'src/database/entities/list_banks';
 import { BanksService } from 'src/banks/banks.service';
-import { BrandLoginEmailValidation } from './validation/brand.login.email.validation';
-import { BrandLoginPhoneValidation } from './validation/brand.login.phone.validation';
 
 @Controller('api/v1/merchants')
 export class MerchantsController {
@@ -65,17 +64,16 @@ export class MerchantsController {
     @Headers('Authorization') token: string,
   ): Promise<any> {
     if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.invalid_token'),
-        ],
-      };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
-          errors,
+          {
+            value: '',
+            property: 'token',
+            constraint: [
+              this.messageService.get('merchant.createmerchant.invalid_token'),
+            ],
+          },
           'UNAUTHORIZED',
         ),
       );
@@ -112,7 +110,7 @@ export class MerchantsController {
               this.messageService.get('merchant.createmerchant.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,
@@ -283,7 +281,7 @@ export class MerchantsController {
           this.messageService.get('merchant.createmerchant.invalid_token'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
@@ -338,7 +336,7 @@ export class MerchantsController {
               this.messageService.get('merchant.createmerchant.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,
@@ -419,7 +417,7 @@ export class MerchantsController {
           this.messageService.get('merchant.createmerchant.invalid_token'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
@@ -456,7 +454,7 @@ export class MerchantsController {
               this.messageService.get('merchant.createmerchant.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,
@@ -531,25 +529,5 @@ export class MerchantsController {
       this.messageService.get('merchant.listmerchant.success'),
       listgroup,
     );
-  }
-
-  @Post('merchants/login/email')
-  @ResponseStatusCode()
-  async loginByEmail(
-    @Body(RequestValidationPipe(BrandLoginEmailValidation))
-    data: BrandLoginEmailValidation,
-  ): Promise<any> {
-    data.access_type = 'email';
-    return await this.merchantsService.loginProcess(data);
-  }
-
-  @Post('merchants/login/phone')
-  @ResponseStatusCode()
-  async loginByPhone(
-    @Body(RequestValidationPipe(BrandLoginPhoneValidation))
-    data: BrandLoginPhoneValidation,
-  ): Promise<any> {
-    data.access_type = 'phone';
-    return await this.merchantsService.loginProcess(data);
   }
 }

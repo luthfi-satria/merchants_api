@@ -12,6 +12,7 @@ import {
   UploadedFile,
   UseInterceptors,
   Headers,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -27,8 +28,6 @@ import { MerchantGroupValidation } from './validation/groups.validation';
 import { catchError, map } from 'rxjs';
 import { DeleteResult } from 'typeorm';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
-import { GroupLoginEmailValidation } from './validation/group.login.email.validation';
-import { GroupLoginPhoneValidation } from './validation/group.login.phone.validation';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -63,7 +62,7 @@ export class GroupsController {
           this.messageService.get('merchant.creategroup.invalid_token'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
@@ -100,7 +99,7 @@ export class GroupsController {
               this.messageService.get('merchant.creategroup.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,
@@ -204,7 +203,7 @@ export class GroupsController {
           this.messageService.get('merchant.creategroup.invalid_token'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
@@ -258,7 +257,7 @@ export class GroupsController {
               this.messageService.get('merchant.creategroup.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,
@@ -335,7 +334,7 @@ export class GroupsController {
           this.messageService.get('merchant.creategroup.invalid_token'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
@@ -371,7 +370,7 @@ export class GroupsController {
               this.messageService.get('merchant.creategroup.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,
@@ -422,7 +421,7 @@ export class GroupsController {
           this.messageService.get('merchant.creategroup.invalid_token'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
@@ -458,7 +457,7 @@ export class GroupsController {
               this.messageService.get('merchant.creategroup.invalid_token'),
             ],
           };
-          throw new BadRequestException(
+          throw new UnauthorizedException(
             this.responseService.error(
               HttpStatus.UNAUTHORIZED,
               errors,
@@ -491,25 +490,5 @@ export class GroupsController {
         throw err.response.data;
       }),
     );
-  }
-
-  @Post('groups/login/email')
-  @ResponseStatusCode()
-  async loginByEmail(
-    @Body(RequestValidationPipe(GroupLoginEmailValidation))
-    data: GroupLoginEmailValidation,
-  ): Promise<any> {
-    data.access_type = 'email';
-    return await this.groupsService.loginProcess(data);
-  }
-
-  @Post('groups/login/phone')
-  @ResponseStatusCode()
-  async loginByPhone(
-    @Body(RequestValidationPipe(GroupLoginPhoneValidation))
-    data: GroupLoginPhoneValidation,
-  ): Promise<any> {
-    data.access_type = 'phone';
-    return await this.groupsService.loginProcess(data);
   }
 }

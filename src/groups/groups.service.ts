@@ -21,10 +21,6 @@ import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 
-const defaultHeadersReq: Record<string, any> = {
-  'Content-Type': 'application/json',
-};
-
 @Injectable()
 export class GroupsService {
   constructor(
@@ -85,6 +81,9 @@ export class GroupsService {
       .save(create_group)
       .then(async (result) => {
         dbOutputTime(result);
+        // const cekMerchantUser = await this.merchantUsersRepository.findOne({
+        //   where: { email: data.email, phone: data.phone },
+        // });
         const mUsers: Partial<MerchantUsersDocument> = {
           name: result.owner_name,
           email: result.email,
@@ -344,129 +343,5 @@ export class GroupsService {
         throw err;
       }),
     );
-  }
-
-  async postHttp(
-    url: string,
-    body: Record<string, any>,
-    headers: Record<string, any>,
-  ): Promise<Observable<AxiosResponse<any>>> {
-    return this.httpService.post(url, body, { headers: headers }).pipe(
-      map((response) => response.data),
-      catchError((err) => {
-        throw err;
-      }),
-    );
-  }
-
-  async loginProcess(
-    data: Record<string, any>,
-  ): Promise<Observable<Promise<any>>> {
-    let existgroup;
-    if (data.access_type == 'email') {
-      existgroup = await this.groupRepository
-        .findOne({ where: { email: data.email } })
-        .catch((err) => {
-          const errors: RMessage = {
-            value: '',
-            property: err.column,
-            constraint: [err.message],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        });
-    } else if (data.access_type == 'phone') {
-      existgroup = await this.groupRepository
-        .findOne({ where: { phone: data.phone } })
-        .catch((err) => {
-          const errors: RMessage = {
-            value: '',
-            property: err.column,
-            constraint: [err.message],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        });
-    }
-
-    if (!existgroup) {
-      const errors: RMessage = {
-        value: data.email,
-        property: 'email',
-        constraint: [
-          this.messageService.get('merchant.logingroup.invalid_email'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    const validate: boolean = await this.hashService.validatePassword(
-      data.password,
-      existgroup.owner_password,
-    );
-    if (!validate) {
-      const errors: RMessage = {
-        value: data.password,
-        property: 'password',
-        constraint: [
-          this.messageService.get('merchant.logingroup.invalid_email'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-
-    const { id } = existgroup;
-    const http_req: Record<string, any> = {
-      id_profile: id,
-      user_type: 'merchant',
-      level: 'corporate',
-      roles: ['merchant'],
-    };
-    const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
-    return (await this.postHttp(url, http_req, defaultHeadersReq)).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        delete response.data.payload;
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.logingroup.success'),
-          response.data,
-        );
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
-    );
-    // })
   }
 }

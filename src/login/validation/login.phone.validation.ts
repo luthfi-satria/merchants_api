@@ -1,6 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
 
-export class BrandLoginPhoneValidation {
+export class LoginPhoneValidation {
   @IsNotEmpty()
   password: string;
 
