@@ -195,6 +195,7 @@ export class GroupsController {
     @UploadedFile() file: Express.Multer.File,
     @Headers('Authorization') token: string,
   ): Promise<any> {
+    console.log('token', token);
     if (typeof token == 'undefined' || token == 'undefined') {
       const errors: RMessage = {
         value: '',

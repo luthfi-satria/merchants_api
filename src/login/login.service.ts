@@ -87,9 +87,11 @@ export class LoginService {
 
     if (!existMerchantUser) {
       const errors: RMessage = {
-        value: data.email,
-        property: 'email',
-        constraint: [this.messageService.get('merchant.login.invalid_email')],
+        value: data[data.access_type],
+        property: data.access_type,
+        constraint: [
+          this.messageService.get('merchant.login.invalid_' + data.access_type),
+        ],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -137,6 +139,7 @@ export class LoginService {
       id_profile: merchantID,
       user_type: 'merchant',
       level: merchantLevel,
+      id: merchantID,
       roles: ['merchant'],
     };
     const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
