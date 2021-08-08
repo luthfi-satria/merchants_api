@@ -48,7 +48,7 @@ export class LobController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
           'Bad Request',
         ),
@@ -160,7 +160,7 @@ export class LobController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
           'Bad Request',
         ),
@@ -287,7 +287,7 @@ export class LobController {
       };
       throw new BadRequestException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
           'Bad Request',
         ),
