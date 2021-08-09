@@ -172,9 +172,7 @@ export class LoginService {
       const errors: RMessage = {
         value: data[data.access_type],
         property: data.access_type,
-        constraint: [
-          this.messageService.get('merchant.login.invalid_' + data.access_type),
-        ],
+        constraint: [this.messageService.get('merchant.login.invalid_phone')],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -184,10 +182,8 @@ export class LoginService {
         ),
       );
     }
-    // let merchantLevel = '';
-    // let merchantID = '';
-    let merchantLevel = 'corporate';
-    let merchantID = existMerchantUser.id;
+    let merchantLevel = '';
+    let merchantID = '';
 
     if (existMerchantUser.store_id != null) {
       merchantLevel = 'store';
