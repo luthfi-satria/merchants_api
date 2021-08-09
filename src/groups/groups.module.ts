@@ -5,6 +5,7 @@ import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { HashService } from 'src/hash/hash.service';
+import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { GroupsController } from './groups.controller';
 import { GroupsService } from './groups.service';
@@ -22,6 +23,6 @@ import { GroupsService } from './groups.service';
     HttpModule,
   ],
   controllers: [GroupsController],
-  providers: [GroupsService, MerchantsService, HashService],
+  providers: [GroupsService, MerchantsService, HashService, LoginService],
 })
 export class GroupsModule {}

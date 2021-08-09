@@ -241,6 +241,7 @@ export class MerchantsController {
             ),
           );
         }
+        data.token = token;
         const result_db: MerchantDocument =
           await this.merchantsService.createMerchantMerchantProfile(data);
         return this.responseService.success(

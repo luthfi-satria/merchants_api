@@ -68,4 +68,5 @@ export class MerchantMerchantValidation {
   created_at: string;
 
   approved_at: string;
+  token: string;
 }

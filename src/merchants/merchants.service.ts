@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
@@ -17,6 +18,11 @@ import moment from 'moment';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { LoginService } from 'src/login/login.service';
+
+const defaultHeadersReq: Record<string, any> = {
+  'Content-Type': 'application/json',
+};
 
 @Injectable()
 export class MerchantsService {
@@ -29,6 +35,7 @@ export class MerchantsService {
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private httpService: HttpService,
+    private loginService: LoginService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -162,6 +169,7 @@ export class MerchantsService {
       .save(create_merchant)
       .then(async (result) => {
         dbOutputTime(result);
+
         const mUsers: Partial<MerchantUsersDocument> = {
           name: result.owner_name,
           email: result.owner_email,
@@ -169,7 +177,13 @@ export class MerchantsService {
           password: result.owner_password,
           merchant_id: result.id,
         };
-        await this.merchantUsersRepository.save(mUsers);
+        const result_musers = await this.merchantUsersRepository.save(mUsers);
+        const pclogdata = {
+          id: result.id,
+          musers_id: result_musers.id,
+        };
+
+        this.createCatalogs(pclogdata);
         delete result.owner_password;
         return result;
       })
@@ -551,6 +565,61 @@ export class MerchantsService {
             'Bad Request',
           ),
         );
+      });
+  }
+
+  async createCatalogs(data: Record<string, any>) {
+    const http_req: Record<string, any> = {
+      id_profile: data.id,
+      user_type: 'merchant',
+      level: 'merchant',
+      id: data.musers_id,
+      group_id: '',
+      merchant_id: data.id,
+      store_id: '',
+      roles: ['merchant'],
+    };
+    const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
+
+    this.httpService
+      .post(url, http_req, { headers: defaultHeadersReq })
+      .subscribe(async (response) => {
+        const ntoken = 'Bearer ' + response.data.data.token;
+        const pcurl =
+          process.env.BASEURL_CATALOG_SERVICE +
+          '/api/v1/catalogs/menus-prices-categories';
+        const pcdata = {
+          name: 'Kategori 1',
+        };
+        const scurl =
+          process.env.BASEURL_CATALOG_SERVICE +
+          '/api/v1/catalogs/menus-sales-channels';
+        const scdata = {
+          name: 'EFOOD',
+          platform: 'ONLINE',
+        };
+
+        this.requestToApi(pcurl, pcdata, ntoken);
+        this.requestToApi(scurl, scdata, ntoken);
+      });
+  }
+
+  async requestToApi(
+    url: string,
+    data: Record<string, any>,
+    token: string,
+  ): Promise<any> {
+    const headersRequest: Record<string, any> = {
+      'Content-Type': 'application/json',
+      Authorization: token,
+    };
+    return this.httpService
+      .post(url, data, { headers: headersRequest })
+      .subscribe(async (response) => {
+        const logger = new Logger();
+
+        logger.log(response.data, 'Reg Catalog Merchant');
+        return response.data;
       });
   }
 }

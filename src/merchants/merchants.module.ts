@@ -10,6 +10,7 @@ import { MerchantUsersDocument } from 'src/database/entities/merchant_users.enti
 import { GroupsService } from 'src/groups/groups.service';
 import { HashService } from 'src/hash/hash.service';
 import { LobService } from 'src/lob/lob.service';
+import { LoginService } from 'src/login/login.service';
 import { MerchantsController } from './merchants.controller';
 import { MerchantsService } from './merchants.service';
 
@@ -34,6 +35,7 @@ import { MerchantsService } from './merchants.service';
     LobService,
     BanksService,
     HashService,
+    LoginService,
   ],
 })
 export class MerchantsModule {}
