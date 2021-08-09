@@ -8,6 +8,7 @@ import { LoginEmailValidation } from './validation/login.email.validation';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
 import { LoginService } from './login.service';
+import { OtpValidateValidation } from './validation/otp.validate.validation';
 
 @Controller('api/v1/merchants')
 export class LoginController {
@@ -35,6 +36,15 @@ export class LoginController {
     data: LoginPhoneValidation,
   ): Promise<any> {
     data.access_type = 'phone';
-    return await this.loginService.loginProcess(data);
+    return await this.loginService.loginPhoneProcess(data);
+  }
+
+  @Post('login/phone-otp-validation')
+  @ResponseStatusCode()
+  async validatePhoneOtpValidation(
+    @Body(RequestValidationPipe(OtpValidateValidation))
+    data: OtpValidateValidation,
+  ): Promise<any> {
+    return await this.loginService.loginPhoneOtpValidationProcess(data);
   }
 }
