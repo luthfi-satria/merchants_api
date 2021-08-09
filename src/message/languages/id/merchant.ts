@@ -158,7 +158,7 @@ export default {
     empty_token: 'Kode Token tidak ada.',
     query_fail: 'Akses ke database gagal',
     invalid_email: 'Email atau password tidak valid.',
-    invalid_phone: 'Nomor Telepon atau password tidak valid.',
+    invalid_phone: 'Nomor Telepon tidak valid.',
     invalid_password: 'Email atau password tidak valid.',
   },
 };
