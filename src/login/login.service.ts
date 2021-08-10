@@ -16,6 +16,8 @@ import { ResponseService } from 'src/response/response.service';
 import { Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { Hash } from 'src/hash/hash.decorator';
+import { LoginEmailValidation } from './validation/login.email.validation';
+import { OtpEmailValidateValidation } from './validation/otp.email-validate.validation';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -45,8 +47,8 @@ export class LoginService {
     );
   }
 
-  async loginProcess(
-    data: Record<string, any>,
+  async loginEmailOtpValidationProcess(
+    data: OtpEmailValidateValidation,
   ): Promise<Observable<Promise<any>>> {
     // let existMerchantUser: MerchantUsersDocument;
     const existMerchantUser = await this.merchantUsersRepository
@@ -68,29 +70,11 @@ export class LoginService {
 
     if (!existMerchantUser) {
       const errors: RMessage = {
-        value: data[data.access_type],
-        property: data.access_type,
+        value: data.email,
+        property: 'email',
         constraint: [
-          this.messageService.get('merchant.login.invalid_' + data.access_type),
+          this.messageService.get('merchant.login.unregistered_email'),
         ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    const validate: boolean = await this.hashService.validatePassword(
-      data.password,
-      existMerchantUser.password,
-    );
-    if (!validate) {
-      const errors: RMessage = {
-        value: '',
-        property: 'password',
-        constraint: [this.messageService.get('merchant.login.invalid_email')],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -117,13 +101,17 @@ export class LoginService {
     }
 
     const http_req: Record<string, any> = {
+      email: data.email,
       id_profile: merchantID,
       user_type: 'merchant',
       level: merchantLevel,
-      id: merchantID,
+      id: existMerchantUser.id,
       roles: ['merchant'],
+      otp_code: data.otp_code,
     };
-    const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
+    const url: string =
+      process.env.BASEURL_AUTH_SERVICE +
+      '/api/v1/auth/otp-login-email-validation';
     return (await this.postHttp(url, http_req, defaultHeadersReq)).pipe(
       map(async (response) => {
         const rsp: Record<string, any> = response;
@@ -142,6 +130,66 @@ export class LoginService {
           this.messageService.get('merchant.login.success'),
           response.data,
         );
+      }),
+      catchError((err) => {
+        throw err.response.data;
+      }),
+    );
+  }
+
+  async loginEmailProcess(
+    request: LoginEmailValidation,
+  ): Promise<Observable<Promise<any>>> {
+    // let existMerchantUser: MerchantUsersDocument;
+    const existMerchantUser = await this.merchantUsersRepository
+      .findOne({ where: { email: request.email } })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: err.column,
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+
+    if (!existMerchantUser) {
+      const errors: RMessage = {
+        value: request.email,
+        property: 'email',
+        constraint: [
+          this.messageService.get('merchant.login.unregistered_email'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    const url: string =
+      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-login-email';
+    return (await this.postHttp(url, request, defaultHeadersReq)).pipe(
+      map(async (response) => {
+        const rsp: Record<string, any> = response;
+        if (rsp.statusCode) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              rsp.message[0],
+              'Bad Request',
+            ),
+          );
+        }
+        return response;
       }),
       catchError((err) => {
         throw err.response.data;
@@ -172,7 +220,9 @@ export class LoginService {
       const errors: RMessage = {
         value: data[data.access_type],
         property: data.access_type,
-        constraint: [this.messageService.get('merchant.login.invalid_phone')],
+        constraint: [
+          this.messageService.get('merchant.login.unregistered_phone'),
+        ],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -208,7 +258,8 @@ export class LoginService {
       otp_code: data.otp_code,
     };
     const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-login-validation';
+      process.env.BASEURL_AUTH_SERVICE +
+      '/api/v1/auth/otp-login-phone-validation';
     return (await this.postHttp(url, http_req, defaultHeadersReq)).pipe(
       map(async (response) => {
         const rsp: Record<string, any> = response;

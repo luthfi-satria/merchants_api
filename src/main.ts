@@ -14,7 +14,16 @@ async function bootstrap() {
         return new BadRequestException(
           errors.map((err) => {
             const { value, property, constraints } = err;
-            return { value, property, constraints: Object.values(constraints) };
+            return {
+              value,
+              property,
+              constraint: Object.keys(constraints).map((key) => {
+                return {
+                  code: `VALIDATION_${key.toUpperCase()}`,
+                  message: constraints[key],
+                };
+              }),
+            };
           }),
         );
       },
