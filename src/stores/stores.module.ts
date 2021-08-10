@@ -7,6 +7,7 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { HashService } from 'src/hash/hash.service';
+import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from './stores.service';
 import { StoresController } from './strores.controller';
@@ -32,6 +33,7 @@ import { StoresController } from './strores.controller';
     AddonsService,
     MerchantsService,
     HashService,
+    LoginService,
   ],
 })
 export class StoresModule {}

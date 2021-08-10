@@ -485,14 +485,11 @@ export class StoresService {
     let search = data.search || '';
     search = search.toLowerCase();
     const currentPage = data.page || 1;
-    const perPage = data.limit || 10;
+    const perPage = Number(data.limit) || 10;
     let totalItems: number;
-
-    // return await this.storeRepository.find({ relations: ['service_addon'] });
 
     return await this.storeRepository
       .createQueryBuilder('merchant_store')
-      .select('*')
       .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
       .where('lower(merchant_store.name) like :mname', {
         mname: '%' + search + '%',
