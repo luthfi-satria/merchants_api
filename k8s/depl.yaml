@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merchants-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merchants
+  template:
+    metadata:
+      labels:
+        app: merchants
+    spec:
+      imagePullSecrets:
+        - name: ghcr
+      containers:
+      - name: merchants
+        image: ghcr.io/wofood/efood_merchants
+        # resources:
+        #   limits:
+        #     memory: "128Mi"
+        #     cpu: "500m"
+        ports:
+          - name: merchants
+            protocol: TCP
+            containerPort: 3000
+        envFrom:
+          - configMapRef:
+              name: efood-config
