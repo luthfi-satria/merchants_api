@@ -28,7 +28,12 @@ export const imageFileFilter = (req: any, file: any, callback) => {
 };
 
 export const dbOutputTime = function (input: Record<string, any>) {
-  if (input.approved_at != null) {
+  if (
+    typeof input.approved_at != 'undefined' &&
+    input.approved_at != null &&
+    input.approved_at != 'undefined' &&
+    input.approved_at != ''
+  ) {
     input.approved_at = momenttz(input.approved_at)
       .tz('Asia/Jakarta')
       .format('YYYY-MM-DD HH:mm:ss');
@@ -40,4 +45,15 @@ export const dbOutputTime = function (input: Record<string, any>) {
     .tz('Asia/Jakarta')
     .format('YYYY-MM-DD HH:mm:ss');
   return input;
+};
+
+export const createUrl = function (filename: any) {
+  if (typeof filename == 'undefined' || filename == null || filename == '') {
+    return null;
+  } else {
+    const address: string = process.env.HTTP_ADDRESS || 'localhost';
+    const port: string | number = process.env.HTTP_PORT || 4002;
+
+    return 'http://' + address + ':' + port + '/api/v1/image' + filename;
+  }
 };

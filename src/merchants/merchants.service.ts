@@ -8,7 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { ListResponse, RMessage } from 'src/response/response.interface';
-import { dbOutputTime } from 'src/utils/general-utils';
+import { createUrl, dbOutputTime } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
@@ -18,11 +18,6 @@ import moment from 'moment';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
-import { LoginService } from 'src/login/login.service';
-
-const defaultHeadersReq: Record<string, any> = {
-  'Content-Type': 'application/json',
-};
 
 @Injectable()
 export class MerchantsService {
@@ -34,8 +29,7 @@ export class MerchantsService {
     @Hash() private readonly hashService: HashService,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
-    private httpService: HttpService,
-    private loginService: LoginService,
+    private httpService: HttpService, // private loginService: LoginService, // @InjectRepository(MerchantDocument) // private connection: Connection,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -73,7 +67,7 @@ export class MerchantsService {
 
   async createMerchantMerchantProfile(
     data: Record<string, any>,
-  ): Promise<MerchantDocument> {
+  ): Promise<Partial<MerchantDocument>> {
     if (
       typeof data.owner_dob == 'undefined' ||
       data.owner_dob.split('/').length != 3
@@ -165,9 +159,14 @@ export class MerchantsService {
         ),
       );
     }
+
+    // return await this.connection.transaction(async (conn) => {
+    //   try {
     return await this.merchantRepository
       .save(create_merchant)
       .then(async (result) => {
+        result.owner_ktp = createUrl(result.owner_ktp);
+        result.owner_face_ktp = createUrl(result.owner_face_ktp);
         dbOutputTime(result);
 
         const mUsers: Partial<MerchantUsersDocument> = {
@@ -177,22 +176,23 @@ export class MerchantsService {
           password: result.owner_password,
           merchant_id: result.id,
         };
-        const result_musers = await this.merchantUsersRepository.save(mUsers);
+        await this.merchantUsersRepository.save(mUsers).catch((err) => {
+          console.error('error', err);
+        });
         const pclogdata = {
           id: result.id,
-          musers_id: result_musers.id,
+          musers_id: result.id,
         };
 
-        this.createCatalogs(pclogdata);
+        await this.createCatalogs(pclogdata);
         delete result.owner_password;
         return result;
       })
       .catch((err) => {
-        console.error('error create merchant:\n', err);
         const errors: RMessage = {
           value: '',
-          property: '',
-          constraint: [err.routine],
+          property: err.column,
+          constraint: [err.message],
         };
         throw new BadRequestException(
           this.responseService.error(
@@ -362,6 +362,10 @@ export class MerchantsService {
       .returning('*')
       .execute()
       .then(async (response) => {
+        response.raw[0].owner_ktp = createUrl(response.raw[0].owner_ktp);
+        response.raw[0].owner_face_ktp = createUrl(
+          response.raw[0].owner_face_ktp,
+        );
         dbOutputTime(response.raw[0]);
         await this.merchantUsersRepository
           .createQueryBuilder('merchant_users')
@@ -371,13 +375,6 @@ export class MerchantsService {
           .execute();
         delete response.raw[0].owner_password;
         return response.raw[0];
-        // const result: Record<string, any> =
-        //   await this.merchantRepository.findOne({
-        //     where: { id: data.id },
-        //   });
-        // dbOutputTime(result);
-        // delete result.owner_password;
-        // return result;
       })
       .catch((err) => {
         const errors: RMessage = {
@@ -434,13 +431,9 @@ export class MerchantsService {
     return await this.merchantRepository
       .createQueryBuilder('merchant_merchant')
       .select('*')
-      // .where('group_id like :gid', { gid: '%' + search + '%' })
       .orWhere('lower(name) like :mname', {
         mname: '%' + search + '%',
       })
-      // .orWhere('lob_id like :lid', {
-      //   lid: '%' + search + '%',
-      // })
       .orWhere('lower(address) like :addr', {
         addr: '%' + search + '%',
       })
@@ -459,18 +452,12 @@ export class MerchantsService {
       .orWhere('lower(owner_nik) like :onik', {
         onik: '%' + search + '%',
       })
-      // .orWhere('lower(owner_dob) like :odob', {
-      //   odob: '%' + search + '%',
-      // })
       .orWhere('lower(owner_dob_city) like :odc', {
         odc: '%' + search + '%',
       })
       .orWhere('lower(owner_address) like :oaddr', {
         oaddr: '%' + search + '%',
       })
-      // .orWhere('bank_id like :bid', {
-      //   bid: '%' + search + '%',
-      // })
       .orWhere('lower(bank_acc_name) like :ban', {
         ban: '%' + search + '%',
       })
@@ -486,13 +473,9 @@ export class MerchantsService {
         return await this.merchantRepository
           .createQueryBuilder('merchant_merchant')
           .select('*')
-          // .where('group_id like :gid', { gid: '%' + search + '%' })
           .where('lower(name) like :mname', {
             mname: '%' + search + '%',
           })
-          // .orWhere('lob_id like :lid', {
-          //   lid: '%' + search + '%',
-          // })
           .orWhere('lower(address) like :addr', {
             addr: '%' + search + '%',
           })
@@ -511,18 +494,12 @@ export class MerchantsService {
           .orWhere('lower(owner_nik) like :onik', {
             onik: '%' + search + '%',
           })
-          // .orWhere('lower(owner_dob) like :odob', {
-          //   odob: '%' + search + '%',
-          // })
           .orWhere('lower(owner_dob_city) like :odc', {
             odc: '%' + search + '%',
           })
           .orWhere('lower(owner_address) like :oaddr', {
             oaddr: '%' + search + '%',
           })
-          // .orWhere('bank_id like :bid', {
-          //   bid: '%' + search + '%',
-          // })
           .orWhere('lower(bank_acc_name) like :ban', {
             ban: '%' + search + '%',
           })
@@ -539,6 +516,8 @@ export class MerchantsService {
       })
       .then((result) => {
         result.forEach((row) => {
+          row.owner_ktp = createUrl(row.owner_ktp);
+          row.owner_face_ktp = createUrl(row.owner_face_ktp);
           dbOutputTime(row);
           row.owner_dob = moment(row.owner_dob).format('YYYY-MM DD');
           delete row.owner_password;
@@ -569,49 +548,29 @@ export class MerchantsService {
   }
 
   async createCatalogs(data: Record<string, any>) {
-    const http_req: Record<string, any> = {
-      id_profile: data.id,
-      user_type: 'merchant',
-      level: 'merchant',
-      id: data.musers_id,
-      group_id: '',
+    const pcurl =
+      process.env.BASEURL_CATALOG_SERVICE +
+      '/api/v1/internal/menus-prices-categories';
+    const pcdata = {
       merchant_id: data.id,
-      store_id: '',
-      roles: ['merchant'],
+      name: 'Kategori 1',
     };
-    const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
+    const scurl =
+      process.env.BASEURL_CATALOG_SERVICE +
+      '/api/v1/internal/menus-sales-channels';
+    const scdata = {
+      merchant_id: data.id,
+      name: 'EFOOD',
+      platform: 'ONLINE',
+    };
 
-    this.httpService
-      .post(url, http_req, { headers: defaultHeadersReq })
-      .subscribe(async (response) => {
-        const ntoken = 'Bearer ' + response.data.data.token;
-        const pcurl =
-          process.env.BASEURL_CATALOG_SERVICE +
-          '/api/v1/catalogs/menus-prices-categories';
-        const pcdata = {
-          name: 'Kategori 1',
-        };
-        const scurl =
-          process.env.BASEURL_CATALOG_SERVICE +
-          '/api/v1/catalogs/menus-sales-channels';
-        const scdata = {
-          name: 'EFOOD',
-          platform: 'ONLINE',
-        };
-
-        this.requestToApi(pcurl, pcdata, ntoken);
-        this.requestToApi(scurl, scdata, ntoken);
-      });
+    this.requestToApi(pcurl, pcdata);
+    this.requestToApi(scurl, scdata);
   }
 
-  async requestToApi(
-    url: string,
-    data: Record<string, any>,
-    token: string,
-  ): Promise<any> {
+  async requestToApi(url: string, data: Record<string, any>): Promise<any> {
     const headersRequest: Record<string, any> = {
       'Content-Type': 'application/json',
-      Authorization: token,
     };
     return this.httpService
       .post(url, data, { headers: headersRequest })

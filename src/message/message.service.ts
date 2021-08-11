@@ -27,6 +27,10 @@ export class MessageService {
     return selectedMessage as string;
   }
 
+  getjson(data: Record<string, any> | string): string {
+    return data as string;
+  }
+
   getRequestErrorsMessage(requestErrors: Record<string, any>[]): string {
     const messageErrors: string[] = requestErrors.map((value) => {
       for (const i in value.constraints) {

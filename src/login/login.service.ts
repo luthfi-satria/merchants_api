@@ -246,11 +246,11 @@ export class LoginService {
       merchantID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
-      merchantLevel = 'brand';
+      merchantLevel = 'merchant';
       merchantID = existMerchantUser.merchant_id;
     }
     if (existMerchantUser.group_id != null) {
-      merchantLevel = 'corporate';
+      merchantLevel = 'group';
       merchantID = existMerchantUser.group_id;
     }
 
@@ -329,11 +329,11 @@ export class LoginService {
       merchantID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
-      merchantLevel = 'brand';
+      merchantLevel = 'merchant';
       merchantID = existMerchantUser.merchant_id;
     }
     if (existMerchantUser.group_id != null) {
-      merchantLevel = 'corporate';
+      merchantLevel = 'group';
       merchantID = existMerchantUser.group_id;
     }
 

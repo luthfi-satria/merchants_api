@@ -9,10 +9,10 @@ import {
 export class MerchantMerchantValidation {
   id: string;
 
-  @IsUUID()
+  @IsUUID('all', { message: 'Group ID bukan format UUID' })
   group_id: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Nama tidak boleh kosong' })
   name: string;
 
   @IsUUID()

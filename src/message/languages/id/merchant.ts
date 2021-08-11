@@ -1,6 +1,18 @@
 export default {
+  general: {
+    success: {
+      code: 'SUCCESS',
+      message: 'SUCCESS',
+    },
+    empty_token: 'Kode Token tidak ada.',
+    invalid_token: 'Kode Token tidak valid.',
+    empty_photo: 'File photo kosong.',
+  },
   creategroup: {
-    success: 'Create Group Success.',
+    success: {
+      code: 'SUCCESS',
+      message: 'SUCCESS',
+    },
     fail: 'Create Group Gagal.',
     phoneExist: 'Nomor telepon sudah digunakan oleh Group lain',
     emailExist: 'Email sudah digunakan oleh Group lain',
@@ -33,7 +45,10 @@ export default {
   createmerchant: {
     success: 'Create Merchant Success.',
     fail: 'Create Merchant Gagal.',
-    phoneExist: 'Nomor telepon sudah digunakan oleh Merchant lain',
+    phoneExist: {
+      code: 'PHONE_ALREADY_REGISTERED',
+      message: 'Nomor telepon sudah digunakan oleh Merchant lain',
+    },
     emailExist: 'Email sudah digunakan oleh Merchant lain.',
     empty_token: 'Kode Token tidak ada.',
     invalid_token: 'Kode Token tidak valid.',
@@ -92,6 +107,10 @@ export default {
     fail: 'Get List Store Gagal.',
     unreg: 'Nomor Telepon Pemilik tidak terdaftar',
     empty_token: 'Kode Token tidak ada.',
+    not_found: {
+      code: 'ISEMPTY',
+      message: 'Store tidak ditemukan',
+    },
   },
   createlob: {
     success: 'Create Bidang Usaha Success.',

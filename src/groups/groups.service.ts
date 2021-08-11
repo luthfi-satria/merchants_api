@@ -15,7 +15,7 @@ import { ResponseService } from 'src/response/response.service';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
-import { dbOutputTime } from 'src/utils/general-utils';
+import { createUrl, dbOutputTime } from 'src/utils/general-utils';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
@@ -80,6 +80,7 @@ export class GroupsService {
     return await this.groupRepository
       .save(create_group)
       .then(async (result) => {
+        result.owner_ktp = createUrl(result.owner_ktp);
         dbOutputTime(result);
         // const cekMerchantUser = await this.merchantUsersRepository.findOne({
         //   where: { email: data.email, phone: data.phone },
@@ -185,6 +186,7 @@ export class GroupsService {
       .returning('*')
       .execute()
       .then(async (response) => {
+        response.raw[0].owner_ktp = createUrl(response.raw[0].owner_ktp);
         dbOutputTime(response.raw[0]);
         await this.merchantUsersRepository
           .createQueryBuilder('merchant_users')
@@ -303,6 +305,7 @@ export class GroupsService {
       })
       .then((result) => {
         result.forEach((row) => {
+          row.owner_ktp = createUrl(row.owner_ktp);
           dbOutputTime(row);
           delete row.owner_password;
         });

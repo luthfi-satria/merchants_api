@@ -13,6 +13,7 @@ import { LobModule } from './lob/lob.module';
 import { BanksModule } from './banks/banks.module';
 import { AddonsModule } from './addons/addons.module';
 import { LoginModule } from './login/login.module';
+import { QueryModule } from './query/query.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { LoginModule } from './login/login.module';
     BanksModule,
     AddonsModule,
     LoginModule,
+    QueryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

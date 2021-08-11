@@ -99,10 +99,7 @@ export class MerchantsController {
             ),
           );
         }
-        if (
-          response.data.payload.user_type != 'admin' &&
-          response.data.payload.user_type != 'merchant'
-        ) {
+        if (response.data.payload.user_type != 'admin') {
           const errors: RMessage = {
             value: token.replace('Bearer ', ''),
             property: 'token',
@@ -242,7 +239,7 @@ export class MerchantsController {
           );
         }
         data.token = token;
-        const result_db: MerchantDocument =
+        const result_db: Partial<MerchantDocument> =
           await this.merchantsService.createMerchantMerchantProfile(data);
         return this.responseService.success(
           true,
