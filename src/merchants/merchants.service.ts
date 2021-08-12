@@ -3,12 +3,13 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { ListResponse, RMessage } from 'src/response/response.interface';
-import { createUrl, dbOutputTime } from 'src/utils/general-utils';
+import { dbOutputTime } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
@@ -18,6 +19,7 @@ import moment from 'moment';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { CommonStorageService } from 'src/common/storage/storage.service';
 
 @Injectable()
 export class MerchantsService {
@@ -30,6 +32,7 @@ export class MerchantsService {
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private httpService: HttpService, // private loginService: LoginService, // @InjectRepository(MerchantDocument) // private connection: Connection,
+    private readonly storage: CommonStorageService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -122,7 +125,13 @@ export class MerchantsService {
       data.owner_ktp != '' &&
       typeof data.owner_ktp != 'undefined'
     ) {
-      create_merchant.owner_ktp = data.owner_ktp;
+      try {
+        const url = await this.storage.store(data.owner_ktp);
+        create_merchant.owner_ktp = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
     } else {
       throw new BadRequestException(
         this.responseService.error(
@@ -143,7 +152,13 @@ export class MerchantsService {
       data.owner_face_ktp != '' &&
       typeof data.owner_face_ktp != 'undefined'
     ) {
-      create_merchant.owner_face_ktp = data.owner_face_ktp;
+      try {
+        const url = await this.storage.store(data.owner_face_ktp);
+        create_merchant.owner_face_ktp = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
     } else {
       throw new BadRequestException(
         this.responseService.error(
@@ -165,8 +180,6 @@ export class MerchantsService {
     return await this.merchantRepository
       .save(create_merchant)
       .then(async (result) => {
-        result.owner_ktp = createUrl(result.owner_ktp);
-        result.owner_face_ktp = createUrl(result.owner_face_ktp);
         dbOutputTime(result);
 
         const mUsers: Partial<MerchantUsersDocument> = {
@@ -346,14 +359,28 @@ export class MerchantsService {
       data.owner_ktp != null &&
       data.owner_ktp != '' &&
       typeof data.owner_ktp != 'undefined'
-    )
-      create_merchant.owner_ktp = data.owner_ktp;
+    ) {
+      try {
+        const url = await this.storage.store(data.owner_ktp);
+        create_merchant.owner_ktp = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
     if (
       data.owner_face_ktp != null &&
       data.owner_face_ktp != '' &&
       typeof data.owner_face_ktp != 'undefined'
-    )
-      create_merchant.owner_face_ktp = data.owner_face_ktp;
+    ) {
+      try {
+        const url = await this.storage.store(data.owner_face_ktp);
+        create_merchant.owner_face_ktp = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
     return await this.merchantRepository
       .createQueryBuilder('merchant_merchant')
       .update(MerchantDocument)
@@ -362,10 +389,6 @@ export class MerchantsService {
       .returning('*')
       .execute()
       .then(async (response) => {
-        response.raw[0].owner_ktp = createUrl(response.raw[0].owner_ktp);
-        response.raw[0].owner_face_ktp = createUrl(
-          response.raw[0].owner_face_ktp,
-        );
         dbOutputTime(response.raw[0]);
         await this.merchantUsersRepository
           .createQueryBuilder('merchant_users')
@@ -516,8 +539,6 @@ export class MerchantsService {
       })
       .then((result) => {
         result.forEach((row) => {
-          row.owner_ktp = createUrl(row.owner_ktp);
-          row.owner_face_ktp = createUrl(row.owner_face_ktp);
           dbOutputTime(row);
           row.owner_dob = moment(row.owner_dob).format('YYYY-MM DD');
           delete row.owner_password;

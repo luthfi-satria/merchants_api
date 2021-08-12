@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
@@ -15,11 +16,12 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
 import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { createUrl, dbOutputTime } from 'src/utils/general-utils';
+import { dbOutputTime } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { CommonStorageService } from 'src/common/storage/storage.service';
 
 @Injectable()
 export class StoresService {
@@ -34,6 +36,7 @@ export class StoresService {
     private httpService: HttpService,
     private readonly merchantService: MerchantsService,
     @Hash() private readonly hashService: HashService,
+    private readonly storage: CommonStorageService,
   ) {}
 
   async findMerchantById(id: string): Promise<StoreDocument> {
@@ -123,10 +126,23 @@ export class StoresService {
       upload_photo: data.upload_photo,
     };
 
+    if (
+      data.upload_photo != null &&
+      data.upload_photo != '' &&
+      typeof data.upload_photo != 'undefined'
+    ) {
+      try {
+        const url = await this.storage.store(data.upload_photo);
+        create_store.upload_photo = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
+
     return await this.storeRepository
       .save(create_store)
       .then(async (result) => {
-        result.upload_photo = createUrl(result.upload_photo);
         dbOutputTime(result);
         const mUsers: Partial<MerchantUsersDocument> = {
           name: result.name,
@@ -418,13 +434,19 @@ export class StoresService {
       data.upload_photo != null &&
       data.upload_photo != '' &&
       typeof data.upload_photo != 'undefined'
-    )
-      store_exist.upload_photo = data.upload_photo;
+    ) {
+      try {
+        const url = await this.storage.store(data.upload_photo);
+        store_exist.upload_photo = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
 
     return await this.storeRepository
       .save(store_exist)
       .then(async (result) => {
-        result.upload_photo = createUrl(result.upload_photo);
         dbOutputTime(result);
         await this.merchantUsersRepository
           .createQueryBuilder('merchant_users')
@@ -564,7 +586,6 @@ export class StoresService {
         })
         .then((result) => {
           result.forEach((row) => {
-            row.upload_photo = createUrl(row.upload_photo);
             dbOutputTime(row);
             delete row.owner_password;
             row.service_addon.forEach((sao) => {
@@ -670,7 +691,6 @@ export class StoresService {
         })
         .then((result) => {
           result.forEach((row) => {
-            row.upload_photo = createUrl(row.upload_photo);
             dbOutputTime(row);
             delete row.owner_password;
             row.service_addon.forEach((sao) => {

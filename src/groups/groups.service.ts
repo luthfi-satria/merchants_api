@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
@@ -15,11 +16,12 @@ import { ResponseService } from 'src/response/response.service';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
-import { createUrl, dbOutputTime } from 'src/utils/general-utils';
+import { dbOutputTime } from 'src/utils/general-utils';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { CommonStorageService } from 'src/common/storage/storage.service';
 
 @Injectable()
 export class GroupsService {
@@ -29,6 +31,7 @@ export class GroupsService {
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private readonly merchantService: MerchantsService,
+    private readonly storage: CommonStorageService,
     private httpService: HttpService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
@@ -75,12 +78,19 @@ export class GroupsService {
       data.owner_ktp != null &&
       data.owner_ktp != '' &&
       typeof data.owner_ktp != 'undefined'
-    )
-      create_group.owner_ktp = data.owner_ktp;
+    ) {
+      try {
+        const url = await this.storage.store(data.owner_ktp);
+        create_group.owner_ktp = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
+
     return await this.groupRepository
       .save(create_group)
       .then(async (result) => {
-        result.owner_ktp = createUrl(result.owner_ktp);
         dbOutputTime(result);
         // const cekMerchantUser = await this.merchantUsersRepository.findOne({
         //   where: { email: data.email, phone: data.phone },
@@ -153,8 +163,15 @@ export class GroupsService {
       typeof data.owner_ktp != 'undefined' &&
       data.owner_ktp != null &&
       data.owner_ktp != ''
-    )
-      create_group.owner_ktp = data.owner_ktp;
+    ) {
+      try {
+        const url = await this.storage.store(data.owner_ktp);
+        create_group.owner_ktp = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
     if (
       typeof data.email != 'undefined' &&
       data.email != null &&
@@ -186,7 +203,6 @@ export class GroupsService {
       .returning('*')
       .execute()
       .then(async (response) => {
-        response.raw[0].owner_ktp = createUrl(response.raw[0].owner_ktp);
         dbOutputTime(response.raw[0]);
         await this.merchantUsersRepository
           .createQueryBuilder('merchant_users')
@@ -305,7 +321,6 @@ export class GroupsService {
       })
       .then((result) => {
         result.forEach((row) => {
-          row.owner_ktp = createUrl(row.owner_ktp);
           dbOutputTime(row);
           delete row.owner_password;
         });

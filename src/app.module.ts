@@ -14,6 +14,7 @@ import { BanksModule } from './banks/banks.module';
 import { AddonsModule } from './addons/addons.module';
 import { LoginModule } from './login/login.module';
 import { QueryModule } from './query/query.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { QueryModule } from './query/query.module';
     AddonsModule,
     LoginModule,
     QueryModule,
+    CommonModule,
   ],
   controllers: [AppController],
   providers: [AppService],
