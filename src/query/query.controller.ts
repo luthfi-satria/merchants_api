@@ -15,7 +15,7 @@ import { Message } from 'src/message/message.decorator';
 // import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
 
-@Controller('api/v1')
+@Controller('api/v1/merchants')
 export class QueryController {
   constructor(
     private readonly storesService: StoresService,

@@ -54,6 +54,8 @@ export const createUrl = function (filename: any) {
     const address: string = process.env.HTTP_ADDRESS || 'localhost';
     const port: string | number = process.env.HTTP_PORT || 4002;
 
-    return 'http://' + address + ':' + port + '/api/v1/image' + filename;
+    return (
+      'http://' + address + ':' + port + '/api/v1/merchants/image' + filename
+    );
   }
 };
