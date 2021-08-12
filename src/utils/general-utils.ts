@@ -51,11 +51,6 @@ export const createUrl = function (filename: any) {
   if (typeof filename == 'undefined' || filename == null || filename == '') {
     return null;
   } else {
-    const address: string = process.env.HTTP_ADDRESS || 'localhost';
-    const port: string | number = process.env.HTTP_PORT || 4002;
-
-    return (
-      'http://' + address + ':' + port + '/api/v1/merchants/image' + filename
-    );
+    return process.env.HTTP_ADDRESS + '/api/v1/merchants/image' + filename;
   }
 };
