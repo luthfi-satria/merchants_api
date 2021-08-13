@@ -21,11 +21,10 @@ export class CommonStorageService {
         await this.storage
           .getDisk('s3')
           .put(file, fs.readFileSync(`./${file}`));
-        const { signedUrl } = await this.storage
-          .getDisk('s3')
-          .getSignedUrl(file);
 
-        return signedUrl;
+        const url = this.storage.getDisk('s3').getUrl(file);
+
+        return url;
       } catch (e) {
         console.error(e);
         throw new InternalServerErrorException(e.message);
