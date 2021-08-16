@@ -51,7 +51,7 @@ export class StoresController {
     }),
   )
   async createstores(
-    @Body(RequestValidationPipe(MerchantStoreValidation))
+    @Body()
     data: MerchantStoreValidation,
     @UploadedFile() file: Express.Multer.File,
     @Headers('Authorization') token: string,

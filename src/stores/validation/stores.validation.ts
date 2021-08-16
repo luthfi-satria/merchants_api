@@ -1,4 +1,11 @@
-import { IsEmail, IsNotEmpty, IsUUID } from 'class-validator';
+import {
+  IsEmail,
+  IsLatitude,
+  IsLongitude,
+  IsNotEmpty,
+  IsNumber,
+  IsUUID,
+} from 'class-validator';
 
 export class MerchantStoreValidation {
   @IsUUID()
@@ -31,9 +38,11 @@ export class MerchantStoreValidation {
   guidance: string;
 
   @IsNotEmpty()
+  @IsLongitude({ message: 'Longitude yang anda masukan salah.' })
   location_longitude: string;
 
   @IsNotEmpty()
+  @IsLatitude({ message: 'Latitude yang anda masukan salah.' })
   location_latitude: string;
 
   upload_photo: string;

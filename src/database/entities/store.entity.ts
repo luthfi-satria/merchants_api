@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ColumnNumericTransformer } from '../helper/column_numberic_transformer';
 import { AddonDocument } from './addons.entity';
 
 @Entity({ name: 'merchant_store' })
@@ -41,11 +42,15 @@ export class StoreDocument {
   @Column()
   guidance: string;
 
-  @Column()
-  location_longitude: string;
+  @Column('decimal', {
+    transformer: new ColumnNumericTransformer(),
+  })
+  location_longitude: number;
 
-  @Column()
-  location_latitude: string;
+  @Column('decimal', {
+    transformer: new ColumnNumericTransformer(),
+  }) //monas
+  location_latitude: number;
 
   @Column()
   upload_photo: string;

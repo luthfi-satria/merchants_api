@@ -538,12 +538,12 @@ export class StoresService {
         .orWhere('lower(merchant_store.guidance) like :guidance', {
           guidance: '%' + search + '%',
         })
-        .orWhere('lower(merchant_store.location_longitude) like :long', {
-          long: '%' + search + '%',
-        })
-        .orWhere('lower(merchant_store.location_latitude) like :lat)', {
-          lat: '%' + search + '%',
-        })
+        // .orWhere('merchant_store.location_longitude = :long', {
+        //   long: search,
+        // })
+        // .orWhere('merchant_store.location_latitude = :lat)', {
+        //   lat: search,
+        // })
         .andWhere('merchant_store.merchant_id = :mid', { mid: merchant.id })
         .getCount()
         .then(async (counts) => {
@@ -572,12 +572,12 @@ export class StoresService {
             .orWhere('lower(merchant_store.guidance) like :guidance', {
               guidance: '%' + search + '%',
             })
-            .orWhere('lower(merchant_store.location_longitude) like :long', {
-              long: '%' + search + '%',
-            })
-            .orWhere('lower(merchant_store.location_latitude) like :lat)', {
-              lat: '%' + search + '%',
-            })
+            // .orWhere('merchant_store.location_longitude = :long', {
+            //   long: search,
+            // })
+            // .orWhere('merchant_store.location_latitude = :lat)', {
+            //   lat: search,
+            // })
             .andWhere('merchant_store.merchant_id = :mid', { mid: merchant.id })
             .orderBy('merchant_store.created_at', 'DESC')
             .offset((currentPage - 1) * perPage)
@@ -645,12 +645,12 @@ export class StoresService {
         .orWhere('lower(merchant_store.guidance) like :guidance', {
           guidance: '%' + search + '%',
         })
-        .orWhere('lower(merchant_store.location_longitude) like :long', {
-          long: '%' + search + '%',
-        })
-        .orWhere('lower(merchant_store.location_latitude) like :lat', {
-          lat: '%' + search + '%',
-        })
+        // .orWhere('merchant_store.location_longitude = :long', {
+        //   long: search,
+        // })
+        // .orWhere('merchant_store.location_latitude = :lat', {
+        //   lat: search,
+        // })
         .getCount()
         .then(async (counts) => {
           totalItems = counts;
@@ -678,12 +678,12 @@ export class StoresService {
             .orWhere('lower(merchant_store.guidance) like :guidance', {
               guidance: '%' + search + '%',
             })
-            .orWhere('lower(merchant_store.location_longitude) like :long', {
-              long: '%' + search + '%',
-            })
-            .orWhere('lower(merchant_store.location_latitude) like :lat', {
-              lat: '%' + search + '%',
-            })
+            // .orWhere('merchant_store.location_longitude = :long', {
+            //   long: search,
+            // })
+            // .orWhere('merchant_store.location_latitude = :lat', {
+            //   lat: search,
+            // })
             .orderBy('merchant_store.created_at', 'DESC')
             .offset((currentPage - 1) * perPage)
             .limit(perPage)
