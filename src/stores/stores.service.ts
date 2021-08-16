@@ -124,6 +124,7 @@ export class StoresService {
       location_latitude: data.location_latitude,
       service_addon: listAddon,
       upload_photo: data.upload_photo,
+      upload_banner: data.upload_banner,
     };
 
     if (
@@ -134,6 +135,20 @@ export class StoresService {
       try {
         const url = await this.storage.store(data.upload_photo);
         create_store.upload_photo = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
+
+    if (
+      data.upload_banner != null &&
+      data.upload_banner != '' &&
+      typeof data.upload_banner != 'undefined'
+    ) {
+      try {
+        const url = await this.storage.store(data.upload_banner);
+        create_store.upload_banner = url;
       } catch (e) {
         console.error(e);
         throw new InternalServerErrorException(e.message);
@@ -438,6 +453,20 @@ export class StoresService {
       try {
         const url = await this.storage.store(data.upload_photo);
         store_exist.upload_photo = url;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
+
+    if (
+      data.upload_banner != null &&
+      data.upload_banner != '' &&
+      typeof data.upload_banner != 'undefined'
+    ) {
+      try {
+        const url = await this.storage.store(data.upload_banner);
+        store_exist.upload_banner = url;
       } catch (e) {
         console.error(e);
         throw new InternalServerErrorException(e.message);

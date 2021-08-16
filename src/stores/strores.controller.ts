@@ -9,23 +9,22 @@ import {
   Post,
   Put,
   Query,
-  UploadedFile,
   UseInterceptors,
   Headers,
   UnauthorizedException,
+  UploadedFiles,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { RMessage } from 'src/response/response.interface';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { MerchantStoreValidation } from './validation/stores.validation';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { editFileName, imageFileFilter } from 'src/utils/general-utils';
 import { StoresService } from './stores.service';
-import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { catchError, map } from 'rxjs';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
@@ -42,7 +41,7 @@ export class StoresController {
   @Post('stores')
   @ResponseStatusCode()
   @UseInterceptors(
-    FileInterceptor('upload_photo', {
+    AnyFilesInterceptor({
       storage: diskStorage({
         destination: './upload_stores',
         filename: editFileName,
@@ -53,7 +52,7 @@ export class StoresController {
   async createstores(
     @Body()
     data: MerchantStoreValidation,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Array<Express.Multer.File>,
     @Headers('Authorization') token: string,
   ): Promise<any> {
     if (typeof token == 'undefined' || token == 'undefined') {
@@ -191,24 +190,15 @@ export class StoresController {
             ),
           );
         }
-        if (!file) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: null,
-                property: 'upload_photo',
-                constraint: [
-                  this.messageService.get('merchant.createstore.empty_photo'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
+        if (files.length > 0) {
+          files.forEach(function (file) {
+            data[file.fieldname] = '/upload_stores/' + file.filename;
+          });
         }
-        data.upload_photo = '/upload_stores/' + file.filename;
         const result_db: StoreDocument =
           await this.storesService.createMerchantStoreProfile(data);
+        result_db.location_longitude = +result_db.location_longitude;
+        result_db.location_latitude = +result_db.location_latitude;
         return this.responseService.success(
           true,
           this.messageService.get('merchant.createstore.success'),
@@ -224,7 +214,7 @@ export class StoresController {
   @Put('stores/:id')
   @ResponseStatusCode()
   @UseInterceptors(
-    FileInterceptor('upload_photo', {
+    AnyFilesInterceptor({
       storage: diskStorage({
         destination: './upload_stores',
         filename: editFileName,
@@ -236,7 +226,7 @@ export class StoresController {
     @Body()
     data: Record<string, any>,
     @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Array<Express.Multer.File>,
     @Headers('Authorization') token: string,
   ): Promise<any> {
     if (typeof token == 'undefined' || token == 'undefined') {
@@ -295,11 +285,16 @@ export class StoresController {
             ),
           );
         }
-        if (file) data.upload_photo = '/upload_stores/' + file.filename;
-
+        if (files.length > 0) {
+          files.forEach(function (file) {
+            data[file.fieldname] = '/upload_stores/' + file.filename;
+          });
+        }
         data.id = id;
         const updateresult: Record<string, any> =
           await this.storesService.updateMerchantStoreProfile(data);
+        updateresult.location_longitude = +updateresult.location_longitude;
+        updateresult.location_latitude = +updateresult.location_latitude;
         return this.responseService.success(
           true,
           this.messageService.get('merchant.updatestore.success'),

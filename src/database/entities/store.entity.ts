@@ -55,6 +55,11 @@ export class StoreDocument {
   @Column()
   upload_photo: string;
 
+  @Column({
+    default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
+  })
+  upload_banner: string;
+
   @ManyToMany(() => AddonDocument)
   @JoinTable({ name: 'merchant_store_addon' })
   service_addon: AddonDocument[];
