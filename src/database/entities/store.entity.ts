@@ -43,13 +43,15 @@ export class StoreDocument {
   guidance: string;
 
   @Column('decimal', {
+    default: '106.827153', //monas
     transformer: new ColumnNumericTransformer(),
   })
   location_longitude: number;
 
   @Column('decimal', {
+    default: '-6.175392', //monas
     transformer: new ColumnNumericTransformer(),
-  }) //monas
+  })
   location_latitude: number;
 
   @Column()
