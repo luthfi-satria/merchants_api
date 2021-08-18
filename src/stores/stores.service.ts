@@ -183,7 +183,7 @@ export class StoresService {
 
         // create default store operational hours
         result.operational_hours = await this.storeOperationalService
-          .createStoreOperationalHours(result.merchant_id)
+          .createStoreOperationalHours(result.id)
           .catch((e) => {
             throw e;
           });
