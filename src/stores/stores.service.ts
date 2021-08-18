@@ -561,6 +561,11 @@ export class StoresService {
       return await this.storeRepository
         .createQueryBuilder('merchant_store')
         .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
+        .leftJoinAndSelect(
+          'merchant_store.operational_hours',
+          'operational_hours',
+          'operational_hours.merchant_store_id = merchant_store.id',
+        )
         .where('(lower(merchant_store.name) like :mname', {
           mname: '%' + search + '%',
         })
@@ -595,6 +600,11 @@ export class StoresService {
           return await this.storeRepository
             .createQueryBuilder('merchant_store')
             .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
+            .leftJoinAndSelect(
+              'merchant_store.operational_hours',
+              'operational_hours',
+              'operational_hours.merchant_store_id = merchant_store.id',
+            )
             .where('(lower(merchant_store.name) like :mname', {
               mname: '%' + search + '%',
             })
@@ -668,6 +678,11 @@ export class StoresService {
       return await this.storeRepository
         .createQueryBuilder('merchant_store')
         .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
+        .leftJoinAndSelect(
+          'merchant_store.operational_hours',
+          'operational_hours',
+          'operational_hours.merchant_store_id = merchant_store.id',
+        )
         .where('lower(merchant_store.name) like :mname', {
           mname: '%' + search + '%',
         })
@@ -700,6 +715,11 @@ export class StoresService {
           totalItems = counts;
           return await this.storeRepository
             .createQueryBuilder('merchant_store')
+            .leftJoinAndSelect(
+              'merchant_store.operational_hours',
+              'operational_hours',
+              'operational_hours.merchant_store_id = merchant_store.id',
+            )
             .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
             .where('lower(merchant_store.name) like :mname', {
               mname: '%' + search + '%',
@@ -740,6 +760,10 @@ export class StoresService {
             row.service_addon.forEach((sao) => {
               delete sao.created_at;
               delete sao.updated_at;
+            });
+            row.operational_hours.forEach((oph) => {
+              delete oph.created_at;
+              delete oph.updated_at;
             });
           });
           const list_result: ListResponse = {

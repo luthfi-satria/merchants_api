@@ -3,7 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  ManyToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -38,7 +38,7 @@ export class StoreOperationalHoursDocument {
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
 
-  @ManyToMany(() => StoreDocument, (store) => store.operational_hours)
+  @ManyToOne(() => StoreDocument, (store) => store.operational_hours)
   @JoinColumn({ name: 'merchant_store_id', referencedColumnName: 'id' })
   store: StoreDocument;
 }
