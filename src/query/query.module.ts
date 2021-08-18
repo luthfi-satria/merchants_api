@@ -6,9 +6,11 @@ import { AddonDocument } from 'src/database/entities/addons.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
+import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { HashService } from 'src/hash/hash.service';
 import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
+import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoresService } from 'src/stores/stores.service';
 import { QueryController } from './query.controller';
 import { QueryService } from './query.service';
@@ -17,6 +19,7 @@ import { QueryService } from './query.service';
   imports: [
     TypeOrmModule.forFeature([
       StoreDocument,
+      StoreOperationalHoursDocument,
       MerchantDocument,
       AddonDocument,
       MerchantDocument,
@@ -31,6 +34,7 @@ import { QueryService } from './query.service';
   providers: [
     QueryService,
     StoresService,
+    StoreOperationalService,
     MerchantsService,
     AddonsService,
     MerchantsService,

@@ -22,6 +22,7 @@ import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
+import { StoreOperationalService } from './stores-operational.service';
 
 @Injectable()
 export class StoresService {
@@ -37,6 +38,7 @@ export class StoresService {
     private readonly merchantService: MerchantsService,
     @Hash() private readonly hashService: HashService,
     private readonly storage: CommonStorageService,
+    private readonly storeOperationalService: StoreOperationalService,
   ) {}
 
   async findMerchantById(id: string): Promise<StoreDocument> {
@@ -178,6 +180,14 @@ export class StoresService {
           delete sao.created_at;
           delete sao.updated_at;
         });
+
+        // create default store operational hours
+        result.operational_hours = await this.storeOperationalService
+          .createStoreOperationalHours(result.merchant_id)
+          .catch((e) => {
+            throw e;
+          });
+
         return result;
       })
       .catch((err) => {

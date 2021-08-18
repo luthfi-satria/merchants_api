@@ -30,11 +30,13 @@ import { catchError, map } from 'rxjs';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { ImageValidationService } from 'src/utils/image-validation.service';
+import { StoreOperationalService } from './stores-operational.service';
 
 @Controller('api/v1/merchants')
 export class StoresController {
   constructor(
     private readonly storesService: StoresService,
+    private readonly storesOperationalService: StoreOperationalService,
     private readonly merchantService: MerchantsService,
     private readonly imageValidationService: ImageValidationService,
     @Response() private readonly responseService: ResponseService,
