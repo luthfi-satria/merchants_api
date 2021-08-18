@@ -17,7 +17,7 @@ import { MessageService } from 'src/message/message.service';
 import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -566,33 +566,38 @@ export class StoresService {
           'operational_hours',
           'operational_hours.merchant_store_id = merchant_store.id',
         )
-        .where('(lower(merchant_store.name) like :mname', {
-          mname: '%' + search + '%',
-        })
-        .orWhere('lower(merchant_store.phone) like :sname', {
-          sname: '%' + search + '%',
-        })
-        .orWhere('lower(merchant_store.owner_phone) like :shp', {
-          shp: '%' + search + '%',
-        })
-        .orWhere('lower(merchant_store.owner_email) like :smail', {
-          smail: '%' + search + '%',
-        })
-        .orWhere('lower(merchant_store.address) like :astrore', {
-          astrore: '%' + search + '%',
-        })
-        .orWhere('lower(merchant_store.post_code) like :pcode', {
-          pcode: '%' + search + '%',
-        })
-        .orWhere('lower(merchant_store.guidance) like :guidance', {
-          guidance: '%' + search + '%',
-        })
-        // .orWhere('merchant_store.location_longitude = :long', {
-        //   long: search,
-        // })
-        // .orWhere('merchant_store.location_latitude = :lat)', {
-        //   lat: search,
-        // })
+        .where('merchant_store.is_store_open = :is_open', { is_open: true })
+        .andWhere(
+          new Brackets((qb) => {
+            qb.where('(lower(merchant_store.name) like :mname', {
+              mname: '%' + search + '%',
+            });
+            qb.orWhere('lower(merchant_store.phone) like :sname', {
+              sname: '%' + search + '%',
+            });
+            qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
+              shp: '%' + search + '%',
+            });
+            qb.orWhere('lower(merchant_store.owner_email) like :smail', {
+              smail: '%' + search + '%',
+            });
+            qb.orWhere('lower(merchant_store.address) like :astrore', {
+              astrore: '%' + search + '%',
+            });
+            qb.orWhere('lower(merchant_store.post_code) like :pcode', {
+              pcode: '%' + search + '%',
+            });
+            qb.orWhere('lower(merchant_store.guidance) like :guidance', {
+              guidance: '%' + search + '%',
+            });
+            // .orWhere('merchant_store.location_longitude = :long', {
+            //   long: search,
+            // })
+            // .orWhere('merchant_store.location_latitude = :lat)', {
+            //   lat: search,
+            // })
+          }),
+        )
         .andWhere('merchant_store.merchant_id = :mid', { mid: merchant.id })
         .getCount()
         .then(async (counts) => {
@@ -721,33 +726,38 @@ export class StoresService {
               'operational_hours.merchant_store_id = merchant_store.id',
             )
             .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-            .where('lower(merchant_store.name) like :mname', {
-              mname: '%' + search + '%',
-            })
-            .orWhere('lower(merchant_store.phone) like :sname', {
-              sname: '%' + search + '%',
-            })
-            .orWhere('lower(merchant_store.owner_phone) like :shp', {
-              shp: '%' + search + '%',
-            })
-            .orWhere('lower(merchant_store.owner_email) like :smail', {
-              smail: '%' + search + '%',
-            })
-            .orWhere('lower(merchant_store.address) like :astrore', {
-              astrore: '%' + search + '%',
-            })
-            .orWhere('lower(merchant_store.post_code) like :pcode', {
-              pcode: '%' + search + '%',
-            })
-            .orWhere('lower(merchant_store.guidance) like :guidance', {
-              guidance: '%' + search + '%',
-            })
-            // .orWhere('merchant_store.location_longitude = :long', {
-            //   long: search,
-            // })
-            // .orWhere('merchant_store.location_latitude = :lat', {
-            //   lat: search,
-            // })
+            .where('merchant_store.is_store_open = :is_open', { is_open: true })
+            .andWhere(
+              new Brackets((qb) => {
+                qb.where('lower(merchant_store.name) like :mname', {
+                  mname: '%' + search + '%',
+                });
+                qb.orWhere('lower(merchant_store.phone) like :sname', {
+                  sname: '%' + search + '%',
+                });
+                qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
+                  shp: '%' + search + '%',
+                });
+                qb.orWhere('lower(merchant_store.owner_email) like :smail', {
+                  smail: '%' + search + '%',
+                });
+                qb.orWhere('lower(merchant_store.address) like :astrore', {
+                  astrore: '%' + search + '%',
+                });
+                qb.orWhere('lower(merchant_store.post_code) like :pcode', {
+                  pcode: '%' + search + '%',
+                });
+                qb.orWhere('lower(merchant_store.guidance) like :guidance', {
+                  guidance: '%' + search + '%',
+                });
+                // .orWhere('merchant_store.location_longitude = :long', {
+                //   long: search,
+                // })
+                // .orWhere('merchant_store.location_latitude = :lat', {
+                //   lat: search,
+                // })
+              }),
+            )
             .orderBy('merchant_store.created_at', 'DESC')
             .offset((currentPage - 1) * perPage)
             .limit(perPage)
