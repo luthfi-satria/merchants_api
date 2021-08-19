@@ -4,11 +4,13 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ColumnNumericTransformer } from '../helper/column_numberic_transformer';
 import { AddonDocument } from './addons.entity';
+import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
 
 @Entity({ name: 'merchant_store' })
 export class StoreDocument {
@@ -54,13 +56,21 @@ export class StoreDocument {
   })
   location_latitude: number;
 
-  @Column()
+  @Column({
+    default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
+  })
   upload_photo: string;
 
   @Column({
     default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
   })
   upload_banner: string;
+
+  @Column({
+    type: 'boolean',
+    default: true,
+  })
+  is_store_open: boolean;
 
   @ManyToMany(() => AddonDocument)
   @JoinTable({ name: 'merchant_store_addon' })
@@ -75,4 +85,11 @@ export class StoreDocument {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
+
+  @OneToMany(
+    () => StoreOperationalHoursDocument,
+    (operational_hours) => operational_hours.store,
+    { cascade: ['insert'] },
+  )
+  operational_hours: StoreOperationalHoursDocument[];
 }

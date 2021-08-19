@@ -6,10 +6,13 @@ import { AddonDocument } from 'src/database/entities/addons.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
+import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { HashService } from 'src/hash/hash.service';
 import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { ImageValidationService } from 'src/utils/image-validation.service';
+import { StoreOperationalController } from './stores-operational.controller';
+import { StoreOperationalService } from './stores-operational.service';
 import { StoresService } from './stores.service';
 import { StoresController } from './strores.controller';
 
@@ -17,6 +20,7 @@ import { StoresController } from './strores.controller';
   imports: [
     TypeOrmModule.forFeature([
       StoreDocument,
+      StoreOperationalHoursDocument,
       MerchantDocument,
       AddonDocument,
       MerchantDocument,
@@ -27,9 +31,10 @@ import { StoresController } from './strores.controller';
     }),
     HttpModule,
   ],
-  controllers: [StoresController],
+  controllers: [StoresController, StoreOperationalController],
   providers: [
     StoresService,
+    StoreOperationalService,
     MerchantsService,
     AddonsService,
     MerchantsService,
@@ -37,5 +42,6 @@ import { StoresController } from './strores.controller';
     LoginService,
     ImageValidationService,
   ],
+  exports: [StoresService, StoreOperationalService],
 })
 export class StoresModule {}
