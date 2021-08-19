@@ -11,6 +11,7 @@ import { GroupsService } from 'src/groups/groups.service';
 import { HashService } from 'src/hash/hash.service';
 import { LobService } from 'src/lob/lob.service';
 import { LoginService } from 'src/login/login.service';
+import { ImageValidationService } from 'src/utils/image-validation.service';
 import { MerchantsController } from './merchants.controller';
 import { MerchantsService } from './merchants.service';
 
@@ -36,6 +37,7 @@ import { MerchantsService } from './merchants.service';
     BanksService,
     HashService,
     LoginService,
+    ImageValidationService,
   ],
 })
 export class MerchantsModule {}

@@ -13,6 +13,7 @@ import {
   UseInterceptors,
   Headers,
   UnauthorizedException,
+  Req,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -31,9 +32,9 @@ import { DeleteResult } from 'typeorm';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { LobService } from 'src/lob/lob.service';
-import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { ListBankDocument } from 'src/database/entities/list_banks';
 import { BanksService } from 'src/banks/banks.service';
+import { ImageValidationService } from 'src/utils/image-validation.service';
 
 @Controller('api/v1/merchants')
 export class MerchantsController {
@@ -42,6 +43,7 @@ export class MerchantsController {
     private readonly groupsService: GroupsService,
     private readonly lobService: LobService,
     private readonly bankService: BanksService,
+    private readonly imageValidationService: ImageValidationService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService, // private httpService: HttpService,
   ) {}
@@ -58,7 +60,8 @@ export class MerchantsController {
     }),
   )
   async createmerchants(
-    @Body(RequestValidationPipe(MerchantMerchantValidation))
+    @Req() req: any,
+    @Body()
     data: MerchantMerchantValidation,
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Headers('Authorization') token: string,
@@ -78,6 +81,10 @@ export class MerchantsController {
         ),
       );
     }
+    this.imageValidationService
+      .setFilter('owner_ktp', 'required')
+      .setFilter('owner_face_ktp', 'required');
+    await this.imageValidationService.validate(req);
 
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
@@ -265,6 +272,7 @@ export class MerchantsController {
     }),
   )
   async updatemerchants(
+    @Req() req: any,
     @Body()
     data: Record<string, any>,
     @Param('id') id: string,
@@ -287,6 +295,8 @@ export class MerchantsController {
         ),
       );
     }
+    await this.imageValidationService.validate(req);
+
     const cekid: MerchantDocument =
       await this.merchantsService.findMerchantById(id);
 

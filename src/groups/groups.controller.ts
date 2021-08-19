@@ -13,6 +13,7 @@ import {
   UseInterceptors,
   Headers,
   UnauthorizedException,
+  Req,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -27,12 +28,13 @@ import { GroupsService } from './groups.service';
 import { MerchantGroupValidation } from './validation/groups.validation';
 import { catchError, map } from 'rxjs';
 import { DeleteResult } from 'typeorm';
-import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
+import { ImageValidationService } from 'src/utils/image-validation.service';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
   constructor(
     private readonly groupsService: GroupsService,
+    private readonly imageValidationService: ImageValidationService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
   ) {}
@@ -49,7 +51,8 @@ export class GroupsController {
     }),
   )
   async creategroups(
-    @Body(RequestValidationPipe(MerchantGroupValidation))
+    @Req() req: any,
+    @Body()
     data: MerchantGroupValidation,
     @UploadedFile() file: Express.Multer.File,
     @Headers('Authorization') token: string,
@@ -70,6 +73,8 @@ export class GroupsController {
         ),
       );
     }
+    this.imageValidationService.setFilter('owner_ktp', 'required');
+    await this.imageValidationService.validate(req);
 
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
@@ -189,6 +194,7 @@ export class GroupsController {
     }),
   )
   async updategroups(
+    @Req() req: any,
     @Body()
     data: Record<string, any>,
     @Param('id') id: string,
@@ -211,6 +217,9 @@ export class GroupsController {
         ),
       );
     }
+    this.imageValidationService.setFilter('owner_ktp', 'required');
+    await this.imageValidationService.validate(req);
+
     const result: GroupDocument = await this.groupsService.findMerchantById(id);
 
     if (!result) {

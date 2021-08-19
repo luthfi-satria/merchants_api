@@ -7,6 +7,7 @@ import { MerchantUsersDocument } from 'src/database/entities/merchant_users.enti
 import { HashService } from 'src/hash/hash.service';
 import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
+import { ImageValidationService } from 'src/utils/image-validation.service';
 import { GroupsController } from './groups.controller';
 import { GroupsService } from './groups.service';
 
@@ -23,6 +24,12 @@ import { GroupsService } from './groups.service';
     HttpModule,
   ],
   controllers: [GroupsController],
-  providers: [GroupsService, MerchantsService, HashService, LoginService],
+  providers: [
+    GroupsService,
+    MerchantsService,
+    HashService,
+    LoginService,
+    ImageValidationService,
+  ],
 })
 export class GroupsModule {}

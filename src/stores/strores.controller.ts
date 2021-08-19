@@ -13,6 +13,7 @@ import {
   Headers,
   UnauthorizedException,
   UploadedFiles,
+  Req,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -28,12 +29,14 @@ import { StoresService } from './stores.service';
 import { catchError, map } from 'rxjs';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { ImageValidationService } from 'src/utils/image-validation.service';
 
 @Controller('api/v1/merchants')
 export class StoresController {
   constructor(
     private readonly storesService: StoresService,
     private readonly merchantService: MerchantsService,
+    private readonly imageValidationService: ImageValidationService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
   ) {}
@@ -50,6 +53,7 @@ export class StoresController {
     }),
   )
   async createstores(
+    @Req() req: any,
     @Body()
     data: MerchantStoreValidation,
     @UploadedFiles() files: Array<Express.Multer.File>,
@@ -71,6 +75,10 @@ export class StoresController {
         ),
       );
     }
+    this.imageValidationService
+      .setFilter('upload_photo', 'required')
+      .setFilter('upload_banner', 'required');
+    await this.imageValidationService.validate(req);
 
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
@@ -223,6 +231,7 @@ export class StoresController {
     }),
   )
   async updatestores(
+    @Req() req: any,
     @Body()
     data: Record<string, any>,
     @Param('id') id: string,
@@ -245,6 +254,8 @@ export class StoresController {
         ),
       );
     }
+    await this.imageValidationService.validate(req);
+
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {

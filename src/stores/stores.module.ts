@@ -9,6 +9,7 @@ import { StoreDocument } from 'src/database/entities/store.entity';
 import { HashService } from 'src/hash/hash.service';
 import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
+import { ImageValidationService } from 'src/utils/image-validation.service';
 import { StoresService } from './stores.service';
 import { StoresController } from './strores.controller';
 
@@ -34,6 +35,7 @@ import { StoresController } from './strores.controller';
     MerchantsService,
     HashService,
     LoginService,
+    ImageValidationService,
   ],
 })
 export class StoresModule {}
