@@ -3,7 +3,6 @@ import {
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
-  IsNumber,
   IsUUID,
 } from 'class-validator';
 
@@ -47,7 +46,6 @@ export class MerchantStoreValidation {
 
   upload_photo: string;
 
-  @IsNotEmpty()
   service_addon: string[];
 
   id: string;

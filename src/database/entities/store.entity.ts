@@ -64,6 +64,7 @@ export class StoreDocument {
 
   @ManyToMany(() => AddonDocument)
   @JoinTable({ name: 'merchant_store_addon' })
+  // @Column({ nullable: true })
   service_addon: AddonDocument[];
 
   // @Column({ type: 'timestamptz', nullable: true })
