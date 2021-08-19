@@ -72,7 +72,7 @@ export class LoginController {
     const headersRequest: Record<string, any> = {
       'Content-Type': 'application/json',
       Authorization: token,
-      'request-from':'merchant',
+      'request-from': 'merchant',
     };
     const http_req: Record<string, any> = {
       user_type: 'merchant',

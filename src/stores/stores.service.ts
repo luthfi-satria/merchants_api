@@ -78,30 +78,35 @@ export class StoresService {
     let validAddonId = true;
     let valueAddonId;
     const listAddon: AddonDocument[] = [];
-    for (const addonId of data.service_addon) {
-      const cekAddonID = await this.addonService.findAddonById(addonId);
-      if (!cekAddonID) {
-        validAddonId = false;
-        valueAddonId = addonId;
-        break;
+    if (
+      typeof data.service_addon != 'undefined' &&
+      data.service_addon.length > 0
+    ) {
+      for (const addonId of data.service_addon) {
+        const cekAddonID = await this.addonService.findAddonById(addonId);
+        if (!cekAddonID) {
+          validAddonId = false;
+          valueAddonId = addonId;
+          break;
+        }
+        dbOutputTime(cekAddonID);
+        listAddon.push(cekAddonID);
       }
-      dbOutputTime(cekAddonID);
-      listAddon.push(cekAddonID);
-    }
-    if (!validAddonId) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: valueAddonId,
-            property: 'service_addon',
-            constraint: [
-              this.messageService.get('merchant.createstore.addonid_unreg'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
+      if (!validAddonId) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: valueAddonId,
+              property: 'service_addon',
+              constraint: [
+                this.messageService.get('merchant.createstore.addonid_unreg'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
     }
 
     const salt: string = await this.hashService.randomSalt();

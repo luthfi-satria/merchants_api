@@ -1,18 +1,12 @@
 export default {
   general: {
-    success: {
-      code: 'SUCCESS',
-      message: 'SUCCESS',
-    },
+    success: 'SUCCESS',
     empty_token: 'Kode Token tidak ada.',
     invalid_token: 'Kode Token tidak valid.',
     empty_photo: 'File photo kosong.',
   },
   creategroup: {
-    success: {
-      code: 'SUCCESS',
-      message: 'SUCCESS',
-    },
+    success: 'SUCCESS',
     fail: 'Create Group Gagal.',
     phoneExist: 'Nomor telepon sudah digunakan oleh Group lain',
     emailExist: 'Email sudah digunakan oleh Group lain',
