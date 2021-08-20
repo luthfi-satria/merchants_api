@@ -768,7 +768,7 @@ export class StoresService {
                 // })
               }),
             )
-            .orderBy('merchant_store.created_at', 'DESC')
+            .orderBy('merchant_store.created_at', 'ASC')
             .offset((currentPage - 1) * perPage)
             .limit(perPage)
             .getMany();
