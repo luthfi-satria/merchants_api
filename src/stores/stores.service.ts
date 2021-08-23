@@ -23,6 +23,7 @@ import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { StoreOperationalService } from './stores-operational.service';
+import { format } from 'date-fns';
 
 @Injectable()
 export class StoresService {
@@ -557,6 +558,10 @@ export class StoresService {
     const perPage = Number(data.limit) || 10;
     let totalItems: number;
 
+    // evaluate store operational hour
+    const currTime = format(new Date(), 'HH:mm');
+    const weekOfDay = parseInt(format(new Date(), 'i'), 10) - 1; // week of day, monday start at 0;
+
     if (merchant.user_type == 'merchant') {
       return await this.storeRepository
         .createQueryBuilder('merchant_store')
@@ -567,6 +572,19 @@ export class StoresService {
           'operational_hours.merchant_store_id = merchant_store.id',
         )
         .where('merchant_store.is_store_open = :is_open', { is_open: true })
+        .andWhere(
+          new Brackets((qb) => {
+            qb.where(':currTime >= operational_hours.open_hour', {
+              currTime: currTime,
+            });
+            qb.andWhere(':currTime < operational_hours.close_hour', {
+              currTime: currTime,
+            });
+            qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+              weekOfDay: weekOfDay,
+            });
+          }),
+        )
         .andWhere(
           new Brackets((qb) => {
             qb.where('(lower(merchant_store.name) like :mname', {
@@ -611,6 +629,19 @@ export class StoresService {
               'operational_hours.merchant_store_id = merchant_store.id',
             )
             .where('merchant_store.is_store_open = :is_open', { is_open: true })
+            .andWhere(
+              new Brackets((qb) => {
+                qb.where(':currTime >= operational_hours.open_hour', {
+                  currTime: currTime,
+                });
+                qb.andWhere(':currTime < operational_hours.close_hour', {
+                  currTime: currTime,
+                });
+                qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+                  weekOfDay: weekOfDay,
+                });
+              }),
+            )
             .andWhere(
               new Brackets((qb) => {
                 qb.where('(lower(merchant_store.name) like :mname', {
@@ -696,6 +727,19 @@ export class StoresService {
         .where('merchant_store.is_store_open = :is_open', { is_open: true })
         .andWhere(
           new Brackets((qb) => {
+            qb.where(':currTime >= operational_hours.open_hour', {
+              currTime: currTime,
+            });
+            qb.andWhere(':currTime < operational_hours.close_hour', {
+              currTime: currTime,
+            });
+            qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+              weekOfDay: weekOfDay,
+            });
+          }),
+        )
+        .andWhere(
+          new Brackets((qb) => {
             qb.where('lower(merchant_store.name) like :mname', {
               mname: '%' + search + '%',
             });
@@ -737,6 +781,19 @@ export class StoresService {
             )
             .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
             .where('merchant_store.is_store_open = :is_open', { is_open: true })
+            .andWhere(
+              new Brackets((qb) => {
+                qb.where(':currTime >= operational_hours.open_hour', {
+                  currTime: currTime,
+                });
+                qb.andWhere(':currTime < operational_hours.close_hour', {
+                  currTime: currTime,
+                });
+                qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+                  weekOfDay: weekOfDay,
+                });
+              }),
+            )
             .andWhere(
               new Brackets((qb) => {
                 qb.where('lower(merchant_store.name) like :mname', {
