@@ -239,11 +239,14 @@ export class LoginService {
       );
     }
     let merchantLevel = '';
+    let groupID = '';
     let merchantID = '';
+    let storeID = '';
+    const id = existMerchantUser.id;
 
     if (existMerchantUser.store_id != null) {
       merchantLevel = 'store';
-      merchantID = existMerchantUser.store_id;
+      storeID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
       merchantLevel = 'merchant';
@@ -251,7 +254,7 @@ export class LoginService {
     }
     if (existMerchantUser.group_id != null) {
       merchantLevel = 'group';
-      merchantID = existMerchantUser.group_id;
+      groupID = existMerchantUser.group_id;
     }
 
     const http_req: Record<string, any> = {
@@ -259,10 +262,14 @@ export class LoginService {
       id_profile: merchantID,
       user_type: 'merchant',
       level: merchantLevel,
-      id: existMerchantUser.id,
+      id: id,
+      group_id: groupID,
+      merchant_id: merchantID,
+      store_id: storeID,
       roles: ['merchant'],
       otp_code: data.otp_code,
     };
+
     const url: string =
       process.env.BASEURL_AUTH_SERVICE +
       '/api/v1/auth/otp-login-phone-validation';

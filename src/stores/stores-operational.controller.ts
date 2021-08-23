@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Logger,
-  Param,
-  Put,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Body, Controller, Logger, Param, Put } from '@nestjs/common';
 import { ResponseService } from 'src/response/response.service';
 import { StoreOperationalService } from './stores-operational.service';
 import { IStoreOperationalPayload } from './types';
