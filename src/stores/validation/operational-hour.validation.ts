@@ -14,6 +14,12 @@ export class StoreOpenValidation {
   is_store_open: boolean;
 }
 
+export class StoreOpen24HourValidation {
+  @IsNotEmpty()
+  @IsBoolean()
+  open_24_hour: boolean;
+}
+
 export class StoreOpenHoursValidation implements IStoreOperationalPayload {
   @IsNotEmpty()
   @IsMilitaryTime({ each: true })

@@ -5,6 +5,7 @@ import {
   NotFoundException,
   Param,
   ParseArrayPipe,
+  ParseBoolPipe,
   Post,
   Put,
   Req,
@@ -17,6 +18,7 @@ import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { StoreOperationalService } from './stores-operational.service';
 import {
+  StoreOpen24HourValidation,
   StoreOpenHoursValidation,
   StoreOpenValidation,
 } from './validation/operational-hour.validation';
@@ -44,7 +46,7 @@ export class StoreOperationalController {
         .then(async (res) => {
           console.log('set operational hour update result: ', res);
           return await this.mStoreOperationalService
-            .getAllStoreScheduleById(store_id)
+            .getAllStoreScheduleByStoreId(store_id)
             .catch((e) => {
               throw e;
             });
@@ -57,6 +59,41 @@ export class StoreOperationalController {
       );
     } catch (e) {
       Logger.error(e.message, '', 'Set Store Operational Hour');
+      throw e;
+    }
+  }
+
+  @Post('set-open-24h')
+  async updateStoreOpen24hours(
+    @Body(new ValidationPipe({ transform: true }))
+    data: StoreOpen24HourValidation,
+    @Req() req: any,
+  ) {
+    try {
+      const { store_id } = req.user;
+
+      const result = await this.mStoreOperationalService
+        .getAllStoreScheduleByStoreId(store_id)
+        .catch((e) => {
+          throw e;
+        })
+        .then(async (res) => {
+          const x = await Promise.all(
+            res.map(async (e) => {
+              return await this.mStoreOperationalService.forceAllScheduleToOpen(
+                e.id,
+              );
+            }),
+          ).catch((e) => {
+            throw e;
+          });
+
+          return x;
+        });
+
+      return result;
+    } catch (e) {
+      Logger.error(e.message, '', 'Update Store 24h');
       throw e;
     }
   }
