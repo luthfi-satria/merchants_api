@@ -4,14 +4,17 @@ import {
   Logger,
   NotFoundException,
   Param,
+  ParseArrayPipe,
   Put,
   ValidationPipe,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { StoreOperationalService } from './stores-operational.service';
-import { IStoreOperationalPayload } from './types';
-import { StoreOpenValidation } from './validation/operational-hour.validation';
+import {
+  StoreOpenHoursValidation,
+  StoreOpenValidation,
+} from './validation/operational-hour.validation';
 
 @Controller('api/v1/merchants/stores')
 export class StoreOperationalController {
@@ -23,7 +26,8 @@ export class StoreOperationalController {
 
   @Put(':store_id/set-operational-hours')
   async updateOperationalHour(
-    @Body() payload: IStoreOperationalPayload[],
+    @Body(new ParseArrayPipe({ items: StoreOpenHoursValidation }))
+    payload: StoreOpenHoursValidation[],
     @Param('store_id') id: string,
   ) {
     try {
