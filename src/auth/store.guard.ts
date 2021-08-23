@@ -28,9 +28,10 @@ export class RoleStoreGuard implements CanActivate {
 
       const res = await firstValueFrom<AuthTokenResponse>(
         this.httpService
-          .get(`http://localhost:4003/api/v1/auth/validate-token`, {
-            headers: headerRequest,
-          })
+          .get(
+            `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/validate-token`,
+            { headers: headerRequest },
+          )
           .pipe(
             map((resp) => {
               return resp?.data;
