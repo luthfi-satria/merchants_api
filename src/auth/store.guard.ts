@@ -30,11 +30,20 @@ export class RoleStoreGuard implements CanActivate {
       const res = await firstValueFrom<AuthTokenResponse>(
         this.httpService.get(url, { headers: headerRequest }).pipe(
           map((resp) => {
+            console.log('response from auth validate: ', resp);
             return resp?.data;
           }),
-          catchError((err) => {
-            Logger.error(err.message, '', 'Auth Token Validate');
-            throw EMPTY;
+          catchError((err: any) => {
+            Logger.error(err.message, '', 'RoleStoreGuard');
+            const { status, statusText } = err.response;
+
+            if (status == 401) {
+              throw new UnauthorizedException(
+                'Invalid Auth Token validation from Auth Service, please refresh your token!',
+                'Auth Token Validation Error',
+              );
+            }
+            return EMPTY;
           }),
         ),
       );
@@ -52,7 +61,7 @@ export class RoleStoreGuard implements CanActivate {
 
       return true;
     } catch (e) {
-      Logger.error('Validate Auth Failed: ', e.message);
+      Logger.error('ERROR! Validate Auth StoreGuard: ', e.message);
       throw e;
     }
   }
