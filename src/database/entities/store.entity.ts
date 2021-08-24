@@ -95,7 +95,7 @@ export class StoreDocument {
   @OneToMany(
     () => StoreOperationalHoursDocument,
     (operational_hours) => operational_hours.store,
-    { cascade: ['insert'] },
+    { cascade: ['insert', 'update'] },
   )
   operational_hours: StoreOperationalHoursDocument[];
 }

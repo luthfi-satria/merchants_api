@@ -13,6 +13,7 @@ import { RoleStoreGuard } from 'src/auth/store.guard';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { StoreOperationalService } from './stores-operational.service';
+import { StoresService } from './stores.service';
 import {
   StoreOpen24HourValidation,
   StoreOpenHoursValidation,
@@ -24,6 +25,7 @@ import {
 export class StoreOperationalController {
   constructor(
     private readonly mStoreOperationalService: StoreOperationalService,
+    private readonly mStoreService: StoresService,
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
   ) {}
@@ -69,22 +71,31 @@ export class StoreOperationalController {
       const { store_id } = req.user;
       const { is_open_24_hour } = data;
 
-      const result = await this.mStoreOperationalService
-        .getAllStoreScheduleByStoreId(store_id)
+      const result = await this.mStoreService
+        .getMerchantStoreDetailById(store_id)
         .catch((e) => {
           throw e;
         })
         .then(async (res) => {
-          if (res.length == 0) {
+          if (res.operational_hours.length == 0) {
             throw new NotFoundException(
               'Store tidak memiliki jadwal operasional',
               'Not Found',
             );
           }
 
+          // update 24 hour flag in merchant store
+          const store = this.mStoreService.createInstance({
+            ...res,
+            is_open_24h: is_open_24_hour,
+          });
+          await this.mStoreService.updateStoreProfile(store).catch((e) => {
+            throw e;
+          });
+
           if (is_open_24_hour) {
             const x = await Promise.all(
-              res.map(async (e) => {
+              res.operational_hours.map(async (e) => {
                 return await this.mStoreOperationalService.forceAllScheduleToOpen(
                   e.id,
                 );
@@ -96,7 +107,7 @@ export class StoreOperationalController {
             return x;
           } else {
             const y = await Promise.all(
-              res.map(async (row) => {
+              res.operational_hours.map(async (row) => {
                 return await this.mStoreOperationalService
                   .resetScheduleToDefault(row.id)
                   .catch((e) => {
@@ -109,8 +120,8 @@ export class StoreOperationalController {
           }
         });
 
-      const updatedResult = await this.mStoreOperationalService
-        .getAllStoreScheduleByStoreId(store_id)
+      const updatedResult = await this.mStoreService
+        .getMerchantStoreDetailById(store_id)
         .catch((e) => {
           throw e;
         });

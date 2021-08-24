@@ -42,6 +42,10 @@ export class StoresService {
     private readonly storeOperationalService: StoreOperationalService,
   ) {}
 
+  createInstance(data: StoreDocument): StoreDocument {
+    return this.storeRepository.create(data);
+  }
+
   async findMerchantById(id: string): Promise<StoreDocument> {
     return await this.storeRepository
       .findOne({
@@ -72,6 +76,12 @@ export class StoresService {
   async findMerchantStoreByEmail(email: string): Promise<StoreDocument> {
     return await this.storeRepository.findOne({
       where: { owner_email: email },
+    });
+  }
+
+  async getMerchantStoreDetailById(id: string): Promise<StoreDocument> {
+    return await this.storeRepository.findOne(id, {
+      relations: ['operational_hours', 'service_addon'],
     });
   }
 
@@ -206,13 +216,24 @@ export class StoresService {
       });
   }
 
+  // partial update
+  async updateStoreProfile(data: StoreDocument) {
+    try {
+      return await this.storeRepository.update(data.id, data).catch((e) => {
+        throw e;
+      });
+    } catch (e) {
+      throw e;
+    }
+  }
+
   async updateMerchantStoreProfile(
     data: Record<string, any>,
   ): Promise<Record<string, any>> {
     const updateMUsers: Partial<MerchantUsersDocument> = {};
     const store_exist: StoreDocument = await this.storeRepository
       .findOne(data.id, {
-        relations: ['service_addon'],
+        relations: ['service_addon', 'operational_hours'],
       })
       .catch(() => {
         throw new BadRequestException(
