@@ -30,11 +30,11 @@ export class RoleStoreGuard implements CanActivate {
       const res = await firstValueFrom<AuthTokenResponse>(
         this.httpService.get(url, { headers: headerRequest }).pipe(
           map((resp) => {
-            console.log('response from auth validate: ', resp);
             return resp?.data;
           }),
           catchError((err: any) => {
             Logger.error(err.message, '', 'RoleStoreGuard');
+
             const { status, statusText } = err.response;
 
             if (status == 401) {

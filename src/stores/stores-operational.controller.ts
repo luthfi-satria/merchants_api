@@ -39,6 +39,22 @@ export class StoreOperationalController {
     try {
       const { store_id } = req.user;
 
+      // populate store schedules if does not exists
+      const ifSchedulesExists =
+        await this.mStoreOperationalService.getAllStoreScheduleByStoreId(
+          store_id,
+        );
+      if (ifSchedulesExists.length == 0) {
+        Logger.log(
+          'Operational store hour does not exists. proceed to populate schedules',
+          'Populate store operational hour',
+        );
+        const createSchedules =
+          await this.mStoreOperationalService.createStoreOperationalHours(
+            store_id,
+          );
+      }
+
       const result = await this.mStoreOperationalService
         .updateStoreOperationalHours(store_id, payload)
         .then(async (res) => {
