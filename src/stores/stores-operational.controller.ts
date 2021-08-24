@@ -178,10 +178,16 @@ export class StoreOperationalController {
         throw new NotFoundException(errors, 'Update open store failed');
       }
 
+      const updatedResult = await this.mStoreService
+        .getMerchantStoreDetailById(store_id)
+        .catch((e) => {
+          throw e;
+        });
+
       return this.responseService.success(
         true,
         'Sukses update status toko buka',
-        [],
+        [updatedResult],
       );
     } catch (e) {
       Logger.error(e.message, '', 'Set Store Status');
