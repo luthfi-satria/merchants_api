@@ -1,27 +1,52 @@
-import { Body, Controller, Logger, Param, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Logger,
+  NotFoundException,
+  Param,
+  ParseArrayPipe,
+  ParseBoolPipe,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
+import { Request } from 'express';
+import { RoleStoreGuard } from 'src/auth/store.guard';
+import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { StoreOperationalService } from './stores-operational.service';
-import { IStoreOperationalPayload } from './types';
+import {
+  StoreOpen24HourValidation,
+  StoreOpenHoursValidation,
+  StoreOpenValidation,
+} from './validation/operational-hour.validation';
 
 @Controller('api/v1/merchants/stores')
+@UseGuards(RoleStoreGuard)
 export class StoreOperationalController {
   constructor(
     private readonly mStoreOperationalService: StoreOperationalService,
+    private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
   ) {}
 
-  @Put(':store_id/set-operational-hours')
+  @Post('set-operational-hours')
   async updateOperationalHour(
-    @Body() payload: IStoreOperationalPayload[],
-    @Param('store_id') id: string,
+    @Body(new ParseArrayPipe({ items: StoreOpenHoursValidation }))
+    payload: StoreOpenHoursValidation[],
+    @Req() req: any,
   ) {
     try {
+      const { store_id } = req.user;
+
       const result = await this.mStoreOperationalService
-        .updateStoreOperationalHours(id, payload)
+        .updateStoreOperationalHours(store_id, payload)
         .then(async (res) => {
           console.log('set operational hour update result: ', res);
           return await this.mStoreOperationalService
-            .getAllStoreScheduleById(id)
+            .getAllStoreScheduleByStoreId(store_id)
             .catch((e) => {
               throw e;
             });
@@ -38,22 +63,67 @@ export class StoreOperationalController {
     }
   }
 
-  @Put(':id/set-store-open')
-  async updateStoreOpenStatus(
-    @Param('id') id: string,
-    @Body() is_store_open: boolean,
+  @Post('set-open-24h')
+  async updateStoreOpen24hours(
+    @Body(new ValidationPipe({ transform: true }))
+    data: StoreOpen24HourValidation,
+    @Req() req: any,
   ) {
     try {
+      const { store_id } = req.user;
+
       const result = await this.mStoreOperationalService
-        .updateStoreOpenStatus(id, is_store_open)
+        .getAllStoreScheduleByStoreId(store_id)
+        .catch((e) => {
+          throw e;
+        })
+        .then(async (res) => {
+          const x = await Promise.all(
+            res.map(async (e) => {
+              return await this.mStoreOperationalService.forceAllScheduleToOpen(
+                e.id,
+              );
+            }),
+          ).catch((e) => {
+            throw e;
+          });
+
+          return x;
+        });
+
+      return result;
+    } catch (e) {
+      Logger.error(e.message, '', 'Update Store 24h');
+      throw e;
+    }
+  }
+
+  @Post('set-store-open')
+  async updateStoreOpenStatus(
+    @Body(new ValidationPipe({ transform: true })) data: StoreOpenValidation,
+    @Req() req: any,
+  ) {
+    try {
+      const { store_id } = req.user;
+      const { is_store_open } = data;
+
+      const result = await this.mStoreOperationalService
+        .updateStoreOpenStatus(store_id, is_store_open)
         .catch((e) => {
           throw e;
         });
 
+      if (result.affected == 0) {
+        const errors = this.messageService.get(
+          'merchant.updatestore.id_notfound',
+        );
+        throw new NotFoundException(errors, 'Update open store failed');
+      }
+
       return this.responseService.success(
         true,
         'Sukses update status toko buka',
-        result,
+        [],
       );
     } catch (e) {
       Logger.error(e.message, '', 'Set Store Status');

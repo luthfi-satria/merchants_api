@@ -51,13 +51,29 @@ export class StoreOperationalService {
     }
   }
 
-  public async getAllStoreScheduleById(
-    id: string,
+  public async forceAllScheduleToOpen(id: string) {
+    try {
+      return await this.storeOperationalRepository
+        .update(id, {
+          open_hour: '00:00',
+          close_hour: '23:59',
+        })
+        .catch((e) => {
+          throw e;
+        });
+    } catch (e) {
+      Logger.error(e.message, '', 'Update schedule 24 hours');
+      throw e;
+    }
+  }
+
+  public async getAllStoreScheduleByStoreId(
+    store_id: string,
   ): Promise<StoreOperationalHoursDocument[]> {
     try {
       return await this.storeOperationalRepository
         .find({
-          where: { merchant_store_id: id },
+          where: { merchant_store_id: store_id },
           select: [
             'id',
             'day_of_week',
