@@ -30,6 +30,7 @@ export class StoreOperationalController {
     private readonly responseService: ResponseService,
   ) {}
 
+  @UseGuards(RoleStoreGuard)
   @Post('set-operational-hours')
   async updateOperationalHour(
     @Body(new ParseArrayPipe({ items: StoreOpenHoursValidation }))
@@ -77,6 +78,7 @@ export class StoreOperationalController {
     }
   }
 
+  @UseGuards(RoleStoreGuard)
   @Post('set-open-24h')
   async updateStoreOpen24hours(
     @Body(new ValidationPipe({ transform: true }))
@@ -156,6 +158,7 @@ export class StoreOperationalController {
     }
   }
 
+  @UseGuards(RoleStoreGuard)
   @Post('set-store-open')
   async updateStoreOpenStatus(
     @Body(new ValidationPipe({ transform: true })) data: StoreOpenValidation,
