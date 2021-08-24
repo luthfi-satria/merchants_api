@@ -92,6 +92,22 @@ export class StoreOperationalService {
     }
   }
 
+  public async resetScheduleToDefault(id: string) {
+    try {
+      return await this.storeOperationalRepository
+        .update(id, {
+          open_hour: '08:00',
+          close_hour: '17:00',
+        })
+        .catch((e) => {
+          throw e;
+        });
+    } catch (e) {
+      Logger.error(e.message, '', 'Update Reset schedule 24 hour');
+      throw e;
+    }
+  }
+
   public async updateStoreOpenStatus(merchant_id: string, is_open: boolean) {
     try {
       const result = await this.storesRepository

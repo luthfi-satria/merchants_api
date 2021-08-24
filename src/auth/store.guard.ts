@@ -6,7 +6,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { map, firstValueFrom, catchError } from 'rxjs';
+import { map, firstValueFrom, catchError, EMPTY } from 'rxjs';
 import { AuthTokenResponse } from './types';
 
 @Injectable()
@@ -25,22 +25,27 @@ export class RoleStoreGuard implements CanActivate {
         'Content-Type': 'application/json',
         Authorization: token,
       };
+      const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/validate-token`;
 
       const res = await firstValueFrom<AuthTokenResponse>(
-        this.httpService
-          .get(
-            `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/validate-token`,
-            { headers: headerRequest },
-          )
-          .pipe(
-            map((resp) => {
-              return resp?.data;
-            }),
-            catchError((err) => {
-              Logger.error(err.message, '', 'Auth Token Validate');
-              throw err;
-            }),
-          ),
+        this.httpService.get(url, { headers: headerRequest }).pipe(
+          map((resp) => {
+            return resp?.data;
+          }),
+          catchError((err: any) => {
+            Logger.error(err.message, '', 'RoleStoreGuard');
+
+            const { status, statusText } = err.response;
+
+            if (status == 401) {
+              throw new UnauthorizedException(
+                'Invalid Auth Token validation from Auth Service, please refresh your token!',
+                'Auth Token Validation Error',
+              );
+            }
+            return EMPTY;
+          }),
+        ),
       );
 
       const { user_type, level } = res?.data?.payload;
@@ -56,7 +61,7 @@ export class RoleStoreGuard implements CanActivate {
 
       return true;
     } catch (e) {
-      Logger.error('Validate Auth Failed: ', e.message);
+      Logger.error('ERROR! Validate Auth StoreGuard: ', e.message);
       throw e;
     }
   }
