@@ -89,6 +89,9 @@ export class StoreOperationalController {
             ...res,
             is_open_24h: is_open_24_hour,
           });
+          delete store.operational_hours;
+          delete store.service_addon;
+
           await this.mStoreService.updateStoreProfile(store).catch((e) => {
             throw e;
           });
