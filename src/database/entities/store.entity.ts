@@ -72,6 +72,12 @@ export class StoreDocument {
   })
   is_store_open: boolean;
 
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  is_open_24h: boolean;
+
   @ManyToMany(() => AddonDocument)
   @JoinTable({ name: 'merchant_store_addon' })
   // @Column({ nullable: true })
