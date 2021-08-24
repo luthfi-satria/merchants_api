@@ -3,16 +3,12 @@ import {
   Controller,
   Logger,
   NotFoundException,
-  Param,
   ParseArrayPipe,
-  ParseBoolPipe,
   Post,
-  Put,
   Req,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
-import { Request } from 'express';
 import { RoleStoreGuard } from 'src/auth/store.guard';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -71,6 +67,7 @@ export class StoreOperationalController {
   ) {
     try {
       const { store_id } = req.user;
+      const { is_open_24_hour } = data;
 
       const result = await this.mStoreOperationalService
         .getAllStoreScheduleByStoreId(store_id)
@@ -78,20 +75,51 @@ export class StoreOperationalController {
           throw e;
         })
         .then(async (res) => {
-          const x = await Promise.all(
-            res.map(async (e) => {
-              return await this.mStoreOperationalService.forceAllScheduleToOpen(
-                e.id,
-              );
-            }),
-          ).catch((e) => {
-            throw e;
-          });
+          if (res.length == 0) {
+            throw new NotFoundException(
+              'Store tidak memiliki jadwal operasional',
+              'Not Found',
+            );
+          }
 
-          return x;
+          if (is_open_24_hour) {
+            const x = await Promise.all(
+              res.map(async (e) => {
+                return await this.mStoreOperationalService.forceAllScheduleToOpen(
+                  e.id,
+                );
+              }),
+            ).catch((e) => {
+              throw e;
+            });
+
+            return x;
+          } else {
+            const y = await Promise.all(
+              res.map(async (row) => {
+                return await this.mStoreOperationalService
+                  .resetScheduleToDefault(row.id)
+                  .catch((e) => {
+                    throw e;
+                  });
+              }),
+            );
+
+            return y;
+          }
         });
 
-      return result;
+      const updatedResult = await this.mStoreOperationalService
+        .getAllStoreScheduleByStoreId(store_id)
+        .catch((e) => {
+          throw e;
+        });
+
+      const msg = is_open_24_hour
+        ? 'Sukses ubah semua jam operasional toko menjadi buka 24 jam'
+        : `Sukses reset semua jam operasional mnejadi default (08:00 - 17:00)`;
+
+      return this.responseService.success(true, msg, updatedResult);
     } catch (e) {
       Logger.error(e.message, '', 'Update Store 24h');
       throw e;

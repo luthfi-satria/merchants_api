@@ -6,7 +6,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { map, firstValueFrom, catchError } from 'rxjs';
+import { map, firstValueFrom, catchError, EMPTY } from 'rxjs';
 import { AuthTokenResponse } from './types';
 
 @Injectable()
@@ -25,22 +25,18 @@ export class RoleStoreGuard implements CanActivate {
         'Content-Type': 'application/json',
         Authorization: token,
       };
+      const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/validate-token`;
 
       const res = await firstValueFrom<AuthTokenResponse>(
-        this.httpService
-          .get(
-            `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/validate-token`,
-            { headers: headerRequest },
-          )
-          .pipe(
-            map((resp) => {
-              return resp?.data;
-            }),
-            catchError((err) => {
-              Logger.error(err.message, '', 'Auth Token Validate');
-              throw err;
-            }),
-          ),
+        this.httpService.get(url, { headers: headerRequest }).pipe(
+          map((resp) => {
+            return resp?.data;
+          }),
+          catchError((err) => {
+            Logger.error(err.message, '', 'Auth Token Validate');
+            throw EMPTY;
+          }),
+        ),
       );
 
       const { user_type, level } = res?.data?.payload;
