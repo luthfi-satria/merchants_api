@@ -495,7 +495,11 @@ export class MerchantsService {
         totalItems = counts;
         return await this.merchantRepository
           .createQueryBuilder('merchant_merchant')
-          .select('*')
+          .leftJoinAndSelect(
+            'merchant_merchant.group',
+            'mc_group',
+            'merchant_merchant.group_id = mc_group.id',
+          )
           .where('lower(name) like :mname', {
             mname: '%' + search + '%',
           })
