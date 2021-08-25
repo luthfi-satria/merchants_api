@@ -8,10 +8,7 @@ export class InternalController {
 
   @Get('merchants/stores/:id')
   @ResponseStatusCode()
-  async getsoresId(@Param('id') id: string): Promise<any> {
-    console.log('internal request: ', id);
-    const rsp = await this.internalService.findStorebyId(id);
-    console.log('internal response: ', rsp);
-    return rsp;
+  async getStoresId(@Param('id') id: string): Promise<any> {
+    return await this.internalService.findStorebyId(id);
   }
 }
