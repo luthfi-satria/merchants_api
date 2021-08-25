@@ -595,15 +595,25 @@ export class StoresService {
         .where('merchant_store.is_store_open = :is_open', { is_open: true })
         .andWhere(
           new Brackets((qb) => {
-            qb.where(':currTime >= operational_hours.open_hour', {
-              currTime: currTime,
-            });
-            qb.andWhere(':currTime < operational_hours.close_hour', {
-              currTime: currTime,
-            });
-            qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+            qb.where('operational_hours.day_of_week = :weekOfDay', {
               weekOfDay: weekOfDay,
             });
+            qb.andWhere(
+              new Brackets((qb) => {
+                qb.where('operational_hours.is_open_24h = :is_open_24h', {
+                  is_open_24h: true,
+                }).orWhere(
+                  new Brackets((qb) => {
+                    qb.where(':currTime >= operational_hours.open_hour', {
+                      currTime: currTime,
+                    });
+                    qb.andWhere(':currTime < operational_hours.close_hour', {
+                      currTime: currTime,
+                    });
+                  }),
+                );
+              }),
+            );
           }),
         )
         .andWhere(
@@ -652,15 +662,28 @@ export class StoresService {
             .where('merchant_store.is_store_open = :is_open', { is_open: true })
             .andWhere(
               new Brackets((qb) => {
-                qb.where(':currTime >= operational_hours.open_hour', {
-                  currTime: currTime,
-                });
-                qb.andWhere(':currTime < operational_hours.close_hour', {
-                  currTime: currTime,
-                });
-                qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+                qb.where('operational_hours.day_of_week = :weekOfDay', {
                   weekOfDay: weekOfDay,
                 });
+                qb.andWhere(
+                  new Brackets((qb) => {
+                    qb.where('operational_hours.is_open_24h = :is_open_24h', {
+                      is_open_24h: true,
+                    }).orWhere(
+                      new Brackets((qb) => {
+                        qb.where(':currTime >= operational_hours.open_hour', {
+                          currTime: currTime,
+                        });
+                        qb.andWhere(
+                          ':currTime < operational_hours.close_hour',
+                          {
+                            currTime: currTime,
+                          },
+                        );
+                      }),
+                    );
+                  }),
+                );
               }),
             )
             .andWhere(
@@ -748,15 +771,25 @@ export class StoresService {
         .where('merchant_store.is_store_open = :is_open', { is_open: true })
         .andWhere(
           new Brackets((qb) => {
-            qb.where(':currTime >= operational_hours.open_hour', {
-              currTime: currTime,
-            });
-            qb.andWhere(':currTime < operational_hours.close_hour', {
-              currTime: currTime,
-            });
-            qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+            qb.where('operational_hours.day_of_week = :weekOfDay', {
               weekOfDay: weekOfDay,
             });
+            qb.andWhere(
+              new Brackets((qb) => {
+                qb.where('operational_hours.is_open_24h = :is_open_24h', {
+                  is_open_24h: true,
+                }).orWhere(
+                  new Brackets((qb) => {
+                    qb.where(':currTime >= operational_hours.open_hour', {
+                      currTime: currTime,
+                    });
+                    qb.andWhere(':currTime < operational_hours.close_hour', {
+                      currTime: currTime,
+                    });
+                  }),
+                );
+              }),
+            );
           }),
         )
         .andWhere(
@@ -804,15 +837,26 @@ export class StoresService {
             .where('merchant_store.is_store_open = :is_open', { is_open: true })
             .andWhere(
               new Brackets((qb) => {
-                qb.where(':currTime >= operational_hours.open_hour', {
-                  currTime: currTime,
-                });
-                qb.andWhere(':currTime < operational_hours.close_hour', {
-                  currTime: currTime,
-                });
-                qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+                qb.where('operational_hours.day_of_week = :weekOfDay', {
                   weekOfDay: weekOfDay,
                 });
+                qb.andWhere(
+                  new Brackets((qb) => {
+                    qb.where('operational_hours.is_open_24h = :is_open_24h', {
+                      is_open_24h: true,
+                    }).orWhere(
+                      new Brackets((qb) => {
+                        qb.where(':currTime >= operational_hours.open_hour', {
+                          currTime: currTime,
+                        });
+                        qb.andWhere(
+                          ':currTime < operational_hours.close_hour',
+                          { currTime: currTime },
+                        );
+                      }),
+                    );
+                  }),
+                );
               }),
             )
             .andWhere(
