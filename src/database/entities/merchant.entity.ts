@@ -1,10 +1,15 @@
+import { Transform, Type } from 'class-transformer';
+import moment from 'moment';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { GroupDocument } from './group.entity';
 
 export enum GroupStatus {
   Waiting_approval = 'WAITING_APPROVAL',
@@ -15,6 +20,7 @@ export enum GroupStatus {
 
 @Entity({ name: 'merchant_merchant' })
 export class MerchantDocument {
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -52,6 +58,10 @@ export class MerchantDocument {
   @Column()
   owner_nik: string;
 
+  @Type(() => Date)
+  @Transform((owner_dob: any) => moment(owner_dob).format('YYYY-MM-DD'), {
+    toPlainOnly: true,
+  })
   @Column({ type: 'date', nullable: true })
   owner_dob: Date;
 
@@ -87,4 +97,12 @@ export class MerchantDocument {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
+
+  @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants)
+  @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })
+  group: GroupDocument;
+
+  constructor(init?: Partial<MerchantDocument>) {
+    Object.assign(this, init);
+  }
 }

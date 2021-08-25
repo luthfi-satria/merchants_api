@@ -449,18 +449,21 @@ export class MerchantsService {
     search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
-    let totalItems: number;
 
     return await this.merchantRepository
       .createQueryBuilder('merchant_merchant')
-      .select('*')
-      .orWhere('lower(name) like :mname', {
+      .leftJoinAndSelect(
+        'merchant_merchant.group',
+        'mc_group',
+        'mc_group.id = merchant_merchant.group_id',
+      )
+      .where('lower(merchant_merchant.name) like :mname', {
         mname: '%' + search + '%',
       })
-      .orWhere('lower(address) like :addr', {
+      .orWhere('lower(merchant_merchant.address) like :addr', {
         addr: '%' + search + '%',
       })
-      .orWhere('lower(owner_name) like :oname', {
+      .orWhere('lower(merchant_merchant.owner_name) like :oname', {
         oname: '%' + search + '%',
       })
       .orWhere('lower(owner_email) like :omail', {
@@ -469,7 +472,7 @@ export class MerchantsService {
       .orWhere('lower(owner_phone) like :ophone', {
         ophone: '%' + search + '%',
       })
-      .orWhere('lower(owner_password) like :opass', {
+      .orWhere('lower(merchant_merchant.owner_password) like :opass', {
         opass: '%' + search + '%',
       })
       .orWhere('lower(owner_nik) like :onik', {
@@ -490,65 +493,24 @@ export class MerchantsService {
       .orWhere('lower(tarif_pb1) like :tpb', {
         tpb: '%' + search + '%',
       })
-      .getCount()
-      .then(async (counts) => {
-        totalItems = counts;
-        return await this.merchantRepository
-          .createQueryBuilder('merchant_merchant')
-          .select('*')
-          .where('lower(name) like :mname', {
-            mname: '%' + search + '%',
-          })
-          .orWhere('lower(address) like :addr', {
-            addr: '%' + search + '%',
-          })
-          .orWhere('lower(owner_name) like :oname', {
-            oname: '%' + search + '%',
-          })
-          .orWhere('lower(owner_email) like :omail', {
-            omail: '%' + search + '%',
-          })
-          .orWhere('lower(owner_phone) like :ophone', {
-            ophone: '%' + search + '%',
-          })
-          .orWhere('lower(owner_password) like :opass', {
-            opass: '%' + search + '%',
-          })
-          .orWhere('lower(owner_nik) like :onik', {
-            onik: '%' + search + '%',
-          })
-          .orWhere('lower(owner_dob_city) like :odc', {
-            odc: '%' + search + '%',
-          })
-          .orWhere('lower(owner_address) like :oaddr', {
-            oaddr: '%' + search + '%',
-          })
-          .orWhere('lower(bank_acc_name) like :ban', {
-            ban: '%' + search + '%',
-          })
-          .orWhere('lower(bank_acc_number) like :banu', {
-            banu: '%' + search + '%',
-          })
-          .orWhere('lower(tarif_pb1) like :tpb', {
-            tpb: '%' + search + '%',
-          })
-          .orderBy('created_at', 'DESC')
-          .offset((currentPage - 1) * perPage)
-          .limit(perPage)
-          .getRawMany();
-      })
+      .skip(currentPage)
+      .take(perPage)
+      .getManyAndCount()
       .then((result) => {
-        result.forEach((row) => {
+        const [record, totalCount] = result;
+
+        // reformat outpu
+        const reformatted: MerchantDocument[] = record.map((row) => {
           dbOutputTime(row);
-          row.owner_dob = moment(row.owner_dob).format('YYYY-MM DD');
-          delete row.owner_password;
+          const x = new MerchantDocument(row);
+          return x;
         });
 
         const list_result: ListResponse = {
-          total_item: totalItems,
+          total_item: totalCount,
           limit: Number(perPage),
           current_page: Number(currentPage),
-          items: result,
+          items: reformatted,
         };
         return list_result;
       })
