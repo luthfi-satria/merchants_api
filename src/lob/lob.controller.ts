@@ -22,6 +22,8 @@ import { LobService } from './lob.service';
 import { MerchantLobValidation } from './validation/lob.validation';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { LobDocument } from 'src/database/entities/lob.entity';
+import { AuthJwtGuard } from 'src/auth/auth.decorators';
+import { UserType } from 'src/auth/guard/user-type.decorator';
 
 @Controller('api/v1/merchants')
 export class LobController {
@@ -32,29 +34,14 @@ export class LobController {
   ) {}
 
   @Post('lob')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async createlob(
     @Body(RequestValidationPipe(MerchantLobValidation))
     data: MerchantLobValidation,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.createlob.invalid_token'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -143,6 +130,8 @@ export class LobController {
   }
 
   @Put('lob/:id')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async updatelob(
     @Body(RequestValidationPipe(MerchantLobValidation))
@@ -150,22 +139,6 @@ export class LobController {
     @Param('id') id: string,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.createlob.invalid_token'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
     const result: LobDocument = await this.lobService.findMerchantById(id);
 
     if (!result) {
@@ -272,27 +245,13 @@ export class LobController {
   }
 
   @Delete('lob/:id')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async deletegroups(
     @Param('id') id: string,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.createlob.invalid_token'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -376,6 +335,8 @@ export class LobController {
   }
 
   @Get('lob')
+  @UserType('admin', 'merchant')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async getgroups(@Query() data: string[]): Promise<any> {
     const listgroup: any = await this.lobService.listGroup(data);
