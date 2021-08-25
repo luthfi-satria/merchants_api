@@ -59,4 +59,8 @@ export class GroupDocument {
 
   @OneToMany(() => MerchantDocument, (merchant) => merchant.group)
   merchants: MerchantDocument[];
+
+  constructor(init?: Partial<GroupDocument>) {
+    Object.assign(this, init);
+  }
 }
