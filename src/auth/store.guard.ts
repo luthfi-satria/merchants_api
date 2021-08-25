@@ -25,7 +25,11 @@ export class RoleStoreGuard implements CanActivate {
       property: property,
       constraint: [errorMessage],
     };
-    return this.responseService.error(HttpStatus.UNAUTHORIZED, errors, 'Role Unauthorize');
+    return this.responseService.error(
+      HttpStatus.UNAUTHORIZED,
+      errors,
+      'Role Unauthorize',
+    );
   }
 
   async canActivate(_context: ExecutionContext) {
