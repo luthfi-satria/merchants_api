@@ -450,20 +450,24 @@ export class MerchantsService {
     search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
-    // let totalItems: number;
 
     const merchant = this.merchantRepository
       .createQueryBuilder('merchant_merchant')
+      .leftJoinAndSelect(
+        'merchant_merchant.group',
+        'mc_group',
+        'mc_group.id = merchant_merchant.group_id',
+      )
       .where(
         new Brackets((query) => {
           query
-            .orWhere('lower(name) like :mname', {
+            .where('lower(merchant_merchant.name) like :mname', {
               mname: '%' + search + '%',
             })
-            .orWhere('lower(address) like :addr', {
+            .orWhere('lower(merchant_merchant.address) like :addr', {
               addr: '%' + search + '%',
             })
-            .orWhere('lower(owner_name) like :oname', {
+            .orWhere('lower(merchant_merchant.owner_name) like :oname', {
               oname: '%' + search + '%',
             })
             .orWhere('lower(owner_email) like :omail', {
@@ -472,7 +476,7 @@ export class MerchantsService {
             .orWhere('lower(owner_phone) like :ophone', {
               ophone: '%' + search + '%',
             })
-            .orWhere('lower(owner_password) like :opass', {
+            .orWhere('lower(merchant_merchant.owner_password) like :opass', {
               opass: '%' + search + '%',
             })
             .orWhere('lower(owner_nik) like :onik', {
@@ -499,7 +503,7 @@ export class MerchantsService {
       merchant.andWhere('group_id = :group_id', { group_id });
     }
     merchant
-      .orderBy('created_at', 'DESC')
+      .orderBy('merchant_merchant.created_at', 'DESC')
       .offset((currentPage - 1) * perPage)
       .limit(perPage);
 

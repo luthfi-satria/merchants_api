@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { MerchantDocument } from './merchant.entity';
 
 export enum GroupStatus {
   Waiting_approval = 'WAITING_APPROVAL',
@@ -54,4 +56,11 @@ export class GroupDocument {
 
   @UpdateDateColumn({ type: 'timestamptz', default: () => 'LOCALTIMESTAMP' })
   updated_at: Date | string;
+
+  @OneToMany(() => MerchantDocument, (merchant) => merchant.group)
+  merchants: MerchantDocument[];
+
+  constructor(init?: Partial<GroupDocument>) {
+    Object.assign(this, init);
+  }
 }
