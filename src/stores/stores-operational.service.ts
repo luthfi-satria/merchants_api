@@ -55,8 +55,7 @@ export class StoreOperationalService {
     try {
       return await this.storeOperationalRepository
         .update(id, {
-          open_hour: '00:00',
-          close_hour: '23:59',
+          is_open_24h: true,
         })
         .catch((e) => {
           throw e;
@@ -96,8 +95,7 @@ export class StoreOperationalService {
     try {
       return await this.storeOperationalRepository
         .update(id, {
-          open_hour: '08:00',
-          close_hour: '17:00',
+          is_open_24h: false,
         })
         .catch((e) => {
           throw e;
