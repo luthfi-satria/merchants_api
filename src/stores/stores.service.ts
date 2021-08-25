@@ -23,7 +23,7 @@ import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { StoreOperationalService } from './stores-operational.service';
-import { format, utcToZonedTime } from 'date-fns-tz';
+import { DateTimeUtils } from 'src/utils/date-time-utils';
 
 @Injectable()
 export class StoresService {
@@ -580,11 +580,8 @@ export class StoresService {
     let totalItems: number;
 
     // evaluate store operational hour
-    const currTime = format(
-      utcToZonedTime(new Date(), 'Asia/Jakarta'),
-      'HH:mm',
-    );
-    const weekOfDay = parseInt(format(new Date(), 'i'), 10) - 1; // week of day, monday start at 0;
+    const currTime = DateTimeUtils.DateTimeToWIB(new Date());
+    const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
 
     if (merchant.user_type == 'merchant') {
       return await this.storeRepository
