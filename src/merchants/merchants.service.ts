@@ -500,13 +500,13 @@ export class MerchantsService {
             'mc_group',
             'merchant_merchant.group_id = mc_group.id',
           )
-          .where('lower(name) like :mname', {
+          .where('lower(merchant_merchant.name) like :mname', {
             mname: '%' + search + '%',
           })
-          .orWhere('lower(address) like :addr', {
+          .orWhere('lower(merchant_merchant.address) like :addr', {
             addr: '%' + search + '%',
           })
-          .orWhere('lower(owner_name) like :oname', {
+          .orWhere('lower(merchant_merchant.owner_name) like :oname', {
             oname: '%' + search + '%',
           })
           .orWhere('lower(owner_email) like :omail', {
@@ -515,7 +515,7 @@ export class MerchantsService {
           .orWhere('lower(owner_phone) like :ophone', {
             ophone: '%' + search + '%',
           })
-          .orWhere('lower(owner_password) like :opass', {
+          .orWhere('lower(merchant_merchant.owner_password) like :opass', {
             opass: '%' + search + '%',
           })
           .orWhere('lower(owner_nik) like :onik', {
@@ -536,7 +536,7 @@ export class MerchantsService {
           .orWhere('lower(tarif_pb1) like :tpb', {
             tpb: '%' + search + '%',
           })
-          .orderBy('created_at', 'DESC')
+          .orderBy('merchant_merchant.created_at', 'DESC')
           .offset((currentPage - 1) * perPage)
           .limit(perPage)
           .getRawMany();
