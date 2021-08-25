@@ -10,7 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { ListResponse, RMessage } from 'src/response/response.interface';
 import { dbOutputTime } from 'src/utils/general-utils';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
@@ -444,128 +444,197 @@ export class MerchantsService {
 
   async listGroupMerchant(
     data: Record<string, any>,
+    group_id: string,
   ): Promise<Record<string, any>> {
     let search = data.search || '';
     search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
-    let totalItems: number;
+    // let totalItems: number;
 
-    return await this.merchantRepository
+    const merchant = this.merchantRepository
       .createQueryBuilder('merchant_merchant')
-      .select('*')
-      .orWhere('lower(name) like :mname', {
-        mname: '%' + search + '%',
-      })
-      .orWhere('lower(address) like :addr', {
-        addr: '%' + search + '%',
-      })
-      .orWhere('lower(owner_name) like :oname', {
-        oname: '%' + search + '%',
-      })
-      .orWhere('lower(owner_email) like :omail', {
-        omail: '%' + search + '%',
-      })
-      .orWhere('lower(owner_phone) like :ophone', {
-        ophone: '%' + search + '%',
-      })
-      .orWhere('lower(owner_password) like :opass', {
-        opass: '%' + search + '%',
-      })
-      .orWhere('lower(owner_nik) like :onik', {
-        onik: '%' + search + '%',
-      })
-      .orWhere('lower(owner_dob_city) like :odc', {
-        odc: '%' + search + '%',
-      })
-      .orWhere('lower(owner_address) like :oaddr', {
-        oaddr: '%' + search + '%',
-      })
-      .orWhere('lower(bank_acc_name) like :ban', {
-        ban: '%' + search + '%',
-      })
-      .orWhere('lower(bank_acc_number) like :banu', {
-        banu: '%' + search + '%',
-      })
-      .orWhere('lower(tarif_pb1) like :tpb', {
-        tpb: '%' + search + '%',
-      })
-      .getCount()
-      .then(async (counts) => {
-        totalItems = counts;
-        return await this.merchantRepository
-          .createQueryBuilder('merchant_merchant')
-          .select('*')
-          .where('lower(name) like :mname', {
-            mname: '%' + search + '%',
-          })
-          .orWhere('lower(address) like :addr', {
-            addr: '%' + search + '%',
-          })
-          .orWhere('lower(owner_name) like :oname', {
-            oname: '%' + search + '%',
-          })
-          .orWhere('lower(owner_email) like :omail', {
-            omail: '%' + search + '%',
-          })
-          .orWhere('lower(owner_phone) like :ophone', {
-            ophone: '%' + search + '%',
-          })
-          .orWhere('lower(owner_password) like :opass', {
-            opass: '%' + search + '%',
-          })
-          .orWhere('lower(owner_nik) like :onik', {
-            onik: '%' + search + '%',
-          })
-          .orWhere('lower(owner_dob_city) like :odc', {
-            odc: '%' + search + '%',
-          })
-          .orWhere('lower(owner_address) like :oaddr', {
-            oaddr: '%' + search + '%',
-          })
-          .orWhere('lower(bank_acc_name) like :ban', {
-            ban: '%' + search + '%',
-          })
-          .orWhere('lower(bank_acc_number) like :banu', {
-            banu: '%' + search + '%',
-          })
-          .orWhere('lower(tarif_pb1) like :tpb', {
-            tpb: '%' + search + '%',
-          })
-          .orderBy('created_at', 'DESC')
-          .offset((currentPage - 1) * perPage)
-          .limit(perPage)
-          .getRawMany();
-      })
-      .then((result) => {
-        result.forEach((row) => {
-          dbOutputTime(row);
-          row.owner_dob = moment(row.owner_dob).format('YYYY-MM DD');
-          delete row.owner_password;
-        });
+      .where(
+        new Brackets((query) => {
+          query
+            .orWhere('lower(name) like :mname', {
+              mname: '%' + search + '%',
+            })
+            .orWhere('lower(address) like :addr', {
+              addr: '%' + search + '%',
+            })
+            .orWhere('lower(owner_name) like :oname', {
+              oname: '%' + search + '%',
+            })
+            .orWhere('lower(owner_email) like :omail', {
+              omail: '%' + search + '%',
+            })
+            .orWhere('lower(owner_phone) like :ophone', {
+              ophone: '%' + search + '%',
+            })
+            .orWhere('lower(owner_password) like :opass', {
+              opass: '%' + search + '%',
+            })
+            .orWhere('lower(owner_nik) like :onik', {
+              onik: '%' + search + '%',
+            })
+            .orWhere('lower(owner_dob_city) like :odc', {
+              odc: '%' + search + '%',
+            })
+            .orWhere('lower(owner_address) like :oaddr', {
+              oaddr: '%' + search + '%',
+            })
+            .orWhere('lower(bank_acc_name) like :ban', {
+              ban: '%' + search + '%',
+            })
+            .orWhere('lower(bank_acc_number) like :banu', {
+              banu: '%' + search + '%',
+            })
+            .orWhere('lower(tarif_pb1) like :tpb', {
+              tpb: '%' + search + '%',
+            });
+        }),
+      );
+    if (group_id) {
+      merchant.andWhere('group_id = :group_id', { group_id });
+    }
+    merchant
+      .orderBy('created_at', 'DESC')
+      .offset((currentPage - 1) * perPage)
+      .limit(perPage);
 
-        const list_result: ListResponse = {
-          total_item: totalItems,
-          limit: Number(perPage),
-          current_page: Number(currentPage),
-          items: result,
-        };
-        return list_result;
-      })
-      .catch((err) => {
-        const errors: RMessage = {
-          value: '',
-          property: '',
-          constraint: [err.message],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      });
+    const totalItems = await merchant.getCount();
+    const list = await merchant.getMany();
+    list.map((element) => {
+      const output = dbOutputTime(element);
+      output.owner_dob = moment(element.owner_dob).format('YYYY-MM-DD');
+      delete output.owner_password;
+      return output;
+    });
+
+    const list_result: ListResponse = {
+      total_item: totalItems,
+      limit: Number(perPage),
+      current_page: Number(currentPage),
+      items: list,
+    };
+    return list_result;
+
+    // return await this.merchantRepository
+    //   .createQueryBuilder('merchant_merchant')
+    //   .select('*')
+    //   .orWhere('lower(name) like :mname', {
+    //     mname: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(address) like :addr', {
+    //     addr: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(owner_name) like :oname', {
+    //     oname: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(owner_email) like :omail', {
+    //     omail: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(owner_phone) like :ophone', {
+    //     ophone: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(owner_password) like :opass', {
+    //     opass: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(owner_nik) like :onik', {
+    //     onik: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(owner_dob_city) like :odc', {
+    //     odc: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(owner_address) like :oaddr', {
+    //     oaddr: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(bank_acc_name) like :ban', {
+    //     ban: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(bank_acc_number) like :banu', {
+    //     banu: '%' + search + '%',
+    //   })
+    //   .orWhere('lower(tarif_pb1) like :tpb', {
+    //     tpb: '%' + search + '%',
+    //   })
+    //   .getCount()
+    //   .then(async (counts) => {
+    //     totalItems = counts;
+    //     return await this.merchantRepository
+    //       .createQueryBuilder('merchant_merchant')
+    //       .select('*')
+    //       .where('lower(name) like :mname', {
+    //         mname: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(address) like :addr', {
+    //         addr: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(owner_name) like :oname', {
+    //         oname: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(owner_email) like :omail', {
+    //         omail: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(owner_phone) like :ophone', {
+    //         ophone: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(owner_password) like :opass', {
+    //         opass: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(owner_nik) like :onik', {
+    //         onik: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(owner_dob_city) like :odc', {
+    //         odc: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(owner_address) like :oaddr', {
+    //         oaddr: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(bank_acc_name) like :ban', {
+    //         ban: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(bank_acc_number) like :banu', {
+    //         banu: '%' + search + '%',
+    //       })
+    //       .orWhere('lower(tarif_pb1) like :tpb', {
+    //         tpb: '%' + search + '%',
+    //       })
+    //       .orderBy('created_at', 'DESC')
+    //       .offset((currentPage - 1) * perPage)
+    //       .limit(perPage)
+    //       .getRawMany();
+    //   })
+    //   .then((result) => {
+    //     result.forEach((row) => {
+    //       dbOutputTime(row);
+    //       row.owner_dob = moment(row.owner_dob).format('YYYY-MM DD');
+    //       delete row.owner_password;
+    //     });
+
+    //     const list_result: ListResponse = {
+    //       total_item: totalItems,
+    //       limit: Number(perPage),
+    //       current_page: Number(currentPage),
+    //       items: result,
+    //     };
+    //     return list_result;
+    //   })
+    //   .catch((err) => {
+    //     const errors: RMessage = {
+    //       value: '',
+    //       property: '',
+    //       constraint: [err.message],
+    //     };
+    //     throw new BadRequestException(
+    //       this.responseService.error(
+    //         HttpStatus.BAD_REQUEST,
+    //         errors,
+    //         'Bad Request',
+    //       ),
+    //     );
+    //   });
   }
 
   async createCatalogs(data: Record<string, any>) {

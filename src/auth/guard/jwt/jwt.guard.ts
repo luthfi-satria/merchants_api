@@ -105,7 +105,7 @@ export class JwtGuard extends AuthGuard('jwt') {
       this.user_type_and_levels &&
       !this.user_type_and_levels.includes(loggedInUser.user_type + '.*') &&
       !this.user_type_and_levels.includes(
-        loggedInUser.user_type + loggedInUser.level,
+        loggedInUser.user_type + '.' + loggedInUser.level,
       )
     ) {
       logger.error('AuthJwtGuardError.Forbidden');

@@ -479,8 +479,15 @@ export class MerchantsController {
   @UserTypeAndLevel('admin.*', 'merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async getmerchants(@Query() data: string[]): Promise<any> {
-    const listgroup: any = await this.merchantsService.listGroupMerchant(data);
+  async getmerchants(@Req() req: any, @Query() data: string[]): Promise<any> {
+    let group_id = null;
+    if (req.user.user_type == 'merchant' && req.user.level == 'group') {
+      group_id = req.user.group_id;
+    }
+    const listgroup: any = await this.merchantsService.listGroupMerchant(
+      data,
+      group_id,
+    );
     if (!listgroup) {
       const errors: RMessage = {
         value: '',
