@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
+import merchant from 'src/message/languages/en/merchant';
+import id from 'src/message/languages/id';
 import { Repository } from 'typeorm';
 import { IStoreOperationalPayload } from './types';
 
@@ -108,9 +110,24 @@ export class StoreOperationalService {
 
   public async updateStoreOpenStatus(merchant_id: string, is_open: boolean) {
     try {
+      const weekDays = Array.from(Array(7)).map((e) => ({ is_open: is_open }));
       const result = await this.storesRepository
         .update(merchant_id, {
           is_store_open: is_open,
+        })
+        .then(async (res) => {
+          await Promise.all(
+            weekDays.map(async (day) => {
+              await this.storeOperationalRepository.update(
+                { merchant_store_id: merchant_id },
+                {
+                  is_open: day.is_open,
+                },
+              );
+            }),
+          );
+
+          return res;
         })
         .catch((e) => {
           throw e;
