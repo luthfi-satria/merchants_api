@@ -31,6 +31,9 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { StoreOperationalService } from './stores-operational.service';
+import { AuthJwtGuard } from 'src/auth/auth.decorators';
+import { UserType } from 'src/auth/guard/user-type.decorator';
+import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -44,6 +47,8 @@ export class StoresController {
   ) {}
 
   @Post('stores')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
     AnyFilesInterceptor({
@@ -61,22 +66,6 @@ export class StoresController {
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'UNAUTHORIZED',
-        ),
-      );
-    }
     this.imageValidationService
       .setFilter('upload_photo', 'required')
       .setFilter('upload_banner', 'required');
@@ -222,6 +211,8 @@ export class StoresController {
   }
 
   @Put('stores/:id')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
     AnyFilesInterceptor({
@@ -240,22 +231,6 @@ export class StoresController {
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'UNAUTHORIZED',
-        ),
-      );
-    }
     await this.imageValidationService.validate(req);
 
     const url: string =
@@ -321,28 +296,13 @@ export class StoresController {
   }
 
   @Delete('stores/:id')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async deletestores(
     @Param('id') id: string,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'UNAUTHORIZED',
-        ),
-      );
-    }
-
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -392,6 +352,8 @@ export class StoresController {
   }
 
   @Get('stores')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async getsores(
     @Query() data: string[],

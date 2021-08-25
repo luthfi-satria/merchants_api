@@ -29,6 +29,8 @@ import { MerchantGroupValidation } from './validation/groups.validation';
 import { catchError, map } from 'rxjs';
 import { DeleteResult } from 'typeorm';
 import { ImageValidationService } from 'src/utils/image-validation.service';
+import { AuthJwtGuard } from 'src/auth/auth.decorators';
+import { UserType } from 'src/auth/guard/user-type.decorator';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -40,6 +42,8 @@ export class GroupsController {
   ) {}
 
   @Post('groups')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
     FileInterceptor('owner_ktp', {
@@ -57,22 +61,6 @@ export class GroupsController {
     @UploadedFile() file: Express.Multer.File,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'Unauthorized',
-        ),
-      );
-    }
     this.imageValidationService.setFilter('owner_ktp', 'required');
     await this.imageValidationService.validate(req);
 
@@ -183,6 +171,8 @@ export class GroupsController {
   }
 
   @Put('groups/:id')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
     FileInterceptor('owner_ktp', {
@@ -201,22 +191,6 @@ export class GroupsController {
     @UploadedFile() file: Express.Multer.File,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'Unauthorized',
-        ),
-      );
-    }
     this.imageValidationService.setFilter('owner_ktp', 'required');
     await this.imageValidationService.validate(req);
 
@@ -330,27 +304,13 @@ export class GroupsController {
   }
 
   @Delete('groups/:id')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async deletegroups(
     @Param('id') id: string,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'UNAUTHORIZED',
-        ),
-      );
-    }
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -417,27 +377,13 @@ export class GroupsController {
   }
 
   @Get('groups')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async getgroups(
     @Query() data: string[],
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.creategroup.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'UNAUTHORIZED',
-        ),
-      );
-    }
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
