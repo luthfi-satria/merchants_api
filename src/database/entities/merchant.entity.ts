@@ -1,10 +1,14 @@
+
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { GroupDocument } from './group.entity';
 
 export enum GroupStatus {
   Waiting_approval = 'WAITING_APPROVAL',
@@ -87,4 +91,8 @@ export class MerchantDocument {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
+
+  @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants)
+  @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })
+  group: GroupDocument;
 }
