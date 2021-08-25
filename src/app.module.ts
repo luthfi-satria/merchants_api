@@ -16,6 +16,7 @@ import { LoginModule } from './login/login.module';
 import { QueryModule } from './query/query.module';
 import { CommonModule } from './common/common.module';
 import { InternalModule } from './internal/internal.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { InternalModule } from './internal/internal.module';
     QueryModule,
     CommonModule,
     InternalModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

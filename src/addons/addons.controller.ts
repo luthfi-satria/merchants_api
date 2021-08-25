@@ -10,7 +10,6 @@ import {
   Put,
   Query,
   Headers,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -24,6 +23,8 @@ import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { AddonsService } from './addons.service';
 import { MerchantAddonsValidation } from './validation/addons.validation';
 import { AddonDocument } from 'src/database/entities/addons.entity';
+import { UserType } from 'src/auth/guard/user-type.decorator';
+import { AuthJwtGuard } from 'src/auth/auth.decorators';
 
 @Controller('api/v1/merchants')
 export class AddonsController {
@@ -34,29 +35,14 @@ export class AddonsController {
   ) {}
 
   @Post('addons')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async createaddon(
     @Body(RequestValidationPipe(MerchantAddonsValidation))
     data: MerchantAddonsValidation,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.createaddon.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'UNAUTHORIZED',
-        ),
-      );
-    }
-
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -74,22 +60,6 @@ export class AddonsController {
               HttpStatus.BAD_REQUEST,
               rsp.message[0],
               'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.createaddon.invalid_token'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'UNAUTHORIZED',
             ),
           );
         }
@@ -145,29 +115,15 @@ export class AddonsController {
   }
 
   @Put('addons/:id')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async updateaddon(
-    @Body(RequestValidationPipe(MerchantAddonsValidation))
+    @Body()
     data: MerchantAddonsValidation,
     @Param('id') id: string,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.createaddon.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'UNAUTHORIZED',
-        ),
-      );
-    }
     const result: AddonDocument = await this.addonService.findAddonById(id);
 
     if (!result) {
@@ -203,22 +159,6 @@ export class AddonsController {
               HttpStatus.BAD_REQUEST,
               rsp.message[0],
               'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.createaddon.invalid_token'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'UNAUTHORIZED',
             ),
           );
         }
@@ -274,27 +214,13 @@ export class AddonsController {
   }
 
   @Delete('addons/:id')
+  @UserType('admin')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async deletegroups(
     @Param('id') id: string,
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [
-          this.messageService.get('merchant.createaddon.invalid_token'),
-        ],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'UNAUTHORIZED',
-        ),
-      );
-    }
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
@@ -312,22 +238,6 @@ export class AddonsController {
               HttpStatus.BAD_REQUEST,
               rsp.message[0],
               'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.createaddon.invalid_token'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'UNAUTHORIZED',
             ),
           );
         }
@@ -378,6 +288,8 @@ export class AddonsController {
   }
 
   @Get('addons')
+  @UserType('admin', 'merchant')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async getgroups(@Query() data: string[]): Promise<any> {
     const listgroup: any = await this.addonService.listGroup(data);
