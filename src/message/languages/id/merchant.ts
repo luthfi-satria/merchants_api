@@ -4,6 +4,10 @@ export default {
     empty_token: 'Kode Token tidak ada.',
     invalid_token: 'Kode Token tidak valid.',
     empty_photo: 'File photo kosong.',
+    idNotFound: {
+      code: 'INVALID_ID',
+      message: 'ID tidak ditemukan.',
+    },
   },
   creategroup: {
     success: 'SUCCESS',

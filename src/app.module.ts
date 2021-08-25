@@ -15,6 +15,7 @@ import { AddonsModule } from './addons/addons.module';
 import { LoginModule } from './login/login.module';
 import { QueryModule } from './query/query.module';
 import { CommonModule } from './common/common.module';
+import { InternalModule } from './internal/internal.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { CommonModule } from './common/common.module';
     LoginModule,
     QueryModule,
     CommonModule,
+    InternalModule,
   ],
   controllers: [AppController],
   providers: [AppService],
