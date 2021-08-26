@@ -614,7 +614,7 @@ export class StoresService {
             }),
           );
         }),
-      )
+      );
     if (search) {
       store.andWhere(
         new Brackets((qb) => {
