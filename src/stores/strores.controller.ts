@@ -359,28 +359,13 @@ export class StoresController {
     @Query() data: string[],
     @Headers('Authorization') token: string,
   ): Promise<any> {
-    if (typeof token == 'undefined' || token == 'undefined') {
-      const errors: RMessage = {
-        value: '',
-        property: 'token',
-        constraint: [this.messageService.get('merchant.general.invalid_token')],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'UNAUTHORIZED',
-        ),
-      );
-    }
-
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
     const headersRequest: Record<string, any> = {
       'Content-Type': 'application/json',
       Authorization: token,
     };
-    const merchant: Record<string, string> = {
+    const param_list_group_store: Record<string, string> = {
       user_type: '',
       id: '',
     };
@@ -418,12 +403,12 @@ export class StoresController {
           );
         }
         if (response.data.payload.level == 'merchant') {
-          merchant.user_type = 'merchant';
-          merchant.id = response.data.payload.merchant_id;
+          param_list_group_store.user_type = 'merchant';
+          param_list_group_store.id = response.data.payload.merchant_id;
         }
         const listgroup: any = await this.storesService.listGroupStore(
           data,
-          merchant,
+          param_list_group_store,
         );
         if (!listgroup) {
           const errors: RMessage = {

@@ -2,20 +2,27 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { ColumnNumericTransformer } from '../helper/column_numberic_transformer';
 import { AddonDocument } from './addons.entity';
+import { MerchantDocument } from './merchant.entity';
 import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
 
 @Entity({ name: 'merchant_store' })
 export class StoreDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @ManyToOne(() => MerchantDocument, (merchant) => merchant.id)
+  @JoinColumn({ name: 'merchant_id' })
+  merchant: MerchantDocument;
 
   @Column('uuid')
   merchant_id: string;

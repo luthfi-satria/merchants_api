@@ -56,30 +56,6 @@ export class JwtGuard extends AuthGuard('jwt') {
       throw new InternalServerErrorException(err);
     }
     const loggedInUser: User = user;
-    console.log(
-      '===========================Start Debug this.user_type_and_levels=================================\n',
-      new Date(Date.now()).toLocaleString(),
-      '\n',
-      user,
-      '\n',
-      loggedInUser,
-      '\n',
-      this.user_type_and_levels,
-      '\n',
-      !this.user_type_and_levels.includes(loggedInUser.user_type + '.*') +
-        ' = ' +
-        loggedInUser.user_type +
-        '.*',
-      '\n',
-      !this.user_type_and_levels.includes(
-        loggedInUser.user_type + loggedInUser.level,
-      ) +
-        ' = ' +
-        loggedInUser.user_type +
-        loggedInUser.level +
-        '.*',
-      '\n============================End Debug this.user_type_and_levels==================================',
-    );
 
     if (!loggedInUser) {
       let error_message = [this.messageService.get('auth.token.invalid_token')];
@@ -108,6 +84,28 @@ export class JwtGuard extends AuthGuard('jwt') {
         loggedInUser.user_type + '.' + loggedInUser.level,
       )
     ) {
+      console.log(
+        '===========================Start Error Forbidden Access=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        user,
+        '\n',
+        this.user_type_and_levels,
+        '\n',
+        !this.user_type_and_levels.includes(loggedInUser.user_type + '.*') +
+          ' = ' +
+          loggedInUser.user_type +
+          '.*',
+        '\n',
+        !this.user_type_and_levels.includes(
+          loggedInUser.user_type + loggedInUser.level,
+        ) +
+          ' = ' +
+          loggedInUser.user_type +
+          '.' +
+          loggedInUser.level,
+        '\n============================End Error Forbidden Access==================================',
+      );
       logger.error('AuthJwtGuardError.Forbidden');
       const errors: RMessage = {
         value: '',

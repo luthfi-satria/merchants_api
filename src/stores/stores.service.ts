@@ -571,13 +571,13 @@ export class StoresService {
 
   async listGroupStore(
     data: Record<string, any>,
-    merchant: Record<string, string>,
+    param_usertype: Record<string, string>,
   ): Promise<Record<string, any>> {
     let search = data.search || '';
     search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
-    let totalItems: number;
+    // let totalItems: number;
 
     // evaluate store operational hour
     const currTime = format(
@@ -586,315 +586,417 @@ export class StoresService {
     );
     const weekOfDay = parseInt(format(new Date(), 'i'), 10) - 1; // week of day, monday start at 0;
 
-    if (merchant.user_type == 'merchant') {
-      return await this.storeRepository
-        .createQueryBuilder('merchant_store')
-        .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-        .leftJoinAndSelect(
-          'merchant_store.operational_hours',
-          'operational_hours',
-          'operational_hours.merchant_store_id = merchant_store.id',
-        )
-        .where('merchant_store.is_store_open = :is_open', { is_open: true })
-        .andWhere(
-          new Brackets((qb) => {
-            qb.where(':currTime >= operational_hours.open_hour', {
-              currTime: currTime,
-            });
-            qb.andWhere(':currTime < operational_hours.close_hour', {
-              currTime: currTime,
-            });
-            qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
-              weekOfDay: weekOfDay,
-            });
-          }),
-        )
-        .andWhere(
-          new Brackets((qb) => {
-            qb.where('(lower(merchant_store.name) like :mname', {
-              mname: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.phone) like :sname', {
-              sname: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
-              shp: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.owner_email) like :smail', {
-              smail: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.address) like :astrore', {
-              astrore: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.post_code) like :pcode', {
-              pcode: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.guidance) like :guidance', {
-              guidance: '%' + search + '%',
-            });
-            // .orWhere('merchant_store.location_longitude = :long', {
-            //   long: search,
-            // })
-            // .orWhere('merchant_store.location_latitude = :lat)', {
-            //   lat: search,
-            // })
-          }),
-        )
-        .andWhere('merchant_store.merchant_id = :mid', { mid: merchant.id })
-        .getCount()
-        .then(async (counts) => {
-          totalItems = counts;
-          return await this.storeRepository
-            .createQueryBuilder('merchant_store')
-            .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-            .leftJoinAndSelect(
-              'merchant_store.operational_hours',
-              'operational_hours',
-              'operational_hours.merchant_store_id = merchant_store.id',
-            )
-            .where('merchant_store.is_store_open = :is_open', { is_open: true })
-            .andWhere(
-              new Brackets((qb) => {
-                qb.where(':currTime >= operational_hours.open_hour', {
-                  currTime: currTime,
-                });
-                qb.andWhere(':currTime < operational_hours.close_hour', {
-                  currTime: currTime,
-                });
-                qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
-                  weekOfDay: weekOfDay,
-                });
-              }),
-            )
-            .andWhere(
-              new Brackets((qb) => {
-                qb.where('(lower(merchant_store.name) like :mname', {
-                  mname: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.phone) like :sname', {
-                  sname: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
-                  shp: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.owner_email) like :smail', {
-                  smail: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.address) like :astrore', {
-                  astrore: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.post_code) like :pcode', {
-                  pcode: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.guidance) like :guidance', {
-                  guidance: '%' + search + '%',
-                });
-                // .orWhere('merchant_store.location_longitude = :long', {
-                //   long: search,
-                // })
-                // .orWhere('merchant_store.location_latitude = :lat)', {
-                //   lat: search,
-                // })
-              }),
-            )
-            .andWhere('merchant_store.merchant_id = :mid', { mid: merchant.id })
-            .orderBy('merchant_store.created_at', 'DESC')
-            .offset((currentPage - 1) * perPage)
-            .limit(perPage)
-            .getMany();
-        })
-        .then((result) => {
-          result.forEach((row) => {
-            dbOutputTime(row);
-            delete row.owner_password;
-            row.service_addon.forEach((sao) => {
-              delete sao.created_at;
-              delete sao.updated_at;
-            });
+    const store = this.storeRepository
+      .createQueryBuilder('merchant_store')
+      .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
+      .leftJoinAndSelect(
+        'merchant_store.operational_hours',
+        'operational_hours',
+        'operational_hours.merchant_store_id = merchant_store.id',
+      )
+      .where('merchant_store.is_store_open = :is_open', { is_open: true })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where(':currTime >= operational_hours.open_hour', {
+            currTime: currTime,
           });
-          const list_result: ListResponse = {
-            total_item: totalItems,
-            limit: Number(perPage),
-            current_page: Number(currentPage),
-            items: result,
-          };
-          return list_result;
-        })
-        .catch((err) => {
-          const errors: RMessage = {
-            value: '',
-            property: '',
-            constraint: [
-              this.messageService.getjson({
-                code: 'DB_ERROR',
-                message: err.message,
-              }),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        });
-    } else {
-      return await this.storeRepository
-        .createQueryBuilder('merchant_store')
-        .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-        .leftJoinAndSelect(
-          'merchant_store.operational_hours',
-          'operational_hours',
-          'operational_hours.merchant_store_id = merchant_store.id',
-        )
-        .where('merchant_store.is_store_open = :is_open', { is_open: true })
-        .andWhere(
-          new Brackets((qb) => {
-            qb.where(':currTime >= operational_hours.open_hour', {
-              currTime: currTime,
-            });
-            qb.andWhere(':currTime < operational_hours.close_hour', {
-              currTime: currTime,
-            });
-            qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
-              weekOfDay: weekOfDay,
-            });
-          }),
-        )
-        .andWhere(
-          new Brackets((qb) => {
-            qb.where('lower(merchant_store.name) like :mname', {
-              mname: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.phone) like :sname', {
-              sname: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
-              shp: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.owner_email) like :smail', {
-              smail: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.address) like :astrore', {
-              astrore: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.post_code) like :pcode', {
-              pcode: '%' + search + '%',
-            });
-            qb.orWhere('lower(merchant_store.guidance) like :guidance', {
-              guidance: '%' + search + '%',
-            });
-            // .orWhere('merchant_store.location_longitude = :long', {
-            //   long: search,
-            // })
-            // .orWhere('merchant_store.location_latitude = :lat', {
-            //   lat: search,
-            // })
-          }),
-        )
-        .getCount()
-        .then(async (counts) => {
-          totalItems = counts;
-          return await this.storeRepository
-            .createQueryBuilder('merchant_store')
-            .leftJoinAndSelect(
-              'merchant_store.operational_hours',
-              'operational_hours',
-              'operational_hours.merchant_store_id = merchant_store.id',
-            )
-            .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-            .where('merchant_store.is_store_open = :is_open', { is_open: true })
-            .andWhere(
-              new Brackets((qb) => {
-                qb.where(':currTime >= operational_hours.open_hour', {
-                  currTime: currTime,
-                });
-                qb.andWhere(':currTime < operational_hours.close_hour', {
-                  currTime: currTime,
-                });
-                qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
-                  weekOfDay: weekOfDay,
-                });
-              }),
-            )
-            .andWhere(
-              new Brackets((qb) => {
-                qb.where('lower(merchant_store.name) like :mname', {
-                  mname: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.phone) like :sname', {
-                  sname: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
-                  shp: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.owner_email) like :smail', {
-                  smail: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.address) like :astrore', {
-                  astrore: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.post_code) like :pcode', {
-                  pcode: '%' + search + '%',
-                });
-                qb.orWhere('lower(merchant_store.guidance) like :guidance', {
-                  guidance: '%' + search + '%',
-                });
-                // .orWhere('merchant_store.location_longitude = :long', {
-                //   long: search,
-                // })
-                // .orWhere('merchant_store.location_latitude = :lat', {
-                //   lat: search,
-                // })
-              }),
-            )
-            .orderBy('merchant_store.created_at', 'ASC')
-            .offset((currentPage - 1) * perPage)
-            .limit(perPage)
-            .getMany();
-        })
-        .then((result) => {
-          result.forEach((row) => {
-            dbOutputTime(row);
-            delete row.owner_password;
-            row.service_addon.forEach((sao) => {
-              delete sao.created_at;
-              delete sao.updated_at;
-            });
-            row.operational_hours.forEach((oph) => {
-              delete oph.created_at;
-              delete oph.updated_at;
-            });
+          qb.andWhere(':currTime < operational_hours.close_hour', {
+            currTime: currTime,
           });
-          const list_result: ListResponse = {
-            total_item: totalItems,
-            limit: Number(perPage),
-            current_page: Number(currentPage),
-            items: result,
-          };
-          return list_result;
-        })
-        .catch((err) => {
-          const errors: RMessage = {
-            value: '',
-            property: '',
-            constraint: [
-              this.messageService.getjson({
-                code: 'DB_ERROR',
-                message: err.message,
-              }),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
+          qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+            weekOfDay: weekOfDay,
+          });
+        }),
+      );
+    if (search) {
+      store.andWhere(
+        new Brackets((qb) => {
+          qb.where('lower(merchant_store.name) like :mname', {
+            mname: '%' + search + '%',
+          });
+          qb.orWhere('lower(merchant_store.phone) like :sname', {
+            sname: '%' + search + '%',
+          });
+          qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
+            shp: '%' + search + '%',
+          });
+          qb.orWhere('lower(merchant_store.owner_email) like :smail', {
+            smail: '%' + search + '%',
+          });
+          qb.orWhere('lower(merchant_store.address) like :astrore', {
+            astrore: '%' + search + '%',
+          });
+          qb.orWhere('lower(merchant_store.post_code) like :pcode', {
+            pcode: '%' + search + '%',
+          });
+          qb.orWhere('lower(merchant_store.guidance) like :guidance', {
+            guidance: '%' + search + '%',
+          });
+        }),
+      );
+    }
+
+    if (param_usertype.user_type && param_usertype.user_type == 'merchant') {
+      store.andWhere('merchant_store.merchant_id = :mid', {
+        mid: param_usertype.id,
+      });
+    } else if (
+      param_usertype.user_type &&
+      param_usertype.user_type == 'group'
+    ) {
+      store
+        .innerJoin('merchant_store.merchant', 'merchant')
+        .andWhere('merchant.group_id = :group_id', {
+          group_id: param_usertype.id,
         });
     }
+    try {
+      const totalItems = await store.getCount();
+      const list = await store
+        .orderBy('merchant_store.created_at', 'ASC')
+        .offset((currentPage - 1) * perPage)
+        .limit(perPage)
+        .getMany();
+      list.map((element) => {
+        const row = dbOutputTime(element);
+        delete row.owner_password;
+        row.service_addon.forEach((sao) => {
+          delete sao.created_at;
+          delete sao.updated_at;
+        });
+        row.operational_hours.forEach((oph) => {
+          delete oph.created_at;
+          delete oph.updated_at;
+        });
+        return row;
+      });
+
+      const list_result: ListResponse = {
+        total_item: totalItems,
+        limit: Number(perPage),
+        current_page: Number(currentPage),
+        items: list,
+      };
+      return list_result;
+    } catch (error) {
+      console.log(
+        '===========================Start Database error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Database error==================================',
+      );
+    }
+
+    // if (merchant.user_type == 'merchant') {
+    //   return await this.storeRepository
+    //     .createQueryBuilder('merchant_store')
+    //     .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
+    //     .leftJoinAndSelect(
+    //       'merchant_store.operational_hours',
+    //       'operational_hours',
+    //       'operational_hours.merchant_store_id = merchant_store.id',
+    //     )
+    //     .where('merchant_store.is_store_open = :is_open', { is_open: true })
+    //     .andWhere(
+    //       new Brackets((qb) => {
+    //         qb.where(':currTime >= operational_hours.open_hour', {
+    //           currTime: currTime,
+    //         });
+    //         qb.andWhere(':currTime < operational_hours.close_hour', {
+    //           currTime: currTime,
+    //         });
+    //         qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+    //           weekOfDay: weekOfDay,
+    //         });
+    //       }),
+    //     )
+    //     .andWhere(
+    //       new Brackets((qb) => {
+    //         qb.where('(lower(merchant_store.name) like :mname', {
+    //           mname: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.phone) like :sname', {
+    //           sname: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
+    //           shp: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.owner_email) like :smail', {
+    //           smail: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.address) like :astrore', {
+    //           astrore: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.post_code) like :pcode', {
+    //           pcode: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.guidance) like :guidance', {
+    //           guidance: '%' + search + '%',
+    //         });
+    //         // .orWhere('merchant_store.location_longitude = :long', {
+    //         //   long: search,
+    //         // })
+    //         // .orWhere('merchant_store.location_latitude = :lat)', {
+    //         //   lat: search,
+    //         // })
+    //       }),
+    //     )
+    //     .andWhere('merchant_store.merchant_id = :mid', { mid: merchant.id })
+    //     .getCount()
+    //     .then(async (counts) => {
+    //       totalItems = counts;
+    //       return await this.storeRepository
+    //         .createQueryBuilder('merchant_store')
+    //         .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
+    //         .leftJoinAndSelect(
+    //           'merchant_store.operational_hours',
+    //           'operational_hours',
+    //           'operational_hours.merchant_store_id = merchant_store.id',
+    //         )
+    //         .where('merchant_store.is_store_open = :is_open', { is_open: true })
+    //         .andWhere(
+    //           new Brackets((qb) => {
+    //             qb.where(':currTime >= operational_hours.open_hour', {
+    //               currTime: currTime,
+    //             });
+    //             qb.andWhere(':currTime < operational_hours.close_hour', {
+    //               currTime: currTime,
+    //             });
+    //             qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+    //               weekOfDay: weekOfDay,
+    //             });
+    //           }),
+    //         )
+    //         .andWhere(
+    //           new Brackets((qb) => {
+    //             qb.where('(lower(merchant_store.name) like :mname', {
+    //               mname: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.phone) like :sname', {
+    //               sname: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
+    //               shp: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.owner_email) like :smail', {
+    //               smail: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.address) like :astrore', {
+    //               astrore: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.post_code) like :pcode', {
+    //               pcode: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.guidance) like :guidance', {
+    //               guidance: '%' + search + '%',
+    //             });
+    //             // .orWhere('merchant_store.location_longitude = :long', {
+    //             //   long: search,
+    //             // })
+    //             // .orWhere('merchant_store.location_latitude = :lat)', {
+    //             //   lat: search,
+    //             // })
+    //           }),
+    //         )
+    //         .andWhere('merchant_store.merchant_id = :mid', { mid: merchant.id })
+    //         .orderBy('merchant_store.created_at', 'DESC')
+    //         .offset((currentPage - 1) * perPage)
+    //         .limit(perPage)
+    //         .getMany();
+    //     })
+    //     .then((result) => {
+    //       result.forEach((row) => {
+    //         dbOutputTime(row);
+    //         delete row.owner_password;
+    //         row.service_addon.forEach((sao) => {
+    //           delete sao.created_at;
+    //           delete sao.updated_at;
+    //         });
+    //       });
+    //       const list_result: ListResponse = {
+    //         total_item: totalItems,
+    //         limit: Number(perPage),
+    //         current_page: Number(currentPage),
+    //         items: result,
+    //       };
+    //       return list_result;
+    //     })
+    //     .catch((err) => {
+    //       const errors: RMessage = {
+    //         value: '',
+    //         property: '',
+    //         constraint: [
+    //           this.messageService.getjson({
+    //             code: 'DB_ERROR',
+    //             message: err.message,
+    //           }),
+    //         ],
+    //       };
+    //       throw new BadRequestException(
+    //         this.responseService.error(
+    //           HttpStatus.BAD_REQUEST,
+    //           errors,
+    //           'Bad Request',
+    //         ),
+    //       );
+    //     });
+    // } else {
+    //   return await this.storeRepository
+    //     .createQueryBuilder('merchant_store')
+    //     .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
+    //     .leftJoinAndSelect(
+    //       'merchant_store.operational_hours',
+    //       'operational_hours',
+    //       'operational_hours.merchant_store_id = merchant_store.id',
+    //     )
+    //     .where('merchant_store.is_store_open = :is_open', { is_open: true })
+    //     .andWhere(
+    //       new Brackets((qb) => {
+    //         qb.where(':currTime >= operational_hours.open_hour', {
+    //           currTime: currTime,
+    //         });
+    //         qb.andWhere(':currTime < operational_hours.close_hour', {
+    //           currTime: currTime,
+    //         });
+    //         qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+    //           weekOfDay: weekOfDay,
+    //         });
+    //       }),
+    //     )
+    //     .andWhere(
+    //       new Brackets((qb) => {
+    //         qb.where('lower(merchant_store.name) like :mname', {
+    //           mname: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.phone) like :sname', {
+    //           sname: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
+    //           shp: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.owner_email) like :smail', {
+    //           smail: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.address) like :astrore', {
+    //           astrore: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.post_code) like :pcode', {
+    //           pcode: '%' + search + '%',
+    //         });
+    //         qb.orWhere('lower(merchant_store.guidance) like :guidance', {
+    //           guidance: '%' + search + '%',
+    //         });
+    //         // .orWhere('merchant_store.location_longitude = :long', {
+    //         //   long: search,
+    //         // })
+    //         // .orWhere('merchant_store.location_latitude = :lat', {
+    //         //   lat: search,
+    //         // })
+    //       }),
+    //     )
+    //     .getCount()
+    //     .then(async (counts) => {
+    //       totalItems = counts;
+    //       return await this.storeRepository
+    //         .createQueryBuilder('merchant_store')
+    //         .leftJoinAndSelect(
+    //           'merchant_store.operational_hours',
+    //           'operational_hours',
+    //           'operational_hours.merchant_store_id = merchant_store.id',
+    //         )
+    //         .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
+    //         .where('merchant_store.is_store_open = :is_open', { is_open: true })
+    //         .andWhere(
+    //           new Brackets((qb) => {
+    //             qb.where(':currTime >= operational_hours.open_hour', {
+    //               currTime: currTime,
+    //             });
+    //             qb.andWhere(':currTime < operational_hours.close_hour', {
+    //               currTime: currTime,
+    //             });
+    //             qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
+    //               weekOfDay: weekOfDay,
+    //             });
+    //           }),
+    //         )
+    //         .andWhere(
+    //           new Brackets((qb) => {
+    //             qb.where('lower(merchant_store.name) like :mname', {
+    //               mname: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.phone) like :sname', {
+    //               sname: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
+    //               shp: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.owner_email) like :smail', {
+    //               smail: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.address) like :astrore', {
+    //               astrore: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.post_code) like :pcode', {
+    //               pcode: '%' + search + '%',
+    //             });
+    //             qb.orWhere('lower(merchant_store.guidance) like :guidance', {
+    //               guidance: '%' + search + '%',
+    //             });
+    //             // .orWhere('merchant_store.location_longitude = :long', {
+    //             //   long: search,
+    //             // })
+    //             // .orWhere('merchant_store.location_latitude = :lat', {
+    //             //   lat: search,
+    //             // })
+    //           }),
+    //         )
+    //         .orderBy('merchant_store.created_at', 'ASC')
+    //         .offset((currentPage - 1) * perPage)
+    //         .limit(perPage)
+    //         .getMany();
+    //     })
+    //     .then((result) => {
+    //       result.forEach((row) => {
+    //         dbOutputTime(row);
+    //         delete row.owner_password;
+    //         row.service_addon.forEach((sao) => {
+    //           delete sao.created_at;
+    //           delete sao.updated_at;
+    //         });
+    //         row.operational_hours.forEach((oph) => {
+    //           delete oph.created_at;
+    //           delete oph.updated_at;
+    //         });
+    //       });
+    //       const list_result: ListResponse = {
+    //         total_item: totalItems,
+    //         limit: Number(perPage),
+    //         current_page: Number(currentPage),
+    //         items: result,
+    //       };
+    //       return list_result;
+    //     })
+    //     .catch((err) => {
+    //       const errors: RMessage = {
+    //         value: '',
+    //         property: '',
+    //         constraint: [
+    //           this.messageService.getjson({
+    //             code: 'DB_ERROR',
+    //             message: err.message,
+    //           }),
+    //         ],
+    //       };
+    //       throw new BadRequestException(
+    //         this.responseService.error(
+    //           HttpStatus.BAD_REQUEST,
+    //           errors,
+    //           'Bad Request',
+    //         ),
+    //       );
+    //     });
+    // }
   }
 
   //------------------------------------------------------------------------------
