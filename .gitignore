@@ -19,6 +19,7 @@ lerna-debug.log*
 /upload_groups/*
 /upload_merchants/*
 /upload_stores/*
+/upload_store_categories/*
 
 
 # IDEs and editors

@@ -17,6 +17,7 @@ import { QueryModule } from './query/query.module';
 import { CommonModule } from './common/common.module';
 import { InternalModule } from './internal/internal.module';
 import { AuthModule } from './auth/auth.module';
+import { StoreCategoriesModule } from './store_categories/store_categories.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { AuthModule } from './auth/auth.module';
     CommonModule,
     InternalModule,
     AuthModule,
+    StoreCategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

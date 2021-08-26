@@ -20,7 +20,6 @@ export enum GroupStatus {
 
 @Entity({ name: 'merchant_merchant' })
 export class MerchantDocument {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
