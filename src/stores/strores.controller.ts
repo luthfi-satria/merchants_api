@@ -405,6 +405,9 @@ export class StoresController {
         if (response.data.payload.level == 'merchant') {
           param_list_group_store.user_type = 'merchant';
           param_list_group_store.id = response.data.payload.merchant_id;
+        } else if (response.data.payload.level == 'group') {
+          param_list_group_store.user_type = 'group';
+          param_list_group_store.id = response.data.payload.group_id;
         }
         const listgroup: any = await this.storesService.listGroupStore(
           data,

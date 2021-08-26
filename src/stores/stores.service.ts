@@ -629,13 +629,14 @@ export class StoresService {
           group_id: param_usertype.id,
         });
     }
+    store
+      .orderBy('merchant_store.created_at', 'ASC')
+      .offset((currentPage - 1) * perPage)
+      .limit(perPage);
+
     try {
       const totalItems = await store.getCount();
-      const list = await store
-        .orderBy('merchant_store.created_at', 'ASC')
-        .offset((currentPage - 1) * perPage)
-        .limit(perPage)
-        .getMany();
+      const list = await store.getMany();
       list.map((element) => {
         const row = dbOutputTime(element);
         delete row.owner_password;

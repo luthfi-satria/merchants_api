@@ -507,22 +507,32 @@ export class MerchantsService {
       .offset((currentPage - 1) * perPage)
       .limit(perPage);
 
-    const totalItems = await merchant.getCount();
-    const list = await merchant.getMany();
-    list.map((element) => {
-      const output = dbOutputTime(element);
-      output.owner_dob = moment(element.owner_dob).format('YYYY-MM-DD');
-      delete output.owner_password;
-      return output;
-    });
+    try {
+      const totalItems = await merchant.getCount();
+      const list = await merchant.getMany();
+      list.map((element) => {
+        const output = dbOutputTime(element);
+        output.owner_dob = moment(element.owner_dob).format('YYYY-MM-DD');
+        delete output.owner_password;
+        return output;
+      });
 
-    const list_result: ListResponse = {
-      total_item: totalItems,
-      limit: Number(perPage),
-      current_page: Number(currentPage),
-      items: list,
-    };
-    return list_result;
+      const list_result: ListResponse = {
+        total_item: totalItems,
+        limit: Number(perPage),
+        current_page: Number(currentPage),
+        items: list,
+      };
+      return list_result;
+    } catch (error) {
+      console.log(
+        '===========================Start Database error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Database error==================================',
+      );
+    }
 
     // return await this.merchantRepository
     //   .createQueryBuilder('merchant_merchant')
