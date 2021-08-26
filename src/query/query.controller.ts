@@ -14,11 +14,13 @@ import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 // import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
+import { QueryService } from './query.service';
 
 @Controller('api/v1/merchants')
 export class QueryController {
   constructor(
     private readonly storesService: StoresService,
+    private readonly queryService: QueryService,
     // private readonly merchantService: MerchantsService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
@@ -41,10 +43,7 @@ export class QueryController {
   @Get('query/stores')
   @ResponseStatusCode()
   async getstores(@Query() data: string[]): Promise<any> {
-    const listgroup: any = await this.storesService.listGroupStore(data, {
-      merchant: '',
-      id: '',
-    });
+    const listgroup: any = await this.queryService.listGroupStore(data);
     if (!listgroup) {
       throw new BadRequestException(
         this.responseService.error(

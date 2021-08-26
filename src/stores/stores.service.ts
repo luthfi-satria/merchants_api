@@ -23,7 +23,6 @@ import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { StoreOperationalService } from './stores-operational.service';
-import { DateTimeUtils } from 'src/utils/date-time-utils';
 
 @Injectable()
 export class StoresService {
@@ -579,10 +578,6 @@ export class StoresService {
     const perPage = Number(data.limit) || 10;
     // let totalItems: number;
 
-    // evaluate store operational hour
-    const currTime = DateTimeUtils.DateTimeToWIB(new Date());
-    const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
-
     const store = this.storeRepository
       .createQueryBuilder('merchant_store')
       .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
@@ -591,30 +586,7 @@ export class StoresService {
         'operational_hours',
         'operational_hours.merchant_store_id = merchant_store.id',
       )
-      .where('merchant_store.is_store_open = :is_open', { is_open: true })
-      .andWhere(
-        new Brackets((qb) => {
-          qb.where('operational_hours.day_of_week = :weekOfDay', {
-            weekOfDay: weekOfDay,
-          });
-          qb.andWhere(
-            new Brackets((qb) => {
-              qb.where('operational_hours.is_open_24h = :is_open_24h', {
-                is_open_24h: true,
-              }).orWhere(
-                new Brackets((qb) => {
-                  qb.where(':currTime >= operational_hours.open_hour', {
-                    currTime: currTime,
-                  });
-                  qb.andWhere(':currTime < operational_hours.close_hour', {
-                    currTime: currTime,
-                  });
-                }),
-              );
-            }),
-          );
-        }),
-      );
+      .where('merchant_store.is_store_open = :is_open', { is_open: true });
     if (search) {
       store.andWhere(
         new Brackets((qb) => {
