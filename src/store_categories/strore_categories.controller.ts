@@ -139,7 +139,7 @@ export class StoreCategoriesController {
     return await this.validatePermission('delete', token, { id: id });
   }
 
-  @Get('store-categories/:id')
+  @Get('store-categories')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
