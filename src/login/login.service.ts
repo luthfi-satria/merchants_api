@@ -373,4 +373,13 @@ export class LoginService {
       }),
     );
   }
+
+  async getProfile(id: string) {
+    return this.merchantUsersRepository.findOne({
+      relations: ['group', 'merchant', 'store'],
+      where: {
+        id,
+      },
+    });
+  }
 }

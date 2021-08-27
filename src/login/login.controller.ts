@@ -5,6 +5,7 @@ import {
   Headers,
   HttpStatus,
   Post,
+  Req,
 } from '@nestjs/common';
 import { GroupsService } from 'src/groups/groups.service';
 import { Response, ResponseStatusCode } from 'src/response/response.decorator';
@@ -18,6 +19,10 @@ import { LoginService } from './login.service';
 import { OtpValidateValidation } from './validation/otp.validate.validation';
 import { OtpEmailValidateValidation } from './validation/otp.email-validate.validation';
 import { catchError, map } from 'rxjs';
+import { Get } from '@nestjs/common';
+import { AuthJwtGuard } from 'src/auth/auth.decorators';
+import { UserType } from 'src/auth/guard/user-type.decorator';
+import { RMessage } from 'src/response/response.interface';
 
 @Controller('api/v1/merchants')
 export class LoginController {
@@ -99,6 +104,34 @@ export class LoginController {
       catchError((err) => {
         throw err.response.data;
       }),
+    );
+  }
+
+  @Get('login/profile')
+  @UserType('merchant')
+  @AuthJwtGuard()
+  async profile(@Req() req: any) {
+    const profile = await this.loginService.getProfile(req.user.id);
+    if (!profile) {
+      const errors: RMessage = {
+        value: '',
+        property: 'paylod',
+        constraint: [
+          this.messageService.get('merchant.login.unregistered_user'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.login.success'),
+      profile,
     );
   }
 }

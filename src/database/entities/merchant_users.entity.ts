@@ -2,9 +2,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { GroupDocument } from './group.entity';
+import { MerchantDocument } from './merchant.entity';
+import { StoreDocument } from './store.entity';
 
 @Entity({ name: 'merchant_users' })
 export class MerchantUsersDocument {
@@ -37,4 +42,16 @@ export class MerchantUsersDocument {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
+
+  @ManyToOne(() => GroupDocument, (group) => group.id)
+  @JoinColumn({ name: 'group_id' })
+  group: GroupDocument;
+
+  @ManyToOne(() => MerchantDocument, (merchant) => merchant.id)
+  @JoinColumn({ name: 'merchant_id' })
+  merchant: MerchantDocument;
+
+  @ManyToOne(() => StoreDocument, (store) => store.id)
+  @JoinColumn({ name: 'store_id' })
+  store: StoreDocument;
 }
