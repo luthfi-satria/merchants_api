@@ -186,4 +186,11 @@ export default {
       message: 'Email belum terdaftar. Daftar sebagai member?',
     },
   },
+  user: {
+    success: 'Ambil data Sukses.',
+    unregistered_user: {
+      code: 'UNREGISTERED_USER',
+      message: 'User belum terdaftar.',
+    },
+  },
 };
