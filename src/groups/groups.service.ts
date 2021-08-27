@@ -249,11 +249,11 @@ export class GroupsService {
       }
     }
     return this.groupRepository
-      .delete({
+      .softDelete({
         id: data,
       })
       .then(() => {
-        return this.merchantUsersRepository.delete({ group_id: data });
+        return this.merchantUsersRepository.softDelete({ group_id: data });
       })
       .catch(() => {
         throw new BadRequestException(

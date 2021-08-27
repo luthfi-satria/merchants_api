@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   JoinTable,
@@ -99,6 +100,9 @@ export class StoreDocument {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
+
+  @DeleteDateColumn({ nullable: true })
+  deleted_at: Date;
 
   @OneToMany(
     () => StoreOperationalHoursDocument,

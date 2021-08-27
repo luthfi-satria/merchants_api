@@ -95,10 +95,7 @@ export class LobService {
   }
 
   async deleteMerchantLobProfile(id: string): Promise<any> {
-    const delete_group: Partial<LobDocument> = {
-      id: id,
-    };
-    return this.lobRepository.delete(delete_group);
+    return this.lobRepository.softDelete(id);
   }
 
   async listGroup(data: Record<string, any>): Promise<Record<string, any>> {

@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -19,4 +20,7 @@ export class LobDocument {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
+
+  @DeleteDateColumn({ nullable: true })
+  deleted_at: Date;
 }

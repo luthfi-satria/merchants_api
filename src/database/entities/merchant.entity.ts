@@ -3,6 +3,7 @@ import moment from 'moment';
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -96,6 +97,9 @@ export class MerchantDocument {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
+
+  @DeleteDateColumn({ nullable: true })
+  deleted_at: Date;
 
   @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants)
   @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })

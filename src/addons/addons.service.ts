@@ -81,10 +81,7 @@ export class AddonsService {
   }
 
   async deleteMerchantAddonProfile(id: string): Promise<any> {
-    const delete_group: Partial<AddonDocument> = {
-      id: id,
-    };
-    return this.addonRepository.delete(delete_group);
+    return this.addonRepository.softDelete(id);
   }
 
   async listGroup(data: Record<string, any>): Promise<Record<string, any>> {

@@ -420,9 +420,9 @@ export class MerchantsService {
       id: data,
     };
     return this.merchantRepository
-      .delete(delete_merchant)
+      .softDelete(delete_merchant)
       .then(() => {
-        return this.merchantUsersRepository.delete({ merchant_id: data });
+        return this.merchantUsersRepository.softDelete({ merchant_id: data });
       })
       .catch(() => {
         const errors: RMessage = {

@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -42,6 +43,9 @@ export class MerchantUsersDocument {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
+
+  @DeleteDateColumn({ nullable: true })
+  deleted_at: Date;
 
   @ManyToOne(() => GroupDocument, (group) => group.id)
   @JoinColumn({ name: 'group_id' })

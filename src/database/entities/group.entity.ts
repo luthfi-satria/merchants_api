@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -56,6 +57,9 @@ export class GroupDocument {
 
   @UpdateDateColumn({ type: 'timestamptz', default: () => 'LOCALTIMESTAMP' })
   updated_at: Date | string;
+
+  @DeleteDateColumn({ nullable: true })
+  deleted_at: Date;
 
   @OneToMany(() => MerchantDocument, (merchant) => merchant.group)
   merchants: MerchantDocument[];

@@ -555,9 +555,9 @@ export class StoresService {
       id: data,
     };
     return this.storeRepository
-      .delete(delete_merchant)
+      .softDelete(delete_merchant)
       .then(() => {
-        return this.merchantUsersRepository.delete({ store_id: data });
+        return this.merchantUsersRepository.softDelete({ store_id: data });
       })
       .catch(() => {
         const errors: RMessage = {

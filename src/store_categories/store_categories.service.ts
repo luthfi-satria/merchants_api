@@ -172,7 +172,7 @@ export class StoreCategoriesService {
       id: data,
     };
     return this.storeCategoriesRepository
-      .delete(deleteStoreCategories)
+      .softDelete(deleteStoreCategories)
       .then(() => {
         return this.responseService.success(
           true,
