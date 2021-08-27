@@ -65,4 +65,10 @@ export class QueryController {
       listgroup,
     );
   }
+
+  @Get('query/store-categories')
+  @ResponseStatusCode()
+  async getStoreCategories(@Query() data: string[]): Promise<any> {
+    return await this.queryService.listStoreCategories(data);
+  }
 }

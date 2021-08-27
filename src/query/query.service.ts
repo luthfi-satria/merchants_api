@@ -11,22 +11,26 @@ import { AddonsService } from 'src/addons/addons.service';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
-import { ListResponse, RMessage } from 'src/response/response.interface';
+import {
+  ListResponse,
+  RMessage,
+  RSuccessMessage,
+} from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
-import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
+import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 
 @Injectable()
 export class QueryService {
   constructor(
     @InjectRepository(StoreDocument)
     private readonly storeRepository: Repository<StoreDocument>,
-    @InjectRepository(MerchantUsersDocument)
-    private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
+    @InjectRepository(StoreCategoriesDocument)
+    private readonly storeCategoryRepository: Repository<StoreCategoriesDocument>,
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
     private readonly addonService: AddonsService,
@@ -198,6 +202,79 @@ export class QueryService {
           items: result,
         };
         return list_result;
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  async listStoreCategories(
+    data: Record<string, any>,
+  ): Promise<RSuccessMessage> {
+    let search = data.search || '';
+    search = search.toLowerCase();
+    const currentPage = data.page || 1;
+    const perPage = Number(data.limit) || 10;
+    let totalItems: number;
+
+    return await this.storeCategoryRepository
+      .createQueryBuilder()
+      .where(
+        new Brackets((qb) => {
+          qb.where('lower(name_id) like :sname', {
+            sname: '%' + search + '%',
+          }).orWhere('lower(name_en) like :ename', {
+            ename: '%' + search + '%',
+          });
+        }),
+      )
+      .andWhere('active = true')
+      .getCount()
+      .then(async (counts) => {
+        totalItems = counts;
+        return await this.storeCategoryRepository
+          .createQueryBuilder()
+          .where(
+            new Brackets((qb) => {
+              qb.where('lower(name_id) like :sname', {
+                sname: '%' + search + '%',
+              }).orWhere('lower(name_en) like :ename', {
+                ename: '%' + search + '%',
+              });
+            }),
+          )
+          .andWhere('active = true')
+          .orderBy('name_id')
+          .offset((currentPage - 1) * perPage)
+          .limit(perPage)
+          .getMany();
+      })
+      .then((result) => {
+        result.forEach((row) => {
+          dbOutputTime(row);
+        });
+        const listResult: ListResponse = {
+          total_item: totalItems,
+          limit: Number(perPage),
+          current_page: Number(currentPage),
+          items: result,
+        };
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.liststore.success'),
+          listResult,
+        );
       })
       .catch((err) => {
         const errors: RMessage = {

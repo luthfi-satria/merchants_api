@@ -240,7 +240,6 @@ export class StoreCategoriesService {
           .getMany();
       })
       .then((result) => {
-        console.log('result', result);
         result.forEach((raw) => {
           dbOutputTime(raw);
         });

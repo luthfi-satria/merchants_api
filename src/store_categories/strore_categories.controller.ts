@@ -105,7 +105,7 @@ export class StoreCategoriesController {
     @Headers('Authorization') token: string,
   ): Promise<any> {
     data.id = id;
-    // await this.imageValidationService.validate(req);
+    await this.imageValidationService.validate(req);
     if (file) data.image = '/upload_store_categories/' + file.filename;
 
     return await this.validatePermission('update', token, data);
