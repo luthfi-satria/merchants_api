@@ -40,7 +40,7 @@ export class StoreCategoriesController {
     private readonly imageValidationService: ImageValidationService,
   ) {}
 
-  @Post('store-categories')
+  @Post('store/categories')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -83,7 +83,7 @@ export class StoreCategoriesController {
     return await this.validatePermission('create', token, data);
   }
 
-  @Put('store-categories/:id')
+  @Put('store/categories/:id')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -111,7 +111,7 @@ export class StoreCategoriesController {
     return await this.validatePermission('update', token, data);
   }
 
-  @Delete('store-categories/:id')
+  @Delete('store/categories/:id')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -139,7 +139,7 @@ export class StoreCategoriesController {
     return await this.validatePermission('delete', token, { id: id });
   }
 
-  @Get('store-categories')
+  @Get('store/categories')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()

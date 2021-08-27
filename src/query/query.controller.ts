@@ -66,7 +66,7 @@ export class QueryController {
     );
   }
 
-  @Get('query/store-categories')
+  @Get('query/stores/categories')
   @ResponseStatusCode()
   async getStoreCategories(@Query() data: string[]): Promise<any> {
     return await this.queryService.listStoreCategories(data);
