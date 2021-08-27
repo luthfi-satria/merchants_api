@@ -19,6 +19,10 @@ export default {
       code: 'INVALID_UUID',
       message: 'UUID tidak valid.',
     },
+    storeIdNotMatch: {
+      code: 'STORE_ID_NOT_MATCH',
+      message: 'Store ID bukan milik merchant.',
+    },
   },
   creategroup: {
     success: 'SUCCESS',

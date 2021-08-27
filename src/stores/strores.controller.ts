@@ -14,6 +14,7 @@ import {
   UnauthorizedException,
   UploadedFiles,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -34,6 +35,8 @@ import { StoreOperationalService } from './stores-operational.service';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
+import { RoleStoreCategoriesGuard } from 'src/auth/store-categories.guard';
+import { UpdateStoreCategoriesValidation } from './validation/update-store-categories.validation';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -434,5 +437,21 @@ export class StoresController {
         );
       }),
     );
+  }
+
+  @Put('stores/:id/category')
+  @UserTypeAndLevel('admin.*', 'merchant.merchant')
+  @AuthJwtGuard()
+  @UseGuards(RoleStoreCategoriesGuard)
+  @ResponseStatusCode()
+  async updateStoreCategories(
+    @Req() req: any,
+    @Body()
+    data: Partial<UpdateStoreCategoriesValidation>,
+    @Param('id') id: string,
+  ): Promise<any> {
+    data.store_id = id;
+    data.payload = req.payload;
+    return await this.storesService.updateStoreCategories(data);
   }
 }

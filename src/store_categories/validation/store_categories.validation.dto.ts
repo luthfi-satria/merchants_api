@@ -18,7 +18,7 @@ export class StoreCategoriesValidation {
   @IsNotEmpty({ message: 'Nama Bahasa Inggris kosong.' })
   name_en: string;
 
-  @IsBooleanString()
+  @IsBooleanString({ message: 'Masukkan data boolean.' })
   active: string;
 
   @IsOptional()

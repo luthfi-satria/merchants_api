@@ -240,7 +240,11 @@ export class StoreCategoriesService {
           .getMany();
       })
       .then((result) => {
-        dbOutputTime(result);
+        console.log('result', result);
+        result.forEach((raw) => {
+          dbOutputTime(raw);
+        });
+
         const listResult: ListResponse = {
           total_item: totalItems,
           limit: Number(perPage),

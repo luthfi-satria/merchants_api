@@ -14,15 +14,21 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
-import { ListResponse, RMessage } from 'src/response/response.interface';
+import {
+  ListResponse,
+  RMessage,
+  RSuccessMessage,
+} from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, Connection, Repository } from 'typeorm';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { StoreOperationalService } from './stores-operational.service';
+import { UpdateStoreCategoriesValidation } from './validation/update-store-categories.validation';
+import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 
 @Injectable()
 export class StoresService {
@@ -39,6 +45,9 @@ export class StoresService {
     @Hash() private readonly hashService: HashService,
     private readonly storage: CommonStorageService,
     private readonly storeOperationalService: StoreOperationalService,
+    @InjectRepository(StoreCategoriesDocument)
+    private readonly storeCategoriesRepository: Repository<StoreCategoriesDocument>,
+    private readonly connection: Connection,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -977,6 +986,116 @@ export class StoresService {
     //       );
     //     });
     // }
+  }
+
+  async updateStoreCategories(
+    args: Partial<UpdateStoreCategoriesValidation>,
+  ): Promise<RSuccessMessage> {
+    if (args.payload.user_type == 'merchant') {
+      const cekStoreId = await this.storeRepository.findOne({
+        where: { id: args.store_id, merchant_id: args.payload.merchant_id },
+      });
+
+      if (!cekStoreId) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: args.store_id,
+              property: 'store_id',
+              constraint: [
+                this.messageService.get('merchant.general.storeIdNotMatch'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+    }
+
+    return await this.storeRepository
+      .createQueryBuilder('s')
+      .leftJoinAndSelect('s.store_categories', 'merchant_store_categories')
+      .where('s.id = :sid', { sid: args.store_id })
+      .getOne()
+      .then(async (stoCatExist) => {
+        const listStoCat: StoreCategoriesDocument[] = [];
+        let validStoCatId = true;
+        let valueStoCatId: string;
+        for (const stocatId of args.category_ids) {
+          const cekStoCatId = await this.storeCategoriesRepository.findOne({
+            where: { id: stocatId },
+          });
+          if (!cekStoCatId) {
+            validStoCatId = false;
+            valueStoCatId = stocatId;
+            break;
+          }
+          dbOutputTime(cekStoCatId);
+          listStoCat.push(cekStoCatId);
+        }
+
+        if (!validStoCatId) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: valueStoCatId,
+                property: 'category_ids',
+                constraint: [
+                  this.messageService.get('merchant.general.invalidID'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        }
+        stoCatExist.store_categories = listStoCat;
+
+        return await this.storeRepository
+          .save(stoCatExist)
+          .then(async (updateResult) => {
+            dbOutputTime(updateResult);
+            updateResult.store_categories.forEach((sao) => {
+              delete sao.created_at;
+              delete sao.updated_at;
+            });
+
+            return this.responseService.success(
+              true,
+              this.messageService.get('merchant.general.success'),
+              updateResult,
+            );
+          })
+          .catch((err) => {
+            throw new BadRequestException(
+              this.responseService.error(
+                HttpStatus.BAD_REQUEST,
+                {
+                  value: null,
+                  property: '',
+                  constraint: [err.message],
+                },
+                'Bad Request',
+              ),
+            );
+          });
+      })
+      .catch(() => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: args.store_id,
+              property: 'store_id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
   }
 
   //------------------------------------------------------------------------------
