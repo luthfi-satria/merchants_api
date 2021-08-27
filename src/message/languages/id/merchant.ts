@@ -3,10 +3,25 @@ export default {
     success: 'SUCCESS',
     empty_token: 'Kode Token tidak ada.',
     invalid_token: 'Kode Token tidak valid.',
-    empty_photo: 'File photo kosong.',
+    empty_photo: {
+      code: 'IMAGE_NOT_FOUND',
+      message: 'File image kosong.',
+    },
     idNotFound: {
       code: 'INVALID_ID',
       message: 'ID tidak ditemukan.',
+    },
+    invalidID: {
+      code: 'INVALID_ID',
+      message: 'ID tidak valid.',
+    },
+    invalidUUID: {
+      code: 'INVALID_UUID',
+      message: 'UUID tidak valid.',
+    },
+    storeIdNotMatch: {
+      code: 'STORE_ID_NOT_MATCH',
+      message: 'Store ID bukan milik merchant.',
     },
   },
   creategroup: {

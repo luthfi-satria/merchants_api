@@ -13,6 +13,7 @@ import {
 import { ColumnNumericTransformer } from '../helper/column_numberic_transformer';
 import { AddonDocument } from './addons.entity';
 import { MerchantDocument } from './merchant.entity';
+import { StoreCategoriesDocument } from './store-categories.entity';
 import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
 
 @Entity({ name: 'merchant_store' })
@@ -105,4 +106,8 @@ export class StoreDocument {
     { cascade: ['insert', 'update'] },
   )
   operational_hours: StoreOperationalHoursDocument[];
+
+  @ManyToMany(() => StoreCategoriesDocument)
+  @JoinTable({ name: 'merchant_store_store_categories' })
+  store_categories: StoreCategoriesDocument[];
 }
