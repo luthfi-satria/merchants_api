@@ -4,6 +4,26 @@ import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 @Injectable()
 export class DatabaseService implements TypeOrmOptionsFactory {
   createTypeOrmOptions(): TypeOrmModuleOptions {
+    const synchronize = process.env.DB_SYNC
+      ? process.env.DB_SYNC == 'false'
+        ? false
+        : true
+      : true;
+    const dropSchema = process.env.DB_DROP_SCHEMA
+      ? process.env.DB_DROP_SCHEMA == 'true'
+        ? true
+        : false
+      : false;
+    const logging = process.env.DB_LOGGING
+      ? process.env.DB_LOGGING == 'true'
+        ? true
+        : false
+      : false;
+    const autoLoadEntities = process.env.DB_AUTOLOAD_ENTITIES
+      ? process.env.DB_AUTOLOAD_ENTITIES == 'false'
+        ? false
+        : true
+      : true;
     return {
       name: 'default',
       type: 'postgres',
@@ -12,10 +32,10 @@ export class DatabaseService implements TypeOrmOptionsFactory {
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      synchronize: Boolean(process.env.DB_SYNC || true),
-      dropSchema: Boolean(process.env.DB_DROP_SCHEMA || false),
-      logging: Boolean(process.env.DB_LOGGING || false),
-      autoLoadEntities: Boolean(process.env.DB_AUTOLOAD_ENTITIES || true),
+      synchronize: synchronize,
+      dropSchema: dropSchema,
+      logging: logging,
+      autoLoadEntities: autoLoadEntities,
       entities: ['dist/**/*.entity.ts', 'dist/**/**/*.entity.ts'],
     };
   }

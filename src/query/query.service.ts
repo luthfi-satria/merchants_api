@@ -47,6 +47,7 @@ export class QueryService {
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
     let totalItems: number;
+    const store_category_id: string = data.store_category_id || '';
 
     const currTime = DateTimeUtils.DateTimeToWIB(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
@@ -58,6 +59,10 @@ export class QueryService {
         'merchant_store.operational_hours',
         'operational_hours',
         'operational_hours.merchant_store_id = merchant_store.id',
+      )
+      .leftJoinAndSelect(
+        'merchant_store.store_categories',
+        'merchant_store_categories',
       )
       .where(
         new Brackets((qb) => {
@@ -113,6 +118,9 @@ export class QueryService {
             });
         }),
       )
+      .andWhere('merchant_store_categories.id::varchar like :stocat', {
+        stocat: '%' + store_category_id + '%',
+      })
       .getCount()
       .then(async (counts) => {
         totalItems = counts;
@@ -123,6 +131,10 @@ export class QueryService {
             'merchant_store.operational_hours',
             'operational_hours',
             'operational_hours.merchant_store_id = merchant_store.id',
+          )
+          .leftJoinAndSelect(
+            'merchant_store.store_categories',
+            'merchant_store_categories',
           )
           .where(
             new Brackets((qb) => {
@@ -181,6 +193,9 @@ export class QueryService {
                 });
             }),
           )
+          .andWhere('merchant_store_categories.id::varchar like :stocat', {
+            stocat: '%' + store_category_id + '%',
+          })
           .orderBy('merchant_store.created_at', 'DESC')
           .offset((currentPage - 1) * perPage)
           .limit(perPage)
