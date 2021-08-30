@@ -100,6 +100,9 @@ export class QueryService {
         .andWhere('merchant_store.is_open_24h = :open_24_hour', {
           open_24_hour: open_24_hour,
         })
+        .andWhere('delivery_type = :delivery_only', {
+          delivery_only: delivery_only,
+        })
         .andWhere(
           new Brackets((qb) => {
             qb.where('lower(merchant_store.name) like :mname', {
@@ -175,6 +178,9 @@ export class QueryService {
             .andWhere('status = :active', { active: enumStoreStatus.active })
             .andWhere('merchant_store.is_open_24h = :open_24_hour', {
               open_24_hour: open_24_hour,
+            })
+            .andWhere('delivery_type = :delivery_only', {
+              delivery_only: delivery_only,
             })
             .andWhere(
               new Brackets((qb) => {
