@@ -438,20 +438,28 @@ export class QueryService {
             }),
           )
           .andWhere('active = true')
-          .orderBy('name_id')
+          .orderBy('name_en')
           .offset((currentPage - 1) * perPage)
           .limit(perPage)
           .getMany();
       })
       .then((result) => {
+        const listManipulate = [];
         result.forEach((row) => {
+          const manipulateRow: Record<string, any> = row;
+          manipulateRow.name = manipulateRow.name_en;
+          delete manipulateRow.name_id;
+          delete manipulateRow.name_en;
+
+          listManipulate.push(manipulateRow);
           dbOutputTime(row);
         });
+
         const listResult: ListResponse = {
           total_item: totalItems,
           limit: Number(perPage),
           current_page: Number(currentPage),
-          items: result,
+          items: listManipulate,
         };
         return this.responseService.success(
           true,
