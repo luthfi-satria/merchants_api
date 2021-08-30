@@ -17,6 +17,18 @@ import { MerchantDocument } from './merchant.entity';
 import { StoreCategoriesDocument } from './store-categories.entity';
 import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
 
+export enum enumDeliveryType {
+  delivery_only = 'DELIVERY_ONLY',
+  delivery_and_pickup = 'DELIVERY_AND_PICKUP',
+}
+
+export enum enumStoreStatus {
+  waiting_approval = 'WAITING_APPROVAL',
+  active = 'ACTIVE',
+  banned = 'BANNED',
+  rejected = 'REJECTED',
+}
+
 @Entity({ name: 'merchant_store' })
 export class StoreDocument {
   @PrimaryGeneratedColumn('uuid')
@@ -74,6 +86,20 @@ export class StoreDocument {
     default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
   })
   upload_banner: string;
+
+  @Column({
+    type: 'enum',
+    enum: enumDeliveryType,
+    default: enumDeliveryType.delivery_only,
+  })
+  delivery_type: enumDeliveryType;
+
+  @Column({
+    type: 'enum',
+    enum: enumStoreStatus,
+    default: enumStoreStatus.waiting_approval,
+  })
+  status: enumStoreStatus;
 
   @Column({
     type: 'boolean',
