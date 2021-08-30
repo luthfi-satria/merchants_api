@@ -15,6 +15,7 @@ import { Message } from 'src/message/message.decorator';
 // import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
 import { QueryService } from './query.service';
+import { QueryListStoreDto } from './validation/query-public.dto';
 
 @Controller('api/v1/merchants')
 export class QueryController {
@@ -42,7 +43,7 @@ export class QueryController {
 
   @Get('query/stores')
   @ResponseStatusCode()
-  async getstores(@Query() data: string[]): Promise<any> {
+  async getstores(@Query() data: QueryListStoreDto): Promise<any> {
     const listgroup: any = await this.queryService.listGroupStore(data);
     if (!listgroup) {
       throw new BadRequestException(

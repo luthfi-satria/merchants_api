@@ -8,7 +8,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { AddonsService } from 'src/addons/addons.service';
-import { StoreDocument } from 'src/database/entities/store.entity';
+import {
+  enumDeliveryType,
+  enumStoreStatus,
+  StoreDocument,
+} from 'src/database/entities/store.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
 import {
@@ -23,6 +27,7 @@ import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
+import { QueryListStoreDto } from './validation/query-public.dto';
 
 @Injectable()
 export class QueryService {
@@ -39,15 +44,18 @@ export class QueryService {
     @Hash() private readonly hashService: HashService,
   ) {}
 
-  async listGroupStore(
-    data: Record<string, any>,
-  ): Promise<Record<string, any>> {
+  async listGroupStore(data: QueryListStoreDto): Promise<Record<string, any>> {
     let search = data.search || '';
     search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
     let totalItems: number;
     const store_category_id: string = data.store_category_id || '';
+    const delivery_only =
+      data.pickup == true
+        ? enumDeliveryType.delivery_and_pickup
+        : enumDeliveryType.delivery_only;
+    const open_24_hour = data.is_24hrs ? true : false;
 
     const currTime = DateTimeUtils.DateTimeToWIB(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
