@@ -96,6 +96,7 @@ export class QueryService {
             );
           }),
         )
+        .andWhere('status = :active', { active: enumStoreStatus.active })
         .andWhere(
           new Brackets((qb) => {
             qb.where('lower(merchant_store.name) like :mname', {
@@ -168,6 +169,7 @@ export class QueryService {
                 );
               }),
             )
+            .andWhere('status = :active', { active: enumStoreStatus.active })
             .andWhere(
               new Brackets((qb) => {
                 qb.where('lower(merchant_store.name) like :mname', {
