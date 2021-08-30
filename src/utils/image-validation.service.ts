@@ -38,6 +38,7 @@ export class ImageValidationService {
         await this.requiredCheck(req, filter.name);
       }
     });
+    this.filter = [];
 
     if (this.errors && this.errors.length > 0) {
       const all_errors = [...this.errors];
