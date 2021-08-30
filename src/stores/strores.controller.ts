@@ -15,6 +15,8 @@ import {
   UploadedFiles,
   Req,
   UseGuards,
+  Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -23,7 +25,10 @@ import { Message } from 'src/message/message.decorator';
 import { RMessage } from 'src/response/response.interface';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { MerchantStoreValidation } from './validation/stores.validation';
+import {
+  DeliveryTypeValidation,
+  MerchantStoreValidation,
+} from './validation/stores.validation';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { editFileName, imageFileFilter } from 'src/utils/general-utils';
 import { StoresService } from './stores.service';
@@ -453,5 +458,55 @@ export class StoresController {
     data.store_id = id;
     data.payload = req.payload;
     return await this.storesService.updateStoreCategories(data);
+  }
+
+  @Put('stores/:store_id/delivery-type')
+  async getStoresListByDeliveryType(
+    @Param('store_id') store_id: string,
+    @Body() payload: DeliveryTypeValidation,
+  ) {
+    try {
+      const { delivery_type } = payload;
+
+      const result = await this.storesService
+        .findMerchantById(store_id)
+        .then(async (item) => {
+          if (!item) {
+            //Not Found exception
+            throw new NotFoundException(
+              this.responseService.error(HttpStatus.NOT_FOUND, {
+                value: store_id,
+                property: 'store_id',
+                constraint: [
+                  this.messageService.get('merchant.updatestore.id_notfound'),
+                ],
+              }),
+            );
+          }
+
+          // quick parsing and update record
+          item.delivery_type = delivery_type;
+          const updated = await this.storesService.updateStoreProfile(item);
+          if (updated.affected < 1) {
+            Logger.warn(
+              `Failed to update delivery type merchant $${store_id}`,
+              'StoreController',
+            );
+          }
+
+          return item;
+        })
+        .catch((e) => {
+          throw e;
+        });
+
+      return this.responseService.success(
+        true,
+        'Update store tipe delivery sukses!',
+        [result],
+      );
+    } catch (e) {
+      throw e;
+    }
   }
 }

@@ -11,7 +11,10 @@ import { catchError, map, Observable } from 'rxjs';
 import { AddonsService } from 'src/addons/addons.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
-import { StoreDocument } from 'src/database/entities/store.entity';
+import {
+  enumDeliveryType,
+  StoreDocument,
+} from 'src/database/entities/store.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
 import {
@@ -151,6 +154,7 @@ export class StoresService {
       service_addon: listAddon,
       upload_photo: data.upload_photo,
       upload_banner: data.upload_banner,
+      delivery_type: data.delivery_type,
     };
 
     if (
@@ -516,6 +520,19 @@ export class StoresService {
         console.error(e);
         throw new InternalServerErrorException(e.message);
       }
+    }
+
+    if (data.delivery_type != null && data.delivery_type != '') {
+      const deliveryType =
+        data.delivery_type == enumDeliveryType.delivery_only
+          ? enumDeliveryType.delivery_only
+          : enumDeliveryType.delivery_and_pickup;
+
+      store_exist.delivery_type = deliveryType;
+    }
+
+    if (data.status != null && data.status != '') {
+      store_exist.status = data.status;
     }
 
     return await this.storeRepository
