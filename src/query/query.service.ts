@@ -52,11 +52,13 @@ export class QueryService {
     const perPage = Number(data.limit) || 10;
     let totalItems: number;
     const store_category_id: string = data.store_category_id || '';
+
     const delivery_only =
       data.pickup == true
         ? enumDeliveryType.delivery_and_pickup
         : enumDeliveryType.delivery_only;
-    const open_24_hour = data.is_24hrs ? true : false;
+    const is24hour = data?.is_24hrs ? true : false;
+    const open_24_hour = data.is_24hrs;
 
     const currTime = DateTimeUtils.DateTimeToWIB(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
@@ -75,6 +77,16 @@ export class QueryService {
           'merchant_store_categories',
         )
         .where(
+          `merchant_store.status = :active
+          ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
+          ${delivery_only ? `AND delivery_type = :delivery_only` : ''}`,
+          {
+            active: enumStoreStatus.active,
+            open_24_hour: open_24_hour,
+            delivery_only: delivery_only,
+          },
+        )
+        .andWhere(
           new Brackets((qb) => {
             qb.where('operational_hours.day_of_week = :weekOfDay', {
               weekOfDay: weekOfDay,
@@ -97,13 +109,6 @@ export class QueryService {
             );
           }),
         )
-        .andWhere('status = :active', { active: enumStoreStatus.active })
-        .andWhere('merchant_store.is_open_24h = :open_24_hour', {
-          open_24_hour: open_24_hour,
-        })
-        .andWhere('delivery_type = :delivery_only', {
-          delivery_only: delivery_only,
-        })
         .andWhere(
           new Brackets((qb) => {
             qb.where('lower(merchant_store.name) like :mname', {
@@ -151,6 +156,18 @@ export class QueryService {
               'merchant_store_categories',
             )
             .where(
+              `merchant_store.status = :active
+              ${
+                is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''
+              }
+              ${delivery_only ? `AND delivery_type = :delivery_only` : ''}`,
+              {
+                active: enumStoreStatus.active,
+                open_24_hour: open_24_hour,
+                delivery_only: delivery_only,
+              },
+            )
+            .andWhere(
               new Brackets((qb) => {
                 qb.where('operational_hours.day_of_week = :weekOfDay', {
                   weekOfDay: weekOfDay,
@@ -176,13 +193,6 @@ export class QueryService {
                 );
               }),
             )
-            .andWhere('status = :active', { active: enumStoreStatus.active })
-            .andWhere('merchant_store.is_open_24h = :open_24_hour', {
-              open_24_hour: open_24_hour,
-            })
-            .andWhere('delivery_type = :delivery_only', {
-              delivery_only: delivery_only,
-            })
             .andWhere(
               new Brackets((qb) => {
                 qb.where('lower(merchant_store.name) like :mname', {
@@ -267,6 +277,16 @@ export class QueryService {
           'merchant_store_categories',
         )
         .where(
+          `merchant_store.status = :active
+          ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
+          ${delivery_only ? `AND delivery_type = :delivery_only` : ''}`,
+          {
+            active: enumStoreStatus.active,
+            open_24_hour: open_24_hour,
+            delivery_only: delivery_only,
+          },
+        )
+        .andWhere(
           new Brackets((qb) => {
             qb.where('operational_hours.day_of_week = :weekOfDay', {
               weekOfDay: weekOfDay,
@@ -340,6 +360,18 @@ export class QueryService {
               'merchant_store_categories',
             )
             .where(
+              `merchant_store.status = :active
+              ${
+                is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''
+              }
+              ${delivery_only ? `AND delivery_type = :delivery_only` : ''}`,
+              {
+                active: enumStoreStatus.active,
+                open_24_hour: open_24_hour,
+                delivery_only: delivery_only,
+              },
+            )
+            .andWhere(
               new Brackets((qb) => {
                 qb.where('operational_hours.day_of_week = :weekOfDay', {
                   weekOfDay: weekOfDay,
