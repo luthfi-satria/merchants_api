@@ -7,6 +7,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { map, firstValueFrom, catchError, EMPTY } from 'rxjs';
 import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
@@ -14,9 +15,14 @@ import { AuthTokenResponse } from './types';
 
 @Injectable()
 export class RoleStoreGuard implements CanActivate {
+  private LOG_CONTEXT = 'RoleStoreGuard';
+  private USER_TYPES_METADATA = 'user_types';
+  private USER_TYPES_AND_LEVELS_METADATA = 'user_type_and_levels';
+
   constructor(
     private readonly httpService: HttpService,
     private readonly responseService: ResponseService,
+    private readonly reflector: Reflector,
   ) {}
 
   private roleAuthError(value: any, property: any, errorMessage: string) {
@@ -28,8 +34,50 @@ export class RoleStoreGuard implements CanActivate {
     return this.responseService.error(
       HttpStatus.UNAUTHORIZED,
       errors,
-      'Role Unauthorize',
+      'Role Guard Unauthorized',
     );
+  }
+
+  private isAllowedPermission(
+    ctx: ExecutionContext,
+    userType: string,
+    userLevel: string,
+  ): boolean {
+    const allowedTypes =
+      this.reflector.get<string[]>(
+        this.USER_TYPES_METADATA,
+        ctx.getHandler(),
+      ) || [];
+
+    const allowedTypesAndLevels =
+      this.reflector.get<string[]>(
+        this.USER_TYPES_AND_LEVELS_METADATA,
+        ctx.getHandler(),
+      ) || [];
+
+    if (allowedTypes.length == 0 && allowedTypesAndLevels.length == 0) {
+      Logger.warn(
+        `Endpoint API belum di definisikan decorator user types dan levels!`,
+        this.LOG_CONTEXT,
+      );
+      return false;
+    }
+
+    let isAllowed = false;
+
+    // allowed types permit all role levels, so no need to check levels.
+    if (allowedTypes.length > 0) {
+      isAllowed = allowedTypes.includes(userType);
+
+      return isAllowed;
+    }
+
+    const curTypeLevel =
+      userType === 'admin' ? `${userType}.*` : `${userType}.${userLevel}`;
+
+    isAllowed = allowedTypesAndLevels.includes(curTypeLevel);
+
+    return isAllowed;
   }
 
   async canActivate(_context: ExecutionContext) {
@@ -52,7 +100,7 @@ export class RoleStoreGuard implements CanActivate {
             return resp?.data;
           }),
           catchError((err: any) => {
-            Logger.error(err.message, '', 'RoleStoreGuard');
+            Logger.error(err.message, '', this.LOG_CONTEXT);
 
             const { status, statusText } = err.response;
 
@@ -68,21 +116,17 @@ export class RoleStoreGuard implements CanActivate {
       );
 
       const { user_type, level } = res?.data?.payload;
-      if (user_type !== 'merchant')
-        throw new UnauthorizedException(
-          this.roleAuthError(
-            user_type,
-            'user_type',
-            `Unauthorized auth token user_type`,
-          ),
-        );
+      const isAllowed = this.isAllowedPermission(_context, user_type, level);
 
-      if (user_type == 'merchant' && level !== 'store') {
+      if (!isAllowed) {
+        const currTypeLevel = `${user_type}.${
+          level === undefined ? '*' : level
+        }`;
         throw new UnauthorizedException(
           this.roleAuthError(
-            level,
-            'level',
-            `Unauthorized merchant's role level`,
+            currTypeLevel,
+            'user_type_and_level',
+            `Unauthorized Access! user_type dan level anda tidak diperbolehkan mengakses API ini!`,
           ),
         );
       }

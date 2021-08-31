@@ -1,8 +1,21 @@
-import { Type } from 'class-transformer';
-import { IsBoolean, IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+import { IsBoolean, IsLatitude, IsLongitude, IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 export class QueryListStoreDto {
   search: string;
+  
+  @IsLongitude()
+  @IsNotEmpty()
+  location_longitude:string;
+
+  @IsLatitude()
+  @IsNotEmpty()
+  location_latitude:string;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  distance: number;
 
   @IsNumber()
   @IsOptional()
@@ -20,11 +33,11 @@ export class QueryListStoreDto {
 
   @IsBoolean()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => JSON.parse(value))
   pickup: boolean;
 
   @IsBoolean()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => JSON.parse(value))
   is_24hrs: boolean;
 }
