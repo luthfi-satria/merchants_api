@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
 } from 'class-validator';
+import { LanguageDocument } from 'src/database/entities/language.entity';
 
 export class StoreCategoriesValidation {
   @IsOptional()
@@ -37,4 +38,10 @@ export class StoreCategoriesValidation {
   @IsOptional()
   @IsNumber({}, { message: 'Data page bukan angka' })
   page: number;
+
+  @IsOptional()
+  languages: Partial<LanguageDocument>[];
+
+  @IsOptional()
+  lang: string;
 }

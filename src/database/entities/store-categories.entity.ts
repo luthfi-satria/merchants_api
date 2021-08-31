@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { LanguageDocument } from './language.entity';
 
 @Entity({ name: 'merchant_store_categories' })
 export class StoreCategoriesDocument {
@@ -16,6 +18,9 @@ export class StoreCategoriesDocument {
     default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
   })
   image: string;
+
+  @OneToMany(() => LanguageDocument, (lang) => lang.store_categories)
+  languages: Partial<LanguageDocument>[];
 
   // @Column()
   // name_id: string;

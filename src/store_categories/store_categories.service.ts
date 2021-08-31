@@ -16,7 +16,7 @@ import {
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { StoreCategoriesValidation } from './validation/store_categories.validation.dto';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
@@ -39,10 +39,7 @@ export class StoreCategoriesService {
   async createStoreCategories(
     data: Partial<StoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
-    const createStocat: Partial<StoreCategoriesDocument> = {
-      // name_id: data.name_id,
-      // name_en: data.name_en,
-    };
+    const createStocat: Partial<StoreCategoriesDocument> = {};
     try {
       const url = await this.storage.store(data.image);
       createStocat.image = url;
@@ -51,33 +48,51 @@ export class StoreCategoriesService {
       throw new InternalServerErrorException(e.message);
     }
     if (typeof data.active != 'undefined') {
-      // createStocat.active = Boolean(data.active).valueOf();
       if (data.active == 'true') createStocat.active = true;
       if (data.active == 'false') createStocat.active = false;
     }
+
+    const keys = [];
+    for (const k in data) keys.push(k);
+    createStocat.languages = [];
+    for (const key of keys) {
+      if (key.substring(0, 5) == 'name_') {
+        await this.languageRepository
+          .save({
+            lang: key.substring(5),
+            name: data[key],
+          })
+          .then((result) => {
+            createStocat.languages.push(result);
+          })
+          .catch((err) => {
+            throw new BadRequestException(
+              this.responseService.error(
+                HttpStatus.BAD_REQUEST,
+                {
+                  value: data[key],
+                  property: key,
+                  constraint: [err.message],
+                },
+                'Bad Request',
+              ),
+            );
+          });
+      }
+    }
+
     return await this.storeCategoriesRepository
       .save(createStocat)
       .then(async (result) => {
-        const manipulateRow: Record<string, any> = result;
-        const keys = [];
-        for (const k in data) keys.push(k);
-        keys.forEach(async (key) => {
-          if (key.substring(0, 5) == 'name_') {
-            manipulateRow[key] = data[key];
-            await this.languageRepository.save({
-              key: 'store_category',
-              key_id: result.id,
-              lang: key.substring(5),
-              name: data[key],
-            });
-          }
+        dbOutputTime(result);
+        result.languages.forEach((row) => {
+          dbOutputTime(row);
         });
-        dbOutputTime(manipulateRow);
 
         return this.responseService.success(
           true,
           this.messageService.get('merchant.general.success'),
-          manipulateRow,
+          result,
         );
       })
       .catch((err) => {
@@ -99,31 +114,37 @@ export class StoreCategoriesService {
     data: Partial<StoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
     const stoCatExist: StoreCategoriesDocument =
-      await this.storeCategoriesRepository.findOne(data.id).catch(() => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: data.id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+      await this.storeCategoriesRepository
+        .findOne({
+          where: { id: data.id },
+          relations: ['languages'],
+        })
+        .catch(() => {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: data.id,
+                property: 'id',
+                constraint: [
+                  this.messageService.get('merchant.general.idNotFound'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        });
     if (!stoCatExist) {
-      const errors: RMessage = {
-        value: data.id,
-        property: 'id',
-        constraint: [this.messageService.get('merchant.general.idNotFound')],
-      };
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
-          errors,
+          {
+            value: data.id,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
           'Bad Request',
         ),
       );
@@ -142,75 +163,46 @@ export class StoreCategoriesService {
       }
     }
 
-    const langExist = await this.languageRepository
-      .find({ where: { key_id: stoCatExist.id } })
-      .catch(() => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: data.id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
     // const manipulateRow: Record<string, any> = result;
     const keys = [];
     for (const k in data) keys.push(k);
-    keys.forEach(async (key) => {
+    for (const key of keys) {
       if (key.substring(0, 5) == 'name_') {
         const updateLang: Partial<LanguageDocument> = {
-          key: 'store_category',
-          key_id: stoCatExist.id,
           lang: key.substring(5),
           name: data[key],
         };
-        const idx = _.findIndex(langExist, function (ix: any) {
-          console.log('langExist lang: ', ix.lang);
-          console.log('key_id: ', key.substring(5));
+        const idx = _.findIndex(stoCatExist.languages, function (ix: any) {
           return ix.lang == key.substring(5);
         });
         if (idx != -1) {
-          updateLang.id = langExist[idx].id;
+          // updateLang.id = stoCatExist.languages[idx].id;
+          stoCatExist.languages[idx].lang = key.substring(5);
+          stoCatExist.languages[idx].name = data[key];
+        } else {
+          const addStocat = await this.languageRepository
+            .save(updateLang)
+            .catch(() => {
+              throw new BadRequestException(
+                this.responseService.error(
+                  HttpStatus.BAD_REQUEST,
+                  {
+                    value: data[key],
+                    property: key,
+                    constraint: [
+                      this.messageService.get('merchant.general.idNotFound'),
+                    ],
+                  },
+                  'Bad Request',
+                ),
+              );
+            });
+          stoCatExist.languages.push(addStocat);
         }
-        console.log('updatelang: ', updateLang);
-        await this.languageRepository.save(updateLang).catch(() => {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: data.id,
-                property: 'id',
-                constraint: [
-                  this.messageService.get('merchant.general.idNotFound'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        });
       }
-    });
+    }
 
-    // if (
-    //   data.name_id != null &&
-    //   data.name_id != '' &&
-    //   typeof data.name_id != 'undefined'
-    // )
-    //   if (
-    //     data.name_en != null &&
-    //     data.name_en != '' &&
-    //     typeof data.name_en != 'undefined'
-    //   )
     if (typeof data.active != 'undefined') {
-      // stoCatExist.name_id = data.name_id;
-      // stoCatExist.name_en = data.name_en;
-      // stoCatExist.active = Boolean(data.active).valueOf();
       if (data.active == 'true') stoCatExist.active = true;
       if (data.active == 'false') stoCatExist.active = false;
     }
@@ -219,36 +211,14 @@ export class StoreCategoriesService {
       .save(stoCatExist)
       .then(async (result) => {
         dbOutputTime(result);
-        const manipulateRow: Record<string, any> = result;
-        const reUpdateLang = await this.languageRepository
-          .find({ where: { key_id: result.id } })
-          .catch(() => {
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                {
-                  value: data.id,
-                  property: 'id',
-                  constraint: [
-                    this.messageService.get('merchant.general.idNotFound'),
-                  ],
-                },
-                'Bad Request',
-              ),
-            );
-          });
-        console.log('reupdatelang: ', reUpdateLang);
-        reUpdateLang.forEach((row) => {
-          manipulateRow['name_' + row.lang] = row.name;
+        result.languages.forEach((row) => {
+          dbOutputTime(row);
         });
-        keys.forEach(async (key) => {
-          if (typeof manipulateRow[key] == 'undefined')
-            manipulateRow[key] = data[key];
-        });
+
         return this.responseService.success(
           true,
           this.messageService.get('merchant.general.success'),
-          manipulateRow,
+          result,
         );
       })
       .catch((err) => {
@@ -268,17 +238,36 @@ export class StoreCategoriesService {
   }
 
   async deleteStoreCategories(data: string): Promise<RSuccessMessage> {
-    const deleteStoreCategories: Partial<StoreCategoriesDocument> = {
-      id: data,
-    };
-    return this.storeCategoriesRepository
-      .softDelete(deleteStoreCategories)
-      .then(async () => {
-        const delLang: Partial<LanguageDocument> = {
-          key: 'store_category',
-          key_id: data,
+    const getStocat = await this.storeCategoriesRepository
+      .findOne({
+        where: { id: data },
+        relations: ['languages'],
+      })
+      .catch(() => {
+        const errors: RMessage = {
+          value: data,
+          property: 'id',
+          constraint: [this.messageService.get('merchant.general.invalidID')],
         };
-        await this.languageRepository.softDelete(delLang);
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+    console.log('exist stocat: ', getStocat);
+    console.log('data', data);
+    return this.storeCategoriesRepository
+      .softDelete({ id: data })
+      .then(async () => {
+        if (getStocat.languages.length > 0) {
+          console.log('masuk sini');
+          for (const row of getStocat.languages) {
+            await this.languageRepository.softDelete({ id: row.id });
+          }
+        }
         return this.responseService.success(
           true,
           this.messageService.get('merchant.general.success'),
@@ -303,45 +292,36 @@ export class StoreCategoriesService {
   async listStoreCategories(
     data: Partial<StoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
-    let search = data.search || '';
-    search = search.toLowerCase();
+    // let search = data.search || '';
+    // search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
     // const active = data.active || true;
     let totalItems: number;
 
-    return await this.storeCategoriesRepository
-      .createQueryBuilder()
-      .where(
-        new Brackets((qb) => {
-          qb.where('lower(name_id) like :mname', {
-            mname: '%' + search + '%',
-          });
-          qb.orWhere('lower(name_en) like :sname', {
-            sname: '%' + search + '%',
-          });
-        }),
-      )
-      // .andWhere('active = :active', { active: active })
-      .getCount()
-      .then(async (counts) => {
-        totalItems = counts;
+    const qCount = this.storeCategoriesRepository
+      .createQueryBuilder('sc')
+      .andWhere('sc.active = true')
+      .orderBy('sc.created_at')
+      .offset((currentPage - 1) * perPage)
+      .limit(perPage)
+      .getManyAndCount();
+
+    return qCount
+      .then(async (rescounts) => {
+        const listStocat = [];
+        rescounts[0].forEach((raw) => {
+          listStocat.push(raw.id);
+        });
+        totalItems = rescounts[1];
+
         return await this.storeCategoriesRepository
-          .createQueryBuilder()
-          .where(
-            new Brackets((qb) => {
-              qb.where('lower(name_id) like :mname', {
-                mname: '%' + search + '%',
-              });
-              qb.orWhere('lower(name_en) like :sname', {
-                sname: '%' + search + '%',
-              });
-            }),
+          .createQueryBuilder('sc')
+          .leftJoinAndSelect(
+            'sc.languages',
+            'merchant_store_categories_languages',
           )
-          // .andWhere('active = :active', { active: active })
-          .orderBy('name_id')
-          .offset((currentPage - 1) * perPage)
-          .limit(perPage)
+          .where('sc.id IN(:...lid)', { lid: listStocat })
           .getMany();
       })
       .then((result) => {
@@ -367,7 +347,7 @@ export class StoreCategoriesService {
           property: '',
           constraint: [
             this.messageService.getjson({
-              code: 'DB_ERROR',
+              code: 'DATA_NOT_FOUND',
               message: err.message,
             }),
           ],

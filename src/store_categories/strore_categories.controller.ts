@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Post,
-  Headers,
   UnauthorizedException,
   HttpStatus,
   BadRequestException,
@@ -14,6 +13,7 @@ import {
   UseInterceptors,
   Req,
   UploadedFile,
+  UseGuards,
 } from '@nestjs/common';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { catchError, lastValueFrom, map } from 'rxjs';
@@ -30,6 +30,7 @@ import { editFileName, imageFileFilter } from 'src/utils/general-utils';
 import { StoreCategoriesValidation } from './validation/store_categories.validation.dto';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { StoreCategoriesService } from './store_categories.service';
+import { RoleStoreCategoriesGuard } from 'src/auth/store-categories.guard';
 
 @Controller('api/v1/merchants')
 export class StoreCategoriesController {
@@ -43,6 +44,7 @@ export class StoreCategoriesController {
   @Post('store/categories')
   @UserType('admin')
   @AuthJwtGuard()
+  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   @UseInterceptors(
     FileInterceptor('image', {
@@ -58,7 +60,7 @@ export class StoreCategoriesController {
     @Body(RequestValidationPipe(StoreCategoriesValidation))
     data: StoreCategoriesValidation,
     @UploadedFile() file: Express.Multer.File,
-    @Headers('Authorization') token: string,
+    // @Headers('Authorization') token: string,
   ): Promise<any> {
     this.imageValidationService.setFilter('image', 'required');
     await this.imageValidationService.validate(req);
@@ -79,13 +81,14 @@ export class StoreCategoriesController {
       );
     }
     data.image = '/upload_store_categories/' + file.filename;
-
-    return await this.validatePermission('create', token, data);
+    return await this.storeCategoriesService.createStoreCategories(data);
+    // return await this.validatePermission('create', token, data);
   }
 
   @Put('store/categories/:id')
   @UserType('admin')
   @AuthJwtGuard()
+  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   @UseInterceptors(
     FileInterceptor('image', {
@@ -102,22 +105,24 @@ export class StoreCategoriesController {
     data: Partial<StoreCategoriesValidation>,
     @UploadedFile() file: Express.Multer.File,
     @Param('id') id: string,
-    @Headers('Authorization') token: string,
+    // @Headers('Authorization') token: string,
   ): Promise<any> {
     data.id = id;
     await this.imageValidationService.validate(req);
     if (file) data.image = '/upload_store_categories/' + file.filename;
 
-    return await this.validatePermission('update', token, data);
+    return await this.storeCategoriesService.updateStoreCategories(data);
+    // return await this.validatePermission('update', token, data);
   }
 
   @Delete('store/categories/:id')
   @UserType('admin')
   @AuthJwtGuard()
+  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   async deleteMenusStores(
     @Param('id') id: string,
-    @Headers('Authorization') token: string,
+    // @Headers('Authorization') token: string,
   ): Promise<any> {
     const cekuuid = isUUID(id);
 
@@ -136,18 +141,20 @@ export class StoreCategoriesController {
         ),
       );
     }
-    return await this.validatePermission('delete', token, { id: id });
+    return await this.storeCategoriesService.deleteStoreCategories(id);
+    // return await this.validatePermission('delete', token, { id: id });
   }
 
   @Get('store/categories')
   @UserType('admin')
   @AuthJwtGuard()
+  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   async getMenusStores(
+    @Req() req: any,
     @Query() data: Partial<StoreCategoriesValidation>,
-    @Headers('Authorization') token: string,
   ): Promise<any> {
-    return await this.validatePermission('get', token, data);
+    return await this.storeCategoriesService.listStoreCategories(data);
   }
 
   //-------------------------------------------------------------------------------------
