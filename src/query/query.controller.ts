@@ -4,9 +4,11 @@ import {
   Get,
   Header,
   HttpStatus,
+  Logger,
   Param,
   Query,
   Res,
+  ValidationPipe,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -43,7 +45,9 @@ export class QueryController {
 
   @Get('query/stores')
   @ResponseStatusCode()
-  async getstores(@Query() data: QueryListStoreDto): Promise<any> {
+  async getstores(
+    @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
+  ): Promise<any> {
     const listgroup: any = await this.queryService.listGroupStore(data);
     if (!listgroup) {
       throw new BadRequestException(
