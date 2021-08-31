@@ -304,8 +304,8 @@ export class QueryService {
   async listStoreCategories(
     data: Record<string, any>,
   ): Promise<RSuccessMessage> {
-    let search = data.search || '';
-    search = search.toLowerCase();
+    // let search = data.search || '';
+    // search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
     let totalItems: number;
@@ -315,57 +315,29 @@ export class QueryService {
 
     return await this.storeCategoryRepository
       .createQueryBuilder('sc')
-      .leftJoinAndSelect('sc.languages', 'merchant_store_categories_languages')
-      // .where(
-      //   new Brackets((qb) => {
-      //     qb.where('sc.name_id ilike :sname', {
-      //       sname: '%' + search + '%',
-      //     }).orWhere('sc.name_en ilike :ename', {
-      //       ename: '%' + search + '%',
-      //     });
-      //   }),
-      // )
       .where('sc.active = true')
-      .andWhere('merchant_store_categories_languages.name ilike :sname', {
-        sname: '%' + search + '%',
-      })
-      .andWhere('merchant_store_categories_languages.lang IN(:...lid)', {
-        lid: listLang,
-      })
-      .getCount()
-      .then(async (counts) => {
-        console.log('counts: ', counts);
-        totalItems = counts;
+      .orderBy('sc.created_at')
+      .offset((currentPage - 1) * perPage)
+      .limit(perPage)
+      .getManyAndCount()
+      .then(async (rescounts) => {
+        totalItems = rescounts[1];
+        const listStocat = [];
+        rescounts[0].forEach((raw) => {
+          listStocat.push(raw.id);
+        });
         return await this.storeCategoryRepository
           .createQueryBuilder('sc')
           .leftJoinAndSelect(
             'sc.languages',
             'merchant_store_categories_languages',
           )
-          // .leftJoinAndSelect('merchant_language', 'l', 'l.key_id = sc.id')
-          // .where(
-          //   new Brackets((qb) => {
-          //     qb.where('lower(name_id) like :sname', {
-          //       sname: '%' + search + '%',
-          //     }).orWhere('lower(name_en) like :ename', {
-          //       ename: '%' + search + '%',
-          //     });
-          //   }),
-          // )
           .where('sc.active = true')
-          .andWhere('merchant_store_categories_languages.name ilike :sname', {
-            sname: '%' + search + '%',
-          })
-          .andWhere('merchant_store_categories_languages.lang IN(:...lid)', {
-            lid: listLang,
-          })
+          .where('sc.id IN(:...lid)', { lid: listStocat })
           .orderBy('merchant_store_categories_languages.name')
-          .offset((currentPage - 1) * perPage)
-          .limit(perPage)
           .getRawMany();
       })
       .then((result) => {
-        console.log('result', result);
         const listManipulate = [];
         result.forEach((row) => {
           const idx = _.findIndex(listManipulate, function (ix: any) {

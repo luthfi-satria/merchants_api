@@ -1042,6 +1042,7 @@ export class StoresService {
         for (const stocatId of args.category_ids) {
           const cekStoCatId = await this.storeCategoriesRepository.findOne({
             where: { id: stocatId },
+            relations: ['languages'],
           });
           if (!cekStoCatId) {
             validStoCatId = false;
@@ -1073,6 +1074,7 @@ export class StoresService {
           .save(stoCatExist)
           .then(async (updateResult) => {
             dbOutputTime(updateResult);
+            delete updateResult.owner_password;
             updateResult.store_categories.forEach((sao) => {
               delete sao.created_at;
               delete sao.updated_at;
