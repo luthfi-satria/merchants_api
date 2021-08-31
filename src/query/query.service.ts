@@ -245,7 +245,7 @@ export class QueryService {
                   });
               }),
             )
-            .orderBy('merchant_store.created_at', 'DESC')
+            .orderBy('distance_in_km', 'ASC')
             .offset((currentPage - 1) * perPage)
             .limit(perPage)
             .getRawMany();
