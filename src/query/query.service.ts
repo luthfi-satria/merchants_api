@@ -46,11 +46,14 @@ export class QueryService {
 
   async listGroupStore(data: QueryListStoreDto): Promise<Record<string, any>> {
     let search = data.search || '';
+    const radius = data.distance || 25;
+    const lat = data.location_latitude
+    const long = data.location_longitude
     search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
     let totalItems: number;
-    const store_category_id: string = data.store_category_id || '';
+    const store_category_id: string = data.store_category_id || null;
 
     const delivery_only =
       data.pickup == true
@@ -62,9 +65,10 @@ export class QueryService {
     const currTime = DateTimeUtils.DateTimeToWIB(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
 
-    if (store_category_id == '') {
+    
       return await this.storeRepository
         .createQueryBuilder('merchant_store')
+        .addSelect("(6371 * ACOS(COS(RADIANS("+lat+")) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS("+long+")) + SIN(RADIANS("+lat+")) * SIN(RADIANS(merchant_store.location_latitude))))","distance_in_km")
         .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
         .leftJoinAndSelect(
           'merchant_store.operational_hours',
@@ -77,12 +81,20 @@ export class QueryService {
         )
         .where(
           `merchant_store.status = :active
+          AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius 
           ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
-          ${delivery_only ? `AND delivery_type = :delivery_only` : ''}`,
+          ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
+          ${
+            store_category_id ? `AND merchant_store_categories.id = :stocat` : ''
+          }`,
           {
             active: enumStoreStatus.active,
             open_24_hour: open_24_hour,
             delivery_only: delivery_only,
+            stocat: store_category_id,
+            radius: radius,
+            lat: lat,
+            long: long,
           },
         )
         .andWhere(
@@ -144,6 +156,7 @@ export class QueryService {
           totalItems = counts;
           return await this.storeRepository
             .createQueryBuilder('merchant_store')
+            .addSelect("(6371 * ACOS(COS(RADIANS("+lat+")) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS("+long+")) + SIN(RADIANS("+lat+")) * SIN(RADIANS(merchant_store.location_latitude))))","distance_in_km")
             .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
             .leftJoinAndSelect(
               'merchant_store.operational_hours',
@@ -156,14 +169,20 @@ export class QueryService {
             )
             .where(
               `merchant_store.status = :active
+              AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius 
+              ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
+              ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
               ${
-                is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''
-              }
-              ${delivery_only ? `AND delivery_type = :delivery_only` : ''}`,
+                store_category_id ? `AND merchant_store_categories.id = :stocat` : ''
+              }`,
               {
                 active: enumStoreStatus.active,
                 open_24_hour: open_24_hour,
                 delivery_only: delivery_only,
+                stocat: store_category_id,
+                radius: radius,
+                lat: lat,
+                long: long,
               },
             )
             .andWhere(
@@ -229,22 +248,20 @@ export class QueryService {
             .orderBy('merchant_store.created_at', 'DESC')
             .offset((currentPage - 1) * perPage)
             .limit(perPage)
-            .getMany();
+            .getRawMany();
         })
-        .then((result) => {
+        .then(async (result) => {
+          const items = await this.manipulateStoreDistance(result)
           result.forEach((row) => {
             dbOutputTime(row);
             delete row.owner_password;
-            row.service_addon.forEach((sao) => {
-              delete sao.created_at;
-              delete sao.updated_at;
-            });
+            
           });
           const list_result: ListResponse = {
             total_item: totalItems,
             limit: Number(perPage),
             current_page: Number(currentPage),
-            items: result,
+            items: items,
           };
           return list_result;
         })
@@ -262,212 +279,7 @@ export class QueryService {
             ),
           );
         });
-    } else {
-      return await this.storeRepository
-        .createQueryBuilder('merchant_store')
-        .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-        .leftJoinAndSelect(
-          'merchant_store.operational_hours',
-          'operational_hours',
-          'operational_hours.merchant_store_id = merchant_store.id',
-        )
-        .leftJoinAndSelect(
-          'merchant_store.store_categories',
-          'merchant_store_categories',
-        )
-        .where(
-          `merchant_store.status = :active
-          ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
-          ${delivery_only ? `AND delivery_type = :delivery_only` : ''}`,
-          {
-            active: enumStoreStatus.active,
-            open_24_hour: open_24_hour,
-            delivery_only: delivery_only,
-          },
-        )
-        .andWhere(
-          new Brackets((qb) => {
-            qb.where('operational_hours.day_of_week = :weekOfDay', {
-              weekOfDay: weekOfDay,
-            });
-            qb.andWhere(
-              new Brackets((qb) => {
-                qb.where('operational_hours.is_open_24h = :is_open_24h', {
-                  is_open_24h: true,
-                }).orWhere(
-                  new Brackets((qb) => {
-                    qb.where(':currTime >= operational_hours.open_hour', {
-                      currTime: currTime,
-                    });
-                    qb.andWhere(':currTime < operational_hours.close_hour', {
-                      currTime: currTime,
-                    });
-                  }),
-                );
-              }),
-            );
-          }),
-        )
-        .andWhere('status = :active', { active: enumStoreStatus.active })
-        .andWhere('merchant_store.is_open_24h = :open_24_hour', {
-          open_24_hour: open_24_hour,
-        })
-        .andWhere('delivery_type = :delivery_only', {
-          delivery_only: delivery_only,
-        })
-        .andWhere(
-          new Brackets((qb) => {
-            qb.where('lower(merchant_store.name) like :mname', {
-              mname: '%' + search + '%',
-            })
-              .orWhere('lower(merchant_store.phone) like :sname', {
-                sname: '%' + search + '%',
-              })
-              .orWhere('lower(merchant_store.owner_phone) like :shp', {
-                shp: '%' + search + '%',
-              })
-              .orWhere('lower(merchant_store.owner_email) like :smail', {
-                smail: '%' + search + '%',
-              })
-              .orWhere('lower(merchant_store.address) like :astrore', {
-                astrore: '%' + search + '%',
-              })
-              .orWhere('lower(merchant_store.post_code) like :pcode', {
-                pcode: '%' + search + '%',
-              })
-              .orWhere('lower(merchant_store.guidance) like :guidance', {
-                guidance: '%' + search + '%',
-              });
-          }),
-        )
-        .andWhere('merchant_store_categories.id = :stocat', {
-          stocat: store_category_id,
-        })
-        .getCount()
-        .then(async (counts) => {
-          totalItems = counts;
-          return await this.storeRepository
-            .createQueryBuilder('merchant_store')
-            .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-            .leftJoinAndSelect(
-              'merchant_store.operational_hours',
-              'operational_hours',
-              'operational_hours.merchant_store_id = merchant_store.id',
-            )
-            .leftJoinAndSelect(
-              'merchant_store.store_categories',
-              'merchant_store_categories',
-            )
-            .where(
-              `merchant_store.status = :active
-              ${
-                is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''
-              }
-              ${delivery_only ? `AND delivery_type = :delivery_only` : ''}`,
-              {
-                active: enumStoreStatus.active,
-                open_24_hour: open_24_hour,
-                delivery_only: delivery_only,
-              },
-            )
-            .andWhere(
-              new Brackets((qb) => {
-                qb.where('operational_hours.day_of_week = :weekOfDay', {
-                  weekOfDay: weekOfDay,
-                });
-                qb.andWhere(
-                  new Brackets((qb) => {
-                    qb.where('operational_hours.is_open_24h = :is_open_24h', {
-                      is_open_24h: true,
-                    }).orWhere(
-                      new Brackets((qb) => {
-                        qb.where(':currTime >= operational_hours.open_hour', {
-                          currTime: currTime,
-                        });
-                        qb.andWhere(
-                          ':currTime < operational_hours.close_hour',
-                          {
-                            currTime: currTime,
-                          },
-                        );
-                      }),
-                    );
-                  }),
-                );
-              }),
-            )
-            .andWhere('status = :active', { active: enumStoreStatus.active })
-            .andWhere('merchant_store.is_open_24h = :open_24_hour', {
-              open_24_hour: open_24_hour,
-            })
-            .andWhere('delivery_type = :delivery_only', {
-              delivery_only: delivery_only,
-            })
-            .andWhere(
-              new Brackets((qb) => {
-                qb.where('lower(merchant_store.name) like :mname', {
-                  mname: '%' + search + '%',
-                })
-                  .orWhere('lower(merchant_store.phone) like :sname', {
-                    sname: '%' + search + '%',
-                  })
-                  .orWhere('lower(merchant_store.owner_phone) like :shp', {
-                    shp: '%' + search + '%',
-                  })
-                  .orWhere('lower(merchant_store.owner_email) like :smail', {
-                    smail: '%' + search + '%',
-                  })
-                  .orWhere('lower(merchant_store.address) like :astrore', {
-                    astrore: '%' + search + '%',
-                  })
-                  .orWhere('lower(merchant_store.post_code) like :pcode', {
-                    pcode: '%' + search + '%',
-                  })
-                  .orWhere('lower(merchant_store.guidance) like :guidance', {
-                    guidance: '%' + search + '%',
-                  });
-              }),
-            )
-            .andWhere('merchant_store_categories.id = :stocat', {
-              stocat: store_category_id,
-            })
-            .orderBy('merchant_store.created_at', 'DESC')
-            .offset((currentPage - 1) * perPage)
-            .limit(perPage)
-            .getMany();
-        })
-        .then((result) => {
-          result.forEach((row) => {
-            dbOutputTime(row);
-            delete row.owner_password;
-            row.service_addon.forEach((sao) => {
-              delete sao.created_at;
-              delete sao.updated_at;
-            });
-          });
-          const list_result: ListResponse = {
-            total_item: totalItems,
-            limit: Number(perPage),
-            current_page: Number(currentPage),
-            items: result,
-          };
-          return list_result;
-        })
-        .catch((err) => {
-          const errors: RMessage = {
-            value: '',
-            property: '',
-            constraint: [err.message],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        });
-    }
+    
   }
 
   async listStoreCategories(
@@ -563,5 +375,133 @@ export class QueryService {
         throw err;
       }),
     );
+  }
+
+  async manipulateStoreDistance(result: any[]) {
+    let stores = []
+    let number_store=0
+    let store_id=''
+    let store=Object()
+    result.forEach(async (raw)=>{
+      dbOutputTime(raw);
+
+      if(store_id==''){ //jika foreach pertama
+        store_id=raw.merchant_store_id //maka inisiasi store id
+      }
+      if(store_id!=raw.merchant_store_id){ //jika variabel store id tidak sama dengan store id result maka  
+        store=Object() // kosongkan object store
+        number_store+=1 // +1 menandakan store tidak sama
+        store_id=raw.merchant_store_id // rubah store id baru
+      }
+
+
+      store.id = raw.merchant_store_id
+      store.merchant_id = raw.merchant_store_merchant_id
+      store.name = raw.merchant_store_name
+      store.phone = raw.merchant_store_phone
+      store.owner_phone = raw.merchant_store_owner_phone
+      store.owner_email = raw.merchant_store_owner_email
+      store.address = raw.merchant_store_address
+      store.post_code = raw.merchant_store_post_code
+      store.guidance = raw.merchant_store_guidance
+      store.distance_in_km = raw.distance_in_km
+      store.location_longitude = parseFloat(raw.merchant_store_location_longitude)
+      store.location_latitude = parseFloat(raw.merchant_store_location_latitude)
+      store.upload_photo = raw.merchant_store_upload_photo
+      store.upload_banner = raw.merchant_store_upload_banner
+      store.delivery_type = raw.merchant_store_delivery_type
+      store.status = raw.merchant_store_status
+      store.is_store_open = raw.merchant_store_is_store_open
+      store.is_open_24h = raw.merchant_store_is_open_24h
+      store.created_at = raw.merchant_store_created_at
+      store.updated_at = raw.merchant_store_updated_at
+      store.deleted_at = raw.merchant_store_deleted_at
+  
+      
+      stores[number_store]=store
+
+      // Add service Addons 
+      if(!store.service_addon){
+        store.service_addon=[]
+      }
+      if(raw.merchant_addon_id){
+        let service_addon=Object()
+
+        service_addon.id = raw.merchant_addon_id
+        service_addon.name = raw.merchant_addon_name
+        service_addon.deleted_at = raw.merchant_addon_deleted_at
+
+        let duplicate = this.cekDuplicate(stores[number_store].service_addon,service_addon.id)
+        if(!duplicate){
+          stores[number_store].service_addon.push(service_addon)
+        }
+
+      }
+
+
+      // Add Store Operational Hours
+      if(!store.operational_hours){
+        store.operational_hours= []
+      }
+      if(raw.operational_hours_id){
+        let operational_hour=Object()
+
+        operational_hour.id = raw.operational_hours_id
+        operational_hour.merchant_store_id = raw.operational_hours_merchant_store_id
+        operational_hour.day_of_week=raw.operational_hours_day_of_week
+        operational_hour.is_open = raw.operational_hours_is_open
+        operational_hour.is_open_24h = raw.operational_hours_is_open_24h
+        operational_hour.open_hour = raw.operational_hours_open_hour
+        operational_hour.close_hour = raw.operational_hours_close_hour
+        operational_hour.created_at = raw.operational_hours_created_at
+        operational_hour.updated_at = raw.operational_hours_updated_at
+
+        let duplicate = this.cekDuplicate(stores[number_store].operational_hours,operational_hour.id)
+        if(!duplicate){
+          stores[number_store].operational_hours.push(operational_hour)
+        }
+      } // End of Add Store Operational Hours
+
+
+      // Add Store Categories
+      if(!store.store_categories){
+        store.store_categories = []
+      }
+      if(raw.merchant_store_categories_id){
+        let categories=Object()
+
+        categories.id = raw.merchant_store_categories_id
+        categories.image = raw.merchant_store_categories_image
+        categories.name_id = raw.merchant_store_categories_name_id
+        categories.name_en = raw.merchant_store_categories_name_en
+        categories.active = raw.merchant_store_categories_active
+        categories.created_at = raw.merchant_store_categories_created_at
+        categories.updated_at = raw.merchant_store_categories_updated_at
+        categories.deleted_at = raw.merchant_store_categories_deleted_at
+
+        let duplicate = this.cekDuplicate(stores[number_store].store_categories,categories.id)
+        if(!duplicate){
+          stores[number_store].store_categories.push(categories)
+        }   
+      } // End of Add Store Categories
+
+      
+
+    })
+    return stores
+  } //end of manipulate Distance
+
+
+  cekDuplicate( o2bject: any[], value:string) {
+    let hasil = false;
+    o2bject.forEach(object => {
+      if(object.id==value){
+        hasil = true
+        return hasil
+      }
+
+    });
+    return hasil
+    
   }
 }
