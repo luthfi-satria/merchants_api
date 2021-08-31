@@ -9,6 +9,7 @@ import {
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
+import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { RoleStoreGuard } from 'src/auth/store.guard';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -21,6 +22,7 @@ import {
 } from './validation/operational-hour.validation';
 
 @Controller('api/v1/merchants/stores')
+@UserTypeAndLevel('admin.*', 'merchant.store')
 @UseGuards(RoleStoreGuard)
 export class StoreOperationalController {
   constructor(
@@ -78,8 +80,9 @@ export class StoreOperationalController {
     }
   }
 
-  @UseGuards(RoleStoreGuard)
   @Post('set-open-24h')
+  @UserTypeAndLevel('merchant.store')
+  @UseGuards(RoleStoreGuard)
   async updateStoreOpen24hours(
     @Body(new ValidationPipe({ transform: true }))
     data: StoreOpen24HourValidation,
@@ -158,8 +161,9 @@ export class StoreOperationalController {
     }
   }
 
-  @UseGuards(RoleStoreGuard)
   @Post('set-store-open')
+  @UserTypeAndLevel('merchant.store')
+  @UseGuards(RoleStoreGuard)
   async updateStoreOpenStatus(
     @Body(new ValidationPipe({ transform: true })) data: StoreOpenValidation,
     @Req() req: any,

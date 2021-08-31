@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { IsBoolean, IsLatitude, IsLongitude, IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 export class QueryListStoreDto {
@@ -33,11 +33,11 @@ export class QueryListStoreDto {
 
   @IsBoolean()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => JSON.parse(value))
   pickup: boolean;
 
   @IsBoolean()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => JSON.parse(value))
   is_24hrs: boolean;
 }
