@@ -42,6 +42,7 @@ import { UserType } from 'src/auth/guard/user-type.decorator';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { RoleStoreCategoriesGuard } from 'src/auth/store-categories.guard';
 import { UpdateStoreCategoriesValidation } from './validation/update-store-categories.validation';
+import { RoleStoreGuard } from 'src/auth/store.guard';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -461,6 +462,8 @@ export class StoresController {
   }
 
   @Put('stores/:store_id/delivery-type')
+  @UserTypeAndLevel('admin.*', 'merchant.merchant', 'merchant.store')
+  @UseGuards(RoleStoreGuard)
   async getStoresListByDeliveryType(
     @Param('store_id') store_id: string,
     @Body() payload: DeliveryTypeValidation,
