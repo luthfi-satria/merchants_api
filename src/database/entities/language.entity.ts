@@ -3,28 +3,27 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'merchant_store_categories' })
-export class StoreCategoriesDocument {
+@Entity({ name: 'merchant_language' })
+export class LanguageDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
-  })
-  image: string;
+  @Column()
+  key: string;
 
-  // @Column()
-  // name_id: string;
+  @Column({ type: 'uuid' })
+  key_id: string;
 
-  // @Column()
-  // name_en: string;
+  @Column()
+  lang: string;
 
-  @Column({ default: true })
-  active: boolean;
+  @Column()
+  name: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date | string;

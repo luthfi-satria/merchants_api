@@ -20,6 +20,8 @@ import { Brackets, Repository } from 'typeorm';
 import { StoreCategoriesValidation } from './validation/store_categories.validation.dto';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
+import { LanguageDocument } from 'src/database/entities/language.entity';
+import _ from 'lodash';
 
 @Injectable()
 export class StoreCategoriesService {
@@ -30,14 +32,16 @@ export class StoreCategoriesService {
     private readonly responseService: ResponseService,
     private httpService: HttpService,
     private readonly storage: CommonStorageService,
+    @InjectRepository(LanguageDocument)
+    private readonly languageRepository: Repository<LanguageDocument>,
   ) {}
 
   async createStoreCategories(
     data: Partial<StoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
     const createStocat: Partial<StoreCategoriesDocument> = {
-      name_id: data.name_id,
-      name_en: data.name_en,
+      // name_id: data.name_id,
+      // name_en: data.name_en,
     };
     try {
       const url = await this.storage.store(data.image);
@@ -47,19 +51,33 @@ export class StoreCategoriesService {
       throw new InternalServerErrorException(e.message);
     }
     if (typeof data.active != 'undefined') {
-      createStocat.active = Boolean(data.active).valueOf();
+      // createStocat.active = Boolean(data.active).valueOf();
       if (data.active == 'true') createStocat.active = true;
       if (data.active == 'false') createStocat.active = false;
     }
     return await this.storeCategoriesRepository
       .save(createStocat)
       .then(async (result) => {
-        dbOutputTime(result);
+        const manipulateRow: Record<string, any> = result;
+        const keys = [];
+        for (const k in data) keys.push(k);
+        keys.forEach(async (key) => {
+          if (key.substring(0, 5) == 'name_') {
+            manipulateRow[key] = data[key];
+            await this.languageRepository.save({
+              key: 'store_category',
+              key_id: result.id,
+              lang: key.substring(5),
+              name: data[key],
+            });
+          }
+        });
+        dbOutputTime(manipulateRow);
 
         return this.responseService.success(
           true,
           this.messageService.get('merchant.general.success'),
-          result,
+          manipulateRow,
         );
       })
       .catch((err) => {
@@ -123,20 +141,76 @@ export class StoreCategoriesService {
         throw new InternalServerErrorException(e.message);
       }
     }
-    if (
-      data.name_id != null &&
-      data.name_id != '' &&
-      typeof data.name_id != 'undefined'
-    )
-      stoCatExist.name_id = data.name_id;
-    if (
-      data.name_en != null &&
-      data.name_en != '' &&
-      typeof data.name_en != 'undefined'
-    )
-      stoCatExist.name_en = data.name_en;
+
+    const langExist = await this.languageRepository
+      .find({ where: { key_id: stoCatExist.id } })
+      .catch(() => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: data.id,
+              property: 'id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+    // const manipulateRow: Record<string, any> = result;
+    const keys = [];
+    for (const k in data) keys.push(k);
+    keys.forEach(async (key) => {
+      if (key.substring(0, 5) == 'name_') {
+        const updateLang: Partial<LanguageDocument> = {
+          key: 'store_category',
+          key_id: stoCatExist.id,
+          lang: key.substring(5),
+          name: data[key],
+        };
+        const idx = _.findIndex(langExist, function (ix: any) {
+          console.log('langExist lang: ', ix.lang);
+          console.log('key_id: ', key.substring(5));
+          return ix.lang == key.substring(5);
+        });
+        if (idx != -1) {
+          updateLang.id = langExist[idx].id;
+        }
+        console.log('updatelang: ', updateLang);
+        await this.languageRepository.save(updateLang).catch(() => {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: data.id,
+                property: 'id',
+                constraint: [
+                  this.messageService.get('merchant.general.idNotFound'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        });
+      }
+    });
+
+    // if (
+    //   data.name_id != null &&
+    //   data.name_id != '' &&
+    //   typeof data.name_id != 'undefined'
+    // )
+    //   if (
+    //     data.name_en != null &&
+    //     data.name_en != '' &&
+    //     typeof data.name_en != 'undefined'
+    //   )
     if (typeof data.active != 'undefined') {
-      stoCatExist.active = Boolean(data.active).valueOf();
+      // stoCatExist.name_id = data.name_id;
+      // stoCatExist.name_en = data.name_en;
+      // stoCatExist.active = Boolean(data.active).valueOf();
       if (data.active == 'true') stoCatExist.active = true;
       if (data.active == 'false') stoCatExist.active = false;
     }
@@ -145,10 +219,36 @@ export class StoreCategoriesService {
       .save(stoCatExist)
       .then(async (result) => {
         dbOutputTime(result);
+        const manipulateRow: Record<string, any> = result;
+        const reUpdateLang = await this.languageRepository
+          .find({ where: { key_id: result.id } })
+          .catch(() => {
+            throw new BadRequestException(
+              this.responseService.error(
+                HttpStatus.BAD_REQUEST,
+                {
+                  value: data.id,
+                  property: 'id',
+                  constraint: [
+                    this.messageService.get('merchant.general.idNotFound'),
+                  ],
+                },
+                'Bad Request',
+              ),
+            );
+          });
+        console.log('reupdatelang: ', reUpdateLang);
+        reUpdateLang.forEach((row) => {
+          manipulateRow['name_' + row.lang] = row.name;
+        });
+        keys.forEach(async (key) => {
+          if (typeof manipulateRow[key] == 'undefined')
+            manipulateRow[key] = data[key];
+        });
         return this.responseService.success(
           true,
           this.messageService.get('merchant.general.success'),
-          result,
+          manipulateRow,
         );
       })
       .catch((err) => {
@@ -173,7 +273,12 @@ export class StoreCategoriesService {
     };
     return this.storeCategoriesRepository
       .softDelete(deleteStoreCategories)
-      .then(() => {
+      .then(async () => {
+        const delLang: Partial<LanguageDocument> = {
+          key: 'store_category',
+          key_id: data,
+        };
+        await this.languageRepository.softDelete(delLang);
         return this.responseService.success(
           true,
           this.messageService.get('merchant.general.success'),

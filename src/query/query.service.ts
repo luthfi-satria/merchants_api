@@ -28,6 +28,7 @@ import { Hash } from 'src/hash/hash.decorator';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { QueryListStoreDto } from './validation/query-public.dto';
+import _ from 'lodash';
 
 @Injectable()
 export class QueryService {
@@ -432,49 +433,68 @@ export class QueryService {
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
     let totalItems: number;
+    const lang = data.lang || 'en';
+    const listLang = ['en'];
+    lang != 'en' ? listLang.push(lang) : '';
 
     return await this.storeCategoryRepository
-      .createQueryBuilder()
-      .where(
-        new Brackets((qb) => {
-          qb.where('lower(name_id) like :sname', {
-            sname: '%' + search + '%',
-          }).orWhere('lower(name_en) like :ename', {
-            ename: '%' + search + '%',
-          });
-        }),
-      )
-      .andWhere('active = true')
+      .createQueryBuilder('sc')
+      .leftJoinAndSelect('merchant_language', 'l', 'l.key_id = sc.id')
+      // .where(
+      //   new Brackets((qb) => {
+      //     qb.where('sc.name_id ilike :sname', {
+      //       sname: '%' + search + '%',
+      //     }).orWhere('sc.name_en ilike :ename', {
+      //       ename: '%' + search + '%',
+      //     });
+      //   }),
+      // )
+      .where('sc.active = true')
+      .andWhere('l.name ilike :sname', { sname: '%' + search + '%' })
+      .andWhere('l.lang IN(:...lid)', { lid: listLang })
       .getCount()
       .then(async (counts) => {
         totalItems = counts;
         return await this.storeCategoryRepository
-          .createQueryBuilder()
-          .where(
-            new Brackets((qb) => {
-              qb.where('lower(name_id) like :sname', {
-                sname: '%' + search + '%',
-              }).orWhere('lower(name_en) like :ename', {
-                ename: '%' + search + '%',
-              });
-            }),
-          )
-          .andWhere('active = true')
-          .orderBy('name_en')
+          .createQueryBuilder('sc')
+          .leftJoinAndSelect('merchant_language', 'l', 'l.key_id = sc.id')
+          // .where(
+          //   new Brackets((qb) => {
+          //     qb.where('lower(name_id) like :sname', {
+          //       sname: '%' + search + '%',
+          //     }).orWhere('lower(name_en) like :ename', {
+          //       ename: '%' + search + '%',
+          //     });
+          //   }),
+          // )
+          .where('sc.active = true')
+          .andWhere('l.name ilike :sname', { sname: '%' + search + '%' })
+          .andWhere('l.lang IN(:...lid)', { lid: listLang })
+          .orderBy('l.name')
           .offset((currentPage - 1) * perPage)
           .limit(perPage)
-          .getMany();
+          .getRawMany();
       })
       .then((result) => {
         const listManipulate = [];
         result.forEach((row) => {
-          const manipulateRow: Record<string, any> = row;
-          manipulateRow.name = manipulateRow.name_en;
-          delete manipulateRow.name_id;
-          delete manipulateRow.name_en;
-
-          listManipulate.push(manipulateRow);
-          dbOutputTime(row);
+          const idx = _.findIndex(listManipulate, function (ix: any) {
+            return ix.id == row.sc_id;
+          });
+          if (idx == -1) {
+            const manipulatedRow = {
+              id: row.sc_id,
+              image: row.sc_image,
+              active: row.sc_active,
+              name: row.l_name,
+              created_at: row.sc_created_at,
+              updated_at: row.sc_updated_at,
+            };
+            dbOutputTime(manipulatedRow);
+            listManipulate.push(manipulatedRow);
+          } else {
+            if (row.l_lang == data.lang) listManipulate[idx].name = row.l_name;
+          }
         });
 
         const listResult: ListResponse = {
@@ -485,7 +505,7 @@ export class QueryService {
         };
         return this.responseService.success(
           true,
-          this.messageService.get('merchant.liststore.success'),
+          this.messageService.get('merchant.general.success'),
           listResult,
         );
       })
