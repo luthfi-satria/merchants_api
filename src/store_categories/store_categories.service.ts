@@ -257,13 +257,10 @@ export class StoreCategoriesService {
           ),
         );
       });
-    console.log('exist stocat: ', getStocat);
-    console.log('data', data);
     return this.storeCategoriesRepository
       .softDelete({ id: data })
       .then(async () => {
         if (getStocat.languages.length > 0) {
-          console.log('masuk sini');
           for (const row of getStocat.languages) {
             await this.languageRepository.softDelete({ id: row.id });
           }

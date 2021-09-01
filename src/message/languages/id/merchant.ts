@@ -23,6 +23,14 @@ export default {
       code: 'STORE_ID_NOT_MATCH',
       message: 'Store ID bukan milik merchant.',
     },
+    emailExist: {
+      code: 'EMAIL_ALREADY_EXISTS',
+      message: 'Email sudah digunakan.',
+    },
+    phoneExist: {
+      code: 'PHONE_ALREADY_EXISTS',
+      message: 'Nomor Telepon sudah digunakan.',
+    },
   },
   creategroup: {
     success: 'SUCCESS',

@@ -10,6 +10,8 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { GroupsController } from './groups.controller';
 import { GroupsService } from './groups.service';
+import { GroupUsersController } from './group_users.controller';
+import { GroupUsersService } from './group_users.service';
 
 @Module({
   imports: [
@@ -23,13 +25,14 @@ import { GroupsService } from './groups.service';
     }),
     HttpModule,
   ],
-  controllers: [GroupsController],
+  controllers: [GroupsController, GroupUsersController],
   providers: [
     GroupsService,
     MerchantsService,
     HashService,
     LoginService,
     ImageValidationService,
+    GroupUsersService,
   ],
 })
 export class GroupsModule {}
