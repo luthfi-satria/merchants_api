@@ -201,7 +201,7 @@ export class GroupUsersService {
           where: { phone: args.phone },
         });
 
-      if (cekphone) {
+      if (cekphone && cekphone.id != args.id) {
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
@@ -224,7 +224,7 @@ export class GroupUsersService {
           where: { email: args.email },
         });
 
-      if (cekemail) {
+      if (cekemail && cekemail.id != args.id) {
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
