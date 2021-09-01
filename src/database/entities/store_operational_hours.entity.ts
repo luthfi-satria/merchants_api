@@ -49,6 +49,14 @@ export class StoreOperationalHoursDocument {
   @OneToMany(
     () => StoreOperationalShiftDocument,
     (shifts) => shifts.operational_day,
+    {
+      cascade: ['insert', 'remove', 'soft-remove'],
+      onDelete: 'CASCADE',
+    },
   )
   shifts: StoreOperationalShiftDocument[];
+
+  constructor(init?: Partial<StoreOperationalHoursDocument>) {
+    Object.assign(this, init);
+  }
 }
