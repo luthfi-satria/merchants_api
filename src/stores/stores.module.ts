@@ -16,6 +16,8 @@ import { ImageValidationService } from 'src/utils/image-validation.service';
 import { StoreOperationalController } from './stores-operational.controller';
 import { StoreOperationalService } from './stores-operational.service';
 import { StoresService } from './stores.service';
+import { StoreUsersController } from './stores_users.controller';
+import { StoreUsersService } from './stores_users.service';
 import { StoresController } from './strores.controller';
 
 @Module({
@@ -34,7 +36,11 @@ import { StoresController } from './strores.controller';
     }),
     HttpModule,
   ],
-  controllers: [StoresController, StoreOperationalController],
+  controllers: [
+    StoresController,
+    StoreOperationalController,
+    StoreUsersController,
+  ],
   providers: [
     StoresService,
     StoreOperationalService,
@@ -44,6 +50,7 @@ import { StoresController } from './strores.controller';
     HashService,
     LoginService,
     ImageValidationService,
+    StoreUsersService,
   ],
   exports: [StoresService, StoreOperationalService],
 })

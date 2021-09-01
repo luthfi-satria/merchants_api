@@ -14,6 +14,8 @@ import { LoginService } from 'src/login/login.service';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { MerchantsController } from './merchants.controller';
 import { MerchantsService } from './merchants.service';
+import { MerchantUsersController } from './merchants_users.controller';
+import { MerchantUsersService } from './merchants_users.service';
 
 @Module({
   imports: [
@@ -29,7 +31,7 @@ import { MerchantsService } from './merchants.service';
     }),
     HttpModule,
   ],
-  controllers: [MerchantsController],
+  controllers: [MerchantsController, MerchantUsersController],
   providers: [
     MerchantsService,
     GroupsService,
@@ -38,6 +40,7 @@ import { MerchantsService } from './merchants.service';
     HashService,
     LoginService,
     ImageValidationService,
+    MerchantUsersService,
   ],
 })
 export class MerchantsModule {}

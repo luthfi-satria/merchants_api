@@ -7,6 +7,7 @@ import {
   Delete,
   Get,
   Req,
+  Query,
 } from '@nestjs/common';
 
 import { ResponseStatusCode } from 'src/response/response.decorator';
@@ -71,10 +72,14 @@ export class GroupUsersController {
   @ResponseStatusCode()
   async listGroupUsers(
     @Req() req: any,
+    @Query() data: Record<string, any>,
     @Param('gid') groupId: string,
   ): Promise<any> {
     const args: Partial<MerchantGroupUsersValidation> = {
       group_id: groupId,
+      search: data.search,
+      limit: data.limit,
+      page: data.page,
     };
     return await this.groupUsersService.listGroupUsers(args);
   }
