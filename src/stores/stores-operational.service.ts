@@ -2,10 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
-import merchant from 'src/message/languages/en/merchant';
-import id from 'src/message/languages/id';
 import { Repository } from 'typeorm';
 import { IStoreOperationalPayload } from './types';
+import { DateTimeUtils } from 'src/utils/date-time-utils';
+import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 
 @Injectable()
 export class StoreOperationalService {
@@ -27,9 +27,14 @@ export class StoreOperationalService {
         return this.storeOperationalRepository.create({
           merchant_store_id: merchantStoreId,
           day_of_week: i,
-          open_hour: this.DEFAULT_STORE_OPEN,
-          close_hour: this.DEFAULT_STORE_CLOSE,
+          day_of_weeks: DateTimeUtils.convertToDayOfWeek(i),
           is_open: true,
+          shifts: [
+            new StoreOperationalShiftDocument({
+              close_hour: this.DEFAULT_STORE_CLOSE,
+              open_hour: this.DEFAULT_STORE_OPEN,
+            })
+          ],
         });
       });
 
