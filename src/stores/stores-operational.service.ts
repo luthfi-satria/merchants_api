@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { IStoreOperationalPayload } from './types';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
+import { StoreOpenHoursValidation, StoreOpenValidation } from './validation/operational-hour.validation';
 
 @Injectable()
 export class StoreOperationalService {
@@ -33,7 +34,7 @@ export class StoreOperationalService {
             new StoreOperationalShiftDocument({
               close_hour: this.DEFAULT_STORE_CLOSE,
               open_hour: this.DEFAULT_STORE_OPEN,
-            })
+            }),
           ],
         });
       });
@@ -80,13 +81,8 @@ export class StoreOperationalService {
       return await this.storeOperationalRepository
         .find({
           where: { merchant_store_id: store_id },
-          select: [
-            'id',
-            'day_of_week',
-            'open_hour',
-            'close_hour',
-            'merchant_store_id',
-          ],
+          select: ['id', 'day_of_week', 'day_of_weeks', 'merchant_store_id'],
+          relations: ['shifts'],
           order: { day_of_week: 'ASC' },
         })
         .catch((e) => {
@@ -146,20 +142,36 @@ export class StoreOperationalService {
 
   public async updateStoreOperationalHours(
     merchant_id: string,
-    data: IStoreOperationalPayload[],
+    data: StoreOpenHoursValidation[]
   ) {
     try {
+      //parse input to object
+      const operational = data.map(e => {
+        const shifts = e.operational_hours.map(e => {
+          return new StoreOperationalShiftDocument({
+            close_hour: e.close_hour,
+            open_hour: e.open_hour,
+          });
+        });
+
+        return new StoreOperationalHoursDocument({
+          day_of_weeks: e.day_of_week,
+          shifts: shifts,
+        });
+      });
+
       const result = await Promise.all(
-        data.map(async (e) => {
+        operational.map(async (e) => {
           const arrUpdated = await this.storeOperationalRepository
             .update(
               {
                 merchant_store_id: merchant_id,
-                day_of_week: e.day_of_week,
+                // day_of_week: e.day_of_week,
+                day_of_weeks: e.day_of_weeks,
               },
               {
-                open_hour: e.open_hour,
-                close_hour: e.close_hour,
+                day_of_weeks: e.day_of_weeks,
+                shifts: e.shifts,
               },
             )
             .catch((e) => {
