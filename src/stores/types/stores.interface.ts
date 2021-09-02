@@ -1,7 +1,10 @@
 export interface IStoreOperationalPayload {
-  open_hour: string;
-  close_hour: string;
-  day_of_week: number;
+  day_of_week: string;
+  operational_hours: IStoreShiftHour[];
+}
+export interface IStoreShiftHour {
+  open_hour?: string;
+  close_hour?: string;
 }
 
 export interface IsTokenPayload {
