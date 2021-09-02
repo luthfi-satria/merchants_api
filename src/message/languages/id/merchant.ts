@@ -31,6 +31,14 @@ export default {
       code: 'PHONE_ALREADY_EXISTS',
       message: 'Nomor Telepon sudah digunakan.',
     },
+    nameExist: {
+      code: 'NAME_ALREADY_EXISTS',
+      message: 'Nama sudah digunakan.',
+    },
+    invalidValue: {
+      code: 'INVALID_VALUE',
+      message: 'Value tidak sesuai.',
+    },
   },
   creategroup: {
     success: 'SUCCESS',
