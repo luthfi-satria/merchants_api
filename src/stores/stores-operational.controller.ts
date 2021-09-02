@@ -22,7 +22,6 @@ import {
 } from './validation/operational-hour.validation';
 
 @Controller('api/v1/merchants/stores')
-@UserTypeAndLevel('admin.*', 'merchant.store')
 @UseGuards(RoleStoreGuard)
 export class StoreOperationalController {
   constructor(
@@ -34,6 +33,7 @@ export class StoreOperationalController {
 
   @UseGuards(RoleStoreGuard)
   @Post('set-operational-hours')
+  @UserTypeAndLevel('admin.*', 'merchant.store')
   async updateOperationalHour(
     @Body(new ParseArrayPipe({ items: StoreOpenHoursValidation }))
     payload: StoreOpenHoursValidation[],
