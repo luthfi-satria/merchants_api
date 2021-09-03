@@ -29,6 +29,7 @@ export class PriceRangeService {
       symbol: args.symbol,
       price_low: validArgs.price_low,
       price_high: validArgs.price_high,
+      sequence: validArgs.sequence,
     };
 
     return await this.priceRangeRepository
@@ -258,7 +259,7 @@ export class PriceRangeService {
     }
 
     if (!isNumber(args.sequence)) {
-      delete args.sequence;
+      args.sequence = null;
     }
     return args;
   }
