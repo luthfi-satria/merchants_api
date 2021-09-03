@@ -1,6 +1,7 @@
 import { HttpModule, Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonService } from 'src/common/common.service';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -33,6 +34,7 @@ import { GroupUsersService } from './group_users.service';
     LoginService,
     ImageValidationService,
     GroupUsersService,
+    CommonService,
   ],
 })
 export class GroupsModule {}

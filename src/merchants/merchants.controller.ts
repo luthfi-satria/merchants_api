@@ -73,181 +73,173 @@ export class MerchantsController {
   ): Promise<any> {
     this.imageValidationService
       .setFilter('owner_ktp', 'required')
-      .setFilter('owner_face_ktp', 'required');
+      .setFilter('owner_face_ktp', 'required')
+      .setFilter('logo', 'required');
     await this.imageValidationService.validate(req);
 
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-    };
+    // const url: string =
+    //   process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
+    // const headersRequest: Record<string, any> = {
+    //   'Content-Type': 'application/json',
+    //   Authorization: token,
+    // };
 
-    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
+    // return (await this.groupsService.getHttp(url, headersRequest)).pipe(
+    //   map(async (response) => {
+    //     const rsp: Record<string, any> = response;
 
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.invalid_token'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'UNAUTHORIZED',
-            ),
-          );
-        }
-        if (files.length > 0) {
-          files.forEach(function (file) {
-            data[file.fieldname] = '/upload_merchants/' + file.filename;
-          });
-        }
-        const cekphone: MerchantDocument =
-          await this.merchantsService.findMerchantMerchantByPhone(
-            data.owner_phone,
-          );
-        if (cekphone) {
-          const errors: RMessage = {
-            value: data.owner_phone,
-            property: 'owner_phone',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.phoneExist'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        const cekemail: MerchantDocument =
-          await this.merchantsService.findMerchantMerchantByEmail(
-            data.owner_email,
-          );
-        if (cekemail) {
-          const errors: RMessage = {
-            value: data.owner_email,
-            property: 'owner_email',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.emailExist'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        const cekgroup: GroupDocument =
-          await this.groupsService.findMerchantById(data.group_id);
-        if (!cekgroup) {
-          const errors: RMessage = {
-            value: data.group_id,
-            property: 'group_id',
-            constraint: [
-              this.messageService.get(
-                'merchant.createmerchant.groupid_notfound',
-              ),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        if (cekgroup.status != 'ACTIVE') {
-          const errors: RMessage = {
-            value: data.group_id,
-            property: 'group_id',
-            constraint: [
-              this.messageService.get(
-                'merchant.createmerchant.groupid_notactive',
-              ),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        const ceklob: LobDocument = await this.lobService.findMerchantById(
-          data.lob_id,
-        );
-        if (!ceklob) {
-          const errors: RMessage = {
-            value: data.lob_id,
-            property: 'lob_id',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.lobid_notfound'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        const cekbank: ListBankDocument = await this.bankService.findBankById(
-          data.bank_id,
-        );
-        if (!cekbank) {
-          const errors: RMessage = {
-            value: data.bank_id,
-            property: 'bank_id',
-            constraint: [
-              this.messageService.get(
-                'merchant.createmerchant.bankid_notfound',
-              ),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        data.token = token;
-        const result_db: Partial<MerchantDocument> =
-          await this.merchantsService.createMerchantMerchantProfile(data);
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.createmerchant.success'),
-          result_db,
-        );
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
+    //     if (rsp.statusCode) {
+    //       throw new BadRequestException(
+    //         this.responseService.error(
+    //           HttpStatus.BAD_REQUEST,
+    //           rsp.message[0],
+    //           'Bad Request',
+    //         ),
+    //       );
+    //     }
+    //     if (response.data.payload.user_type != 'admin') {
+    //       const errors: RMessage = {
+    //         value: token.replace('Bearer ', ''),
+    //         property: 'token',
+    //         constraint: [
+    //           this.messageService.get('merchant.createmerchant.invalid_token'),
+    //         ],
+    //       };
+    //       throw new UnauthorizedException(
+    //         this.responseService.error(
+    //           HttpStatus.UNAUTHORIZED,
+    //           errors,
+    //           'UNAUTHORIZED',
+    //         ),
+    //       );
+    //     }
+    if (files.length > 0) {
+      files.forEach(function (file) {
+        data[file.fieldname] = '/upload_merchants/' + file.filename;
+      });
+    }
+    const cekphone: MerchantDocument =
+      await this.merchantsService.findMerchantMerchantByPhone(data.owner_phone);
+    if (cekphone) {
+      const errors: RMessage = {
+        value: data.owner_phone,
+        property: 'owner_phone',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.phoneExist'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    const cekemail: MerchantDocument =
+      await this.merchantsService.findMerchantMerchantByEmail(data.owner_email);
+    if (cekemail) {
+      const errors: RMessage = {
+        value: data.owner_email,
+        property: 'owner_email',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.emailExist'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    const cekgroup: GroupDocument = await this.groupsService.findMerchantById(
+      data.group_id,
     );
+    if (!cekgroup) {
+      const errors: RMessage = {
+        value: data.group_id,
+        property: 'group_id',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.groupid_notfound'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    if (cekgroup.status != 'ACTIVE') {
+      const errors: RMessage = {
+        value: data.group_id,
+        property: 'group_id',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.groupid_notactive'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    const ceklob: LobDocument = await this.lobService.findMerchantById(
+      data.lob_id,
+    );
+    if (!ceklob) {
+      const errors: RMessage = {
+        value: data.lob_id,
+        property: 'lob_id',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.lobid_notfound'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    const cekbank: ListBankDocument = await this.bankService.findBankById(
+      data.bank_id,
+    );
+    if (!cekbank) {
+      const errors: RMessage = {
+        value: data.bank_id,
+        property: 'bank_id',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.bankid_notfound'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    data.token = token;
+    const result_db: Partial<MerchantDocument> =
+      await this.merchantsService.createMerchantMerchantProfile(data);
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.createmerchant.success'),
+      result_db,
+    );
+    //   }),
+    //   catchError((err) => {
+    //     throw err.response.data;
+    //   }),
+    // );
   }
 
   @Put('merchants/:id')
@@ -269,7 +261,7 @@ export class MerchantsController {
     data: Record<string, any>,
     @Param('id') id: string,
     @UploadedFiles() files: Array<Express.Multer.File>,
-    @Headers('Authorization') token: string,
+    // @Headers('Authorization') token: string,
   ): Promise<any> {
     await this.imageValidationService.validate(req);
 
@@ -292,99 +284,97 @@ export class MerchantsController {
     }
 
     data.id = cekid.id;
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-    };
+    // const url: string =
+    //   process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
+    // const headersRequest: Record<string, any> = {
+    //   'Content-Type': 'application/json',
+    //   Authorization: token,
+    // };
 
-    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
+    // return (await this.groupsService.getHttp(url, headersRequest)).pipe(
+    //   map(async (response) => {
+    //     const rsp: Record<string, any> = response;
 
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.invalid_token'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'UNAUTHORIZED',
-            ),
-          );
-        }
-        if (files.length > 0) {
-          files.forEach(function (file) {
-            data[file.fieldname] = '/upload_merchants/' + file.filename;
-          });
-        }
-        const cekphone: MerchantDocument =
-          await this.merchantsService.findMerchantMerchantByPhone(
-            data.owner_phone,
-          );
-        if (cekphone && cekphone.owner_phone != cekid.owner_phone) {
-          const errors: RMessage = {
-            value: data.owner_phone,
-            property: 'owner_phone',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.phoneExist'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        const cekemail: MerchantDocument =
-          await this.merchantsService.findMerchantMerchantByEmail(
-            data.owner_email,
-          );
-        if (cekemail && cekemail.owner_email != cekid.owner_email) {
-          const errors: RMessage = {
-            value: data.owner_email,
-            property: 'owner_email',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.emailExist'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        const resData =
-          await this.merchantsService.updateMerchantMerchantProfile(data);
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.updatemerchant.success'),
-          resData,
-        );
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
+    //     if (rsp.statusCode) {
+    //       throw new BadRequestException(
+    //         this.responseService.error(
+    //           HttpStatus.BAD_REQUEST,
+    //           rsp.message[0],
+    //           'Bad Request',
+    //         ),
+    //       );
+    //     }
+    //     if (response.data.payload.user_type != 'admin') {
+    //       const errors: RMessage = {
+    //         value: token.replace('Bearer ', ''),
+    //         property: 'token',
+    //         constraint: [
+    //           this.messageService.get('merchant.createmerchant.invalid_token'),
+    //         ],
+    //       };
+    //       throw new UnauthorizedException(
+    //         this.responseService.error(
+    //           HttpStatus.UNAUTHORIZED,
+    //           errors,
+    //           'UNAUTHORIZED',
+    //         ),
+    //       );
+    //     }
+    if (files.length > 0) {
+      files.forEach(function (file) {
+        data[file.fieldname] = '/upload_merchants/' + file.filename;
+      });
+    }
+    const cekphone: MerchantDocument =
+      await this.merchantsService.findMerchantMerchantByPhone(data.owner_phone);
+    if (cekphone && cekphone.owner_phone != cekid.owner_phone) {
+      const errors: RMessage = {
+        value: data.owner_phone,
+        property: 'owner_phone',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.phoneExist'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    const cekemail: MerchantDocument =
+      await this.merchantsService.findMerchantMerchantByEmail(data.owner_email);
+    if (cekemail && cekemail.owner_email != cekid.owner_email) {
+      const errors: RMessage = {
+        value: data.owner_email,
+        property: 'owner_email',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.emailExist'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    const resData = await this.merchantsService.updateMerchantMerchantProfile(
+      data,
+      cekid,
     );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.updatemerchant.success'),
+      resData,
+    );
+    //   }),
+    //   catchError((err) => {
+    //     throw err.response.data;
+    //   }),
+    // );
   }
 
   @Delete('merchants/:id')

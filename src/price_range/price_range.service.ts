@@ -130,7 +130,6 @@ export class PriceRangeService {
 
     return await this.priceRangeRepository
       .createQueryBuilder('')
-      // .leftJoinAndSelect('mu.group', 'merchant_group')
       .where(
         new Brackets((qb) => {
           qb.where('name ilike :mname', {

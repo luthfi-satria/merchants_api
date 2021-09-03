@@ -2,6 +2,7 @@ import { HttpModule, Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BanksService } from 'src/banks/banks.service';
+import { CommonService } from 'src/common/common.service';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { ListBankDocument } from 'src/database/entities/list_banks';
 import { LobDocument } from 'src/database/entities/lob.entity';
@@ -41,6 +42,7 @@ import { MerchantUsersService } from './merchants_users.service';
     LoginService,
     ImageValidationService,
     MerchantUsersService,
+    CommonService,
   ],
 })
 export class MerchantsModule {}

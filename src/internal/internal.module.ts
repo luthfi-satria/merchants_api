@@ -1,6 +1,7 @@
 import { HttpModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddonsService } from 'src/addons/addons.service';
+import { CommonService } from 'src/common/common.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -34,6 +35,7 @@ import { InternalService } from './internal.service';
     MerchantsService,
     HashService,
     StoreOperationalService,
+    CommonService,
   ],
 })
 export class InternalModule {}

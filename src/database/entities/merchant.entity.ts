@@ -89,6 +89,9 @@ export class MerchantDocument {
   @Column()
   tarif_pb1: string;
 
+  @Column({ nullable: true })
+  logo: string;
+
   @Column({ type: 'timestamptz', nullable: true })
   approved_at: Date | string;
 

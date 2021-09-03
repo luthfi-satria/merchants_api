@@ -20,6 +20,8 @@ import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
+// import merchant from 'src/message/languages/en/merchant';
+import { CommonService } from 'src/common/common.service';
 
 @Injectable()
 export class MerchantsService {
@@ -31,8 +33,9 @@ export class MerchantsService {
     @Hash() private readonly hashService: HashService,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
-    private httpService: HttpService, // private loginService: LoginService, // @InjectRepository(MerchantDocument) // private connection: Connection,
+    private httpService: HttpService,
     private readonly storage: CommonStorageService,
+    private readonly commonService: CommonService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -120,60 +123,19 @@ export class MerchantsService {
       typeof data.status != 'undefined'
     )
       create_merchant.status = data.status;
-    if (
-      data.owner_ktp != null &&
-      data.owner_ktp != '' &&
-      typeof data.owner_ktp != 'undefined'
-    ) {
-      try {
-        const url = await this.storage.store(data.owner_ktp);
-        create_merchant.owner_ktp = url;
-      } catch (e) {
-        console.error(e);
-        throw new InternalServerErrorException(e.message);
-      }
-    } else {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: null,
-            property: 'owner_ktp',
-            constraint: [
-              this.messageService.get('merchant.createstore.empty_photo'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
-    if (
-      data.owner_face_ktp != null &&
-      data.owner_face_ktp != '' &&
-      typeof data.owner_face_ktp != 'undefined'
-    ) {
-      try {
-        const url = await this.storage.store(data.owner_face_ktp);
-        create_merchant.owner_face_ktp = url;
-      } catch (e) {
-        console.error(e);
-        throw new InternalServerErrorException(e.message);
-      }
-    } else {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: null,
-            property: 'owner_face_ktp',
-            constraint: [
-              this.messageService.get('merchant.createstore.empty_photo'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
+
+    create_merchant.owner_ktp = await this.extendValidateImageCreate(
+      data.owner_ktp,
+      'owner_ktp',
+    );
+    create_merchant.owner_face_ktp = await this.extendValidateImageCreate(
+      data.owner_face_ktp,
+      'owner_face_ktp',
+    );
+    create_merchant.logo = await this.extendValidateImageCreate(
+      data.logo,
+      'logo',
+    );
 
     // return await this.connection.transaction(async (conn) => {
     //   try {
@@ -194,7 +156,7 @@ export class MerchantsService {
         });
         const pclogdata = {
           id: result.id,
-          musers_id: result.id,
+          // musers_id: result.id,
         };
 
         await this.createCatalogs(pclogdata);
@@ -220,9 +182,11 @@ export class MerchantsService {
   //owner_name, email, phone, password
   async updateMerchantMerchantProfile(
     data: Record<string, any>,
+    merchantExist: MerchantDocument,
   ): Promise<Record<string, any>> {
     const updateMUsers: Partial<MerchantUsersDocument> = {};
-    const create_merchant: Partial<MerchantDocument> = {};
+    // const create_merchant: Partial<MerchantDocument> = {};
+
     if (
       data.owner_dob != null &&
       data.owner_dob != '' &&
@@ -245,34 +209,34 @@ export class MerchantsService {
       data.owner_dob = moment(moment(data.owner_dob, 'DD/MM/YYYY')).format(
         'YYYY-MM-DD',
       );
-      create_merchant.owner_dob = data.owner_dob;
+      merchantExist.owner_dob = data.owner_dob;
     }
     if (
       data.group_id != null &&
       data.group_id != '' &&
       typeof data.group_id != 'undefined'
     )
-      create_merchant.group_id = data.group_id;
+      merchantExist.group_id = data.group_id;
     if (data.name != null && data.name != '' && typeof data.name != 'undefined')
-      create_merchant.name = data.name;
+      merchantExist.name = data.name;
     if (
       data.lob_id != null &&
       data.lob_id != '' &&
       typeof data.lob_id != 'undefined'
     )
-      create_merchant.lob_id = data.lob_id;
+      merchantExist.lob_id = data.lob_id;
     if (
       data.address != null &&
       data.address != '' &&
       typeof data.address != 'undefined'
     )
-      create_merchant.address = data.address;
+      merchantExist.address = data.address;
     if (
       data.owner_name != null &&
       data.owner_name != '' &&
       typeof data.owner_name != 'undefined'
     ) {
-      create_merchant.owner_name = data.owner_name;
+      merchantExist.owner_name = data.owner_name;
       updateMUsers.name = data.owner_name;
     }
     if (
@@ -280,7 +244,7 @@ export class MerchantsService {
       data.owner_email != '' &&
       typeof data.owner_email != 'undefined'
     ) {
-      create_merchant.owner_email = data.owner_email;
+      merchantExist.owner_email = data.owner_email;
       updateMUsers.email = data.owner_email;
     }
     if (
@@ -288,7 +252,7 @@ export class MerchantsService {
       data.owner_phone != '' &&
       typeof data.owner_phone != 'undefined'
     ) {
-      create_merchant.owner_phone = data.owner_phone;
+      merchantExist.owner_phone = data.owner_phone;
       updateMUsers.phone = data.owner_phone;
     }
     if (
@@ -301,7 +265,7 @@ export class MerchantsService {
         data.owner_password,
         salt,
       );
-      create_merchant.owner_password = passwordHash;
+      merchantExist.owner_password = passwordHash;
       updateMUsers.password = passwordHash;
     }
     if (
@@ -309,95 +273,108 @@ export class MerchantsService {
       data.owner_nik != '' &&
       typeof data.owner_nik != 'undefined'
     )
-      create_merchant.owner_nik = data.owner_nik;
+      merchantExist.owner_nik = data.owner_nik;
     if (
       data.owner_dob_city != null &&
       data.owner_dob_city != '' &&
       typeof data.owner_dob_city != 'undefined'
     )
-      create_merchant.owner_dob_city = data.owner_dob_city;
+      merchantExist.owner_dob_city = data.owner_dob_city;
     if (
       data.owner_address != null &&
       data.owner_address != '' &&
       typeof data.owner_address != 'undefined'
     )
-      create_merchant.owner_address = data.owner_address;
+      merchantExist.owner_address = data.owner_address;
     if (
       data.bank_id != null &&
       data.bank_id != '' &&
       typeof data.bank_id != 'undefined'
     )
-      create_merchant.bank_id = data.bank_id;
+      merchantExist.bank_id = data.bank_id;
     if (
       data.bank_acc_name != null &&
       data.bank_acc_name != '' &&
       typeof data.bank_acc_name != 'undefined'
     )
-      create_merchant.bank_acc_name = data.bank_acc_name;
+      merchantExist.bank_acc_name = data.bank_acc_name;
     if (
       data.bank_acc_number != null &&
       data.bank_acc_number != '' &&
       typeof data.bank_acc_number != 'undefined'
     )
-      create_merchant.bank_acc_number = data.bank_acc_number;
+      merchantExist.bank_acc_number = data.bank_acc_number;
     if (
       data.tarif_pb1 != null &&
       data.tarif_pb1 != '' &&
       typeof data.tarif_pb1 != 'undefined'
     )
-      create_merchant.tarif_pb1 = data.tarif_pb1;
+      merchantExist.tarif_pb1 = data.tarif_pb1;
     if (
       data.status != null &&
       data.status != '' &&
       typeof data.status != 'undefined'
     )
-      create_merchant.status = data.status;
+      merchantExist.status = data.status;
     if (data.status == 'ACTIVE') {
-      create_merchant.approved_at = new Date();
+      merchantExist.approved_at = new Date();
     }
-    if (
-      data.owner_ktp != null &&
-      data.owner_ktp != '' &&
-      typeof data.owner_ktp != 'undefined'
-    ) {
-      try {
-        const url = await this.storage.store(data.owner_ktp);
-        create_merchant.owner_ktp = url;
-      } catch (e) {
-        console.error(e);
-        throw new InternalServerErrorException(e.message);
-      }
-    }
-    if (
-      data.owner_face_ktp != null &&
-      data.owner_face_ktp != '' &&
-      typeof data.owner_face_ktp != 'undefined'
-    ) {
-      try {
-        const url = await this.storage.store(data.owner_face_ktp);
-        create_merchant.owner_face_ktp = url;
-      } catch (e) {
-        console.error(e);
-        throw new InternalServerErrorException(e.message);
-      }
-    }
+    // if (
+    //   data.owner_ktp != null &&
+    //   data.owner_ktp != '' &&
+    //   typeof data.owner_ktp != 'undefined'
+    // ) {
+    //   try {
+    //     const url = await this.storage.store(data.owner_ktp);
+    //     merchantExist.owner_ktp = url;
+    //   } catch (e) {
+    //     console.error(e);
+    //     throw new InternalServerErrorException(e.message);
+    //   }
+    // }
+    // if (
+    //   data.owner_face_ktp != null &&
+    //   data.owner_face_ktp != '' &&
+    //   typeof data.owner_face_ktp != 'undefined'
+    // ) {
+    //   try {
+    //     const url = await this.storage.store(data.owner_face_ktp);
+    //     merchantExist.owner_face_ktp = url;
+    //   } catch (e) {
+    //     console.error(e);
+    //     throw new InternalServerErrorException(e.message);
+    //   }
+    // }
+    merchantExist.owner_ktp = await this.extendValidateImageUpdate(
+      data.owner_ktp,
+      merchantExist.owner_ktp,
+    );
+    merchantExist.owner_face_ktp = await this.extendValidateImageUpdate(
+      data.owner_face_ktp,
+      merchantExist.owner_face_ktp,
+    );
+    merchantExist.logo = await this.extendValidateImageUpdate(
+      data.logo,
+      merchantExist.logo,
+    );
     return await this.merchantRepository
-      .createQueryBuilder('merchant_merchant')
-      .update(MerchantDocument)
-      .set(create_merchant)
-      .where('id= :id', { id: data.id })
-      .returning('*')
-      .execute()
+      .save(merchantExist)
+      // .createQueryBuilder('merchant_merchant')
+      // .update(MerchantDocument)
+      // .set(merchantExist)
+      // .where('id= :id', { id: data.id })
+      // .returning('*')
+      // .execute()
       .then(async (response) => {
-        dbOutputTime(response.raw[0]);
+        dbOutputTime(response);
         await this.merchantUsersRepository
           .createQueryBuilder('merchant_users')
           .update(MerchantUsersDocument)
           .set(updateMUsers)
           .where('merchant_id= :gid', { gid: data.id })
           .execute();
-        delete response.raw[0].owner_password;
-        return response.raw[0];
+        delete response.owner_password;
+        return response;
       })
       .catch((err) => {
         const errors: RMessage = {
@@ -667,22 +644,71 @@ export class MerchantsService {
       name: 'EFOOD',
       platform: 'ONLINE',
     };
-
-    this.requestToApi(pcurl, pcdata);
-    this.requestToApi(scurl, scdata);
-  }
-
-  async requestToApi(url: string, data: Record<string, any>): Promise<any> {
-    const headersRequest: Record<string, any> = {
+    const headers: Record<string, any> = {
       'Content-Type': 'application/json',
     };
-    return this.httpService
-      .post(url, data, { headers: headersRequest })
-      .subscribe(async (response) => {
-        const logger = new Logger();
 
-        logger.log(response.data, 'Reg Catalog Merchant');
-        return response.data;
-      });
+    await this.requestToApi(pcurl, pcdata, headers);
+    await this.requestToApi(scurl, scdata, headers);
+  }
+
+  async requestToApi(
+    url: string,
+    data: Record<string, any>,
+    headers: Record<string, any>,
+  ): Promise<any> {
+    const result = await this.commonService.postHttp(url, data, headers);
+    const logger = new Logger();
+    logger.log(result, 'Reg Catalog Merchant');
+  }
+
+  async extendValidateImageCreate(
+    image: string,
+    imageProperty: string,
+  ): Promise<string> {
+    let imageUrl: string;
+
+    if (image != null && image != '' && typeof image != 'undefined') {
+      try {
+        imageUrl = await this.storage.store(image);
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    } else {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: null,
+            property: imageProperty,
+            constraint: [
+              this.messageService.get('merchant.general.empty_photo'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    return imageUrl;
+  }
+
+  async extendValidateImageUpdate(
+    image: string,
+    urlExisting: string,
+  ): Promise<string> {
+    let imageUrl = '';
+
+    if (image != null && image != '' && typeof image != 'undefined') {
+      try {
+        imageUrl = await this.storage.store(image);
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    } else {
+      imageUrl = urlExisting;
+    }
+    return imageUrl;
   }
 }

@@ -1,5 +1,6 @@
 import { HttpModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonService } from 'src/common/common.service';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -19,6 +20,12 @@ import { LoginService } from './login.service';
     HttpModule,
   ],
   controllers: [LoginController],
-  providers: [LoginService, HashService, GroupsService, MerchantsService],
+  providers: [
+    LoginService,
+    HashService,
+    GroupsService,
+    MerchantsService,
+    CommonService,
+  ],
 })
 export class LoginModule {}

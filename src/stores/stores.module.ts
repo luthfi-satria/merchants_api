@@ -2,6 +2,7 @@ import { HttpModule, Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddonsService } from 'src/addons/addons.service';
+import { CommonService } from 'src/common/common.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -51,6 +52,7 @@ import { StoresController } from './strores.controller';
     LoginService,
     ImageValidationService,
     StoreUsersService,
+    CommonService,
   ],
   exports: [StoresService, StoreOperationalService],
 })
