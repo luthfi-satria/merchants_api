@@ -1009,9 +1009,25 @@ export class StoresService {
     args: Partial<UpdateStoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
     if (args.payload.user_type == 'merchant') {
-      const cekStoreId = await this.storeRepository.findOne({
-        where: { id: args.store_id, merchant_id: args.payload.merchant_id },
-      });
+      const cekStoreId = await this.storeRepository
+        .findOne({
+          where: { id: args.store_id, merchant_id: args.payload.merchant_id },
+        })
+        .catch(() => {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: args.store_id,
+                property: 'store_id',
+                constraint: [
+                  this.messageService.get('merchant.general.idNotFound'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        });
 
       if (!cekStoreId) {
         throw new BadRequestException(
@@ -1030,76 +1046,11 @@ export class StoresService {
       }
     }
 
-    return await this.storeRepository
+    const stoCatExist = await this.storeRepository
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.store_categories', 'merchant_store_categories')
       .where('s.id = :sid', { sid: args.store_id })
       .getOne()
-      .then(async (stoCatExist) => {
-        const listStoCat: StoreCategoriesDocument[] = [];
-        let validStoCatId = true;
-        let valueStoCatId: string;
-        for (const stocatId of args.category_ids) {
-          const cekStoCatId = await this.storeCategoriesRepository.findOne({
-            where: { id: stocatId },
-            relations: ['languages'],
-          });
-          if (!cekStoCatId) {
-            validStoCatId = false;
-            valueStoCatId = stocatId;
-            break;
-          }
-          dbOutputTime(cekStoCatId);
-          listStoCat.push(cekStoCatId);
-        }
-
-        if (!validStoCatId) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: valueStoCatId,
-                property: 'category_ids',
-                constraint: [
-                  this.messageService.get('merchant.general.invalidID'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        }
-        stoCatExist.store_categories = listStoCat;
-
-        return await this.storeRepository
-          .save(stoCatExist)
-          .then(async (updateResult) => {
-            dbOutputTime(updateResult);
-            delete updateResult.owner_password;
-            updateResult.store_categories.forEach((sao) => {
-              delete sao.created_at;
-              delete sao.updated_at;
-            });
-
-            return this.responseService.success(
-              true,
-              this.messageService.get('merchant.general.success'),
-              updateResult,
-            );
-          })
-          .catch((err) => {
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                {
-                  value: null,
-                  property: '',
-                  constraint: [err.message],
-                },
-                'Bad Request',
-              ),
-            );
-          });
-      })
       .catch(() => {
         throw new BadRequestException(
           this.responseService.error(
@@ -1110,6 +1061,66 @@ export class StoresService {
               constraint: [
                 this.messageService.get('merchant.general.idNotFound'),
               ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+
+    const listStoCat: StoreCategoriesDocument[] = [];
+    let validStoCatId = true;
+    let valueStoCatId: string;
+
+    for (const stocatId of args.category_ids) {
+      const cekStoCatId = await this.storeCategoriesRepository.findOne({
+        where: { id: stocatId },
+        relations: ['languages'],
+      });
+      if (!cekStoCatId) {
+        validStoCatId = false;
+        valueStoCatId = stocatId;
+        break;
+      }
+      dbOutputTime(cekStoCatId);
+      listStoCat.push(cekStoCatId);
+    }
+    if (!validStoCatId) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: valueStoCatId,
+            property: 'category_ids',
+            constraint: [this.messageService.get('merchant.general.invalidID')],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    stoCatExist.store_categories = listStoCat;
+    return await this.storeRepository
+      .save(stoCatExist)
+      .then(async (updateResult) => {
+        dbOutputTime(updateResult);
+        delete updateResult.owner_password;
+        updateResult.store_categories.forEach((sao) => {
+          delete sao.created_at;
+          delete sao.updated_at;
+        });
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.general.success'),
+          stoCatExist,
+        );
+      })
+      .catch((err) => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: null,
+              property: '',
+              constraint: [err.message],
             },
             'Bad Request',
           ),

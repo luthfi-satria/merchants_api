@@ -1,9 +1,7 @@
 import {
-  BadRequestException,
   Controller,
   Get,
   Header,
-  HttpStatus,
   Param,
   Query,
   Res,
@@ -13,7 +11,6 @@ import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
-// import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
 import { QueryService } from './query.service';
 import { QueryListStoreDto } from './validation/query-public.dto';
@@ -23,7 +20,6 @@ export class QueryController {
   constructor(
     private readonly storesService: StoresService,
     private readonly queryService: QueryService,
-    // private readonly merchantService: MerchantsService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
   ) {}
@@ -47,27 +43,7 @@ export class QueryController {
   async getstores(
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
-    const listgroup: any = await this.queryService.listGroupStore(data);
-    if (!listgroup) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: '',
-            property: '',
-            constraint: [
-              this.messageService.get('merchant.liststore.not_found'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
-    return this.responseService.success(
-      true,
-      this.messageService.get('merchant.liststore.success'),
-      listgroup,
-    );
+    return await this.queryService.listGroupStore(data);
   }
 
   @Get('query/stores/categories')

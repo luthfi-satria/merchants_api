@@ -11,6 +11,7 @@ import {
 
 export class QueryListStoreDto {
   search: string;
+  lang: string;
 
   @IsLongitude()
   @IsNotEmpty()
