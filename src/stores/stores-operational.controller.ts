@@ -60,6 +60,7 @@ export class StoreOperationalController {
           );
       }
 
+      //parse from validation to entity class
       const updPayload = payload.map((e) => {
         const shifts = e.operational_hours.map((e) => {
           const item = new StoreOperationalShiftDocument({
@@ -74,8 +75,10 @@ export class StoreOperationalController {
         });
 
         return new StoreOperationalHoursDocument({
-          id: store_id,
+          merchant_store_id: store_id,
           day_of_weeks: e.day_of_week,
+          is_open_24h: e.open_24hrs,
+          // is_open: e.is_open,
           shifts: shifts,
         });
       });

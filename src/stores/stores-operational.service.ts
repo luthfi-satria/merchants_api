@@ -209,9 +209,11 @@ export class StoreOperationalService {
         });
 
         row.shifts = alterShifts;
+        row.is_open_24h = isFound.is_open_24h;
+        //row.is_open = isFound.is_open;
       }
 
-      return row;
+      return new StoreOperationalHoursDocument({ ...row });
     });
 
     return parsedValue;
