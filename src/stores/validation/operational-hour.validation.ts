@@ -4,6 +4,7 @@ import {
   IsIn,
   IsMilitaryTime,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -27,6 +28,10 @@ export class StoreShiftHours {
   @IsUUID()
   @IsOptional()
   id?: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  shift_id: number;
 
   @IsNotEmpty()
   @IsMilitaryTime({ each: true })
