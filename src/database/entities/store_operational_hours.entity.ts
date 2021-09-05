@@ -50,7 +50,7 @@ export class StoreOperationalHoursDocument {
     () => StoreOperationalShiftDocument,
     (shifts) => shifts.operational_day,
     {
-      cascade: ['insert', 'remove', 'soft-remove'],
+      cascade: true,
       onDelete: 'CASCADE',
     },
   )
