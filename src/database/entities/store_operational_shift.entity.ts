@@ -12,8 +12,14 @@ export class StoreOperationalShiftDocument {
   @PrimaryGeneratedColumn('uuid')
   id?: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', nullable: true })
   store_operational_id?: string;
+
+  @Column({ type: 'int4', nullable: true })
+  shift_id: number;
+
+  @Column({ type: 'boolean', default: true })
+  is_active: boolean;
 
   @Column({ type: 'varchar', length: '7', default: '08:00' })
   open_hour: string;
