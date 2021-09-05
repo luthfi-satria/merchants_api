@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsIn,
@@ -10,7 +10,7 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { IStoreOperationalPayload, IStoreShiftHour } from '../types';
+import { IStoreOperationalPayload } from '../types';
 
 export class StoreOpenValidation {
   @IsNotEmpty()
@@ -45,6 +45,16 @@ export class StoreShiftHours {
 export class StoreOpenHoursValidation implements IStoreOperationalPayload {
   @ValidateNested({ each: true })
   operational_hours: StoreShiftHours[];
+
+  @IsBoolean()
+  @IsNotEmpty()
+  @Transform(({ value }) => JSON.parse(value))
+  open_24hrs: boolean;
+
+  // @IsBoolean()
+  // @IsNotEmpty()
+  // @Transform(({ value }) => JSON.parse(value))
+  // is_open: boolean;
 
   @IsNotEmpty()
   @IsString({ each: true })
