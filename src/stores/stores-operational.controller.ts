@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { RoleStoreGuard } from 'src/auth/store.guard';
+import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
+import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { StoreOperationalService } from './stores-operational.service';
@@ -58,10 +60,35 @@ export class StoreOperationalController {
           );
       }
 
+      const updPayload = payload.map((e) => {
+        const shifts = e.operational_hours.map((e) => {
+          const item = new StoreOperationalShiftDocument({
+            shift_id: e.shift_id,
+            open_hour: e.open_hour,
+            close_hour: e.close_hour,
+          });
+          if (e.id && e.id !== '') {
+            item.id = e.id;
+          }
+          return item;
+        });
+
+        return new StoreOperationalHoursDocument({
+          id: store_id,
+          day_of_weeks: e.day_of_week,
+          shifts: shifts,
+        });
+      });
+
+      const parsedValue =
+        await this.mStoreOperationalService.parseOldExistingSchedules(
+          ifSchedulesExists,
+          updPayload,
+        );
+
       const result = await this.mStoreOperationalService
-        .updateStoreOperationalHours(store_id, payload)
+        .updateStoreOperationalHours(store_id, parsedValue)
         .then(async (res) => {
-          console.log('set operational hour update result: ', res);
           return await this.mStoreOperationalService
             .getAllStoreScheduleByStoreId(store_id)
             .catch((e) => {

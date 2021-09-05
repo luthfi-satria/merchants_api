@@ -3,10 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { Repository } from 'typeorm';
-import { IStoreOperationalPayload } from './types';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
-import { StoreOpenHoursValidation, StoreOpenValidation } from './validation/operational-hour.validation';
 
 @Injectable()
 export class StoreOperationalService {
@@ -81,7 +79,13 @@ export class StoreOperationalService {
       return await this.storeOperationalRepository
         .find({
           where: { merchant_store_id: store_id },
-          select: ['id', 'day_of_week', 'day_of_weeks', 'merchant_store_id'],
+          select: [
+            'id',
+            'day_of_week',
+            'day_of_weeks',
+            'merchant_store_id',
+            'is_open_24h',
+          ],
           relations: ['shifts'],
           order: { day_of_week: 'ASC' },
         })
@@ -141,39 +145,22 @@ export class StoreOperationalService {
   }
 
   public async updateStoreOperationalHours(
-    merchant_id: string,
-    data: StoreOpenHoursValidation[]
+    store_id: string,
+    data: StoreOperationalHoursDocument[],
   ) {
     try {
-      //parse input to object
-      const operational = data.map(e => {
-        const shifts = e.operational_hours.map(e => {
-          return new StoreOperationalShiftDocument({
-            close_hour: e.close_hour,
-            open_hour: e.open_hour,
-          });
-        });
-
-        return new StoreOperationalHoursDocument({
-          day_of_weeks: e.day_of_week,
-          shifts: shifts,
-        });
-      });
-
       const result = await Promise.all(
-        operational.map(async (e) => {
+        data.map(async (e) => {
           const arrUpdated = await this.storeOperationalRepository
-            .update(
-              {
-                merchant_store_id: merchant_id,
-                // day_of_week: e.day_of_week,
-                day_of_weeks: e.day_of_weeks,
-              },
-              {
-                day_of_weeks: e.day_of_weeks,
-                shifts: e.shifts,
-              },
-            )
+            .save({
+              ...e,
+              merchant_store_id: store_id,
+            })
+            .then((res) => {
+              console.info('update Result for shift operational hour', res);
+
+              return res;
+            })
             .catch((e) => {
               throw e;
             });
@@ -183,11 +170,50 @@ export class StoreOperationalService {
       ).catch((e) => {
         throw e;
       });
-
       return result;
     } catch (e) {
       Logger.error(e.message, '', 'Update Store Operational');
       throw e;
     }
+  }
+
+  public async parseOldExistingSchedules(
+    oldSchedule: StoreOperationalHoursDocument[],
+    newSchedule: StoreOperationalHoursDocument[],
+  ) {
+    const parsedValue = oldSchedule.map((row) => {
+      const isFound = newSchedule.find(
+        (e) => e.day_of_weeks === row.day_of_weeks,
+      );
+
+      if (isFound) {
+        // update existing record with new data
+        const alterShifts = isFound.shifts.map((e) => {
+          const isShiftsHasID = row.shifts.find(
+            (ee) => ee.shift_id == e.shift_id,
+          );
+
+          if (isShiftsHasID) {
+            // attach shifts id and store id for Typeorm relational Update
+            return new StoreOperationalShiftDocument({
+              ...e,
+              id: isShiftsHasID.id,
+              store_operational_id: isShiftsHasID.store_operational_id,
+            });
+          }
+
+          // else create new Store Shifts based on shift_id
+          return new StoreOperationalShiftDocument({
+            ...e,
+          });
+        });
+
+        row.shifts = alterShifts;
+      }
+
+      return row;
+    });
+
+    return parsedValue;
   }
 }
