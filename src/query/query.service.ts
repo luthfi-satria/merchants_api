@@ -66,6 +66,7 @@ export class QueryService {
     const currTime = DateTimeUtils.DateTimeToWIB(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
     const lang = data.lang || 'id';
+    console.log('data: ', data);
 
     const qlistStore = this.storeRepository
       .createQueryBuilder('merchant_store')
@@ -85,6 +86,13 @@ export class QueryService {
         'operational_hours',
         'operational_hours.merchant_store_id = merchant_store.id',
       );
+
+    if (store_category_id) {
+      qlistStore.leftJoinAndSelect(
+        'merchant_store.store_categories',
+        'merchant_store_categories',
+      );
+    }
 
     const listCount = await qlistStore
       .where(
