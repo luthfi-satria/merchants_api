@@ -606,13 +606,7 @@ export class StoresService {
 
     const store = this.storeRepository
       .createQueryBuilder('merchant_store')
-      .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-      .leftJoinAndSelect(
-        'merchant_store.operational_hours',
-        'operational_hours',
-        'operational_hours.merchant_store_id = merchant_store.id',
-      )
-      .where('merchant_store.is_store_open = :is_open', { is_open: true });
+      .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon');
     if (search) {
       store.andWhere(
         new Brackets((qb) => {
@@ -669,10 +663,6 @@ export class StoresService {
         row.service_addon.forEach((sao) => {
           delete sao.created_at;
           delete sao.updated_at;
-        });
-        row.operational_hours.forEach((oph) => {
-          delete oph.created_at;
-          delete oph.updated_at;
         });
         return row;
       });
