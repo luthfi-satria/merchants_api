@@ -54,4 +54,14 @@ export class DateTimeUtils {
       .toLowerCase();
     return dayOfWeek;
   }
+
+  /**
+   *
+   * @param day_of_week string - string from day of week in format('ddd')
+   * @returns Day of week in 'd' format
+   */
+  static convertToDayOfWeekNumber(day_of_week: string): number {
+    const dayOfWeek = moment(day_of_week, 'ddd').format('d');
+    return parseInt(dayOfWeek, 10);
+  }
 }

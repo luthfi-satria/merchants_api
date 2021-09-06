@@ -26,7 +26,7 @@ export class StoreOperationalService {
         return this.storeOperationalRepository.create({
           merchant_store_id: merchantStoreId,
           day_of_week: i,
-          day_of_weeks: DateTimeUtils.convertToDayOfWeek(i),
+          //day_of_weeks: DateTimeUtils.convertToDayOfWeek(i),
           is_open: true,
           shifts: [
             new StoreOperationalShiftDocument({
@@ -183,7 +183,7 @@ export class StoreOperationalService {
   ) {
     const parsedValue = oldSchedule.map((row) => {
       const isFound = newSchedule.find(
-        (e) => e.day_of_weeks === row.day_of_weeks,
+        (e) => e.day_of_week === row.day_of_week,
       );
 
       if (isFound) {
