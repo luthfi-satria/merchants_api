@@ -189,8 +189,7 @@ export class QueryService {
     listCount[0].forEach((item) => {
       listId.push(item.id);
     });
-
-    const listItem = await this.storeRepository
+    const qListData = await this.storeRepository
       .createQueryBuilder('merchant_store')
       .addSelect(
         '(6371 * ACOS(COS(RADIANS(' +
@@ -215,10 +214,13 @@ export class QueryService {
       .leftJoinAndSelect(
         'merchant_store_categories.languages',
         'merchant_store_categories_languages',
-      )
-      .where('merchant_store.id IN(:...ids)', { ids: listId })
-      .getRawMany()
-      .catch((err) => {
+      );
+
+    let items = [];
+    if (listId.length > 0) {
+      qListData.where('merchant_store.id IN(:...ids)', { ids: listId });
+
+      const listItem = await qListData.getRawMany().catch((err) => {
         const errors: RMessage = {
           value: '',
           property: '',
@@ -232,11 +234,12 @@ export class QueryService {
           ),
         );
       });
-    const items = await this.manipulateStoreDistance2(listItem, lang);
-    listItem.forEach((row) => {
-      dbOutputTime(row);
-      delete row.owner_password;
-    });
+      items = await this.manipulateStoreDistance2(listItem, lang);
+      listItem.forEach((row) => {
+        dbOutputTime(row);
+        delete row.owner_password;
+      });
+    }
     const list_result: ListResponse = {
       total_item: totalItems,
       limit: Number(perPage),
