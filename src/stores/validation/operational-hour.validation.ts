@@ -33,6 +33,10 @@ export class StoreShiftHours {
   @IsNotEmpty()
   shift_id: number;
 
+  @IsBoolean()
+  @Transform(({ value }) => JSON.parse(value))
+  is_active: boolean;
+
   @IsNotEmpty()
   @IsMilitaryTime({ each: true })
   open_hour: string;

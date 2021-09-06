@@ -19,7 +19,7 @@ export class StoreOperationalHoursDocument {
   merchant_store_id: string;
 
   @Column({ type: 'int8' }) //TODO niel- will remove this, change to day_of_weeks with verbose day ex 'mon, tue, etc.';
-  day_of_week: number;
+  day_of_week: number | string;
 
   @Column({ type: 'varchar', length: '4', nullable: true })
   day_of_weeks: string;
