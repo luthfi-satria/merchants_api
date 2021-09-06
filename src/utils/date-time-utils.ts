@@ -21,7 +21,7 @@ export class DateTimeUtils {
     const weekDayInWIB = momenttz(serverDate)
       .tz('Asia/Jakarta')
       .format('YYYY-MM-DD');
-    return parseInt(moment(weekDayInWIB).format('d'), 10) - 1;
+    return parseInt(moment(weekDayInWIB).format('d'), 10);
   }
 
   /**
