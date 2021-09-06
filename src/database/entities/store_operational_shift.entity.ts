@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
 
 @Entity({ name: 'merchant_store_operational_shifts' })
@@ -30,9 +31,11 @@ export class StoreOperationalShiftDocument {
   close_hour: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
+  @Exclude()
   created_at: Date | string;
 
   @UpdateDateColumn({ type: 'timestamptz' })
+  @Exclude()
   updated_at: Date | string;
 
   @ManyToOne(

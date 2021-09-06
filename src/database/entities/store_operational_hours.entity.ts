@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -37,9 +38,11 @@ export class StoreOperationalHoursDocument {
   close_hour: string; // TODO: niel- remove this column
 
   @CreateDateColumn({ type: 'timestamptz' })
+  @Exclude()
   created_at: Date | string;
 
   @UpdateDateColumn({ type: 'timestamptz' })
+  @Exclude()
   updated_at: Date | string;
 
   @ManyToOne(() => StoreDocument, (store) => store.operational_hours)
