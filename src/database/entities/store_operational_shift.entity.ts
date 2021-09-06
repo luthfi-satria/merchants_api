@@ -1,9 +1,11 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
 
@@ -18,7 +20,7 @@ export class StoreOperationalShiftDocument {
   @Column({ type: 'int4', nullable: true })
   shift_id: number;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: 'boolean', default: false })
   is_active: boolean;
 
   @Column({ type: 'varchar', length: '7', default: '08:00' })
@@ -26,6 +28,12 @@ export class StoreOperationalShiftDocument {
 
   @Column({ type: 'varchar', length: '7', default: '17:00' })
   close_hour: string;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at: Date | string;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_at: Date | string;
 
   @ManyToOne(
     () => StoreOperationalHoursDocument,
