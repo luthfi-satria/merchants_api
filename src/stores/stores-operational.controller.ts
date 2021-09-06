@@ -187,8 +187,8 @@ export class StoreOperationalController {
         });
 
       const msg = is_open_24_hour
-        ? 'Sukses ubah semua jam operasional toko menjadi buka 24 jam'
-        : `Sukses reset semua jam operasional mnejadi default (08:00 - 17:00)`;
+        ? `Sukses mengubah status toko menjadi 'Buka 24 Jam'`
+        : `Sukses mereset status 'Buka 24 Jam', sekarang toko mengikuti jadwal operasional toko.`;
 
       return this.responseService.success(true, msg, updatedResult);
     } catch (e) {
