@@ -1,10 +1,12 @@
 import {
+  ClassSerializerInterceptor,
   Controller,
   Get,
   Header,
   Param,
   Query,
   Res,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
@@ -40,10 +42,12 @@ export class QueryController {
 
   @Get('query/stores')
   @ResponseStatusCode()
+  @UseInterceptors(ClassSerializerInterceptor)
   async getstores(
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
-    return await this.queryService.listGroupStore(data);
+    //return await this.queryService.listGroupStore(data);
+    return await this.queryService.getListQueryStore(data);
   }
 
   @Get('query/stores/categories')
