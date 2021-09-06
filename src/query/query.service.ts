@@ -66,8 +66,6 @@ export class QueryService {
     const currTime = DateTimeUtils.DateTimeToWIB(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
     const lang = data.lang || 'id';
-    console.log('data: ', data);
-
     const qlistStore = this.storeRepository
       .createQueryBuilder('merchant_store')
       .addSelect(
