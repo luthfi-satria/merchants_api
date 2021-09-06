@@ -22,7 +22,7 @@ import {
   RSuccessMessage,
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime } from 'src/utils/general-utils';
+import { dbOutputTime, getDistanceInKilometers } from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
@@ -276,6 +276,9 @@ export class QueryService {
       const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
       const lang = data.lang || 'id';
 
+      console.log('current week of day: ', weekOfDay);
+      console.log('current time: ', currTime);
+
       const qlistStore = await this.storeRepository
         .createQueryBuilder('merchant_store')
         .addSelect(
@@ -288,6 +291,7 @@ export class QueryService {
             ')) * SIN(RADIANS(merchant_store.location_latitude))))',
           'distance_in_km',
         )
+        // --- JOIN TABLES ---
         .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon') //MANY TO MANY
         .leftJoinAndSelect(
           'merchant_store.operational_hours',
@@ -299,6 +303,11 @@ export class QueryService {
           'operational_shifts',
           'operational_shifts.store_operational_id = operational_hours.id',
         )
+        .leftJoinAndSelect(
+          'merchant_store.store_categories',
+          'merchant_store_categories',
+        )
+        // --- Filter Conditions ---
         .where(
           `merchant_store.status = :active
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
@@ -319,9 +328,28 @@ export class QueryService {
             long: long,
           },
         )
+        .andWhere(
+          new Brackets((qb) => {
+            qb.where(
+              `operational_hours.day_of_week = :weekOfDay
+              ${
+                is24hour == false
+                  ? `AND (:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR merchant_store.is_open_24h = true`
+                  : ''
+              }`,
+              {
+                weekOfDay: weekOfDay,
+                currTime: currTime,
+                all24h: true, //niel true for query all stores
+              },
+            );
+          }),
+        )
         .orderBy('distance_in_km', 'ASC')
-        .offset((currentPage - 1) * perPage)
-        .limit(perPage)
+        //.offset((currentPage - 1) * perPage)
+        //.limit(perPage)
+        .skip((currentPage - 1) * perPage)
+        .take(perPage)
         .getManyAndCount()
         .catch((e) => {
           Logger.error(e.message, '', 'QueryListStore');
@@ -342,11 +370,26 @@ export class QueryService {
 
       const [storeItems, totalItems] = qlistStore;
 
+      // -- Formating output OR add external attribute to query --
+      const formattedStoredItems = storeItems.map((row, i) => {
+        const distance_in_km = getDistanceInKilometers(
+          parseFloat(lat),
+          parseFloat(long),
+          row.location_latitude,
+          row.location_longitude,
+        );
+
+        return {
+          ...row,
+          distance_in_km: distance_in_km,
+        };
+      });
+
       const list_result: ListResponse = {
         total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
-        items: storeItems,
+        items: formattedStoredItems,
       };
 
       return this.responseService.success(
