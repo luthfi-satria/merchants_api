@@ -43,7 +43,8 @@ export class QueryController {
   async getstores(
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
-    return await this.queryService.listGroupStore(data);
+    //return await this.queryService.listGroupStore(data);
+    return await this.queryService.getListQueryStore(data);
   }
 
   @Get('query/stores/categories')

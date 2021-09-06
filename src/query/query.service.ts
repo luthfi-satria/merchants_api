@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
@@ -251,6 +252,112 @@ export class QueryService {
       this.messageService.get('merchant.liststore.success'),
       list_result,
     );
+  }
+
+  async getListQueryStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
+    try {
+      let search = data.search || '';
+      const radius = data.distance || 25;
+      const lat = data.location_latitude;
+      const long = data.location_longitude;
+      search = search.toLowerCase();
+      const currentPage = data.page || 1;
+      const perPage = Number(data.limit) || 10;
+      const store_category_id: string = data.store_category_id || null;
+
+      const delivery_only =
+        data.pickup == true
+          ? enumDeliveryType.delivery_and_pickup
+          : enumDeliveryType.delivery_only;
+      const is24hour = data?.is_24hrs ? true : false;
+      const open_24_hour = data.is_24hrs;
+
+      const currTime = DateTimeUtils.DateTimeToWIB(new Date());
+      const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
+      const lang = data.lang || 'id';
+
+      const qlistStore = await this.storeRepository
+        .createQueryBuilder('merchant_store')
+        .addSelect(
+          '(6371 * ACOS(COS(RADIANS(' +
+            lat +
+            ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
+            long +
+            ')) + SIN(RADIANS(' +
+            lat +
+            ')) * SIN(RADIANS(merchant_store.location_latitude))))',
+          'distance_in_km',
+        )
+        .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon') //MANY TO MANY
+        .leftJoinAndSelect(
+          'merchant_store.operational_hours',
+          'operational_hours',
+          'operational_hours.merchant_store_id = merchant_store.id',
+        )
+        .leftJoinAndSelect(
+          'operational_hours.shifts',
+          'operational_shifts',
+          'operational_shifts.store_operational_id = operational_hours.id',
+        )
+        .where(
+          `merchant_store.status = :active
+            AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
+            ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
+            ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
+            ${
+              store_category_id
+                ? `AND merchant_store_categories.id = :stocat`
+                : ''
+            }`,
+          {
+            active: enumStoreStatus.active,
+            open_24_hour: open_24_hour,
+            delivery_only: delivery_only,
+            stocat: store_category_id,
+            radius: radius,
+            lat: lat,
+            long: long,
+          },
+        )
+        .orderBy('distance_in_km', 'ASC')
+        .offset((currentPage - 1) * perPage)
+        .limit(perPage)
+        .getManyAndCount()
+        .catch((e) => {
+          Logger.error(e.message, '', 'QueryListStore');
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: '',
+                property: '',
+                constraint: [
+                  this.messageService.get('merchant.liststore.not_found'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        });
+
+      const [storeItems, totalItems] = qlistStore;
+
+      const list_result: ListResponse = {
+        total_item: totalItems,
+        limit: Number(perPage),
+        current_page: Number(currentPage),
+        items: storeItems,
+      };
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.liststore.success'),
+        list_result,
+      );
+    } catch (e) {
+      Logger.error(e.message, '', 'QUERY LIST STORE');
+      throw e;
+    }
   }
 
   async listStoreCategories(
