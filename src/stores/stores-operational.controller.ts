@@ -15,6 +15,7 @@ import { StoreOperationalHoursDocument } from 'src/database/entities/store_opera
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
+import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreOperationalService } from './stores-operational.service';
 import { StoresService } from './stores.service';
 import {
@@ -65,6 +66,7 @@ export class StoreOperationalController {
         const shifts = e.operational_hours.map((e) => {
           const item = new StoreOperationalShiftDocument({
             shift_id: e.shift_id,
+            is_active: e.is_active,
             open_hour: e.open_hour,
             close_hour: e.close_hour,
           });
@@ -81,11 +83,12 @@ export class StoreOperationalController {
           merchant_store_id: store_id,
           day_of_week: dayOfWeek,
           is_open_24h: e.open_24hrs,
-          // is_open: e.is_open,
+          // is_open: e.is_open, // niel- comment first
           shifts: shifts,
         });
       });
 
+      // Merge & format input data with existing data, to support cascade update.
       const parsedValue =
         await this.mStoreOperationalService.parseOldExistingSchedules(
           ifSchedulesExists,

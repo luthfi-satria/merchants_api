@@ -82,9 +82,9 @@ export class StoreOperationalService {
           select: [
             'id',
             'day_of_week',
-            'day_of_weeks',
             'merchant_store_id',
             'is_open_24h',
+            'is_open',
           ],
           relations: ['shifts'],
           order: { day_of_week: 'ASC' },
@@ -182,33 +182,46 @@ export class StoreOperationalService {
     newSchedule: StoreOperationalHoursDocument[],
   ) {
     const parsedValue = oldSchedule.map((row) => {
-      const isFound = newSchedule.find(
-        (e) => e.day_of_week === row.day_of_week,
-      );
+      const isFound = newSchedule.find((e) => {
+        const isFounded =
+          e.day_of_week.toString() === row.day_of_week.toString(); // convert to string because typeorm find() result.
+        return isFounded;
+      });
 
       if (isFound) {
         // update existing record with new data
-        const alterShifts = isFound.shifts.map((e) => {
-          const isShiftsHasID = row.shifts.find(
-            (ee) => ee.shift_id == e.shift_id,
+        const getMaxArrayLength =
+          row.shifts.length > isFound.shifts.length
+            ? row.shifts.length
+            : isFound.shifts.length;
+
+        // Push & Merge from update data with existing data
+        const newSchedules = [...Array(getMaxArrayLength)].map((item, i) => {
+          const updData = isFound.shifts.find(
+            (e) => e.shift_id.toString() === i.toString(),
+          );
+          const existData = row.shifts.find(
+            (e) => e.shift_id.toString() === i.toString(),
           );
 
-          if (isShiftsHasID) {
-            // attach shifts id and store id for Typeorm relational Update
+          const existingShiftID = existData?.id === undefined ? undefined : existData.id;
+
+          if (updData) {
             return new StoreOperationalShiftDocument({
-              ...e,
-              id: isShiftsHasID.id,
-              store_operational_id: isShiftsHasID.store_operational_id,
+              ...updData,
+              id: existingShiftID,
+              store_operational_id: row.id,
+            });
+          } else if (existData) {
+            return new StoreOperationalShiftDocument({
+              ...existData,
+              id: existingShiftID,
+              store_operational_id: row.id,
             });
           }
-
-          // else create new Store Shifts based on shift_id
-          return new StoreOperationalShiftDocument({
-            ...e,
-          });
         });
 
-        row.shifts = alterShifts;
+        row.shifts = newSchedules;
         row.is_open_24h = isFound.is_open_24h;
         //row.is_open = isFound.is_open;
       }
