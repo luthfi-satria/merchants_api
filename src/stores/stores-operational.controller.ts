@@ -74,9 +74,12 @@ export class StoreOperationalController {
           return item;
         });
 
+        //convert day of week into int
+        const dayOfWeek = DateTimeUtils.convertToDayOfWeekNumber(e.day_of_week);
+
         return new StoreOperationalHoursDocument({
           merchant_store_id: store_id,
-          day_of_weeks: e.day_of_week,
+          day_of_week: dayOfWeek,
           is_open_24h: e.open_24hrs,
           // is_open: e.is_open,
           shifts: shifts,
