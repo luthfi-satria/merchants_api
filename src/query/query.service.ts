@@ -30,6 +30,8 @@ import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { QueryListStoreDto } from './validation/query-public.dto';
 import _ from 'lodash';
+import { StoreOperationalService } from 'src/stores/stores-operational.service';
+import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 
 @Injectable()
 export class QueryService {
@@ -41,6 +43,7 @@ export class QueryService {
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
     private readonly addonService: AddonsService,
+    private readonly storeOperationalService: StoreOperationalService,
     private httpService: HttpService,
     private readonly merchantService: MerchantsService,
     @Hash() private readonly hashService: HashService,
@@ -367,20 +370,41 @@ export class QueryService {
 
       const [storeItems, totalItems] = qlistStore;
 
-      // -- Formating output OR add external attribute to query --
-      const formattedStoredItems = storeItems.map((row, i) => {
-        const distance_in_km = getDistanceInKilometers(
-          parseFloat(lat),
-          parseFloat(long),
-          row.location_latitude,
-          row.location_longitude,
-        );
+      // -- Formating output OR add external attribute to  output--
+      const formattedStoredItems = await Promise.all(
+        storeItems.map(async (row) => {
+          // Add 'distance_in_km' attribute
+          const distance_in_km = getDistanceInKilometers(
+            parseFloat(lat),
+            parseFloat(long),
+            row.location_latitude,
+            row.location_longitude,
+          );
 
-        return {
-          ...row,
-          distance_in_km: distance_in_km,
-        };
-      });
+          // Get relation of operational store & operational shift,
+          const opt_hours = await this.storeOperationalService
+            .getAllStoreScheduleByStoreId(row.id)
+            .then((res) => {
+              return res.map((e) => {
+                const dayOfWeekToWord = DateTimeUtils.convertToDayOfWeek(
+                  Number(e.day_of_week),
+                );
+                const x = new StoreOperationalHoursDocument({ ...e });
+                delete x.day_of_week;
+                return {
+                  ...x,
+                  day_of_week: dayOfWeekToWord,
+                };
+              });
+            });
+
+          return {
+            ...row,
+            distance_in_km: distance_in_km,
+            operational_hours: opt_hours,
+          };
+        }),
+      );
 
       const list_result: ListResponse = {
         total_item: totalItems,
@@ -682,8 +706,6 @@ export class QueryService {
             day_of_week: raw.operational_hours_day_of_week,
             is_open: raw.operational_hours_is_open,
             is_open_24h: raw.operational_hours_is_open_24h,
-            open_hour: raw.operational_hours_open_hour,
-            close_hour: raw.operational_hours_close_hour,
           };
           manipulatedRow.operational_hours.push(oh);
         }
