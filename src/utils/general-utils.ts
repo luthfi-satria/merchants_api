@@ -63,3 +63,30 @@ export const createUrl = function (filename: any) {
     return process.env.HTTP_ADDRESS + '/api/v1/merchants/image' + filename;
   }
 };
+
+export const getDistanceInKilometers = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+) => {
+  const R = 6371; // km
+  const dLat = lat2 - lat1;
+  const dLon = lon2 - lon1;
+
+  const dLatRadian = (dLat * Math.PI) / 180;
+  const dLonRadian = (dLon * Math.PI) / 180;
+
+  const lat1Rad = (lat1 * Math.PI) / 180;
+  const lat2Rad = (lat2 * Math.PI) / 180;
+
+  const a =
+    Math.sin(dLatRadian / 2) * Math.sin(dLatRadian / 2) +
+    Math.sin(dLonRadian / 2) *
+      Math.sin(dLonRadian / 2) *
+      Math.cos(lat1Rad) *
+      Math.cos(lat2Rad);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c;
+  return d;
+}
