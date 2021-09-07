@@ -8,6 +8,7 @@ import { MerchantUsersDocument } from 'src/database/entities/merchant_users.enti
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
+import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 import { HashService } from 'src/hash/hash.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
@@ -23,6 +24,7 @@ import { InternalService } from './internal.service';
       AddonDocument,
       MerchantDocument,
       StoreOperationalHoursDocument,
+      StoreOperationalShiftDocument,
       StoreCategoriesDocument,
     ]),
     HttpModule,

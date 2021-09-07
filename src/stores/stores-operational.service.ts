@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { Repository } from 'typeorm';
-import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 
 @Injectable()
@@ -14,6 +13,8 @@ export class StoreOperationalService {
   constructor(
     @InjectRepository(StoreOperationalHoursDocument)
     private readonly storeOperationalRepository: Repository<StoreOperationalHoursDocument>,
+    @InjectRepository(StoreOperationalShiftDocument)
+    private readonly storeShiftsRepository: Repository<StoreOperationalShiftDocument>,
     @InjectRepository(StoreDocument)
     private readonly storesRepository: Repository<StoreDocument>,
   ) {}
@@ -53,6 +54,22 @@ export class StoreOperationalService {
         return e;
       });
     } catch (e) {
+      throw e;
+    }
+  }
+
+  public async deleteExistingOperationalShifts(store_operational_id: string) {
+    try {
+      const result = await this.storeShiftsRepository
+        .delete({
+          store_operational_id: store_operational_id,
+        })
+        .catch((e) => {
+          throw e;
+        });
+      return result;
+    } catch (e) {
+      Logger.error(e.message, '', 'Delete Operational shifts');
       throw e;
     }
   }
@@ -156,11 +173,6 @@ export class StoreOperationalService {
               ...e,
               merchant_store_id: store_id,
             })
-            .then((res) => {
-              console.info('update Result for shift operational hour', res);
-
-              return res;
-            })
             .catch((e) => {
               throw e;
             });
@@ -181,53 +193,37 @@ export class StoreOperationalService {
     oldSchedule: StoreOperationalHoursDocument[],
     newSchedule: StoreOperationalHoursDocument[],
   ) {
-    const parsedValue = oldSchedule.map((row) => {
-      const isFound = newSchedule.find((e) => {
-        const isFounded =
-          e.day_of_week.toString() === row.day_of_week.toString(); // convert to string because typeorm find() result.
-        return isFounded;
-      });
-
-      if (isFound) {
-        // update existing record with new data
-        const getMaxArrayLength =
-          row.shifts.length > isFound.shifts.length
-            ? row.shifts.length
-            : isFound.shifts.length;
-
-        // Push & Merge from update data with existing data
-        const newSchedules = [...Array(getMaxArrayLength)].map((item, i) => {
-          const updData = isFound.shifts.find(
-            (e) => e.shift_id.toString() === i.toString(),
-          );
-          const existData = row.shifts.find(
-            (e) => e.shift_id.toString() === i.toString(),
-          );
-
-          const existingShiftID = existData?.id === undefined ? undefined : existData.id;
-
-          if (updData) {
-            return new StoreOperationalShiftDocument({
-              ...updData,
-              id: existingShiftID,
-              store_operational_id: row.id,
-            });
-          } else if (existData) {
-            return new StoreOperationalShiftDocument({
-              ...existData,
-              id: existingShiftID,
-              store_operational_id: row.id,
-            });
-          }
+    const parsedValue = await Promise.all(
+      oldSchedule.map(async (row) => {
+        const isFound = newSchedule.find((e) => {
+          const isFounded =
+            e.day_of_week.toString() === row.day_of_week.toString(); // convert to string because typeorm find() result.
+          return isFounded;
         });
 
-        row.shifts = newSchedules;
-        row.is_open_24h = isFound.is_open_24h;
-        //row.is_open = isFound.is_open;
-      }
+        if (isFound) {
+          // Delete existing shifts and replace with new ones
+          const result = await this.deleteExistingOperationalShifts(
+            row.id,
+          ).catch((e) => {
+            throw e;
+          });
 
-      return new StoreOperationalHoursDocument({ ...row });
-    });
+          const newSchedules = isFound.shifts.map((e) => {
+            return new StoreOperationalShiftDocument({
+              ...e,
+              store_operational_id: row.id,
+            });
+          });
+
+          row.shifts = newSchedules;
+          row.is_open_24h = isFound.is_open_24h;
+          //row.is_open = isFound.is_open;
+        }
+
+        return new StoreOperationalHoursDocument({ ...row });
+      }),
+    );
 
     return parsedValue;
   }
