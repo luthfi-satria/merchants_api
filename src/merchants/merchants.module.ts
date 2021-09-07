@@ -17,6 +17,8 @@ import { MerchantsController } from './merchants.controller';
 import { MerchantsService } from './merchants.service';
 import { MerchantUsersController } from './merchants_users.controller';
 import { MerchantUsersService } from './merchants_users.service';
+import { ResetPasswordController } from './reset-password.controller';
+import { ResetPasswordService } from './reset-password.service';
 
 @Module({
   imports: [
@@ -32,7 +34,11 @@ import { MerchantUsersService } from './merchants_users.service';
     }),
     HttpModule,
   ],
-  controllers: [MerchantsController, MerchantUsersController],
+  controllers: [
+    MerchantsController,
+    MerchantUsersController,
+    ResetPasswordController,
+  ],
   providers: [
     MerchantsService,
     GroupsService,
@@ -43,6 +49,7 @@ import { MerchantUsersService } from './merchants_users.service';
     ImageValidationService,
     MerchantUsersService,
     CommonService,
+    ResetPasswordService,
   ],
 })
 export class MerchantsModule {}

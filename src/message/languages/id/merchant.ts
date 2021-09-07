@@ -27,6 +27,10 @@ export default {
       code: 'EMAIL_ALREADY_EXISTS',
       message: 'Email sudah digunakan.',
     },
+    emailNotFound: {
+      code: 'EMAIL_NOT_FOUND',
+      message: 'Email tidak ditemukan.',
+    },
     phoneExist: {
       code: 'PHONE_ALREADY_EXISTS',
       message: 'Nomor Telepon sudah digunakan.',
@@ -38,6 +42,10 @@ export default {
     invalidValue: {
       code: 'INVALID_VALUE',
       message: 'Value tidak sesuai.',
+    },
+    dataNotFound: {
+      code: 'DATA_NOT_FOUND',
+      message: 'Data tidak ditemukan.',
     },
   },
   creategroup: {

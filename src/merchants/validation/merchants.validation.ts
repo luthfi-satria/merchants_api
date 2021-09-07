@@ -2,6 +2,7 @@ import {
   IsEmail,
   IsNotEmpty,
   IsNumberString,
+  IsOptional,
   IsUUID,
   Length,
 } from 'class-validator';
@@ -69,4 +70,11 @@ export class MerchantMerchantValidation {
 
   approved_at: string;
   token: string;
+
+  @IsOptional()
+  @IsEmail()
+  email: string;
+
+  @IsOptional()
+  password: string;
 }

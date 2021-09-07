@@ -108,6 +108,9 @@ export class MerchantDocument {
   @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })
   group: GroupDocument;
 
+  @Column({ nullable: true })
+  token_reset_password: string;
+
   constructor(init?: Partial<MerchantDocument>) {
     Object.assign(this, init);
   }
