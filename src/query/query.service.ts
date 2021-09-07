@@ -403,14 +403,20 @@ export class QueryService {
               });
             });
 
-          const str_cat = row.store_categories.map((e, i) => {
+          // Parse Store Categories with localization category language name
+          const store_categories = row.store_categories.map((item) => {
+            const ctg_language = item.languages.find((e) => e.lang === lang);
 
+            const x = new StoreCategoriesDocument({ ...item });
+            delete x.languages;
+            return { ...x, name: ctg_language.name };
           });
 
           return {
             ...row,
             distance_in_km: distance_in_km,
             operational_hours: opt_hours,
+            store_categories: store_categories,
           };
         }),
       );

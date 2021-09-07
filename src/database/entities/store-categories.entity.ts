@@ -39,4 +39,8 @@ export class StoreCategoriesDocument {
 
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date;
+
+  constructor(init?: Partial<StoreCategoriesDocument>) {
+    Object.assign(this, init);
+  }
 }
