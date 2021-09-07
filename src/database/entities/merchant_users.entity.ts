@@ -58,4 +58,7 @@ export class MerchantUsersDocument {
   @ManyToOne(() => StoreDocument, (store) => store.id)
   @JoinColumn({ name: 'store_id' })
   store: StoreDocument;
+
+  @Column({ nullable: true })
+  token_reset_password: string;
 }

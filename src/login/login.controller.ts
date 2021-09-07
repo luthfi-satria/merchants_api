@@ -134,4 +134,13 @@ export class LoginController {
       profile,
     );
   }
+
+  @Post('login')
+  @ResponseStatusCode()
+  async loginByEmailPassword(
+    @Body()
+    data: LoginEmailValidation,
+  ): Promise<any> {
+    return await this.loginService.loginEmailPasswordProcess(data);
+  }
 }

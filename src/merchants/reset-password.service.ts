@@ -11,15 +11,15 @@ import { RMessage } from 'src/response/response.interface';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantMerchantValidation } from './validation/merchants.validation';
-import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 
 @Injectable()
 export class ResetPasswordService {
   constructor(
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
-    @InjectRepository(MerchantDocument)
-    private readonly merchantRepository: Repository<MerchantDocument>,
+    @InjectRepository(MerchantUsersDocument)
+    private readonly merchantUserRepository: Repository<MerchantUsersDocument>,
     private readonly commonService: CommonService,
     @Hash() private readonly hashService: HashService,
   ) {}
@@ -27,9 +27,9 @@ export class ResetPasswordService {
   async resetPasswordEmail(
     args: Partial<MerchantMerchantValidation>,
   ): Promise<any> {
-    const cekEmail = await this.merchantRepository
+    const cekEmail = await this.merchantUserRepository
       .findOne({
-        owner_email: args.email,
+        email: args.email,
       })
       .catch(() => {
         throw new BadRequestException(
@@ -65,7 +65,7 @@ export class ResetPasswordService {
     //Generate Random String
     const token = randomUUID();
     cekEmail.token_reset_password = token;
-    return await this.merchantRepository
+    return await this.merchantUserRepository
       .save(cekEmail)
       .then(() => {
         if (process.env.NODE_ENV == 'test') {
@@ -94,7 +94,7 @@ export class ResetPasswordService {
     args: Partial<MerchantMerchantValidation>,
     qstring: Record<string, any>,
   ): Promise<any> {
-    const cekToken = await this.merchantRepository
+    const cekToken = await this.merchantUserRepository
       .findOne({
         token_reset_password: qstring.token,
       })
@@ -135,10 +135,10 @@ export class ResetPasswordService {
       args.password,
       salt,
     );
-    cekToken.owner_password = passwordHash;
+    cekToken.password = passwordHash;
     cekToken.token_reset_password = '';
 
-    return await this.merchantRepository
+    return await this.merchantUserRepository
       .save(cekToken)
       .then(() => {
         return this.responseService.success(

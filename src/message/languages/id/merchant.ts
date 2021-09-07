@@ -215,7 +215,6 @@ export default {
     query_fail: 'Akses ke database gagal',
     invalid_email: 'Email tidak valid.',
     invalid_phone: 'Nomor Telepon tidak valid.',
-    invalid_password: 'Email atau password tidak valid.',
     unregistered_phone: {
       code: 'UNREGISTERED_PHONE',
       message: 'No. handphone belum terdaftar. Daftar sebagai member?',
@@ -223,6 +222,10 @@ export default {
     unregistered_email: {
       code: 'UNREGISTERED_EMAIL',
       message: 'Email belum terdaftar. Daftar sebagai member?',
+    },
+    invalid_password: {
+      code: 'INVALID_PASSWORD',
+      message: 'Password tidak valid',
     },
   },
   user: {

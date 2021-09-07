@@ -11,13 +11,14 @@ import { MerchantUsersDocument } from 'src/database/entities/merchant_users.enti
 import { HashService } from 'src/hash/hash.service';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
-import { RMessage } from 'src/response/response.interface';
+import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { Hash } from 'src/hash/hash.decorator';
 import { LoginEmailValidation } from './validation/login.email.validation';
 import { OtpEmailValidateValidation } from './validation/otp.email-validate.validation';
+import { CommonService } from 'src/common/common.service';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -32,6 +33,7 @@ export class LoginService {
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
     @Hash() private readonly hashService: HashService,
+    private readonly commonService: CommonService,
   ) {}
 
   async postHttp(
@@ -381,5 +383,102 @@ export class LoginService {
         id,
       },
     });
+  }
+
+  async loginEmailPasswordProcess(request: LoginEmailValidation): Promise<any> {
+    const existMerchantUser = await this.merchantUsersRepository
+      .findOne({ where: { email: request.email } })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: err.column,
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+
+    if (!existMerchantUser) {
+      const errors: RMessage = {
+        value: request.email,
+        property: 'email',
+        constraint: [
+          this.messageService.get('merchant.login.unregistered_email'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    const cekPassword = await this.hashService.validatePassword(
+      request.password,
+      existMerchantUser.password,
+    );
+    if (!cekPassword) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: 'password',
+            constraint: [
+              this.messageService.get('merchant.login.invalid_password'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    let merchantLevel = '';
+    let groupID = '';
+    let merchantID = '';
+    let storeID = '';
+    const id = existMerchantUser.id;
+
+    if (existMerchantUser.store_id != null) {
+      merchantLevel = 'store';
+      storeID = existMerchantUser.store_id;
+    }
+    if (existMerchantUser.merchant_id != null) {
+      merchantLevel = 'merchant';
+      merchantID = existMerchantUser.merchant_id;
+    }
+    if (existMerchantUser.group_id != null) {
+      merchantLevel = 'group';
+      groupID = existMerchantUser.group_id;
+    }
+
+    const http_req: Record<string, any> = {
+      phone: existMerchantUser.phone,
+      id_profile: merchantID,
+      user_type: 'merchant',
+      level: merchantLevel,
+      id: id,
+      group_id: groupID,
+      merchant_id: merchantID,
+      store_id: storeID,
+      roles: ['merchant'],
+    };
+
+    const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
+    const resp: Record<string, any> = await this.commonService.postHttp(
+      url,
+      http_req,
+    );
+    if (resp.statusCode) {
+      throw resp;
+    } else {
+      return resp;
+    }
   }
 }
