@@ -25,18 +25,6 @@ export class StoreOpen24HourValidation {
 }
 
 export class StoreShiftHours {
-  @IsUUID()
-  @IsOptional()
-  id?: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  shift_id: number;
-
-  @IsBoolean()
-  @Transform(({ value }) => JSON.parse(value))
-  is_active: boolean;
-
   @IsNotEmpty()
   @IsMilitaryTime({ each: true })
   open_hour: string;
