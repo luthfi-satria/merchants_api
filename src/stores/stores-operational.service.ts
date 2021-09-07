@@ -2,10 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
-import merchant from 'src/message/languages/en/merchant';
-import id from 'src/message/languages/id';
 import { Repository } from 'typeorm';
-import { IStoreOperationalPayload } from './types';
+import { DateTimeUtils } from 'src/utils/date-time-utils';
+import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 
 @Injectable()
 export class StoreOperationalService {
@@ -27,9 +26,14 @@ export class StoreOperationalService {
         return this.storeOperationalRepository.create({
           merchant_store_id: merchantStoreId,
           day_of_week: i,
-          open_hour: this.DEFAULT_STORE_OPEN,
-          close_hour: this.DEFAULT_STORE_CLOSE,
+          //day_of_weeks: DateTimeUtils.convertToDayOfWeek(i),
           is_open: true,
+          shifts: [
+            new StoreOperationalShiftDocument({
+              close_hour: this.DEFAULT_STORE_CLOSE,
+              open_hour: this.DEFAULT_STORE_OPEN,
+            }),
+          ],
         });
       });
 
@@ -78,10 +82,11 @@ export class StoreOperationalService {
           select: [
             'id',
             'day_of_week',
-            'open_hour',
-            'close_hour',
             'merchant_store_id',
+            'is_open_24h',
+            'is_open',
           ],
+          relations: ['shifts'],
           order: { day_of_week: 'ASC' },
         })
         .catch((e) => {
@@ -140,23 +145,22 @@ export class StoreOperationalService {
   }
 
   public async updateStoreOperationalHours(
-    merchant_id: string,
-    data: IStoreOperationalPayload[],
+    store_id: string,
+    data: StoreOperationalHoursDocument[],
   ) {
     try {
       const result = await Promise.all(
         data.map(async (e) => {
           const arrUpdated = await this.storeOperationalRepository
-            .update(
-              {
-                merchant_store_id: merchant_id,
-                day_of_week: e.day_of_week,
-              },
-              {
-                open_hour: e.open_hour,
-                close_hour: e.close_hour,
-              },
-            )
+            .save({
+              ...e,
+              merchant_store_id: store_id,
+            })
+            .then((res) => {
+              console.info('update Result for shift operational hour', res);
+
+              return res;
+            })
             .catch((e) => {
               throw e;
             });
@@ -166,11 +170,65 @@ export class StoreOperationalService {
       ).catch((e) => {
         throw e;
       });
-
       return result;
     } catch (e) {
       Logger.error(e.message, '', 'Update Store Operational');
       throw e;
     }
+  }
+
+  public async parseOldExistingSchedules(
+    oldSchedule: StoreOperationalHoursDocument[],
+    newSchedule: StoreOperationalHoursDocument[],
+  ) {
+    const parsedValue = oldSchedule.map((row) => {
+      const isFound = newSchedule.find((e) => {
+        const isFounded =
+          e.day_of_week.toString() === row.day_of_week.toString(); // convert to string because typeorm find() result.
+        return isFounded;
+      });
+
+      if (isFound) {
+        // update existing record with new data
+        const getMaxArrayLength =
+          row.shifts.length > isFound.shifts.length
+            ? row.shifts.length
+            : isFound.shifts.length;
+
+        // Push & Merge from update data with existing data
+        const newSchedules = [...Array(getMaxArrayLength)].map((item, i) => {
+          const updData = isFound.shifts.find(
+            (e) => e.shift_id.toString() === i.toString(),
+          );
+          const existData = row.shifts.find(
+            (e) => e.shift_id.toString() === i.toString(),
+          );
+
+          const existingShiftID = existData?.id === undefined ? undefined : existData.id;
+
+          if (updData) {
+            return new StoreOperationalShiftDocument({
+              ...updData,
+              id: existingShiftID,
+              store_operational_id: row.id,
+            });
+          } else if (existData) {
+            return new StoreOperationalShiftDocument({
+              ...existData,
+              id: existingShiftID,
+              store_operational_id: row.id,
+            });
+          }
+        });
+
+        row.shifts = newSchedules;
+        row.is_open_24h = isFound.is_open_24h;
+        //row.is_open = isFound.is_open;
+      }
+
+      return new StoreOperationalHoursDocument({ ...row });
+    });
+
+    return parsedValue;
   }
 }

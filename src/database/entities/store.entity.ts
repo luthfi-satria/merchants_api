@@ -133,7 +133,10 @@ export class StoreDocument {
   @OneToMany(
     () => StoreOperationalHoursDocument,
     (operational_hours) => operational_hours.store,
-    { cascade: ['insert', 'update'] },
+    {
+      cascade: ['insert', 'update', 'remove', 'soft-remove'],
+      onDelete: 'CASCADE',
+    },
   )
   operational_hours: StoreOperationalHoursDocument[];
 

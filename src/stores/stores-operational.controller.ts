@@ -11,8 +11,11 @@ import {
 } from '@nestjs/common';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { RoleStoreGuard } from 'src/auth/store.guard';
+import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
+import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
+import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreOperationalService } from './stores-operational.service';
 import { StoresService } from './stores.service';
 import {
@@ -22,7 +25,6 @@ import {
 } from './validation/operational-hour.validation';
 
 @Controller('api/v1/merchants/stores')
-@UserTypeAndLevel('admin.*', 'merchant.store')
 @UseGuards(RoleStoreGuard)
 export class StoreOperationalController {
   constructor(
@@ -34,6 +36,7 @@ export class StoreOperationalController {
 
   @UseGuards(RoleStoreGuard)
   @Post('set-operational-hours')
+  @UserTypeAndLevel('admin.*', 'merchant.store')
   async updateOperationalHour(
     @Body(new ParseArrayPipe({ items: StoreOpenHoursValidation }))
     payload: StoreOpenHoursValidation[],
@@ -42,8 +45,8 @@ export class StoreOperationalController {
     try {
       const { store_id } = req.user;
 
-      // populate store schedules if does not exists
-      const ifSchedulesExists =
+      //populate store schedules if does not exists
+      let ifSchedulesExists =
         await this.mStoreOperationalService.getAllStoreScheduleByStoreId(
           store_id,
         );
@@ -52,16 +55,49 @@ export class StoreOperationalController {
           'Operational store hour does not exists. proceed to populate schedules',
           'Populate store operational hour',
         );
-        const createSchedules =
+        ifSchedulesExists =
           await this.mStoreOperationalService.createStoreOperationalHours(
             store_id,
           );
       }
 
+      //parse from validation to entity class
+      const updPayload = payload.map((e) => {
+        const shifts = e.operational_hours.map((e) => {
+          const item = new StoreOperationalShiftDocument({
+            shift_id: e.shift_id,
+            is_active: e.is_active,
+            open_hour: e.open_hour,
+            close_hour: e.close_hour,
+          });
+          if (e.id && e.id !== '') {
+            item.id = e.id;
+          }
+          return item;
+        });
+
+        //convert day of week into int
+        const dayOfWeek = DateTimeUtils.convertToDayOfWeekNumber(e.day_of_week);
+
+        return new StoreOperationalHoursDocument({
+          merchant_store_id: store_id,
+          day_of_week: dayOfWeek,
+          is_open_24h: e.open_24hrs,
+          // is_open: e.is_open, // niel- comment first
+          shifts: shifts,
+        });
+      });
+
+      // Merge & format input data with existing data, to support cascade update.
+      const parsedValue =
+        await this.mStoreOperationalService.parseOldExistingSchedules(
+          ifSchedulesExists,
+          updPayload,
+        );
+
       const result = await this.mStoreOperationalService
-        .updateStoreOperationalHours(store_id, payload)
+        .updateStoreOperationalHours(store_id, parsedValue)
         .then(async (res) => {
-          console.log('set operational hour update result: ', res);
           return await this.mStoreOperationalService
             .getAllStoreScheduleByStoreId(store_id)
             .catch((e) => {
@@ -151,8 +187,8 @@ export class StoreOperationalController {
         });
 
       const msg = is_open_24_hour
-        ? 'Sukses ubah semua jam operasional toko menjadi buka 24 jam'
-        : `Sukses reset semua jam operasional mnejadi default (08:00 - 17:00)`;
+        ? `Sukses mengubah status toko menjadi 'Buka 24 Jam'`
+        : `Sukses mereset status 'Buka 24 Jam', sekarang toko mengikuti jadwal operasional toko.`;
 
       return this.responseService.success(true, msg, updatedResult);
     } catch (e) {
