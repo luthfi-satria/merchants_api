@@ -13,9 +13,11 @@ import { StoreOperationalHoursDocument } from './store_operational_hours.entity'
 @Entity({ name: 'merchant_store_operational_shifts' })
 export class StoreOperationalShiftDocument {
   @PrimaryGeneratedColumn('uuid')
+  @Exclude()
   id?: string;
 
   @Column({ type: 'uuid', nullable: true })
+  @Exclude()
   store_operational_id?: string;
 
   @Column({ type: 'varchar', length: '7', default: '08:00' })
