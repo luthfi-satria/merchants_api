@@ -65,14 +65,9 @@ export class StoreOperationalController {
       const updPayload = payload.map((e) => {
         const shifts = e.operational_hours.map((e) => {
           const item = new StoreOperationalShiftDocument({
-            shift_id: e.shift_id,
-            is_active: e.is_active,
             open_hour: e.open_hour,
             close_hour: e.close_hour,
           });
-          if (e.id && e.id !== '') {
-            item.id = e.id;
-          }
           return item;
         });
 
@@ -105,10 +100,29 @@ export class StoreOperationalController {
             });
         });
 
+      const formatted = result.map((item) => {
+        const fmtShift = item.shifts.map((ee) => {
+          return new StoreOperationalShiftDocument({
+            open_hour: ee.open_hour,
+            close_hour: ee.close_hour,
+          });
+        });
+
+        return new StoreOperationalHoursDocument({
+          merchant_store_id: item.id,
+          day_of_week: DateTimeUtils.convertToDayOfWeek(
+            Number(item.day_of_week),
+          ),
+          is_open: item.is_open,
+          is_open_24h: item.is_open_24h,
+          shifts: fmtShift,
+        });
+      });
+
       return this.responseService.success(
         true,
         'Sukses Update Jam Operasi toko',
-        result,
+        formatted,
       );
     } catch (e) {
       Logger.error(e.message, '', 'Set Store Operational Hour');
