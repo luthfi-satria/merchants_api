@@ -310,6 +310,10 @@ export class QueryService {
           'merchant_store.store_categories',
           'merchant_store_categories',
         )
+        .leftJoinAndSelect(
+          'merchant_store_categories.languages',
+          'merchant_store_categories_languages',
+        )
         // --- Filter Conditions ---
         .where(
           `merchant_store.status = :active
@@ -349,8 +353,6 @@ export class QueryService {
           }),
         )
         .orderBy('distance_in_km', 'ASC')
-        //.offset((currentPage - 1) * perPage)
-        //.limit(perPage)
         .skip((currentPage - 1) * perPage)
         .take(perPage)
         .getManyAndCount()
@@ -400,6 +402,10 @@ export class QueryService {
                 };
               });
             });
+
+          const str_cat = row.store_categories.map((e, i) => {
+
+          });
 
           return {
             ...row,
