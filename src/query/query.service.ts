@@ -277,13 +277,21 @@ export class QueryService {
           : enumDeliveryType.delivery_only;
       const is24hour = data?.is_24hrs ? true : false;
       const open_24_hour = data.is_24hrs;
+      const include_closed_stores = data.include_closed_stores || false;
 
       const currTime = DateTimeUtils.DateTimeToWIB(new Date());
       const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
       const lang = data.lang || 'id';
 
-      console.log('current week of day: ', weekOfDay);
-      console.log('current time: ', currTime);
+      console.info(`
+      filter params: 
+        current time: ${currTime}
+        week of day: ${weekOfDay}
+        is24hour: ${is24hour}
+        open_24_hour: ${open_24_hour}
+        include_closed_stores: ${include_closed_stores}
+        delivery_only: ${delivery_only}
+      `);
 
       const qlistStore = await this.storeRepository
         .createQueryBuilder('merchant_store')
@@ -415,6 +423,13 @@ export class QueryService {
             return { ...x, name: ctg_language.name };
           });
 
+          // filter logic store operational status
+          const store_operational_status = this.getStoreOperationalStatus(
+            row.is_store_open,
+            currTime,
+            row.operational_hours,
+          );
+
           // Get Merchant Profile
           const merchant = await this.merchantRepository
             .findOne(row.merchant_id)
@@ -430,6 +445,7 @@ export class QueryService {
           return {
             ...row,
             distance_in_km: distance_in_km,
+            store_operational_status,
             operational_hours: opt_hours,
             store_categories: store_categories,
             merchant,
@@ -453,6 +469,17 @@ export class QueryService {
       Logger.error(e.message, '', 'QUERY LIST STORE');
       throw e;
     }
+  }
+
+  private getStoreOperationalStatus(is_store_status: boolean, currTime: string, curShiftHour:StoreOperationalHoursDocument[]) {
+    const { open_hour, close_hour } = curShiftHour[0];
+    const respectShiftTime =
+      currTime >= open_hour && currTime < close_hour ? true : false;
+
+    console.log(
+      `get store operational status: store open: ${is_store_status} && in_operational_time ${respectShiftTime}`,
+    );
+    return is_store_status && respectShiftTime ? true : false;
   }
 
   async listStoreCategories(
