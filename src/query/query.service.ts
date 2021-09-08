@@ -68,7 +68,7 @@ export class QueryService {
         ? enumDeliveryType.delivery_and_pickup
         : enumDeliveryType.delivery_only;
     const is24hour = data?.is_24hrs ? true : false;
-    const open_24_hour = data.is_24hrs;
+    const open_24_hour = data.is_24hrs || false;
 
     const currTime = DateTimeUtils.DateTimeToWIB(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
@@ -283,15 +283,17 @@ export class QueryService {
       const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
       const lang = data.lang || 'id';
 
-      console.info(`
-      filter params: 
+      Logger.debug(
+        `filter params: 
         current time: ${currTime}
         week of day: ${weekOfDay}
         is24hour: ${is24hrs}
         open_24_hour: ${open_24_hour}
         include_closed_stores: ${include_closed_stores}
         delivery_only: ${delivery_only}
-      `);
+      `,
+        'Query List Stores',
+      );
 
       const qlistStore = await this.storeRepository
         .createQueryBuilder('merchant_store')
@@ -481,13 +483,17 @@ export class QueryService {
     }
   }
 
-  private getStoreOperationalStatus(is_store_status: boolean, currTime: string, curShiftHour:StoreOperationalHoursDocument[]) {
+  private getStoreOperationalStatus(
+    is_store_status: boolean,
+    currTime: string,
+    curShiftHour: StoreOperationalHoursDocument[],
+  ) {
     const { open_hour, close_hour } = curShiftHour[0];
     const respectShiftTime =
       currTime >= open_hour && currTime < close_hour ? true : false;
 
-    console.log(
-      `get store operational status: store open: ${is_store_status} && in_operational_time ${respectShiftTime}`,
+    Logger.debug(
+      `Get store_operational_status(store open: ${is_store_status} && in_operational_time ${respectShiftTime})`,
     );
     return is_store_status && respectShiftTime ? true : false;
   }
@@ -851,3 +857,4 @@ export class QueryService {
     return listManipulate;
   }
 }
+z
