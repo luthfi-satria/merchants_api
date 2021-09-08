@@ -350,12 +350,14 @@ export class QueryService {
           new Brackets((qb) => {
             qb.where(
               `operational_hours.day_of_week = :weekOfDay
+                AND merchant_store.is_store_open = :is_open
               ${
                 is24hour == false
-                  ? `AND (:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR merchant_store.is_open_24h = true`
+                  ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR merchant_store.is_open_24h = :all24h)`
                   : ''
               }`,
               {
+                is_open: true,
                 weekOfDay: weekOfDay,
                 currTime: currTime,
                 all24h: true, //niel true for query all stores
