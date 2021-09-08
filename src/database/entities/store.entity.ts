@@ -101,6 +101,12 @@ export class StoreDocument {
   })
   status: enumStoreStatus;
 
+  @Column('decimal', {
+    default: '0',
+    transformer: new ColumnNumericTransformer(),
+  })
+  average_price: number;
+
   @Column({
     type: 'boolean',
     default: true,

@@ -54,4 +54,19 @@ export class InternalService {
         );
       });
   }
+
+  async updataAveragePrice(data) {
+    try {
+      data.forEach(async (arr) => {
+        const gStore: StoreDocument = await this.storeRepository.findOne({
+          where: { id: arr.store_id },
+        });
+        gStore.average_price = arr.average_price;
+        await this.storeRepository.save(gStore);
+      });
+      return 'update average succes';
+    } catch (err) {
+      console.error('error', err);
+    }
+  }
 }
