@@ -32,6 +32,7 @@ import { QueryListStoreDto } from './validation/query-public.dto';
 import _ from 'lodash';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
+import { MerchantDocument } from 'src/database/entities/merchant.entity';
 
 @Injectable()
 export class QueryService {
@@ -47,6 +48,8 @@ export class QueryService {
     private httpService: HttpService,
     private readonly merchantService: MerchantsService,
     @Hash() private readonly hashService: HashService,
+    @InjectRepository(MerchantDocument)
+    private readonly merchantRepository: Repository<MerchantDocument>,
   ) {}
 
   async listGroupStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
@@ -259,11 +262,11 @@ export class QueryService {
 
   async getListQueryStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
     try {
-      let search = data.search || '';
+      const search = data.search || '';
       const radius = data.distance || 25;
       const lat = data.location_latitude;
       const long = data.location_longitude;
-      search = search.toLowerCase();
+      // search = search.toLowerCase();
       const currentPage = data.page || 1;
       const perPage = Number(data.limit) || 10;
       const store_category_id: string = data.store_category_id || null;
@@ -412,11 +415,24 @@ export class QueryService {
             return { ...x, name: ctg_language.name };
           });
 
+          // Get Merchant Profile
+          const merchant = await this.merchantRepository
+            .findOne(row.merchant_id)
+            .then((result) => {
+              delete result.owner_password;
+              delete result.approved_at;
+              delete result.created_at;
+              delete result.updated_at;
+              delete result.deleted_at;
+              return result;
+            });
+
           return {
             ...row,
             distance_in_km: distance_in_km,
             operational_hours: opt_hours,
             store_categories: store_categories,
+            merchant,
           };
         }),
       );
