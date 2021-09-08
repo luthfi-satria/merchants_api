@@ -49,4 +49,9 @@ export class QueryListStoreDto {
   @IsOptional()
   @Transform(({ value }) => JSON.parse(value))
   is_24hrs: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  @Transform(({ value }) => JSON.parse(value))
+  include_closed_stores: boolean;
 }
