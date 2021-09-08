@@ -275,7 +275,7 @@ export class QueryService {
         data.pickup == true
           ? enumDeliveryType.delivery_and_pickup
           : enumDeliveryType.delivery_only;
-      const is24hour = data?.is_24hrs ? true : false;
+      const is24hrs = data?.is_24hrs ? true : false;
       const open_24_hour = data.is_24hrs;
       const include_closed_stores = data.include_closed_stores || false;
 
@@ -287,7 +287,7 @@ export class QueryService {
       filter params: 
         current time: ${currTime}
         week of day: ${weekOfDay}
-        is24hour: ${is24hour}
+        is24hour: ${is24hrs}
         open_24_hour: ${open_24_hour}
         include_closed_stores: ${include_closed_stores}
         delivery_only: ${delivery_only}
@@ -329,7 +329,7 @@ export class QueryService {
         .where(
           `merchant_store.status = :active
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
-            ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
+            ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
             ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
             ${
               store_category_id
@@ -348,21 +348,29 @@ export class QueryService {
         )
         .andWhere(
           new Brackets((qb) => {
-            qb.where(
-              `operational_hours.day_of_week = :weekOfDay
-                AND merchant_store.is_store_open = :is_open
-              ${
-                is24hour == false
-                  ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR merchant_store.is_open_24h = :all24h)`
-                  : ''
-              }`,
-              {
-                is_open: true,
+            if (include_closed_stores) {
+              // Tampilkan semua stores, tanpa memperhatikan jadwal operasional store
+              qb.where(`operational_hours.day_of_week = :weekOfDay`, {
                 weekOfDay: weekOfDay,
-                currTime: currTime,
-                all24h: true, //niel true for query all stores
-              },
-            );
+              });
+            } else {
+              qb.where(
+                `operational_hours.day_of_week = :weekOfDay
+                  AND merchant_store.is_store_open = :is_open
+                ${
+                  // jika params 'is24hrs' false / tidak di define query list store include store yg buka 24jam
+                  is24hrs == false
+                    ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR merchant_store.is_open_24h = :all24h)`
+                    : ''
+                }`,
+                {
+                  is_open: true,
+                  weekOfDay: weekOfDay,
+                  currTime: currTime,
+                  all24h: true, //niel true for query all stores
+                },
+              );
+            }
           }),
         )
         .orderBy('distance_in_km', 'ASC')
