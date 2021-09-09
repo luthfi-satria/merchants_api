@@ -143,4 +143,7 @@ export class StoreDocument {
   @ManyToMany(() => StoreCategoriesDocument)
   @JoinTable({ name: 'merchant_store_store_categories' })
   store_categories: StoreCategoriesDocument[];
+
+  @Column({ default: 0 })
+  average_price: number;
 }

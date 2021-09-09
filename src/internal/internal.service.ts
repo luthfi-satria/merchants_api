@@ -2,7 +2,7 @@ import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
-import { RMessage } from 'src/response/response.interface';
+import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { Repository } from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -53,5 +53,20 @@ export class InternalService {
           ),
         );
       });
+  }
+
+  async updateStoreAveragePrice(
+    args: Record<string, any>[],
+  ): Promise<RSuccessMessage> {
+    for (const raw of args) {
+      await this.storeRepository.update(
+        { id: raw.store_id },
+        { average_price: raw.average_price },
+      );
+    }
+    return {
+      success: true,
+      message: 'SUCCESS',
+    };
   }
 }
