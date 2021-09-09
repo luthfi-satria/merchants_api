@@ -68,8 +68,10 @@ export class ResetPasswordService {
     return await this.merchantUserRepository
       .save(cekEmail)
       .then(() => {
+        const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
         if (process.env.NODE_ENV == 'test') {
-          return { status: true, token: token };
+          return { status: true, token: token, url: url };
         } else {
           return { status: true };
         }
@@ -130,13 +132,29 @@ export class ResetPasswordService {
       );
     }
 
+    if (cekToken.token_reset_password == null) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: qstring.token,
+            property: 'token',
+            constraint: [
+              this.messageService.get('merchant.general.dataNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
     const salt: string = await this.hashService.randomSalt();
     const passwordHash = await this.hashService.hashPassword(
       args.password,
       salt,
     );
     cekToken.password = passwordHash;
-    cekToken.token_reset_password = '';
+    cekToken.token_reset_password = null;
 
     return await this.merchantUserRepository
       .save(cekToken)
