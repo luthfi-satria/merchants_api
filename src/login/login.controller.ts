@@ -131,6 +131,7 @@ export class LoginController {
     }
     dbOutputTime(profile);
     dbOutputTime(profile.merchant);
+    delete profile.password;
     delete profile.merchant.owner_password;
     return this.responseService.success(
       true,
