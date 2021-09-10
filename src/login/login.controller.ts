@@ -23,6 +23,7 @@ import { Get } from '@nestjs/common';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RMessage } from 'src/response/response.interface';
+import { dbOutputTime } from 'src/utils/general-utils';
 
 @Controller('api/v1/merchants')
 export class LoginController {
@@ -115,7 +116,7 @@ export class LoginController {
     if (!profile) {
       const errors: RMessage = {
         value: '',
-        property: 'paylod',
+        property: 'payload',
         constraint: [
           this.messageService.get('merchant.login.unregistered_user'),
         ],
@@ -128,6 +129,9 @@ export class LoginController {
         ),
       );
     }
+    dbOutputTime(profile);
+    dbOutputTime(profile.merchant);
+    delete profile.merchant.owner_password;
     return this.responseService.success(
       true,
       this.messageService.get('merchant.login.success'),
