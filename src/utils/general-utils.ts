@@ -37,26 +37,26 @@ export const imageFileFilter = (req: any, file: any, callback) => {
 };
 
 export const dbOutputTime = function (input: Record<string, any>) {
-  if (
-    typeof input.approved_at != 'undefined' &&
-    input.approved_at != null &&
-    input.approved_at != 'undefined' &&
-    input.approved_at != ''
-  ) {
-    input.approved_at = momenttz(input.approved_at)
-      .tz('Asia/Jakarta')
-      .format('YYYY-MM-DD HH:mm:ss');
-  }
-  if (
-    typeof input.deleted_at != 'undefined' &&
-    input.deleted_at != null &&
-    input.deleted_at != 'undefined' &&
-    input.deleted_at != ''
-  ) {
-    input.deleted_at = momenttz(input.deleted_at)
-      .tz('Asia/Jakarta')
-      .format('YYYY-MM-DD HH:mm:ss');
-  }
+  // if (
+  //   typeof input.approved_at != 'undefined' &&
+  //   input.approved_at != null &&
+  //   input.approved_at != 'undefined' &&
+  //   input.approved_at != ''
+  // ) {
+  //   input.approved_at = momenttz(input.approved_at)
+  //     .tz('Asia/Jakarta')
+  //     .format('YYYY-MM-DD HH:mm:ss');
+  // }
+  // if (
+  //   typeof input.deleted_at != 'undefined' &&
+  //   input.deleted_at != null &&
+  //   input.deleted_at != 'undefined' &&
+  //   input.deleted_at != ''
+  // ) {
+  //   input.deleted_at = momenttz(input.deleted_at)
+  //     .tz('Asia/Jakarta')
+  //     .format('YYYY-MM-DD HH:mm:ss');
+  // }
   input.created_at = momenttz(input.created_at)
     .tz('Asia/Jakarta')
     .format('YYYY-MM-DD HH:mm:ss');
