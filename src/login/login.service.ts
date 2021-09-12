@@ -377,12 +377,17 @@ export class LoginService {
   }
 
   async getProfile(id: string) {
-    return this.merchantUsersRepository.findOne({
-      relations: ['group', 'merchant', 'store'],
-      where: {
-        id,
-      },
-    });
+    console.log('id: ', id);
+    return this.merchantUsersRepository
+      .findOne({
+        relations: ['group', 'merchant', 'store'],
+        where: {
+          id,
+        },
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }
 
   async loginEmailPasswordProcess(request: LoginEmailValidation): Promise<any> {
