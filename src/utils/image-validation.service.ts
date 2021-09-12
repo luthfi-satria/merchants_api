@@ -33,6 +33,13 @@ export class ImageValidationService {
         return error;
       });
     }
+    console.log(
+      '===========================Start Debug this.filter=================================\n',
+      new Date(Date.now()).toLocaleString(),
+      '\n',
+      this.filter,
+      '\n============================End Debug this.filter==================================',
+    );
     this.filter.map(async (filter) => {
       if (filter.filtering == 'required') {
         await this.requiredCheck(req, filter.name);

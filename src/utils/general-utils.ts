@@ -36,6 +36,22 @@ export const imageFileFilter = (req: any, file: any, callback) => {
   callback(null, true);
 };
 
+export const imageAndPdfFileFilter = (req: any, file: any, callback) => {
+  if (!file.originalname.match(/\.(jpg|jpeg|png|pdf)$/)) {
+    if (!req.fileValidationError) {
+      req.fileValidationError = [];
+    }
+    const error = {
+      value: file.originalname,
+      property: file.fieldname,
+      constraint: 'file.image.not_allowed',
+    };
+    req.fileValidationError.push(error);
+    callback(null, false);
+  }
+  callback(null, true);
+};
+
 export const dbOutputTime = function (input: Record<string, any>) {
   if (
     typeof input.approved_at != 'undefined' &&

@@ -26,7 +26,7 @@ export class MerchantUsersDocument {
   @Column()
   phone: string;
 
-  @Column()
+  @Column({ nullable: true })
   password: string;
 
   @Column('uuid', { nullable: true })

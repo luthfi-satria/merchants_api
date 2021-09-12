@@ -8,12 +8,25 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { MerchantDocument } from './merchant.entity';
+import { MerchantUsersDocument } from './merchant_users.entity';
+
+export enum CategoryGroup {
+  COMPANY = 'COMPANY',
+  PERSONAL = 'PERSONAL',
+}
 
 export enum GroupStatus {
-  Waiting_approval = 'WAITING_APPROVAL',
+  Draft = 'DRAFT',
+  Waiting_approval = 'WAITING_FOR_APPROVAL',
   Active = 'ACTIVE',
+  Inactive = 'INACTIVE',
   Banned = 'BANNED',
   Rejected = 'REJECTED',
+}
+
+export enum DirectorIdentityType {
+  KTP = 'KTP',
+  PASSPORT = 'PASSPORT',
 }
 
 @Entity({ name: 'merchant_group' })
@@ -21,8 +34,85 @@ export class GroupDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({
+    type: 'enum',
+    enum: CategoryGroup,
+    default: CategoryGroup.COMPANY,
+  })
+  category: CategoryGroup;
+
   @Column()
   name: string;
+
+  @Column()
+  phone: string;
+
+  @Column()
+  address: string;
+
+  @Column({ nullable: true })
+  siup_no: string;
+
+  @Column({ nullable: true })
+  siup_file: string;
+
+  @Column({ nullable: true })
+  akta_pendirian_file: string;
+
+  @Column({ nullable: true })
+  akta_perubahan_file: string;
+
+  @Column({ nullable: true })
+  npwp_no: string;
+
+  @Column({ nullable: true })
+  npwp_file: string;
+
+  // Direktur
+  @Column({ nullable: true })
+  director_name: string;
+
+  @Column({ nullable: true })
+  director_phone: string;
+
+  @Column({ nullable: true })
+  director_email: string;
+
+  @Column({
+    type: 'enum',
+    enum: DirectorIdentityType,
+    default: DirectorIdentityType.KTP,
+  })
+  director_identity_type: DirectorIdentityType;
+
+  @Column({ nullable: true })
+  director_id_no: string;
+
+  @Column({ nullable: true })
+  director_id_file: string;
+
+  @Column({ nullable: true })
+  director_id_face_file: string;
+
+  //Penanggung Jawab Operasional
+  @Column({ nullable: true })
+  pic_operational_name: string;
+
+  @Column({ nullable: true })
+  pic_operational_email: string;
+
+  @Column({ nullable: true })
+  pic_operational_phone: string;
+
+  //Penanggung Jawab Keuangan
+  @Column({ nullable: true })
+  pic_finance_name: string;
+
+  @Column({ nullable: true })
+  pic_finance_email: string;
+
+  @Column({ nullable: true })
+  pic_finance_phone: string;
 
   @Column({
     type: 'enum',
@@ -30,24 +120,6 @@ export class GroupDocument {
     default: GroupStatus.Waiting_approval,
   })
   status: GroupStatus;
-
-  @Column()
-  owner_name: string;
-
-  @Column()
-  owner_password: string;
-
-  @Column({ nullable: true })
-  owner_ktp: string;
-
-  @Column()
-  email: string;
-
-  @Column()
-  phone: string;
-
-  @Column()
-  address: string;
 
   @Column({ type: 'timestamptz', nullable: true })
   approved_at: Date | string;
@@ -63,6 +135,12 @@ export class GroupDocument {
 
   @OneToMany(() => MerchantDocument, (merchant) => merchant.group)
   merchants: MerchantDocument[];
+
+  @OneToMany(
+    () => MerchantUsersDocument,
+    (merchant_users) => merchant_users.group,
+  )
+  users: MerchantUsersDocument[];
 
   constructor(init?: Partial<GroupDocument>) {
     Object.assign(this, init);

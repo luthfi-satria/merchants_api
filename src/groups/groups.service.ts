@@ -1,9 +1,9 @@
+/* eslint-disable prettier/prettier */
 import {
   BadRequestException,
   HttpService,
   HttpStatus,
   Injectable,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
@@ -22,6 +22,10 @@ import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
+import { CreateGroupDTO } from './validation/create_groups.dto';
+import { GroupUsersService } from './group_users.service';
+import { GroupUser } from './interface/group_users.interface';
+import { UpdateGroupDTO } from './validation/update_groups.dto';
 
 @Injectable()
 export class GroupsService {
@@ -31,6 +35,7 @@ export class GroupsService {
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private readonly merchantService: MerchantsService,
+    private readonly groupUserService: GroupUsersService,
     private readonly storage: CommonStorageService,
     private httpService: HttpService,
     @Response() private readonly responseService: ResponseService,
@@ -46,6 +51,13 @@ export class GroupsService {
     return await this.groupRepository.findOne({ where: { phone: phone } });
   }
 
+  async findMerchantByPhoneExceptId(
+    phone: string,
+    id: string,
+  ): Promise<GroupDocument> {
+    return await this.groupRepository.findOne({ where: { phone, id } });
+  }
+
   async findMerchantByEmail(email: string): Promise<GroupDocument> {
     return await this.groupRepository.findOne({
       where: { email: email },
@@ -53,180 +65,126 @@ export class GroupsService {
   }
 
   async createMerchantGroupProfile(
-    data: Record<string, any>,
+    createGroupDTO: CreateGroupDTO,
   ): Promise<GroupDocument> {
-    const salt: string = await this.hashService.randomSalt();
-    const passwordHash = await this.hashService.hashPassword(
-      data.owner_password,
-      salt,
-    );
-    const create_group: Partial<GroupDocument> = {
-      name: data.name,
-      owner_name: data.owner_name,
-      owner_password: passwordHash,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-    };
-    if (
-      data.status != null &&
-      data.status != '' &&
-      typeof data.status != 'undefined'
-    )
-      create_group.status = data.status;
-    if (
-      data.owner_ktp != null &&
-      data.owner_ktp != '' &&
-      typeof data.owner_ktp != 'undefined'
-    ) {
-      try {
-        const url = await this.storage.store(data.owner_ktp);
-        create_group.owner_ktp = url;
-      } catch (e) {
-        console.error(e);
-        throw new InternalServerErrorException(e.message);
+    const create_group = this.groupRepository.create(createGroupDTO);
+    try {
+      const create = await this.groupRepository.save(create_group);
+      if (!create) {
+        throw new Error('failed insert to merchant_group');
       }
-    }
 
-    return await this.groupRepository
-      .save(create_group)
-      .then(async (result) => {
-        dbOutputTime(result);
-        // const cekMerchantUser = await this.merchantUsersRepository.findOne({
-        //   where: { email: data.email, phone: data.phone },
-        // });
-        const mUsers: Partial<MerchantUsersDocument> = {
-          name: result.owner_name,
-          email: result.email,
-          phone: result.phone,
-          password: result.owner_password,
-          group_id: result.id,
+      const array_email = [];
+      create.users = [];
+      array_email.push(createGroupDTO.director_email);
+      const create_director: Partial<GroupUser> = {
+        group_id: create.id,
+        name: createGroupDTO.director_name,
+        phone: createGroupDTO.director_phone,
+        email: createGroupDTO.director_email,
+      };
+      const director = await this.groupUserService.createUserWithoutPassword(
+        create_director,
+      );
+      create.users.push(director);
+      if (!array_email.includes(createGroupDTO.pic_operational_email)) {
+        array_email.push(createGroupDTO.pic_operational_email);
+        const create_pic_operational: Partial<GroupUser> = {
+          group_id: create.id,
+          name: createGroupDTO.pic_operational_name,
+          phone: createGroupDTO.pic_operational_phone,
+          email: createGroupDTO.pic_operational_email,
         };
-        await this.merchantUsersRepository.save(mUsers);
-        delete result.owner_password;
-        return result;
-      })
-      .catch((err2) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err2.column,
-              constraint: [err2.message],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+        const pic_operational =
+          await this.groupUserService.createUserWithoutPassword(
+            create_pic_operational,
+          );
+        create.users.push(pic_operational);
+      }
+      if (!array_email.includes(createGroupDTO.pic_finance_email)) {
+        array_email.push(createGroupDTO.pic_finance_email);
+        const create_pic_finance: Partial<GroupUser> = {
+          group_id: create.id,
+          name: createGroupDTO.pic_finance_name,
+          phone: createGroupDTO.pic_finance_phone,
+          email: createGroupDTO.pic_finance_email,
+        };
+        const pic_finance =
+          await this.groupUserService.createUserWithoutPassword(
+            create_pic_finance,
+          );
+        create.users.push(pic_finance);
+      }
+      return create;
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: error.column,
+            constraint: [error.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async updateMerchantGroupProfile(
-    data: Record<string, any>,
-  ): Promise<Record<string, any>> {
-    const updateMUsers: Partial<MerchantUsersDocument> = {};
-    const create_group: Partial<GroupDocument> = {};
+    updateGroupDTO: UpdateGroupDTO,
+    id: string,
+  ): Promise<GroupDocument> {
+    const group = await this.groupRepository.findOne({
+      relations: ['users'],
+      where: { id },
+    });
 
-    if (typeof data.name != 'undefined' && data.name != null && data.name != '')
-      create_group.name = data.name;
-    if (
-      typeof data.status != 'undefined' &&
-      data.status != null &&
-      data.status != ''
-    )
-      create_group.status = data.status;
-    if (data.status == 'ACTIVE') {
-      create_group.approved_at = new Date();
-    }
-    if (
-      typeof data.owner_name != 'undefined' &&
-      data.owner_name != null &&
-      data.owner_name != ''
-    ) {
-      create_group.owner_name = data.owner_name;
-      updateMUsers.name = data.owner_name;
-    }
-    if (
-      typeof data.owner_password != 'undefined' &&
-      data.owner_password != null &&
-      data.owner_password != ''
-    ) {
-      const salt: string = await this.hashService.randomSalt();
-      const passwordHash = await this.hashService.hashPassword(
-        data.owner_password,
-        salt,
+    group.users = [];
+    const update_director: Partial<GroupUser> = {
+      group_id: id,
+      name: updateGroupDTO.director_name,
+      phone: updateGroupDTO.director_phone,
+      email: updateGroupDTO.director_email,
+    };
+    const director = await this.groupUserService.updateUserByEmailGroupId(
+      update_director,
+      group.director_email,
+    );
+    group.users.push(director);
+
+    const update_pic_operational: Partial<GroupUser> = {
+      group_id: id,
+      name: updateGroupDTO.pic_operational_name,
+      phone: updateGroupDTO.pic_operational_phone,
+      email: updateGroupDTO.pic_operational_email,
+    };
+    const pic_operational =
+      await this.groupUserService.updateUserByEmailGroupId(
+        update_pic_operational,
+        group.pic_operational_email,
       );
-      data.owner_password = passwordHash;
-      updateMUsers.password = passwordHash;
-    }
-    if (
-      typeof data.owner_ktp != 'undefined' &&
-      data.owner_ktp != null &&
-      data.owner_ktp != ''
-    ) {
-      try {
-        const url = await this.storage.store(data.owner_ktp);
-        create_group.owner_ktp = url;
-      } catch (e) {
-        console.error(e);
-        throw new InternalServerErrorException(e.message);
-      }
-    }
-    if (
-      typeof data.email != 'undefined' &&
-      data.email != null &&
-      data.email != ''
-    ) {
-      create_group.email = data.email;
-      updateMUsers.email = data.email;
-    }
-    if (
-      typeof data.phone != 'undefined' &&
-      data.phone != null &&
-      data.phone != ''
-    ) {
-      create_group.phone = data.phone;
-      updateMUsers.phone = data.phone;
-    }
-    if (
-      typeof data.address != 'undefined' &&
-      data.address != null &&
-      data.address != ''
-    )
-      create_group.address = data.address;
+      group.users.push(pic_operational);
 
-    return this.groupRepository
-      .createQueryBuilder('merchant_group')
-      .update(GroupDocument)
-      .set(create_group)
-      .where('id= :id', { id: data.id })
-      .returning('*')
-      .execute()
-      .then(async (response) => {
-        dbOutputTime(response.raw[0]);
-        await this.merchantUsersRepository
-          .createQueryBuilder('merchant_users')
-          .update(MerchantUsersDocument)
-          .set(updateMUsers)
-          .where('group_id= :gid', { gid: data.id })
-          .execute();
-        delete response.raw[0].owner_password;
-        return response.raw[0];
-      })
-      .catch((err) => {
-        const errors: RMessage = {
-          value: '',
-          property: err.column,
-          constraint: [err.message],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      });
+    const update_pic_finance: Partial<GroupUser> = {
+      group_id: id,
+      name: updateGroupDTO.pic_finance_name,
+      phone: updateGroupDTO.pic_finance_phone,
+      email: updateGroupDTO.pic_finance_email,
+    };
+    const pic_finance = await this.groupUserService.updateUserByEmailGroupId(
+      update_pic_finance,
+      group.pic_finance_email,
+    );
+    group.users.push(pic_finance);
+
+    Object.assign(group, updateGroupDTO);
+    const update_group = this.groupRepository.save(group);
+    if(!update_group){
+       throw new Error("Update Failed");
+    }
+    return group;
   }
 
   async deleteMerchantGroupProfile(data: string): Promise<any> {
@@ -283,10 +241,10 @@ export class GroupsService {
       .createQueryBuilder()
       .select('*')
       .where('lower(name) like :name', { name: '%' + search + '%' })
-      .orWhere('lower(owner_name) like :oname', {
+      .orWhere('lower(director_name) like :oname', {
         oname: '%' + search + '%',
       })
-      .orWhere('lower(email) like :email', {
+      .orWhere('lower(director_email) like :email', {
         email: '%' + search + '%',
       })
       .orWhere('lower(phone) like :ghp', {
@@ -302,10 +260,10 @@ export class GroupsService {
           .createQueryBuilder('merchant_group')
           .select('*')
           .where('lower(name) like :name', { name: '%' + search + '%' })
-          .orWhere('lower(owner_name) like :oname', {
+          .orWhere('lower(director_name) like :oname', {
             oname: '%' + search + '%',
           })
-          .orWhere('lower(email) like :email', {
+          .orWhere('lower(director_email) like :email', {
             email: '%' + search + '%',
           })
           .orWhere('lower(phone) like :ghp', {
@@ -322,7 +280,7 @@ export class GroupsService {
       .then((result) => {
         result.forEach((row) => {
           dbOutputTime(row);
-          delete row.owner_password;
+          // delete row.owner_password;
         });
 
         const list_result: ListResponse = {

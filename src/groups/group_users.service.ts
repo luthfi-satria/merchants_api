@@ -11,7 +11,7 @@ import { MessageService } from 'src/message/message.service';
 import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, Not, Repository } from 'typeorm';
 import { MerchantGroupUsersValidation } from './validation/groups_users.validation';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
@@ -19,6 +19,8 @@ import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { GroupUser } from './interface/group_users.interface';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class GroupUsersService {
@@ -32,6 +34,94 @@ export class GroupUsersService {
     @Message() private readonly messageService: MessageService,
     @Hash() private readonly hashService: HashService,
   ) {}
+
+  async createUserWithoutPassword(groupUser: Partial<GroupUser>) {
+    groupUser.token_reset_password = randomUUID();
+    return await this.merchantUsersRepository.save(groupUser);
+  }
+
+  async updateUserByEmailGroupId(groupUser: Partial<GroupUser>, email: string) {
+    try {
+      const user = await this.merchantUsersRepository.findOne({
+        where: { email, group_id: groupUser.group_id },
+      });
+      if (!user) {
+        const message = {
+          value: groupUser.email,
+          property: 'email',
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
+        };
+        console.log(message);
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            message,
+            'Bad Request',
+          ),
+        );
+      }
+      if (groupUser.email != email) {
+        const cekemail = await this.merchantUsersRepository.findOne({
+          where: { email: groupUser.email },
+        });
+        if (cekemail) {
+          const message = {
+            value: groupUser.email,
+            property: 'email',
+            constraint: [
+              this.messageService.get('merchant.general.emailExist'),
+            ],
+          };
+          console.log(message);
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              message,
+              'Bad Request',
+            ),
+          );
+        }
+      }
+      const cekphone: MerchantUsersDocument =
+        await this.merchantUsersRepository.findOne({
+          where: { phone: groupUser.phone, email: Not(email) },
+        });
+      if (cekphone) {
+        const message = {
+          value: groupUser.phone,
+          property: 'phone',
+          constraint: [this.messageService.get('merchant.general.phoneExist')],
+        };
+        console.log(message);
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            message,
+            'Bad Request',
+          ),
+        );
+      }
+      delete groupUser.password;
+      Object.assign(user, groupUser);
+      return await this.merchantUsersRepository.save(user);
+    } catch (err) {
+      console.error('data error: ', groupUser);
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
 
   async createGroupUsers(
     args: Partial<MerchantGroupUsersValidation>,
@@ -130,7 +220,7 @@ export class GroupUsersService {
         dbOutputTime(result);
         dbOutputTime(result.group);
         delete result.password;
-        delete result.group.owner_password;
+        // delete result.group.owner_password;
 
         return this.responseService.success(
           true,
@@ -256,7 +346,7 @@ export class GroupUsersService {
         dbOutputTime(result);
         dbOutputTime(result.group);
         delete result.password;
-        delete result.group.owner_password;
+        // delete result.group.owner_password;
 
         return this.responseService.success(
           true,
@@ -379,7 +469,7 @@ export class GroupUsersService {
           dbOutputTime(raw);
           dbOutputTime(raw.group);
           delete raw.password;
-          delete raw.group.owner_password;
+          // delete raw.group.owner_password;
         });
 
         const listResult: ListResponse = {

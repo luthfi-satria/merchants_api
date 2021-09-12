@@ -9,6 +9,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { GroupsService } from 'src/groups/groups.service';
+import { GroupUsersService } from 'src/groups/group_users.service';
 import { HashService } from 'src/hash/hash.service';
 import { LobService } from 'src/lob/lob.service';
 import { LoginService } from 'src/login/login.service';
@@ -48,6 +49,7 @@ import { ResetPasswordService } from './reset-password.service';
     LoginService,
     ImageValidationService,
     MerchantUsersService,
+    GroupUsersService,
     CommonService,
     ResetPasswordService,
   ],
