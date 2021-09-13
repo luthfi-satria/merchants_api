@@ -11,7 +11,7 @@ import { catchError, map } from 'rxjs/operators';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
-import { ListResponse, RMessage } from 'src/response/response.interface';
+import { ListResponse } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
@@ -235,76 +235,37 @@ export class GroupsService {
     search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
-    let totalItems: number;
 
-    return await this.groupRepository
-      .createQueryBuilder()
-      .select('*')
-      .where('lower(name) like :name', { name: '%' + search + '%' })
-      .orWhere('lower(director_name) like :oname', {
-        oname: '%' + search + '%',
-      })
-      .orWhere('lower(director_email) like :email', {
-        email: '%' + search + '%',
-      })
-      .orWhere('lower(phone) like :ghp', {
-        ghp: '%' + search + '%',
-      })
-      .orWhere('lower(address) like :adg', {
-        adg: '%' + search + '%',
-      })
-      .getCount()
-      .then(async (counts) => {
-        totalItems = counts;
-        return await this.groupRepository
-          .createQueryBuilder('merchant_group')
-          .select('*')
-          .where('lower(name) like :name', { name: '%' + search + '%' })
-          .orWhere('lower(director_name) like :oname', {
-            oname: '%' + search + '%',
-          })
-          .orWhere('lower(director_email) like :email', {
-            email: '%' + search + '%',
-          })
-          .orWhere('lower(phone) like :ghp', {
-            ghp: '%' + search + '%',
-          })
-          .orWhere('lower(address) like :adg', {
-            adg: '%' + search + '%',
-          })
-          .orderBy('created_at', 'DESC')
-          .offset((currentPage - 1) * perPage)
-          .limit(perPage)
-          .getRawMany();
-      })
-      .then((result) => {
-        result.forEach((row) => {
-          dbOutputTime(row);
-          // delete row.owner_password;
-        });
-
-        const list_result: ListResponse = {
-          total_item: totalItems,
-          limit: Number(perPage),
-          current_page: Number(currentPage),
-          items: result,
-        };
-        return list_result;
-      })
-      .catch((err) => {
-        const errors: RMessage = {
-          value: '',
-          property: '',
-          constraint: [err.message],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      });
+    const query = this.groupRepository
+                  .createQueryBuilder()
+                  .where('lower(name) like :name', { name: '%' + search + '%' })
+                  .orWhere('lower(director_name) like :oname', {
+                    oname: '%' + search + '%',
+                  })
+                  .orWhere('lower(director_email) like :email', {
+                    email: '%' + search + '%',
+                  })
+                  .orWhere('lower(phone) like :ghp', {
+                    ghp: '%' + search + '%',
+                  })
+                  .orWhere('lower(address) like :adg', {
+                    adg: '%' + search + '%',
+                  })
+                  .orderBy('created_at', 'DESC')
+                  .offset((currentPage - 1) * perPage)
+                  .limit(perPage);
+    const count = await query.getCount();
+    const list = await query.getMany();
+    list.map(element => {
+      return dbOutputTime(element);
+    });
+    const list_result: ListResponse = {
+      total_item: count,
+      limit: Number(perPage),
+      current_page: Number(currentPage),
+      items: list,
+    };
+    return list_result;
   }
 
   //------------------------------------------------------------------------------
