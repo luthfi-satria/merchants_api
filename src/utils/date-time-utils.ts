@@ -13,6 +13,22 @@ export class DateTimeUtils {
   }
 
   /**
+   * Convert military time to gmt offset
+   * @param time Date Format 'HH:MM'
+   * @param gmt_offset GMT offset from timezone
+   */
+  static calcClockTimeWithGMTOffset(
+    curTime: string,
+    gmt_offset: number,
+  ): string {
+    const inputTime = moment(curTime, 'HH:mm').format('HH:mm');
+    const timeWithOffset = moment(inputTime, 'HH:mm')
+      .utcOffset(gmt_offset)
+      .format('HH:mm');
+    return timeWithOffset;
+  }
+
+  /**
    *
    * @returns Day of Week (0-6) in number
    */

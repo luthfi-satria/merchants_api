@@ -38,12 +38,13 @@ export class StoreOperationalController {
   @Post('set-operational-hours')
   @UserTypeAndLevel('admin.*', 'merchant.store')
   async updateOperationalHour(
-    @Body(new ParseArrayPipe({ items: StoreOpenHoursValidation }))
-    payload: StoreOpenHoursValidation[],
+    @Body(new ValidationPipe())
+    payload: StoreOpenHoursValidation,
     @Req() req: any,
   ) {
     try {
       const { store_id } = req.user;
+      const { gmt_offset, operational_hours } = payload;
 
       //populate store schedules if does not exists
       let ifSchedulesExists =
@@ -62,11 +63,13 @@ export class StoreOperationalController {
       }
 
       //parse from validation to entity class
-      const updPayload = payload.map((e) => {
+      const updPayload = operational_hours.map((e) => {
         const shifts = e.operational_hours.map((e) => {
+          const { open_hour, close_hour } = e;
+
           const item = new StoreOperationalShiftDocument({
-            open_hour: e.open_hour,
-            close_hour: e.close_hour,
+            open_hour: open_hour,
+            close_hour: close_hour,
           });
           return item;
         });
@@ -75,6 +78,7 @@ export class StoreOperationalController {
         const dayOfWeek = DateTimeUtils.convertToDayOfWeekNumber(e.day_of_week);
 
         return new StoreOperationalHoursDocument({
+          gmt_offset: gmt_offset,
           merchant_store_id: store_id,
           day_of_week: dayOfWeek,
           is_open_24h: e.open_24hrs,

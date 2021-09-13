@@ -1,10 +1,18 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDefined,
   IsIn,
   IsMilitaryTime,
   IsNotEmpty,
+  IsNotEmptyObject,
+  IsNumber,
+  IsObject,
+  IsOptional,
   IsString,
+  IsUUID,
+  Max,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { IStoreOperationalPayload } from '../types';
@@ -31,7 +39,7 @@ export class StoreShiftHours {
   close_hour: string;
 }
 
-export class StoreOpenHoursValidation implements IStoreOperationalPayload {
+export class OperationalHoursValidation {
   @ValidateNested({ each: true })
   operational_hours: StoreShiftHours[];
 
@@ -51,4 +59,16 @@ export class StoreOpenHoursValidation implements IStoreOperationalPayload {
     message: `values day of week should in ddd format!`,
   })
   day_of_week: string;
+}
+
+export class StoreOpenHoursValidation {
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(-12)
+  @Max(12)
+  @Transform(({ value }) => Number(value))
+  gmt_offset: number;
+
+  @ValidateNested({ each: true })
+  operational_hours: OperationalHoursValidation[];
 }

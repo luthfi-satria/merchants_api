@@ -37,6 +37,9 @@ export class StoreOperationalHoursDocument {
   @Column({ type: 'varchar', length: '7', default: '17:00' })
   close_hour: string; // TODO: niel- remove this column
 
+  @Column({ type: 'int', default: null, nullable: true })
+  gmt_offset: number;
+
   @CreateDateColumn({ type: 'timestamptz' })
   @Exclude()
   created_at: Date | string;
