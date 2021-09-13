@@ -442,6 +442,7 @@ export class QueryService {
           const store_operational_status = this.getStoreOperationalStatus(
             row.is_store_open,
             currTime,
+            weekOfDay,
             row.operational_hours,
           );
 
@@ -489,16 +490,21 @@ export class QueryService {
   private getStoreOperationalStatus(
     is_store_status: boolean,
     currTime: string,
+    currWeekDay: number,
     curShiftHour: StoreOperationalHoursDocument[],
   ) {
-    const { open_hour, close_hour } = curShiftHour[0];
-    const respectShiftTime =
-      currTime >= open_hour && currTime < close_hour ? true : false;
+    const isCurrentDay = curShiftHour.find(
+      (row) => row.day_of_week == String(currWeekDay),
+    );
+
+    const respectShiftTime = isCurrentDay.shifts.find((e) =>
+      currTime >= e.open_hour && currTime < e.close_hour ? true : false,
+    );
 
     Logger.debug(
       `Get store_operational_status(store open: ${is_store_status} && in_operational_time ${respectShiftTime})`,
     );
-    return is_store_status && respectShiftTime ? true : false;
+    return is_store_status && respectShiftTime !== null ? true : false;
   }
 
   async listStoreCategories(
