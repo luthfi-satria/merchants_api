@@ -127,12 +127,10 @@ export class StoreOperationalController {
         });
 
         return new StoreOperationalHoursDocument({
-          merchant_store_id: item.id,
+          ...item,
           day_of_week: DateTimeUtils.convertToDayOfWeek(
             Number(item.day_of_week),
           ),
-          is_open: item.is_open,
-          is_open_24h: item.is_open_24h,
           shifts: fmtShift,
         });
       });
