@@ -4,6 +4,7 @@ import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { Repository } from 'typeorm';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
+import { DateTimeUtils } from 'src/utils/date-time-utils';
 
 @Injectable()
 export class StoreOperationalService {
@@ -21,18 +22,28 @@ export class StoreOperationalService {
 
   public async createStoreOperationalHours(
     merchantStoreId: string,
+    gmt_offset: number,
   ): Promise<StoreOperationalHoursDocument[]> {
     try {
       const operationHours = [...Array(7)].map((e, i) => {
+        const utc_openHour = DateTimeUtils.convertTimeToUTC(
+          this.DEFAULT_STORE_OPEN,
+          gmt_offset,
+        );
+        const utc_closeHour = DateTimeUtils.convertTimeToUTC(
+          this.DEFAULT_STORE_CLOSE,
+          gmt_offset,
+        );
+
         return this.storeOperationalRepository.create({
           merchant_store_id: merchantStoreId,
           day_of_week: i,
-          //day_of_weeks: DateTimeUtils.convertToDayOfWeek(i),
+          gmt_offset: gmt_offset,
           is_open: true,
           shifts: [
             new StoreOperationalShiftDocument({
-              close_hour: this.DEFAULT_STORE_CLOSE,
-              open_hour: this.DEFAULT_STORE_OPEN,
+              close_hour: utc_closeHour,
+              open_hour: utc_openHour,
             }),
           ],
         });

@@ -1,9 +1,11 @@
+import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
+  IsNumber,
   IsUUID,
 } from 'class-validator';
 import { enumDeliveryType } from 'src/database/entities/store.entity';
@@ -45,6 +47,11 @@ export class MerchantStoreValidation {
   @IsNotEmpty()
   @IsLatitude({ message: 'Latitude yang anda masukan salah.' })
   location_latitude: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  @Type(() => Number)
+  gmt_offset: number;
 
   upload_photo: string;
 

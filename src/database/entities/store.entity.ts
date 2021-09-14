@@ -114,6 +114,13 @@ export class StoreDocument {
   })
   is_open_24h: boolean;
 
+  @Column({
+    type: 'int',
+    nullable: true,
+    default: null,
+  })
+  gmt_offset: number;
+
   @ManyToMany(() => AddonDocument)
   @JoinTable({ name: 'merchant_store_addon' })
   // @Column({ nullable: true })

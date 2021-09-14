@@ -155,6 +155,7 @@ export class StoresService {
       upload_photo: data.upload_photo,
       upload_banner: data.upload_banner,
       delivery_type: data.delivery_type,
+      gmt_offset: data.gmt_offset,
     };
 
     if (
