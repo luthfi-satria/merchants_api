@@ -70,7 +70,7 @@ export class QueryService {
     const is24hour = data?.is_24hrs ? true : false;
     const open_24_hour = data.is_24hrs || false;
 
-    const currTime = DateTimeUtils.DateTimeToWIB(new Date());
+    const currTime = DateTimeUtils.DateTimeToUTC(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
     const lang = data.lang || 'id';
     const qlistStore = this.storeRepository
@@ -280,13 +280,13 @@ export class QueryService {
       const open_24_hour = data.is_24hrs;
       const include_closed_stores = data.include_closed_stores || false;
 
-      const currTime = DateTimeUtils.DateTimeToWIB(new Date());
+      const currTime = DateTimeUtils.DateTimeToUTC(new Date());
       const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
       const lang = data.lang || 'id';
 
       Logger.debug(
         `filter params:
-        current time: ${currTime}
+        current time: ${currTime} UTC+0
         week of day: ${weekOfDay}
         is24hour: ${is24hrs}
         open_24_hour: ${open_24_hour}

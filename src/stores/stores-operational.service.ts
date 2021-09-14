@@ -99,6 +99,7 @@ export class StoreOperationalService {
           select: [
             'id',
             'day_of_week',
+            'gmt_offset',
             'merchant_store_id',
             'is_open_24h',
             'is_open',

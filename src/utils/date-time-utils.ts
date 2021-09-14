@@ -7,9 +7,9 @@ export class DateTimeUtils {
    * @param date Date format
    * @returns Time format in HH:mm in string
    */
-  static DateTimeToWIB(date: Date): string {
+  static DateTimeToUTC(date: Date): string {
     const currentDate = date ? date : new Date();
-    return momenttz(currentDate).tz('Asia/Jakarta').format('HH:mm');
+    return momenttz(currentDate).tz('UTC').format('HH:mm');
   }
 
   /**
