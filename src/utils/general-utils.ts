@@ -116,3 +116,14 @@ export const getDistanceInKilometers = (
   const d = R * c;
   return d;
 };
+
+export const deleteCredParam = function (input: Record<string, any>) {
+  delete input.approved_at;
+  delete input.created_at;
+  delete input.updated_at;
+  delete input.deleted_at;
+  delete input.password;
+  delete input.owner_password;
+  delete input.token_reset_password;
+  return input;
+};

@@ -21,6 +21,7 @@ import { OtpEmailValidateValidation } from './validation/otp.email-validate.vali
 import { CommonService } from 'src/common/common.service';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
 import { UbahPasswordValidation } from './validation/ubah-password.validation';
+import { deleteCredParam } from 'src/utils/general-utils';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -659,10 +660,10 @@ export class LoginService {
     );
     existMerchantUser.password = passwordHash;
     const result = await this.merchantUsersRepository.save(existMerchantUser);
-    delete result.password;
+    deleteCredParam(result);
     return this.responseService.success(
       true,
-      this.messageService.get('merchant.login.success'),
+      this.messageService.get('merchant.general.success'),
       result,
     );
   }
