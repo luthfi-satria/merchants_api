@@ -61,6 +61,7 @@ export class StoreOperationalController {
         ifSchedulesExists =
           await this.mStoreOperationalService.createStoreOperationalHours(
             store_id,
+            payload.gmt_offset,
           );
       }
 
