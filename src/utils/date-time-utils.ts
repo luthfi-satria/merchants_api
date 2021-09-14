@@ -7,9 +7,43 @@ export class DateTimeUtils {
    * @param date Date format
    * @returns Time format in HH:mm in string
    */
-  static DateTimeToWIB(date: Date): string {
+  static DateTimeToUTC(date: Date): string {
     const currentDate = date ? date : new Date();
-    return momenttz(currentDate).tz('Asia/Jakarta').format('HH:mm');
+    return momenttz(currentDate).tz('UTC').format('HH:mm');
+  }
+
+  /**
+   * Convert military time to gmt offset
+   * @param time Date Format 'HH:MM'
+   * @param gmt_offset GMT offset from timezone
+   */
+  static calcClockTimeWithGMTOffset(
+    curTime: string,
+    gmt_offset: number,
+  ): string {
+    const inputTime = moment(curTime, 'HH:mm').format('HH:mm');
+    const timeWithOffset = moment(inputTime, 'HH:mm')
+      .utcOffset(gmt_offset)
+      .format('HH:mm');
+
+    return timeWithOffset;
+  }
+
+  /**
+   *
+   * @param currTime Current input time clock in HH:mm
+   * @param currTimeGMTOffset GMT offset/ timezone from currTime
+   * @returns converted clock Time, based on difference by currTimeGMTOffset with UTC +0
+   */
+  static convertTimeToUTC(currTime: string, currTimeGMTOffset: number): string {
+    const gmtOffset = this.getDiffFromUTCOffset(currTimeGMTOffset);
+
+    const inputTime = moment(currTime, 'HH:mm').format('HH:mm');
+    const timeWithOffset = moment(inputTime, 'HH:mm')
+      .utcOffset(gmtOffset)
+      .format('HH:mm');
+
+    return timeWithOffset;
   }
 
   /**
@@ -63,5 +97,14 @@ export class DateTimeUtils {
   static convertToDayOfWeekNumber(day_of_week: string): number {
     const dayOfWeek = moment(day_of_week, 'ddd').format('d');
     return parseInt(dayOfWeek, 10);
+  }
+
+  /**
+   *
+   * @param gmt_offset current input GMT offset
+   * @returns GMT offset difference from UTC - 8 OR (-8) - UTC Offset
+   */
+  static getDiffFromUTCOffset(gmt_offset: number): number {
+    return gmt_offset >= 0 ? 0 - gmt_offset : gmt_offset * -1;
   }
 }

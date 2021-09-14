@@ -27,6 +27,8 @@ import {
 @Controller('api/v1/merchants/stores')
 @UseGuards(RoleStoreGuard)
 export class StoreOperationalController {
+  private GMT_Offset = 0; // UTC/GMT +0
+
   constructor(
     private readonly mStoreOperationalService: StoreOperationalService,
     private readonly mStoreService: StoresService,
@@ -38,12 +40,13 @@ export class StoreOperationalController {
   @Post('set-operational-hours')
   @UserTypeAndLevel('admin.*', 'merchant.store')
   async updateOperationalHour(
-    @Body(new ParseArrayPipe({ items: StoreOpenHoursValidation }))
-    payload: StoreOpenHoursValidation[],
+    @Body(new ValidationPipe())
+    payload: StoreOpenHoursValidation,
     @Req() req: any,
   ) {
     try {
       const { store_id } = req.user;
+      const { gmt_offset, operational_hours } = payload;
 
       //populate store schedules if does not exists
       let ifSchedulesExists =
@@ -62,11 +65,25 @@ export class StoreOperationalController {
       }
 
       //parse from validation to entity class
-      const updPayload = payload.map((e) => {
+      const updPayload = operational_hours.map((e) => {
         const shifts = e.operational_hours.map((e) => {
+          const { open_hour, close_hour } = e;
+
+          //Convert and save to UTC+0
+          const utc_openHour = DateTimeUtils.convertTimeToUTC(
+            open_hour,
+            gmt_offset,
+          );
+          const utc_closeHour = DateTimeUtils.convertTimeToUTC(
+            close_hour,
+            gmt_offset,
+          );
+
+          console.log(`utc convert: ${utc_openHour} ${utc_closeHour}`);
+
           const item = new StoreOperationalShiftDocument({
-            open_hour: e.open_hour,
-            close_hour: e.close_hour,
+            open_hour: utc_openHour,
+            close_hour: utc_closeHour,
           });
           return item;
         });
@@ -75,6 +92,7 @@ export class StoreOperationalController {
         const dayOfWeek = DateTimeUtils.convertToDayOfWeekNumber(e.day_of_week);
 
         return new StoreOperationalHoursDocument({
+          gmt_offset: gmt_offset,
           merchant_store_id: store_id,
           day_of_week: dayOfWeek,
           is_open_24h: e.open_24hrs,
@@ -109,12 +127,10 @@ export class StoreOperationalController {
         });
 
         return new StoreOperationalHoursDocument({
-          merchant_store_id: item.id,
+          ...item,
           day_of_week: DateTimeUtils.convertToDayOfWeek(
             Number(item.day_of_week),
           ),
-          is_open: item.is_open,
-          is_open_24h: item.is_open_24h,
           shifts: fmtShift,
         });
       });

@@ -22,20 +22,14 @@ export class StoreOperationalHoursDocument {
   @Column({ type: 'int8' }) //TODO niel- will remove this, change to day_of_weeks with verbose day ex 'mon, tue, etc.';
   day_of_week: number | string;
 
-  @Column({ type: 'varchar', length: '4', nullable: true })
-  day_of_weeks: string;
-
   @Column({ type: 'boolean', default: true })
   is_open: boolean;
 
   @Column({ type: 'boolean', default: false })
   is_open_24h: boolean;
 
-  @Column({ type: 'varchar', length: '7', default: '08:00' })
-  open_hour: string; // TODO: niel- remove this column
-
-  @Column({ type: 'varchar', length: '7', default: '17:00' })
-  close_hour: string; // TODO: niel- remove this column
+  @Column({ type: 'int', default: null, nullable: true })
+  gmt_offset: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
   @Exclude()

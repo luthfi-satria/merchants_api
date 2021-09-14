@@ -70,7 +70,7 @@ export class QueryService {
     const is24hour = data?.is_24hrs ? true : false;
     const open_24_hour = data.is_24hrs || false;
 
-    const currTime = DateTimeUtils.DateTimeToWIB(new Date());
+    const currTime = DateTimeUtils.DateTimeToUTC(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
     const lang = data.lang || 'id';
     const qlistStore = this.storeRepository
@@ -280,13 +280,13 @@ export class QueryService {
       const open_24_hour = data.is_24hrs;
       const include_closed_stores = data.include_closed_stores || false;
 
-      const currTime = DateTimeUtils.DateTimeToWIB(new Date());
+      const currTime = DateTimeUtils.DateTimeToUTC(new Date());
       const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
       const lang = data.lang || 'id';
 
       Logger.debug(
         `filter params:
-        current time: ${currTime}
+        current time: ${currTime} UTC+0
         week of day: ${weekOfDay}
         is24hour: ${is24hrs}
         open_24_hour: ${open_24_hour}
@@ -442,6 +442,7 @@ export class QueryService {
           const store_operational_status = this.getStoreOperationalStatus(
             row.is_store_open,
             currTime,
+            weekOfDay,
             row.operational_hours,
           );
 
@@ -489,16 +490,21 @@ export class QueryService {
   private getStoreOperationalStatus(
     is_store_status: boolean,
     currTime: string,
+    currWeekDay: number,
     curShiftHour: StoreOperationalHoursDocument[],
   ) {
-    const { open_hour, close_hour } = curShiftHour[0];
-    const respectShiftTime =
-      currTime >= open_hour && currTime < close_hour ? true : false;
+    const isCurrentDay = curShiftHour.find(
+      (row) => row.day_of_week == String(currWeekDay),
+    );
+
+    const respectShiftTime = isCurrentDay.shifts.find((e) =>
+      currTime >= e.open_hour && currTime < e.close_hour ? true : false,
+    );
 
     Logger.debug(
       `Get store_operational_status(store open: ${is_store_status} && in_operational_time ${respectShiftTime})`,
     );
-    return is_store_status && respectShiftTime ? true : false;
+    return is_store_status && respectShiftTime !== null ? true : false;
   }
 
   async listStoreCategories(

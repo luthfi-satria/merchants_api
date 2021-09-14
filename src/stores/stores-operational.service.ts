@@ -99,6 +99,7 @@ export class StoreOperationalService {
           select: [
             'id',
             'day_of_week',
+            'gmt_offset',
             'merchant_store_id',
             'is_open_24h',
             'is_open',
@@ -218,6 +219,7 @@ export class StoreOperationalService {
 
           row.shifts = newSchedules;
           row.is_open_24h = isFound.is_open_24h;
+          row.gmt_offset = isFound.gmt_offset;
           //row.is_open = isFound.is_open;
         }
 
