@@ -67,6 +67,20 @@ export class GroupsService {
   async createMerchantGroupProfile(
     createGroupDTO: CreateGroupDTO,
   ): Promise<GroupDocument> {
+    const salt: string = await this.hashService.randomSalt();
+    createGroupDTO.director_password = await this.hashService.hashPassword(
+      createGroupDTO.director_password,
+      salt,
+    );
+    createGroupDTO.pic_operational_password = await this.hashService.hashPassword(
+      createGroupDTO.pic_operational_password,
+      salt,
+    );
+    createGroupDTO.pic_finance_password = await this.hashService.hashPassword(
+      createGroupDTO.pic_finance_password,
+      salt,
+    );
+
     const create_group = this.groupRepository.create(createGroupDTO);
     try {
       const create = await this.groupRepository.save(create_group);
@@ -82,8 +96,12 @@ export class GroupsService {
         name: createGroupDTO.director_name,
         phone: createGroupDTO.director_phone,
         email: createGroupDTO.director_email,
+        password: createGroupDTO.director_password,
       };
-      const director = await this.groupUserService.createUserWithoutPassword(
+      // const director = await this.groupUserService.createUserWithoutPassword(
+      //   create_director,
+      // );
+      const director = await this.groupUserService.createUserPassword(
         create_director,
       );
       create.users.push(director);
@@ -94,9 +112,13 @@ export class GroupsService {
           name: createGroupDTO.pic_operational_name,
           phone: createGroupDTO.pic_operational_phone,
           email: createGroupDTO.pic_operational_email,
+          password: createGroupDTO.pic_operational_password,
         };
         const pic_operational =
-          await this.groupUserService.createUserWithoutPassword(
+          // await this.groupUserService.createUserWithoutPassword(
+          //   create_pic_operational,
+          // );
+          await this.groupUserService.createUserPassword(
             create_pic_operational,
           );
         create.users.push(pic_operational);
@@ -108,9 +130,13 @@ export class GroupsService {
           name: createGroupDTO.pic_finance_name,
           phone: createGroupDTO.pic_finance_phone,
           email: createGroupDTO.pic_finance_email,
+          password: createGroupDTO.pic_finance_password,
         };
         const pic_finance =
-          await this.groupUserService.createUserWithoutPassword(
+          // await this.groupUserService.createUserWithoutPassword(
+          //   create_pic_finance,
+          // );
+          await this.groupUserService.createUserPassword(
             create_pic_finance,
           );
         create.users.push(pic_finance);

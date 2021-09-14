@@ -35,6 +35,10 @@ export default {
       code: 'PHONE_ALREADY_EXISTS',
       message: 'Nomor Telepon sudah digunakan.',
     },
+    phoneNotFound: {
+      code: 'PHONE_NOT_FOUND',
+      message: 'Nomer telepon tidak ditemukan.',
+    },
     nameExist: {
       code: 'NAME_ALREADY_EXISTS',
       message: 'Nama sudah digunakan.',

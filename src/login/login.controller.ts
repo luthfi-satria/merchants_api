@@ -23,7 +23,6 @@ import { Get } from '@nestjs/common';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RMessage } from 'src/response/response.interface';
-import { dbOutputTime } from 'src/utils/general-utils';
 
 @Controller('api/v1/merchants')
 export class LoginController {
@@ -129,10 +128,7 @@ export class LoginController {
         ),
       );
     }
-    // dbOutputTime(profile);
-    // dbOutputTime(profile.merchant);
     delete profile.password;
-    // delete profile.merchant.owner_password;
     return this.responseService.success(
       true,
       this.messageService.get('merchant.login.success'),
@@ -147,5 +143,14 @@ export class LoginController {
     data: LoginEmailValidation,
   ): Promise<any> {
     return await this.loginService.loginEmailPasswordProcess(data);
+  }
+
+  @Post('login/phone-password')
+  @ResponseStatusCode()
+  async loginByPhonePassword(
+    @Body()
+    data: LoginPhoneValidation,
+  ): Promise<any> {
+    return await this.loginService.loginPhonePasswordProcess(data);
   }
 }

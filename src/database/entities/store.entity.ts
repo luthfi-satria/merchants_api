@@ -20,6 +20,7 @@ import { StoreOperationalHoursDocument } from './store_operational_hours.entity'
 export enum enumDeliveryType {
   delivery_only = 'DELIVERY_ONLY',
   delivery_and_pickup = 'DELIVERY_AND_PICKUP',
+  pickup_only = 'PICKUP_ONLY',
 }
 
 export enum enumStoreStatus {

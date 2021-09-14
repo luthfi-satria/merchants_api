@@ -76,5 +76,10 @@ export class MerchantMerchantValidation {
   email: string;
 
   @IsOptional()
+  @IsNumberString()
+  @Length(10, 15)
+  phone: string;
+
+  @IsOptional()
   password: string;
 }

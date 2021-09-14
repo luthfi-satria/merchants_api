@@ -92,6 +92,74 @@ export class ResetPasswordService {
       });
   }
 
+  async resetPasswordPhone(
+    args: Partial<MerchantMerchantValidation>,
+  ): Promise<any> {
+    const cekPhone = await this.merchantUserRepository
+      .findOne({
+        phone: args.phone,
+      })
+      .catch(() => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: args.phone,
+              property: 'phone',
+              constraint: [
+                this.messageService.get('merchant.general.phoneNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+    if (!cekPhone) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: args.phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.get('merchant.general.phoneNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    //Generate Random String
+    const token = randomUUID();
+    cekPhone.token_reset_password = token;
+    return await this.merchantUserRepository
+      .save(cekPhone)
+      .then(() => {
+        const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+        if (process.env.NODE_ENV == 'test') {
+          return { status: true, token: token, url: url };
+        } else {
+          return { status: true };
+        }
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: err.column,
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
   async resetPasswordExec(
     args: Partial<MerchantMerchantValidation>,
     qstring: Record<string, any>,

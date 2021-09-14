@@ -3,6 +3,7 @@ import {
   IsIn,
   IsNotEmpty,
   IsNumberString,
+  IsOptional,
   IsString,
   Length,
   ValidateIf,
@@ -113,4 +114,19 @@ export class CreateGroupDTO {
   @IsNotEmpty()
   @IsIn(Object.values(GroupStatus))
   status: GroupStatus;
+
+  @IsOptional()
+  pic_operational_nip: string;
+
+  @IsOptional()
+  pic_finance_nip: string;
+
+  @IsNotEmpty({ message: 'Director Password harus diisi' })
+  director_password: string;
+
+  @IsNotEmpty({ message: 'Pic Operational Password harus diisi' })
+  pic_operational_password: string;
+
+  @IsNotEmpty({ message: 'Pic Finance Password harus diisi' })
+  pic_finance_password: string;
 }

@@ -271,6 +271,7 @@ export class QueryService {
       const perPage = Number(data.limit) || 10;
       const store_category_id: string = data.store_category_id || null;
 
+      // ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
       const delivery_only =
         data.pickup == true
           ? enumDeliveryType.delivery_and_pickup
@@ -284,7 +285,7 @@ export class QueryService {
       const lang = data.lang || 'id';
 
       Logger.debug(
-        `filter params: 
+        `filter params:
         current time: ${currTime}
         week of day: ${weekOfDay}
         is24hour: ${is24hrs}
@@ -328,6 +329,8 @@ export class QueryService {
           'merchant_store_categories_languages',
         )
         // --- Filter Conditions ---
+        // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
+
         .where(
           `merchant_store.status = :active
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius

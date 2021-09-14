@@ -103,4 +103,19 @@ export class UpdateGroupDTO {
   @IsOptional()
   @IsIn(Object.values(GroupStatus))
   status: GroupStatus;
+
+  @IsOptional()
+  pic_operational_nip: string;
+
+  @IsOptional()
+  pic_finance_nip: string;
+
+  @IsOptional()
+  director_password: string;
+
+  @IsOptional()
+  pic_operational_password: string;
+
+  @IsOptional()
+  pic_finance_password: string;
 }

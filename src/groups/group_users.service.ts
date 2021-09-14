@@ -40,6 +40,13 @@ export class GroupUsersService {
     return await this.merchantUsersRepository.save(groupUser);
   }
 
+  async createUserPassword(groupUser: Partial<GroupUser>) {
+    groupUser.token_reset_password = randomUUID();
+    const result = await this.merchantUsersRepository.save(groupUser);
+    delete result.password;
+    return result;
+  }
+
   async updateUserByEmailGroupId(groupUser: Partial<GroupUser>, email: string) {
     try {
       const user = await this.merchantUsersRepository.findOne({

@@ -17,6 +17,15 @@ export class ResetPasswordController {
     return await this.resetPasswordService.resetPasswordEmail(args);
   }
 
+  @Post('phone')
+  @ResponseStatusCode()
+  async resetPassPhone(
+    @Body()
+    args: Partial<MerchantMerchantValidation>,
+  ): Promise<any> {
+    return await this.resetPasswordService.resetPasswordPhone(args);
+  }
+
   @Post('password')
   @ResponseStatusCode()
   async resetPassPassword(
