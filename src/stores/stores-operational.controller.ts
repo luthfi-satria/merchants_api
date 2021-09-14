@@ -27,6 +27,8 @@ import {
 @Controller('api/v1/merchants/stores')
 @UseGuards(RoleStoreGuard)
 export class StoreOperationalController {
+  private GMT_Offset = 0; // UTC/GMT +0
+
   constructor(
     private readonly mStoreOperationalService: StoreOperationalService,
     private readonly mStoreService: StoresService,
@@ -67,9 +69,21 @@ export class StoreOperationalController {
         const shifts = e.operational_hours.map((e) => {
           const { open_hour, close_hour } = e;
 
+          //Convert and save to UTC+0
+          const utc_openHour = DateTimeUtils.convertTimeToUTC(
+            open_hour,
+            gmt_offset,
+          );
+          const utc_closeHour = DateTimeUtils.convertTimeToUTC(
+            close_hour,
+            gmt_offset,
+          );
+
+          console.log(`utc convert: ${utc_openHour} ${utc_closeHour}`);
+
           const item = new StoreOperationalShiftDocument({
-            open_hour: open_hour,
-            close_hour: close_hour,
+            open_hour: utc_openHour,
+            close_hour: utc_closeHour,
           });
           return item;
         });
