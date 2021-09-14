@@ -5,6 +5,7 @@ import {
   Headers,
   HttpStatus,
   Post,
+  Put,
   Req,
 } from '@nestjs/common';
 import { GroupsService } from 'src/groups/groups.service';
@@ -23,6 +24,7 @@ import { Get } from '@nestjs/common';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RMessage } from 'src/response/response.interface';
+import { UbahPasswordValidation } from './validation/ubah-password.validation';
 
 @Controller('api/v1/merchants')
 export class LoginController {
@@ -152,5 +154,17 @@ export class LoginController {
     data: LoginPhoneValidation,
   ): Promise<any> {
     return await this.loginService.loginPhonePasswordProcess(data);
+  }
+
+  @Put('profile/password')
+  @UserType('merchant')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async ubahPassword(
+    @Req() req: any,
+    @Body()
+    data: UbahPasswordValidation,
+  ): Promise<any> {
+    return await this.loginService.ubahPasswordProcess(data, req.user);
   }
 }

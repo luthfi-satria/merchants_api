@@ -11,7 +11,7 @@ import { MerchantUsersDocument } from 'src/database/entities/merchant_users.enti
 import { HashService } from 'src/hash/hash.service';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
-import { RMessage } from 'src/response/response.interface';
+import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
@@ -20,6 +20,7 @@ import { LoginEmailValidation } from './validation/login.email.validation';
 import { OtpEmailValidateValidation } from './validation/otp.email-validate.validation';
 import { CommonService } from 'src/common/common.service';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
+import { UbahPasswordValidation } from './validation/ubah-password.validation';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -592,5 +593,77 @@ export class LoginService {
     } else {
       return resp;
     }
+  }
+
+  async ubahPasswordProcess(
+    request: UbahPasswordValidation,
+    user: Record<string, any>,
+  ): Promise<RSuccessMessage> {
+    const existMerchantUser = await this.merchantUsersRepository
+      .findOne({ where: { id: user.id } })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: err.column,
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+
+    if (!existMerchantUser) {
+      const errors: RMessage = {
+        value: user.id,
+        property: 'token',
+        constraint: [
+          this.messageService.get('merchant.user.unregistered_user'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    const cekPassword = await this.hashService.validatePassword(
+      request.old_password,
+      existMerchantUser.password,
+    );
+    if (!cekPassword) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: 'old_password',
+            constraint: [
+              this.messageService.get('merchant.login.invalid_password'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    const salt: string = await this.hashService.randomSalt();
+    const passwordHash = await this.hashService.hashPassword(
+      request.new_password,
+      salt,
+    );
+    existMerchantUser.password = passwordHash;
+    const result = await this.merchantUsersRepository.save(existMerchantUser);
+    delete result.password;
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.login.success'),
+      result,
+    );
   }
 }
