@@ -61,6 +61,9 @@ export class CreateGroupDTO {
   @IsString()
   director_name: string;
 
+  @IsOptional()
+  director_nip: string;
+
   @IsNotEmpty()
   @IsString()
   director_phone: string;
@@ -88,6 +91,9 @@ export class CreateGroupDTO {
   @IsString()
   pic_operational_name: string;
 
+  @IsOptional()
+  pic_operational_nip: string;
+
   @IsNotEmpty()
   @IsEmail()
   pic_operational_email: string;
@@ -102,6 +108,9 @@ export class CreateGroupDTO {
   @IsString()
   pic_finance_name: string;
 
+  @IsOptional()
+  pic_finance_nip: string;
+
   @IsNotEmpty()
   @IsEmail()
   pic_finance_email: string;
@@ -114,12 +123,6 @@ export class CreateGroupDTO {
   @IsNotEmpty()
   @IsIn(Object.values(GroupStatus))
   status: GroupStatus;
-
-  @IsOptional()
-  pic_operational_nip: string;
-
-  @IsOptional()
-  pic_finance_nip: string;
 
   @IsNotEmpty({ message: 'Director Password harus diisi' })
   director_password: string;
