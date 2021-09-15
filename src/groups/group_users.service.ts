@@ -60,7 +60,6 @@ export class GroupUsersService {
             this.messageService.get('merchant.general.dataNotFound'),
           ],
         };
-        console.log(message);
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
@@ -81,7 +80,6 @@ export class GroupUsersService {
               this.messageService.get('merchant.general.emailExist'),
             ],
           };
-          console.log(message);
           throw new BadRequestException(
             this.responseService.error(
               HttpStatus.BAD_REQUEST,
@@ -101,7 +99,6 @@ export class GroupUsersService {
           property: 'phone',
           constraint: [this.messageService.get('merchant.general.phoneExist')],
         };
-        console.log(message);
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,

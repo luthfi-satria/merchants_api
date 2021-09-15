@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
@@ -415,7 +416,10 @@ export class LoginService {
 
   async loginEmailPasswordProcess(request: LoginEmailValidation): Promise<any> {
     const existMerchantUser = await this.merchantUsersRepository
-      .findOne({ where: { email: request.email } })
+      .findOne({
+        where: { email: request.email },
+        relations: ['group', 'merchant', 'store'],
+      })
       .catch((err) => {
         const errors: RMessage = {
           value: '',
@@ -430,7 +434,6 @@ export class LoginService {
           ),
         );
       });
-
     if (!existMerchantUser) {
       const errors: RMessage = {
         value: request.email,
@@ -439,11 +442,11 @@ export class LoginService {
           this.messageService.get('merchant.login.unregistered_email'),
         ],
       };
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           errors,
-          'Bad Request',
+          'Unauthorized',
         ),
       );
     }
@@ -453,9 +456,9 @@ export class LoginService {
       existMerchantUser.password,
     );
     if (!cekPassword) {
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         this.responseService.error(
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
           {
             value: '',
             property: 'password',
@@ -463,7 +466,7 @@ export class LoginService {
               this.messageService.get('merchant.login.invalid_password'),
             ],
           },
-          'Bad Request',
+          'Unauthorized',
         ),
       );
     }
@@ -474,14 +477,59 @@ export class LoginService {
     const id = existMerchantUser.id;
 
     if (existMerchantUser.store_id != null) {
+      if (existMerchantUser.store.status != 'ACTIVE') {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: existMerchantUser.store.status,
+              property: 'store_status',
+              constraint: [
+                this.messageService.get('merchant.general.unverificatedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
       merchantLevel = 'store';
       storeID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
+      if (existMerchantUser.merchant.status != 'ACTIVE') {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: existMerchantUser.merchant.status,
+              property: 'merchant_status',
+              constraint: [
+                this.messageService.get('merchant.general.unverificatedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
       merchantLevel = 'merchant';
       merchantID = existMerchantUser.merchant_id;
     }
     if (existMerchantUser.group_id != null) {
+      if (existMerchantUser.group.status != 'ACTIVE') {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: existMerchantUser.group.status,
+              property: 'group_status',
+              constraint: [
+                this.messageService.get('merchant.general.unverificatedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
       merchantLevel = 'group';
       groupID = existMerchantUser.group_id;
     }
@@ -512,7 +560,10 @@ export class LoginService {
 
   async loginPhonePasswordProcess(request: LoginPhoneValidation): Promise<any> {
     const existMerchantUser = await this.merchantUsersRepository
-      .findOne({ where: { phone: request.phone } })
+      .findOne({
+        where: { phone: request.phone },
+        relations: ['group', 'merchant', 'store'],
+      })
       .catch((err) => {
         const errors: RMessage = {
           value: '',
@@ -570,14 +621,59 @@ export class LoginService {
     const id = existMerchantUser.id;
 
     if (existMerchantUser.store_id != null) {
+      if (existMerchantUser.store.status != 'ACTIVE') {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: existMerchantUser.store.status,
+              property: 'store_status',
+              constraint: [
+                this.messageService.get('merchant.general.unverificatedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
       merchantLevel = 'store';
       storeID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
+      if (existMerchantUser.merchant.status != 'ACTIVE') {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: existMerchantUser.merchant.status,
+              property: 'merchant_status',
+              constraint: [
+                this.messageService.get('merchant.general.unverificatedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
       merchantLevel = 'merchant';
       merchantID = existMerchantUser.merchant_id;
     }
     if (existMerchantUser.group_id != null) {
+      if (existMerchantUser.group.status != 'ACTIVE') {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: existMerchantUser.group.status,
+              property: 'group_status',
+              constraint: [
+                this.messageService.get('merchant.general.unverificatedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
       merchantLevel = 'group';
       groupID = existMerchantUser.group_id;
     }

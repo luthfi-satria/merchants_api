@@ -3,6 +3,18 @@ export default {
     success: 'SUCCESS',
     empty_token: 'Kode Token tidak ada.',
     invalid_token: 'Kode Token tidak valid.',
+    dataNotFound: {
+      code: 'DATA_NOT_FOUND',
+      message: 'Data tidak ditemukan.',
+    },
+    emailExist: {
+      code: 'EMAIL_ALREADY_EXISTS',
+      message: 'Email sudah digunakan.',
+    },
+    emailNotFound: {
+      code: 'EMAIL_NOT_FOUND',
+      message: 'Email tidak ditemukan.',
+    },
     empty_photo: {
       code: 'IMAGE_NOT_FOUND',
       message: 'File image kosong.',
@@ -19,17 +31,13 @@ export default {
       code: 'INVALID_UUID',
       message: 'UUID tidak valid.',
     },
-    storeIdNotMatch: {
-      code: 'STORE_ID_NOT_MATCH',
-      message: 'Store ID bukan milik merchant.',
+    invalidValue: {
+      code: 'INVALID_VALUE',
+      message: 'Value tidak sesuai.',
     },
-    emailExist: {
-      code: 'EMAIL_ALREADY_EXISTS',
-      message: 'Email sudah digunakan.',
-    },
-    emailNotFound: {
-      code: 'EMAIL_NOT_FOUND',
-      message: 'Email tidak ditemukan.',
+    nameExist: {
+      code: 'NAME_ALREADY_EXISTS',
+      message: 'Nama sudah digunakan.',
     },
     phoneExist: {
       code: 'PHONE_ALREADY_EXISTS',
@@ -39,17 +47,13 @@ export default {
       code: 'PHONE_NOT_FOUND',
       message: 'Nomer telepon tidak ditemukan.',
     },
-    nameExist: {
-      code: 'NAME_ALREADY_EXISTS',
-      message: 'Nama sudah digunakan.',
+    storeIdNotMatch: {
+      code: 'STORE_ID_NOT_MATCH',
+      message: 'Store ID bukan milik merchant.',
     },
-    invalidValue: {
-      code: 'INVALID_VALUE',
-      message: 'Value tidak sesuai.',
-    },
-    dataNotFound: {
-      code: 'DATA_NOT_FOUND',
-      message: 'Data tidak ditemukan.',
+    unverificatedUser: {
+      code: 'UNVERIFICATED_USER',
+      message: 'User belum terverifikasi.',
     },
   },
   creategroup: {
