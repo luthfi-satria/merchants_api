@@ -22,6 +22,10 @@ import { CommonService } from 'src/common/common.service';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
 import { UbahPasswordValidation } from './validation/ubah-password.validation';
 import { deleteCredParam } from 'src/utils/general-utils';
+import { UpdateProfileValidation } from './validation/update-profile.validation';
+import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { StoreDocument } from 'src/database/entities/store.entity';
+import { GroupDocument } from 'src/database/entities/group.entity';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -32,6 +36,13 @@ export class LoginService {
   constructor(
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
+    @InjectRepository(MerchantDocument)
+    private readonly merchantRepository: Repository<MerchantDocument>,
+    @InjectRepository(StoreDocument)
+    private readonly storeRepository: Repository<StoreDocument>,
+    @InjectRepository(GroupDocument)
+    private readonly groupRepository: Repository<GroupDocument>,
+
     private httpService: HttpService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
@@ -516,7 +527,6 @@ export class LoginService {
           ),
         );
       });
-
     if (!existMerchantUser) {
       const errors: RMessage = {
         value: request.phone,
@@ -665,6 +675,106 @@ export class LoginService {
       true,
       this.messageService.get('merchant.general.success'),
       result,
+    );
+  }
+
+  async updateProfile(
+    data: UpdateProfileValidation,
+    user: Record<string, any>,
+  ) {
+    const existUser = await this.merchantUsersRepository
+      .findOne({
+        relations: ['group', 'merchant', 'store'],
+        where: {
+          id: user.id,
+        },
+      })
+      .catch((err) => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: '',
+              property: err.column,
+              constraint: [err.message],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+    if (!existUser) {
+      const errors: RMessage = {
+        value: user.id,
+        property: 'id',
+        constraint: [
+          this.messageService.get('merchant.user.unregistered_user'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    if (data.name && data.name != '') existUser.name = data.name;
+    if (data.nip && data.nip != '') existUser.nip = data.nip;
+
+    const updateMerchantUser = await this.merchantUsersRepository.save(
+      existUser,
+    );
+    const merchant: Record<string, any> =
+      user.level == 'group'
+        ? await this.groupRepository.findOne({
+            where: { id: existUser.group_id },
+          })
+        : user.level == 'merchant'
+        ? await this.merchantRepository.findOne({
+            where: { id: existUser.merchant_id },
+          })
+        : await this.storeRepository.findOne({
+            where: { id: existUser.store_id },
+          });
+    if (merchant) {
+      if (user.level == 'group') {
+        if (existUser.email == merchant.director_email) {
+          await this.groupRepository.update(
+            { id: merchant.id },
+            {
+              director_name: updateMerchantUser.name,
+              director_nip: updateMerchantUser.nip,
+            },
+          );
+          existUser.group.director_name = updateMerchantUser.name;
+          existUser.group.director_nip = updateMerchantUser.nip;
+        } else if (existUser.email == merchant.pic_operational_email) {
+          await this.groupRepository.update(
+            { id: merchant.id },
+            {
+              pic_operational_name: updateMerchantUser.name,
+              pic_operational_nip: updateMerchantUser.nip,
+            },
+          );
+          existUser.group.pic_operational_name = updateMerchantUser.name;
+          existUser.group.pic_operational_nip = updateMerchantUser.nip;
+        } else {
+          await this.groupRepository.update(
+            { id: merchant.id },
+            {
+              pic_finance_name: updateMerchantUser.name,
+              pic_finance_nip: updateMerchantUser.nip,
+            },
+          );
+          existUser.group.pic_finance_name = updateMerchantUser.name;
+          existUser.group.pic_finance_nip = updateMerchantUser.nip;
+        }
+      }
+    }
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      existUser,
     );
   }
 }

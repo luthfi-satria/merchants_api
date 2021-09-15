@@ -54,6 +54,10 @@ export class UpdateGroupDTO {
 
   @IsOptional()
   @IsString()
+  director_nip: string;
+
+  @IsOptional()
+  @IsString()
   director_phone: string;
 
   @IsOptional()
@@ -78,6 +82,10 @@ export class UpdateGroupDTO {
   pic_operational_name: string;
 
   @IsOptional()
+  @IsString()
+  pic_operational_nip: string;
+
+  @IsOptional()
   @IsEmail()
   pic_operational_email: string;
 
@@ -92,6 +100,10 @@ export class UpdateGroupDTO {
   pic_finance_name: string;
 
   @IsOptional()
+  @IsString()
+  pic_finance_nip: string;
+
+  @IsOptional()
   @IsEmail()
   pic_finance_email: string;
 
@@ -103,12 +115,6 @@ export class UpdateGroupDTO {
   @IsOptional()
   @IsIn(Object.values(GroupStatus))
   status: GroupStatus;
-
-  @IsOptional()
-  pic_operational_nip: string;
-
-  @IsOptional()
-  pic_finance_nip: string;
 
   @IsOptional()
   director_password: string;

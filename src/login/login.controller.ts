@@ -25,6 +25,7 @@ import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RMessage } from 'src/response/response.interface';
 import { UbahPasswordValidation } from './validation/ubah-password.validation';
+import { UpdateProfileValidation } from './validation/update-profile.validation';
 
 @Controller('api/v1/merchants')
 export class LoginController {
@@ -109,7 +110,7 @@ export class LoginController {
     );
   }
 
-  @Get('login/profile')
+  @Get('profile')
   @UserType('merchant')
   @AuthJwtGuard()
   async profile(@Req() req: any) {
@@ -166,5 +167,17 @@ export class LoginController {
     data: UbahPasswordValidation,
   ): Promise<any> {
     return await this.loginService.ubahPasswordProcess(data, req.user);
+  }
+
+  @Put('profile')
+  @UserType('merchant')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updateProfile(
+    @Req() req: any,
+    @Body()
+    data: UpdateProfileValidation,
+  ): Promise<any> {
+    return await this.loginService.updateProfile(data, req.user);
   }
 }
