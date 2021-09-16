@@ -31,7 +31,7 @@ export class ProfileController {
         const errors: RMessage = {
             value: data.email,
             property: 'email',
-            constraint: [this.messageService.get('admins.general.emailExist')],
+            constraint: [this.messageService.get('merchant.general.emailExist')],
         };
         throw new BadRequestException(
             this.responseService.error(
@@ -70,7 +70,7 @@ export class ProfileController {
     }
 
     @Post('verify-email-validation')
-    @UserType('admin')
+    @UserType('merchant')
     @AuthJwtGuard()
     async updateEmailValidation(@Req() req: any,@Body() data: UpdateEmailDto){
         const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-email-validation';
@@ -82,7 +82,7 @@ export class ProfileController {
         const errors: RMessage = {
             value: data.email,
             property: 'email',
-            constraint: [this.messageService.get('admins.general.emailExist')],
+            constraint: [this.messageService.get('merchant.general.emailExist')],
         };
         throw new BadRequestException(
             this.responseService.error(
@@ -109,7 +109,7 @@ export class ProfileController {
             const updateResult = await this.profileService.updateEmail(data)
             return this.responseService.success(
                 true,
-                this.messageService.get('admins.general.success'),
+                this.messageService.get('merchant.general.success'),
                 updateResult,
             );
             }
@@ -128,19 +128,19 @@ export class ProfileController {
     }
 
     @Post('verify-phone')
-    @UserType('admin')
+    @UserType('merchant')
     @AuthJwtGuard()
     async updatePhone(@Req() req: any,@Body() data: UpdatePhoneDto){
         const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-phone';
         const defaultJsonHeader: Record<string, any> = {
         'Content-Type': 'application/json',
         };
-        const existEmail = await this.profileService.findOneMerchantByPhone(data.phone)
-        if(existEmail){
+        const existPhone = await this.profileService.findOneMerchantByPhone(data.phone)
+        if(existPhone){
         const errors: RMessage = {
             value: data.phone,
             property: 'phone',
-            constraint: [this.messageService.get('admins.general.phoneExist')],
+            constraint: [this.messageService.get('merchant.general.phoneExist')],
         };
         throw new BadRequestException(
             this.responseService.error(
@@ -179,19 +179,19 @@ export class ProfileController {
     }
 
     @Post('verify-phone-validation')
-    @UserType('admin')
+    @UserType('merchant')
     @AuthJwtGuard()
     async updatePhoneValidation(@Req() req: any,@Body() data: UpdatePhoneDto){
         const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-phone-validation';
         const defaultJsonHeader: Record<string, any> = {
         'Content-Type': 'application/json',
         };
-        const existEmail = await this.profileService.findOneMerchantByPhone(data.phone)
-        if(existEmail){
+        const existPhone = await this.profileService.findOneMerchantByPhone(data.phone)
+        if(existPhone){
         const errors: RMessage = {
             value: data.phone,
-            property: 'email',
-            constraint: [this.messageService.get('admins.general.emailExist')],
+            property: 'phone',
+            constraint: [this.messageService.get('merchant.general.emailExist')],
         };
         throw new BadRequestException(
             this.responseService.error(
@@ -218,7 +218,7 @@ export class ProfileController {
             const updateResult = await this.profileService.updatePhone(data)
             return this.responseService.success(
                 true,
-                this.messageService.get('admins.general.success'),
+                this.messageService.get('merchant.general.success'),
                 updateResult,
             );
             }
