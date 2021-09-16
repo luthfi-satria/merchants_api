@@ -865,8 +865,34 @@ export class LoginService {
           existUser.group.pic_finance_name = updateMerchantUser.name;
           existUser.group.pic_finance_nip = updateMerchantUser.nip;
         }
+        deleteCredParam(existUser.group);
+      } else if (user.level == 'merchant') {
+        if (existUser.email == merchant.pic_email) {
+          await this.merchantRepository.update(
+            { id: merchant.id },
+            {
+              pic_name: updateMerchantUser.name,
+              pic_nip: updateMerchantUser.nip,
+            },
+          );
+          existUser.merchant.pic_name = updateMerchantUser.name;
+          existUser.merchant.pic_nip = updateMerchantUser.nip;
+        }
+        deleteCredParam(existUser.merchant);
+      } else if (user.level == 'store') {
+        if (existUser.email == merchant.email) {
+          await this.storeRepository.update(
+            { id: merchant.id },
+            {
+              name: updateMerchantUser.name,
+            },
+          );
+          existUser.store.name = updateMerchantUser.name;
+        }
+        deleteCredParam(existUser.store);
       }
     }
+    deleteCredParam(existUser);
     return this.responseService.success(
       true,
       this.messageService.get('merchant.general.success'),

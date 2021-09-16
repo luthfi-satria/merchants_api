@@ -17,7 +17,7 @@ import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { dbOutputTime } from 'src/utils/general-utils';
-import { MerchantsService } from 'src/merchants/merchants.service';
+// import { MerchantsService } from 'src/merchants/merchants.service';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -26,6 +26,7 @@ import { CreateGroupDTO } from './validation/create_groups.dto';
 import { GroupUsersService } from './group_users.service';
 import { GroupUser } from './interface/group_users.interface';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
+// import { MerchantsService } from 'src/merchants/merchants.service';
 
 @Injectable()
 export class GroupsService {
@@ -34,7 +35,7 @@ export class GroupsService {
     private readonly groupRepository: Repository<GroupDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
-    private readonly merchantService: MerchantsService,
+    // private readonly merchantService: MerchantsService,
     private readonly groupUserService: GroupUsersService,
     private readonly storage: CommonStorageService,
     private httpService: HttpService,
@@ -219,7 +220,7 @@ export class GroupsService {
   }
 
   async deleteMerchantGroupProfile(data: string): Promise<any> {
-    const cekid = await this.merchantService.findMerchantById(data);
+    const cekid = await this.findMerchantById(data);
     if (cekid) {
       if (cekid.status == 'ACTIVE') {
         throw new BadRequestException(

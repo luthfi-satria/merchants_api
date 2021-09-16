@@ -17,8 +17,9 @@ import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
-import { MerchantMerchantUsersValidation } from './validation/merchants_users.validation';
+import { MerchantUsersValidation } from './validation/merchants_users.validation';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class MerchantUsersService {
@@ -34,7 +35,7 @@ export class MerchantUsersService {
   ) {}
 
   async createMerchantUsers(
-    args: Partial<MerchantMerchantUsersValidation>,
+    args: Partial<MerchantUsersValidation>,
   ): Promise<RSuccessMessage> {
     const cekMerchantId = await this.merchantRepository
       .findOne({
@@ -130,7 +131,7 @@ export class MerchantUsersService {
         dbOutputTime(result);
         dbOutputTime(result.merchant);
         delete result.password;
-        delete result.merchant.owner_password;
+        delete result.merchant.pic_password;
 
         return this.responseService.success(
           true,
@@ -154,7 +155,7 @@ export class MerchantUsersService {
   }
 
   async updateMerchantUsers(
-    args: Partial<MerchantMerchantUsersValidation>,
+    args: Partial<MerchantUsersValidation>,
   ): Promise<RSuccessMessage> {
     const gUsersExist: MerchantUsersDocument =
       await this.merchantUsersRepository
@@ -256,7 +257,7 @@ export class MerchantUsersService {
         dbOutputTime(result);
         dbOutputTime(result.merchant);
         delete result.password;
-        delete result.merchant.owner_password;
+        delete result.merchant.pic_password;
 
         return this.responseService.success(
           true,
@@ -281,7 +282,7 @@ export class MerchantUsersService {
   }
 
   async deleteMerchantUsers(
-    args: Partial<MerchantMerchantUsersValidation>,
+    args: Partial<MerchantUsersValidation>,
   ): Promise<RSuccessMessage> {
     const gUsersExist: MerchantUsersDocument =
       await this.merchantUsersRepository
@@ -345,7 +346,7 @@ export class MerchantUsersService {
   }
 
   async listMerchantUsers(
-    args: Partial<MerchantMerchantUsersValidation>,
+    args: Partial<MerchantUsersValidation>,
   ): Promise<RSuccessMessage> {
     const search = args.search || '';
     const currentPage = Number(args.page) || 1;
@@ -379,7 +380,7 @@ export class MerchantUsersService {
           dbOutputTime(raw);
           dbOutputTime(raw.merchant);
           delete raw.password;
-          delete raw.merchant.owner_password;
+          delete raw.merchant.pic_password;
         });
 
         const listResult: ListResponse = {
@@ -414,6 +415,78 @@ export class MerchantUsersService {
       });
   }
 
+  async checkExistEmailPhone(
+    email: string,
+    phone: string,
+    id: string,
+  ): Promise<any> {
+    const cekemail: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { email: email },
+      });
+    if ((id == '' && cekemail) || (cekemail && cekemail.id != id)) {
+      if (cekemail) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: email,
+              property: 'email',
+              constraint: [
+                this.messageService.get('merchant.general.emailExist'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+    }
+    const cekphone: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { phone: phone },
+      });
+
+    if ((id == '' && cekphone) || (cekphone && cekphone.id != id)) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.get('merchant.general.phoneExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    return true;
+  }
+
+  async createMerchantUsersFromMerchant(
+    args: Partial<MerchantUsersDocument>,
+  ): Promise<any> {
+    args.token_reset_password = randomUUID();
+
+    const result: Record<string, any> = await this.merchantUsersRepository.save(
+      args,
+    );
+
+    if (process.env.NODE_ENV == 'test') {
+      const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${result.token_reset_password}`;
+      result.url_reset_password = url;
+    }
+    return result;
+  }
+
+  async updateMerchantUsersFromMerchant(
+    args: Partial<MerchantUsersDocument>,
+  ): Promise<any> {
+    const result = await this.merchantUsersRepository.save(args);
+    delete result.password;
+    return result;
+  }
   //------------------------------------------------------------------------------
 
   async getHttp(
