@@ -22,6 +22,7 @@ import { MerchantUsersController } from './merchants_users.controller';
 import { MerchantUsersService } from './merchants_users.service';
 import { ResetPasswordController } from './reset-password.controller';
 import { ResetPasswordService } from './reset-password.service';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ResetPasswordService } from './reset-password.service';
     }),
     HttpModule,
     GroupsModule,
+    ProfileModule,
   ],
   controllers: [
     MerchantsController,
