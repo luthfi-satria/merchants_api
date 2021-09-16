@@ -18,7 +18,7 @@ export class ProfileController {
         @Message() private readonly messageService: MessageService, // private httpService: HttpService,
     ) {}
 
-    @Post('profile/verify-email')
+    @Post('verify-email')
     @UserType('merchant')
     @AuthJwtGuard()
     async updateEmail(@Req() req: any,@Body() data: UpdateEmailDto){
@@ -69,7 +69,7 @@ export class ProfileController {
         );
     }
 
-    @Post('profile/verify-email-validation')
+    @Post('verify-email-validation')
     @UserType('admin')
     @AuthJwtGuard()
     async updateEmailValidation(@Req() req: any,@Body() data: UpdateEmailDto){
@@ -127,7 +127,7 @@ export class ProfileController {
         );
     }
 
-    @Post('profile/verify-phone')
+    @Post('verify-phone')
     @UserType('admin')
     @AuthJwtGuard()
     async updatePhone(@Req() req: any,@Body() data: UpdatePhoneDto){
@@ -178,7 +178,7 @@ export class ProfileController {
         );
     }
 
-    @Post('profile/verify-phone-validation')
+    @Post('verify-phone-validation')
     @UserType('admin')
     @AuthJwtGuard()
     async updatePhoneValidation(@Req() req: any,@Body() data: UpdatePhoneDto){
