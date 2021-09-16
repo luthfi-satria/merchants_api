@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddonsService } from 'src/addons/addons.service';
 import { CommonService } from 'src/common/common.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
+import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
@@ -33,6 +34,7 @@ import { StoresController } from './strores.controller';
       MerchantDocument,
       MerchantUsersDocument,
       StoreCategoriesDocument,
+      GroupDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },

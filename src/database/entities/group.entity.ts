@@ -73,10 +73,16 @@ export class GroupDocument {
   director_name: string;
 
   @Column({ nullable: true })
+  director_nip: string;
+
+  @Column({ nullable: true })
   director_phone: string;
 
   @Column({ nullable: true })
   director_email: string;
+
+  @Column({ nullable: true })
+  director_password: string;
 
   @Column({
     type: 'enum',
@@ -94,21 +100,18 @@ export class GroupDocument {
   @Column({ nullable: true })
   director_id_face_file: string;
 
-  @Column({ nullable: true })
-  director_password: string;
-
   //Penanggung Jawab Operasional
   @Column({ nullable: true })
   pic_operational_name: string;
+
+  @Column({ nullable: true })
+  pic_operational_nip: string;
 
   @Column({ nullable: true })
   pic_operational_email: string;
 
   @Column({ nullable: true })
   pic_operational_phone: string;
-
-  @Column({ nullable: true })
-  pic_operational_nip: string;
 
   @Column({ nullable: true })
   pic_operational_password: string;
@@ -118,13 +121,13 @@ export class GroupDocument {
   pic_finance_name: string;
 
   @Column({ nullable: true })
+  pic_finance_nip: string;
+
+  @Column({ nullable: true })
   pic_finance_email: string;
 
   @Column({ nullable: true })
   pic_finance_phone: string;
-
-  @Column({ nullable: true })
-  pic_finance_nip: string;
 
   @Column({ nullable: true })
   pic_finance_password: string;

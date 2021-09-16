@@ -97,6 +97,7 @@ export class GroupsService {
         phone: createGroupDTO.director_phone,
         email: createGroupDTO.director_email,
         password: createGroupDTO.director_password,
+        nip: createGroupDTO.director_nip
       };
       // const director = await this.groupUserService.createUserWithoutPassword(
       //   create_director,
@@ -113,6 +114,7 @@ export class GroupsService {
           phone: createGroupDTO.pic_operational_phone,
           email: createGroupDTO.pic_operational_email,
           password: createGroupDTO.pic_operational_password,
+          nip: createGroupDTO.pic_operational_nip
         };
         const pic_operational =
           // await this.groupUserService.createUserWithoutPassword(
@@ -131,6 +133,7 @@ export class GroupsService {
           phone: createGroupDTO.pic_finance_phone,
           email: createGroupDTO.pic_finance_email,
           password: createGroupDTO.pic_finance_password,
+          nip: createGroupDTO.pic_finance_nip
         };
         const pic_finance =
           // await this.groupUserService.createUserWithoutPassword(
@@ -143,7 +146,6 @@ export class GroupsService {
       }
       return create;
     } catch (error) {
-      console.log(error);
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
@@ -173,6 +175,7 @@ export class GroupsService {
       name: updateGroupDTO.director_name,
       phone: updateGroupDTO.director_phone,
       email: updateGroupDTO.director_email,
+      nip: updateGroupDTO.director_nip,
     };
     const director = await this.groupUserService.updateUserByEmailGroupId(
       update_director,
@@ -185,6 +188,7 @@ export class GroupsService {
       name: updateGroupDTO.pic_operational_name,
       phone: updateGroupDTO.pic_operational_phone,
       email: updateGroupDTO.pic_operational_email,
+      nip: updateGroupDTO.pic_operational_nip,
     };
     const pic_operational =
       await this.groupUserService.updateUserByEmailGroupId(
@@ -198,6 +202,7 @@ export class GroupsService {
       name: updateGroupDTO.pic_finance_name,
       phone: updateGroupDTO.pic_finance_phone,
       email: updateGroupDTO.pic_finance_email,
+      nip: updateGroupDTO.pic_finance_nip
     };
     const pic_finance = await this.groupUserService.updateUserByEmailGroupId(
       update_pic_finance,

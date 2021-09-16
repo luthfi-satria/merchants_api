@@ -25,6 +25,7 @@ import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RMessage } from 'src/response/response.interface';
 import { UbahPasswordValidation } from './validation/ubah-password.validation';
+import { UpdateProfileValidation } from './validation/update-profile.validation';
 
 @Controller('api/v1/merchants')
 export class LoginController {
@@ -35,42 +36,42 @@ export class LoginController {
     @Message() private readonly messageService: MessageService,
   ) {}
 
-  @Post('login/email')
-  @ResponseStatusCode()
-  async loginByEmail(
-    @Body()
-    data: LoginEmailValidation,
-  ): Promise<any> {
-    return await this.loginService.loginEmailProcess(data);
-  }
+  // @Post('login/email')
+  // @ResponseStatusCode()
+  // async loginByEmail(
+  //   @Body()
+  //   data: LoginEmailValidation,
+  // ): Promise<any> {
+  //   return await this.loginService.loginEmailProcess(data);
+  // }
 
-  @Post('login/phone')
-  @ResponseStatusCode()
-  async loginByPhone(
-    @Body(RequestValidationPipe(LoginPhoneValidation))
-    data: LoginPhoneValidation,
-  ): Promise<any> {
-    data.access_type = 'phone';
-    return await this.loginService.loginPhoneProcess(data);
-  }
+  // @Post('login/phone')
+  // @ResponseStatusCode()
+  // async loginByPhone(
+  //   @Body(RequestValidationPipe(LoginPhoneValidation))
+  //   data: LoginPhoneValidation,
+  // ): Promise<any> {
+  //   data.access_type = 'phone';
+  //   return await this.loginService.loginPhoneProcess(data);
+  // }
 
-  @Post('login/phone-otp-validation')
-  @ResponseStatusCode()
-  async validatePhoneOtpValidation(
-    @Body()
-    data: OtpValidateValidation,
-  ): Promise<any> {
-    return await this.loginService.loginPhoneOtpValidationProcess(data);
-  }
+  // @Post('login/phone-otp-validation')
+  // @ResponseStatusCode()
+  // async validatePhoneOtpValidation(
+  //   @Body()
+  //   data: OtpValidateValidation,
+  // ): Promise<any> {
+  //   return await this.loginService.loginPhoneOtpValidationProcess(data);
+  // }
 
-  @Post('login/email-otp-validation')
-  @ResponseStatusCode()
-  async validateEmailOtpValidation(
-    @Body()
-    data: OtpEmailValidateValidation,
-  ): Promise<any> {
-    return await this.loginService.loginEmailOtpValidationProcess(data);
-  }
+  // @Post('login/email-otp-validation')
+  // @ResponseStatusCode()
+  // async validateEmailOtpValidation(
+  //   @Body()
+  //   data: OtpEmailValidateValidation,
+  // ): Promise<any> {
+  //   return await this.loginService.loginEmailOtpValidationProcess(data);
+  // }
 
   @Post('login/refresh-token')
   async refreshToken(@Headers('Authorization') token: string): Promise<any> {
@@ -109,7 +110,7 @@ export class LoginController {
     );
   }
 
-  @Get('login/profile')
+  @Get('profile')
   @UserType('merchant')
   @AuthJwtGuard()
   async profile(@Req() req: any) {
@@ -166,5 +167,17 @@ export class LoginController {
     data: UbahPasswordValidation,
   ): Promise<any> {
     return await this.loginService.ubahPasswordProcess(data, req.user);
+  }
+
+  @Put('profile')
+  @UserType('merchant')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updateProfile(
+    @Req() req: any,
+    @Body()
+    data: UpdateProfileValidation,
+  ): Promise<any> {
+    return await this.loginService.updateProfile(data, req.user);
   }
 }

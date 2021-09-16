@@ -61,4 +61,7 @@ export class MerchantUsersDocument {
 
   @Column({ nullable: true })
   token_reset_password: string;
+
+  @Column({ nullable: true })
+  nip: string;
 }

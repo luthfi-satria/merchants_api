@@ -10,4 +10,6 @@ export interface GroupUser {
   group_id: string;
 
   token_reset_password: string;
+
+  nip: string;
 }

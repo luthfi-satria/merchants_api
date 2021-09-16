@@ -155,6 +155,7 @@ export class StoresService {
       upload_photo: data.upload_photo,
       upload_banner: data.upload_banner,
       delivery_type: data.delivery_type,
+      gmt_offset: data.gmt_offset,
     };
 
     if (
@@ -206,7 +207,7 @@ export class StoresService {
 
         // create default store operational hours
         result.operational_hours = await this.storeOperationalService
-          .createStoreOperationalHours(result.id)
+          .createStoreOperationalHours(result.id, result.gmt_offset)
           .catch((e) => {
             throw e;
           });

@@ -4,6 +4,7 @@ import { CommonService } from 'src/common/common.service';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { StoreDocument } from 'src/database/entities/store.entity';
 import { GroupsService } from 'src/groups/groups.service';
 import { GroupUsersService } from 'src/groups/group_users.service';
 import { HashService } from 'src/hash/hash.service';
@@ -17,6 +18,7 @@ import { LoginService } from './login.service';
       MerchantUsersDocument,
       GroupDocument,
       MerchantDocument,
+      StoreDocument,
     ]),
     HttpModule,
   ],

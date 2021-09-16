@@ -6,6 +6,7 @@ import { CommonStorageService } from 'src/common/storage/storage.service';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { StoreDocument } from 'src/database/entities/store.entity';
 import { HashService } from 'src/hash/hash.service';
 import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
@@ -21,6 +22,7 @@ import { GroupUsersService } from './group_users.service';
       GroupDocument,
       MerchantDocument,
       MerchantUsersDocument,
+      StoreDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
