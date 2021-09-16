@@ -20,6 +20,7 @@ import { MerchantUsersController } from './merchants_users.controller';
 import { MerchantUsersService } from './merchants_users.service';
 import { ResetPasswordController } from './reset-password.controller';
 import { ResetPasswordService } from './reset-password.service';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ResetPasswordService } from './reset-password.service';
       limits: { fileSize: 2 * 1000 * 1000 },
     }),
     HttpModule,
+    ProfileModule,
   ],
   controllers: [
     MerchantsController,
