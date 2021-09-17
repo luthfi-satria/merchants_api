@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  HttpService,
   HttpStatus,
   Injectable,
   InternalServerErrorException,
@@ -8,20 +7,30 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
-import { ListResponse, RMessage } from 'src/response/response.interface';
-import { dbOutputTime } from 'src/utils/general-utils';
+import {
+  ListResponse,
+  RMessage,
+  RSuccessMessage,
+} from 'src/response/response.interface';
+import { deleteCredParam } from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { Message } from 'src/message/message.decorator';
-import moment from 'moment';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
-// import merchant from 'src/message/languages/en/merchant';
 import { CommonService } from 'src/common/common.service';
+import { CreateMerchantDTO } from './validation/create_merchant.dto';
+import { GroupDocument } from 'src/database/entities/group.entity';
+import { GroupsService } from 'src/groups/groups.service';
+import { LobService } from 'src/lob/lob.service';
+import { LobDocument } from 'src/database/entities/lob.entity';
+import { MerchantUsersService } from './merchants_users.service';
+import { MerchantUser } from './interface/merchant_user.interface';
+import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 
 @Injectable()
 export class MerchantsService {
@@ -33,9 +42,11 @@ export class MerchantsService {
     @Hash() private readonly hashService: HashService,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
-    private httpService: HttpService,
+    private merchantUserService: MerchantUsersService,
     private readonly storage: CommonStorageService,
     private readonly commonService: CommonService,
+    private readonly groupsService: GroupsService,
+    private readonly lobService: LobService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -61,27 +72,29 @@ export class MerchantsService {
 
   async findMerchantMerchantByPhone(id: string): Promise<MerchantDocument> {
     return await this.merchantRepository.findOne({
-      where: { owner_phone: id },
+      where: { pic_phone: id },
     });
   }
 
   async findMerchantMerchantByEmail(id: string): Promise<MerchantDocument> {
     return await this.merchantRepository.findOne({
-      where: { owner_email: id },
+      where: { pic_email: id },
     });
   }
 
   async createMerchantMerchantProfile(
-    data: Record<string, any>,
-  ): Promise<Partial<MerchantDocument>> {
-    if (
-      typeof data.owner_dob == 'undefined' ||
-      data.owner_dob.split('/').length != 3
-    ) {
+    data: CreateMerchantDTO,
+  ): Promise<RSuccessMessage> {
+    const cekphone: MerchantDocument = await this.merchantRepository.findOne({
+      where: { pic_phone: data.pic_phone },
+    });
+    if (cekphone) {
       const errors: RMessage = {
-        value: data.owner_dob,
-        property: 'owner_dob',
-        constraint: ['Format tanggal tidak sesuai'],
+        value: data.pic_phone,
+        property: 'pic_phone',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.phoneExist'),
+        ],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -91,112 +104,202 @@ export class MerchantsService {
         ),
       );
     }
-    data.owner_dob = moment(moment(data.owner_dob, 'DD/MM/YYYY')).format(
-      'YYYY-MM-DD',
+    const cekemail: MerchantDocument = await this.merchantRepository.findOne({
+      where: { pic_email: data.pic_email },
+    });
+    if (cekemail) {
+      const errors: RMessage = {
+        value: data.pic_email,
+        property: 'pic_email',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.emailExist'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    const cekgroup: GroupDocument = await this.groupsService.findMerchantById(
+      data.group_id,
     );
+    if (!cekgroup) {
+      const errors: RMessage = {
+        value: data.group_id,
+        property: 'group_id',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.groupid_notfound'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    if (cekgroup.status != 'ACTIVE') {
+      const errors: RMessage = {
+        value: data.group_id,
+        property: 'group_id',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.groupid_notactive'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    const ceklob: LobDocument = await this.lobService.findMerchantById(
+      data.lob_id,
+    );
+    if (!ceklob) {
+      const errors: RMessage = {
+        value: data.lob_id,
+        property: 'lob_id',
+        constraint: [
+          this.messageService.get('merchant.createmerchant.lobid_notfound'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    await this.merchantUserService.checkExistEmailPhone(
+      data.pic_email,
+      data.pic_phone,
+      '',
+    );
+
     const salt: string = await this.hashService.randomSalt();
-    const passwordHash = await this.hashService.hashPassword(
-      data.owner_password,
+    data.pic_password = await this.hashService.hashPassword(
+      data.pic_password,
       salt,
     );
-    const create_merchant: Partial<MerchantDocument> = {
+    const pb1 = data.pb1 == 'true' ? true : false;
+    const merchantDTO: Partial<MerchantDocument> = {
       group_id: data.group_id,
+      type: data.type,
       name: data.name,
-      lob_id: data.lob_id,
+      phone: data.phone,
+      profile_store_photo: data.profile_store_photo,
       address: data.address,
-      owner_name: data.owner_name,
-      owner_email: data.owner_email,
-      owner_phone: data.owner_phone,
-      owner_password: passwordHash,
-      owner_nik: data.owner_nik,
-      owner_dob: data.owner_dob,
-      owner_dob_city: data.owner_dob_city,
-      owner_address: data.owner_address,
-      bank_id: data.bank_id,
-      bank_acc_name: data.bank_acc_name,
-      bank_acc_number: data.bank_acc_number,
-      tarif_pb1: data.tarif_pb1,
+      lob_id: data.lob_id,
+      pb1: pb1,
+      pic_name: data.pic_name,
+      pic_phone: data.pic_phone,
+      pic_email: data.pic_email,
+      pic_password: data.pic_password,
+      status: data.status,
     };
-    if (
-      data.status != null &&
-      data.status != '' &&
-      typeof data.status != 'undefined'
-    )
-      create_merchant.status = data.status;
 
-    create_merchant.owner_ktp = await this.extendValidateImageCreate(
-      data.owner_ktp,
-      'owner_ktp',
-    );
-    create_merchant.owner_face_ktp = await this.extendValidateImageCreate(
-      data.owner_face_ktp,
-      'owner_face_ktp',
-    );
-    create_merchant.logo = await this.extendValidateImageCreate(
-      data.logo,
-      'logo',
-    );
+    merchantDTO.logo = data.logo ? data.logo : '';
+    merchantDTO.pic_nip = data.pic_nip ? data.pic_nip : '';
+    if (pb1) {
+      merchantDTO.pb1_tariff = Number(data.pb1_tariff);
+      merchantDTO.npwp_no = data.npwp_no;
+      merchantDTO.npwp_name = data.npwp_name;
+      merchantDTO.npwp_file = data.npwp_file;
+    }
 
-    // return await this.connection.transaction(async (conn) => {
-    //   try {
-    return await this.merchantRepository
-      .save(create_merchant)
-      .then(async (result) => {
-        dbOutputTime(result);
+    const createMerchant = this.merchantRepository.create(merchantDTO);
+    try {
+      const create: Record<string, any> = await this.merchantRepository.save(
+        createMerchant,
+      );
+      if (!create) {
+        throw new Error('failed insert to merchant_group');
+      }
 
-        const mUsers: Partial<MerchantUsersDocument> = {
-          name: result.owner_name,
-          email: result.owner_email,
-          phone: result.owner_phone,
-          password: result.owner_password,
-          merchant_id: result.id,
-        };
-        await this.merchantUsersRepository.save(mUsers).catch((err) => {
-          console.error('error', err);
-        });
-        const pclogdata = {
-          id: result.id,
-          // musers_id: result.id,
-        };
+      const createMerchantUser: Partial<MerchantUser> = {
+        merchant_id: create.id,
+        name: createMerchant.pic_name,
+        phone: createMerchant.pic_phone,
+        email: createMerchant.pic_email,
+        password: createMerchant.pic_password,
+        nip: createMerchant.pic_nip,
+      };
 
-        await this.createCatalogs(pclogdata);
-        delete result.owner_password;
-        return result;
-      })
-      .catch((err) => {
-        const errors: RMessage = {
-          value: '',
-          property: err.column,
-          constraint: [err.message],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
+      const result =
+        await this.merchantUserService.createMerchantUsersFromMerchant(
+          createMerchantUser,
         );
-      });
+      deleteCredParam(result);
+      create.user = result;
+      deleteCredParam(create);
+
+      const pclogdata = {
+        id: create.id,
+      };
+      await this.createCatalogs(pclogdata);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.createmerchant.success'),
+        create,
+      );
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: error.column,
+            constraint: [error.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   //owner_name, email, phone, password
   async updateMerchantMerchantProfile(
-    data: Record<string, any>,
-    merchantExist: MerchantDocument,
-  ): Promise<Record<string, any>> {
-    const updateMUsers: Partial<MerchantUsersDocument> = {};
-    // const create_merchant: Partial<MerchantDocument> = {};
-
-    if (
-      data.owner_dob != null &&
-      data.owner_dob != '' &&
-      typeof data.owner_dob != 'undefined'
-    ) {
-      if (data.owner_dob.split('/').length < 3) {
+    data: UpdateMerchantDTO,
+  ): Promise<RSuccessMessage> {
+    const existMerchant: MerchantDocument =
+      await this.merchantRepository.findOne({
+        where: { id: data.id },
+      });
+    if (!existMerchant) {
+      const errors: RMessage = {
+        value: data.id,
+        property: 'id',
+        constraint: [this.messageService.get('merchant.updatemerchant.unreg')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    let flgUpdateMerchantUser = false;
+    if (data.pic_phone) {
+      const cekphone: MerchantDocument = await this.findMerchantMerchantByPhone(
+        data.pic_phone,
+      );
+      if (cekphone && cekphone.pic_phone != existMerchant.pic_phone) {
         const errors: RMessage = {
-          value: data.owner_dob,
-          property: 'owner_dob',
-          constraint: ['Format tanggal tidak sesuai'],
+          value: data.pic_phone,
+          property: 'pic_phone',
+          constraint: [
+            this.messageService.get('merchant.createmerchant.phoneExist'),
+          ],
         };
         throw new BadRequestException(
           this.responseService.error(
@@ -206,181 +309,20 @@ export class MerchantsService {
           ),
         );
       }
-      data.owner_dob = moment(moment(data.owner_dob, 'DD/MM/YYYY')).format(
-        'YYYY-MM-DD',
+      flgUpdateMerchantUser = true;
+      existMerchant.pic_phone = data.pic_phone;
+    }
+    if (data.pic_email) {
+      const cekemail: MerchantDocument = await this.findMerchantMerchantByEmail(
+        data.pic_email,
       );
-      merchantExist.owner_dob = data.owner_dob;
-    }
-    if (
-      data.group_id != null &&
-      data.group_id != '' &&
-      typeof data.group_id != 'undefined'
-    )
-      merchantExist.group_id = data.group_id;
-    if (data.name != null && data.name != '' && typeof data.name != 'undefined')
-      merchantExist.name = data.name;
-    if (
-      data.lob_id != null &&
-      data.lob_id != '' &&
-      typeof data.lob_id != 'undefined'
-    )
-      merchantExist.lob_id = data.lob_id;
-    if (
-      data.address != null &&
-      data.address != '' &&
-      typeof data.address != 'undefined'
-    )
-      merchantExist.address = data.address;
-    if (
-      data.owner_name != null &&
-      data.owner_name != '' &&
-      typeof data.owner_name != 'undefined'
-    ) {
-      merchantExist.owner_name = data.owner_name;
-      updateMUsers.name = data.owner_name;
-    }
-    if (
-      data.owner_email != null &&
-      data.owner_email != '' &&
-      typeof data.owner_email != 'undefined'
-    ) {
-      merchantExist.owner_email = data.owner_email;
-      updateMUsers.email = data.owner_email;
-    }
-    if (
-      data.owner_phone != null &&
-      data.owner_phone != '' &&
-      typeof data.owner_phone != 'undefined'
-    ) {
-      merchantExist.owner_phone = data.owner_phone;
-      updateMUsers.phone = data.owner_phone;
-    }
-    if (
-      data.owner_password != null &&
-      data.owner_password != '' &&
-      typeof data.owner_password != 'undefined'
-    ) {
-      const salt: string = await this.hashService.randomSalt();
-      const passwordHash = await this.hashService.hashPassword(
-        data.owner_password,
-        salt,
-      );
-      merchantExist.owner_password = passwordHash;
-      updateMUsers.password = passwordHash;
-    }
-    if (
-      data.owner_nik != null &&
-      data.owner_nik != '' &&
-      typeof data.owner_nik != 'undefined'
-    )
-      merchantExist.owner_nik = data.owner_nik;
-    if (
-      data.owner_dob_city != null &&
-      data.owner_dob_city != '' &&
-      typeof data.owner_dob_city != 'undefined'
-    )
-      merchantExist.owner_dob_city = data.owner_dob_city;
-    if (
-      data.owner_address != null &&
-      data.owner_address != '' &&
-      typeof data.owner_address != 'undefined'
-    )
-      merchantExist.owner_address = data.owner_address;
-    if (
-      data.bank_id != null &&
-      data.bank_id != '' &&
-      typeof data.bank_id != 'undefined'
-    )
-      merchantExist.bank_id = data.bank_id;
-    if (
-      data.bank_acc_name != null &&
-      data.bank_acc_name != '' &&
-      typeof data.bank_acc_name != 'undefined'
-    )
-      merchantExist.bank_acc_name = data.bank_acc_name;
-    if (
-      data.bank_acc_number != null &&
-      data.bank_acc_number != '' &&
-      typeof data.bank_acc_number != 'undefined'
-    )
-      merchantExist.bank_acc_number = data.bank_acc_number;
-    if (
-      data.tarif_pb1 != null &&
-      data.tarif_pb1 != '' &&
-      typeof data.tarif_pb1 != 'undefined'
-    )
-      merchantExist.tarif_pb1 = data.tarif_pb1;
-    if (
-      data.status != null &&
-      data.status != '' &&
-      typeof data.status != 'undefined'
-    )
-      merchantExist.status = data.status;
-    if (data.status == 'ACTIVE') {
-      merchantExist.approved_at = new Date();
-    }
-    // if (
-    //   data.owner_ktp != null &&
-    //   data.owner_ktp != '' &&
-    //   typeof data.owner_ktp != 'undefined'
-    // ) {
-    //   try {
-    //     const url = await this.storage.store(data.owner_ktp);
-    //     merchantExist.owner_ktp = url;
-    //   } catch (e) {
-    //     console.error(e);
-    //     throw new InternalServerErrorException(e.message);
-    //   }
-    // }
-    // if (
-    //   data.owner_face_ktp != null &&
-    //   data.owner_face_ktp != '' &&
-    //   typeof data.owner_face_ktp != 'undefined'
-    // ) {
-    //   try {
-    //     const url = await this.storage.store(data.owner_face_ktp);
-    //     merchantExist.owner_face_ktp = url;
-    //   } catch (e) {
-    //     console.error(e);
-    //     throw new InternalServerErrorException(e.message);
-    //   }
-    // }
-    merchantExist.owner_ktp = await this.extendValidateImageUpdate(
-      data.owner_ktp,
-      merchantExist.owner_ktp,
-    );
-    merchantExist.owner_face_ktp = await this.extendValidateImageUpdate(
-      data.owner_face_ktp,
-      merchantExist.owner_face_ktp,
-    );
-    merchantExist.logo = await this.extendValidateImageUpdate(
-      data.logo,
-      merchantExist.logo,
-    );
-    return await this.merchantRepository
-      .save(merchantExist)
-      // .createQueryBuilder('merchant_merchant')
-      // .update(MerchantDocument)
-      // .set(merchantExist)
-      // .where('id= :id', { id: data.id })
-      // .returning('*')
-      // .execute()
-      .then(async (response) => {
-        dbOutputTime(response);
-        await this.merchantUsersRepository
-          .createQueryBuilder('merchant_users')
-          .update(MerchantUsersDocument)
-          .set(updateMUsers)
-          .where('merchant_id= :gid', { gid: data.id })
-          .execute();
-        delete response.owner_password;
-        return response;
-      })
-      .catch((err) => {
+      if (cekemail && cekemail.pic_email != existMerchant.pic_email) {
         const errors: RMessage = {
-          value: '',
-          property: err.column,
-          constraint: [err.message],
+          value: data.pic_email,
+          property: 'pic_email',
+          constraint: [
+            this.messageService.get('merchant.createmerchant.emailExist'),
+          ],
         };
         throw new BadRequestException(
           this.responseService.error(
@@ -389,7 +331,144 @@ export class MerchantsService {
             'Bad Request',
           ),
         );
-      });
+      }
+      flgUpdateMerchantUser = true;
+      existMerchant.pic_email = data.pic_email;
+    }
+    if (data.type) existMerchant.type = data.type;
+    if (data.name) existMerchant.name = data.name;
+    if (data.phone) existMerchant.phone = data.phone;
+    if (data.logo) existMerchant.logo = data.logo;
+    if (data.profile_store_photo)
+      existMerchant.profile_store_photo = data.profile_store_photo;
+    if (data.address) existMerchant.address = data.address;
+    if (data.lob_id) existMerchant.lob_id = data.lob_id;
+    if (data.pb1) {
+      existMerchant.pb1 = data.pb1 == 'true' ? true : false;
+    }
+    if (data.npwp_no) existMerchant.npwp_no = data.npwp_no;
+    if (data.npwp_name) existMerchant.npwp_name = data.npwp_name;
+    if (data.npwp_file) existMerchant.npwp_file = data.npwp_file;
+    if (data.pic_name) {
+      existMerchant.pic_name = data.pic_name;
+      flgUpdateMerchantUser = true;
+    }
+    if (data.pic_nip) {
+      existMerchant.pic_nip = data.pic_nip;
+      flgUpdateMerchantUser = true;
+    }
+    if (data.status) existMerchant.status = data.status;
+
+    try {
+      const update: Record<string, any> = await this.merchantRepository.save(
+        existMerchant,
+      );
+      if (!update) {
+        throw new Error('failed insert to merchant_group');
+      }
+      update.user = {};
+      if (flgUpdateMerchantUser) {
+        const updateMerchantUser: Partial<MerchantUser> = {
+          merchant_id: existMerchant.id,
+          name: existMerchant.pic_name,
+          phone: existMerchant.pic_phone,
+          email: existMerchant.pic_email,
+          nip: existMerchant.pic_nip,
+        };
+
+        const result =
+          await this.merchantUserService.updateMerchantUsersFromMerchant(
+            updateMerchantUser,
+          );
+        deleteCredParam(result);
+        update.user = result;
+      }
+      deleteCredParam(update);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.createmerchant.success'),
+        update,
+      );
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: error.column,
+            constraint: [error.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    //   //   try {
+    //   //     const url = await this.storage.store(data.owner_ktp);
+    //   //     merchantExist.owner_ktp = url;
+    //   //   } catch (e) {
+    //   //     console.error(e);
+    //   //     throw new InternalServerErrorException(e.message);
+    //   //   }
+    //   // }
+    //   // if (
+    //   //   data.owner_face_ktp != null &&
+    //   //   data.owner_face_ktp != '' &&
+    //   //   typeof data.owner_face_ktp != 'undefined'
+    //   // ) {
+    //   //   try {
+    //   //     const url = await this.storage.store(data.owner_face_ktp);
+    //   //     merchantExist.owner_face_ktp = url;
+    //   //   } catch (e) {
+    //   //     console.error(e);
+    //   //     throw new InternalServerErrorException(e.message);
+    //   //   }
+    //   // }
+    //   merchantExist.owner_ktp = await this.extendValidateImageUpdate(
+    //     data.owner_ktp,
+    //     merchantExist.owner_ktp,
+    //   );
+    //   merchantExist.owner_face_ktp = await this.extendValidateImageUpdate(
+    //     data.owner_face_ktp,
+    //     merchantExist.owner_face_ktp,
+    //   );
+    //   merchantExist.logo = await this.extendValidateImageUpdate(
+    //     data.logo,
+    //     merchantExist.logo,
+    //   );
+    //   return await this.merchantRepository
+    //     .save(merchantExist)
+    //     // .createQueryBuilder('merchant_merchant')
+    //     // .update(MerchantDocument)
+    //     // .set(merchantExist)
+    //     // .where('id= :id', { id: data.id })
+    //     // .returning('*')
+    //     // .execute()
+    //     .then(async (response) => {
+    //       dbOutputTime(response);
+    //       await this.merchantUsersRepository
+    //         .createQueryBuilder('merchant_users')
+    //         .update(MerchantUsersDocument)
+    //         .set(updateMUsers)
+    //         .where('merchant_id= :gid', { gid: data.id })
+    //         .execute();
+    //       delete response.owner_password;
+    //       return response;
+    //     })
+    //     .catch((err) => {
+    //       const errors: RMessage = {
+    //         value: '',
+    //         property: err.column,
+    //         constraint: [err.message],
+    //       };
+    //       throw new BadRequestException(
+    //         this.responseService.error(
+    //           HttpStatus.BAD_REQUEST,
+    //           errors,
+    //           'Bad Request',
+    //         ),
+    //       );
+    //     });
   }
 
   async deleteMerchantMerchantProfile(data: string): Promise<any> {
@@ -438,42 +517,27 @@ export class MerchantsService {
       .where(
         new Brackets((query) => {
           query
-            .where('lower(merchant_merchant.name) like :mname', {
+            .where('merchant_merchant.name ilike :mname', {
               mname: '%' + search + '%',
             })
-            .orWhere('lower(merchant_merchant.address) like :addr', {
+            .orWhere('merchant_merchant.address ilike :addr', {
               addr: '%' + search + '%',
             })
-            .orWhere('lower(merchant_merchant.owner_name) like :oname', {
+            .orWhere('merchant_merchant.pic_name ilike :oname', {
               oname: '%' + search + '%',
             })
-            .orWhere('lower(owner_email) like :omail', {
+            .orWhere('merchant_merchant.pic_email ilike :omail', {
               omail: '%' + search + '%',
             })
-            .orWhere('lower(owner_phone) like :ophone', {
+            .orWhere('merchant_merchant.pic_phone ilike :ophone', {
               ophone: '%' + search + '%',
             })
-            .orWhere('lower(merchant_merchant.owner_password) like :opass', {
-              opass: '%' + search + '%',
-            })
-            .orWhere('lower(owner_nik) like :onik', {
+            .orWhere('merchant_merchant.pic_nip ilike :onik', {
               onik: '%' + search + '%',
-            })
-            .orWhere('lower(owner_dob_city) like :odc', {
-              odc: '%' + search + '%',
-            })
-            .orWhere('lower(owner_address) like :oaddr', {
-              oaddr: '%' + search + '%',
-            })
-            .orWhere('lower(bank_acc_name) like :ban', {
-              ban: '%' + search + '%',
-            })
-            .orWhere('lower(bank_acc_number) like :banu', {
-              banu: '%' + search + '%',
-            })
-            .orWhere('lower(tarif_pb1) like :tpb', {
-              tpb: '%' + search + '%',
             });
+          // .orWhere('merchant_merchant.pb1_tariff ilike :tpb', {
+          //   tpb: '%' + search + '%',
+          // });
         }),
       );
     if (group_id) {
@@ -488,9 +552,10 @@ export class MerchantsService {
       const totalItems = await merchant.getCount();
       const list = await merchant.getMany();
       list.map((element) => {
-        const output = dbOutputTime(element);
-        output.owner_dob = moment(element.owner_dob).format('YYYY-MM-DD');
-        delete output.owner_password;
+        let output = deleteCredParam(element); // dbOutputTime(element);
+        output = deleteCredParam(element.group);
+        // output.owner_dob = moment(element.owner_dob).format('YYYY-MM-DD');
+        // delete output.owner_password;
         return output;
       });
 

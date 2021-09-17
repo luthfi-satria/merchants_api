@@ -14,7 +14,7 @@ import { ResponseStatusCode } from 'src/response/response.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { MerchantUsersService } from './merchants_users.service';
-import { MerchantMerchantUsersValidation } from './validation/merchants_users.validation';
+import { MerchantUsersValidation } from './validation/merchants_users.validation';
 
 @Controller('api/v1/merchants/merchants')
 export class MerchantUsersController {
@@ -27,7 +27,7 @@ export class MerchantUsersController {
   async createMerchantUsers(
     @Req() req: any,
     @Body()
-    args: Partial<MerchantMerchantUsersValidation>,
+    args: Partial<MerchantUsersValidation>,
     @Param('mid') merchantId: string,
   ): Promise<any> {
     args.merchant_id = merchantId;
@@ -41,7 +41,7 @@ export class MerchantUsersController {
   async updateMerchantUsers(
     @Req() req: any,
     @Body()
-    args: Partial<MerchantMerchantUsersValidation>,
+    args: Partial<MerchantUsersValidation>,
     @Param('mid') merchantId: string,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
@@ -59,7 +59,7 @@ export class MerchantUsersController {
     @Param('mid') merchantId: string,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
-    const args: Partial<MerchantMerchantUsersValidation> = {
+    const args: Partial<MerchantUsersValidation> = {
       merchant_id: merchantId,
       id: merchantUserId,
     };
@@ -75,7 +75,7 @@ export class MerchantUsersController {
     @Query() data: Record<string, any>,
     @Param('mid') merchantId: string,
   ): Promise<any> {
-    const args: Partial<MerchantMerchantUsersValidation> = {
+    const args: Partial<MerchantUsersValidation> = {
       merchant_id: merchantId,
       search: data.search,
       limit: data.limit,

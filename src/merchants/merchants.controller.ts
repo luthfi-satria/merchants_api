@@ -11,8 +11,6 @@ import {
   Query,
   UploadedFiles,
   UseInterceptors,
-  Headers,
-  UnauthorizedException,
   Req,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
@@ -23,32 +21,24 @@ import { Message } from 'src/message/message.decorator';
 import { RMessage } from 'src/response/response.interface';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { MerchantMerchantValidation } from './validation/merchants.validation';
-import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { CreateMerchantDTO } from './validation/create_merchant.dto';
 import { editFileName, imageFileFilter } from 'src/utils/general-utils';
-import { catchError, map } from 'rxjs';
-import { GroupsService } from 'src/groups/groups.service';
 import { DeleteResult } from 'typeorm';
-import { GroupDocument } from 'src/database/entities/group.entity';
-import { LobDocument } from 'src/database/entities/lob.entity';
-import { LobService } from 'src/lob/lob.service';
-import { ListBankDocument } from 'src/database/entities/list_banks';
-import { BanksService } from 'src/banks/banks.service';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
+import { CommonStorageService } from 'src/common/storage/storage.service';
+import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 
 @Controller('api/v1/merchants')
 export class MerchantsController {
   constructor(
     private readonly merchantsService: MerchantsService,
-    private readonly groupsService: GroupsService,
-    private readonly lobService: LobService,
-    private readonly bankService: BanksService,
     private readonly imageValidationService: ImageValidationService,
     @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService, // private httpService: HttpService,
+    @Message() private readonly messageService: MessageService,
+    private readonly storage: CommonStorageService,
   ) {}
 
   @Post('merchants')
@@ -67,179 +57,27 @@ export class MerchantsController {
   async createmerchants(
     @Req() req: any,
     @Body()
-    data: MerchantMerchantValidation,
+    createMerchantDTO: CreateMerchantDTO,
     @UploadedFiles() files: Array<Express.Multer.File>,
-    @Headers('Authorization') token: string,
   ): Promise<any> {
     this.imageValidationService
-      .setFilter('owner_ktp', 'required')
-      .setFilter('owner_face_ktp', 'required')
-      .setFilter('logo', 'required');
+      .setFilter('logo', '')
+      .setFilter('profile_store_photo', 'required');
+    if (createMerchantDTO.pb1 == 'true')
+      this.imageValidationService.setFilter('npwp_file', 'required');
     await this.imageValidationService.validate(req);
 
-    // const url: string =
-    //   process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    // const headersRequest: Record<string, any> = {
-    //   'Content-Type': 'application/json',
-    //   Authorization: token,
-    // };
-
-    // return (await this.groupsService.getHttp(url, headersRequest)).pipe(
-    //   map(async (response) => {
-    //     const rsp: Record<string, any> = response;
-
-    //     if (rsp.statusCode) {
-    //       throw new BadRequestException(
-    //         this.responseService.error(
-    //           HttpStatus.BAD_REQUEST,
-    //           rsp.message[0],
-    //           'Bad Request',
-    //         ),
-    //       );
-    //     }
-    //     if (response.data.payload.user_type != 'admin') {
-    //       const errors: RMessage = {
-    //         value: token.replace('Bearer ', ''),
-    //         property: 'token',
-    //         constraint: [
-    //           this.messageService.get('merchant.createmerchant.invalid_token'),
-    //         ],
-    //       };
-    //       throw new UnauthorizedException(
-    //         this.responseService.error(
-    //           HttpStatus.UNAUTHORIZED,
-    //           errors,
-    //           'UNAUTHORIZED',
-    //         ),
-    //       );
-    //     }
     if (files.length > 0) {
-      files.forEach(function (file) {
-        data[file.fieldname] = '/upload_merchants/' + file.filename;
-      });
+      for (const file of files) {
+        const file_name = '/upload_merchants/' + file.filename;
+        const url = await this.storage.store(file_name);
+        createMerchantDTO[file.fieldname] = url;
+      }
     }
-    const cekphone: MerchantDocument =
-      await this.merchantsService.findMerchantMerchantByPhone(data.owner_phone);
-    if (cekphone) {
-      const errors: RMessage = {
-        value: data.owner_phone,
-        property: 'owner_phone',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.phoneExist'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    const cekemail: MerchantDocument =
-      await this.merchantsService.findMerchantMerchantByEmail(data.owner_email);
-    if (cekemail) {
-      const errors: RMessage = {
-        value: data.owner_email,
-        property: 'owner_email',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.emailExist'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    const cekgroup: GroupDocument = await this.groupsService.findMerchantById(
-      data.group_id,
+
+    return await this.merchantsService.createMerchantMerchantProfile(
+      createMerchantDTO,
     );
-    if (!cekgroup) {
-      const errors: RMessage = {
-        value: data.group_id,
-        property: 'group_id',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.groupid_notfound'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    if (cekgroup.status != 'ACTIVE') {
-      const errors: RMessage = {
-        value: data.group_id,
-        property: 'group_id',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.groupid_notactive'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    const ceklob: LobDocument = await this.lobService.findMerchantById(
-      data.lob_id,
-    );
-    if (!ceklob) {
-      const errors: RMessage = {
-        value: data.lob_id,
-        property: 'lob_id',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.lobid_notfound'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    const cekbank: ListBankDocument = await this.bankService.findBankById(
-      data.bank_id,
-    );
-    if (!cekbank) {
-      const errors: RMessage = {
-        value: data.bank_id,
-        property: 'bank_id',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.bankid_notfound'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    data.token = token;
-    const result_db: Partial<MerchantDocument> =
-      await this.merchantsService.createMerchantMerchantProfile(data);
-    return this.responseService.success(
-      true,
-      this.messageService.get('merchant.createmerchant.success'),
-      result_db,
-    );
-    //   }),
-    //   catchError((err) => {
-    //     throw err.response.data;
-    //   }),
-    // );
   }
 
   @Put('merchants/:id')
@@ -258,211 +96,67 @@ export class MerchantsController {
   async updatemerchants(
     @Req() req: any,
     @Body()
-    data: Record<string, any>,
+    updateMerchantDTO: UpdateMerchantDTO,
     @Param('id') id: string,
     @UploadedFiles() files: Array<Express.Multer.File>,
-    // @Headers('Authorization') token: string,
   ): Promise<any> {
     await this.imageValidationService.validate(req);
+    updateMerchantDTO.id = id;
 
-    const cekid: MerchantDocument =
-      await this.merchantsService.findMerchantById(id);
-
-    if (!cekid) {
-      const errors: RMessage = {
-        value: id,
-        property: 'id',
-        constraint: [this.messageService.get('merchant.updatemerchant.unreg')],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const file_name = '/upload_merchants/' + file.filename;
+        const url = await this.storage.store(file_name);
+        updateMerchantDTO[file.fieldname] = url;
+      }
     }
-
-    data.id = cekid.id;
-    // const url: string =
-    //   process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    // const headersRequest: Record<string, any> = {
-    //   'Content-Type': 'application/json',
-    //   Authorization: token,
-    // };
-
-    // return (await this.groupsService.getHttp(url, headersRequest)).pipe(
-    //   map(async (response) => {
-    //     const rsp: Record<string, any> = response;
-
-    //     if (rsp.statusCode) {
-    //       throw new BadRequestException(
-    //         this.responseService.error(
-    //           HttpStatus.BAD_REQUEST,
-    //           rsp.message[0],
-    //           'Bad Request',
-    //         ),
-    //       );
-    //     }
-    //     if (response.data.payload.user_type != 'admin') {
-    //       const errors: RMessage = {
-    //         value: token.replace('Bearer ', ''),
-    //         property: 'token',
-    //         constraint: [
-    //           this.messageService.get('merchant.createmerchant.invalid_token'),
-    //         ],
-    //       };
-    //       throw new UnauthorizedException(
-    //         this.responseService.error(
-    //           HttpStatus.UNAUTHORIZED,
-    //           errors,
-    //           'UNAUTHORIZED',
-    //         ),
-    //       );
-    //     }
-    if (files.length > 0) {
-      files.forEach(function (file) {
-        data[file.fieldname] = '/upload_merchants/' + file.filename;
-      });
-    }
-    const cekphone: MerchantDocument =
-      await this.merchantsService.findMerchantMerchantByPhone(data.owner_phone);
-    if (cekphone && cekphone.owner_phone != cekid.owner_phone) {
-      const errors: RMessage = {
-        value: data.owner_phone,
-        property: 'owner_phone',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.phoneExist'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    const cekemail: MerchantDocument =
-      await this.merchantsService.findMerchantMerchantByEmail(data.owner_email);
-    if (cekemail && cekemail.owner_email != cekid.owner_email) {
-      const errors: RMessage = {
-        value: data.owner_email,
-        property: 'owner_email',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.emailExist'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    const resData = await this.merchantsService.updateMerchantMerchantProfile(
-      data,
-      cekid,
+    return await this.merchantsService.updateMerchantMerchantProfile(
+      updateMerchantDTO,
     );
-    return this.responseService.success(
-      true,
-      this.messageService.get('merchant.updatemerchant.success'),
-      resData,
-    );
-    //   }),
-    //   catchError((err) => {
-    //     throw err.response.data;
-    //   }),
-    // );
   }
 
   @Delete('merchants/:id')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async deletemerchants(
-    @Param('id') id: string,
-    @Headers('Authorization') token: string,
-  ): Promise<any> {
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-    };
-
-    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.invalid_token'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'UNAUTHORIZED',
-            ),
-          );
-        }
-        try {
-          const result: DeleteResult =
-            await this.merchantsService.deleteMerchantMerchantProfile(id);
-          if (result.raw.length == 0 && result.affected == 0) {
-            const errors: RMessage = {
-              value: id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.deletemerchant.invalid_id'),
-              ],
-            };
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                errors,
-                'Bad Request',
-              ),
-            );
-          }
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.deletemerchant.success'),
-          );
-        } catch (err) {
-          const errors: RMessage = {
-            value: id,
-            property: 'id',
-            constraint: [err.message],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
-    );
+  async deletemerchants(@Param('id') id: string): Promise<any> {
+    try {
+      const result: DeleteResult =
+        await this.merchantsService.deleteMerchantMerchantProfile(id);
+      if (result.raw.length == 0 && result.affected == 0) {
+        const errors: RMessage = {
+          value: id,
+          property: 'id',
+          constraint: [
+            this.messageService.get('merchant.deletemerchant.invalid_id'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.deletemerchant.success'),
+      );
+    } catch (err) {
+      const errors: RMessage = {
+        value: id,
+        property: 'id',
+        constraint: [err.message],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   @Get('merchants')

@@ -450,7 +450,7 @@ export class QueryService {
           const merchant = await this.merchantRepository
             .findOne(row.merchant_id)
             .then((result) => {
-              delete result.owner_password;
+              delete result.pic_password;
               delete result.approved_at;
               delete result.created_at;
               delete result.updated_at;

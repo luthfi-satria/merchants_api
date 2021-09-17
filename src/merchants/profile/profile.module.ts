@@ -5,14 +5,9 @@ import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      MerchantUsersDocument,
-    ]),
-    HttpModule,
-  ],
-  exports:[ProfileService],
+  imports: [TypeOrmModule.forFeature([MerchantUsersDocument]), HttpModule],
+  exports: [ProfileService],
   controllers: [ProfileController],
-  providers: [ProfileService]
+  providers: [ProfileService],
 })
 export class ProfileModule {}

@@ -2,7 +2,7 @@ import { Body, Controller, Post, Query } from '@nestjs/common';
 
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { ResetPasswordService } from './reset-password.service';
-import { MerchantMerchantValidation } from './validation/merchants.validation';
+import { MerchantUsersValidation } from './validation/merchants_users.validation';
 
 @Controller('api/v1/merchants/reset-password')
 export class ResetPasswordController {
@@ -12,7 +12,7 @@ export class ResetPasswordController {
   @ResponseStatusCode()
   async resetPassEmail(
     @Body()
-    args: Partial<MerchantMerchantValidation>,
+    args: Partial<MerchantUsersValidation>,
   ): Promise<any> {
     return await this.resetPasswordService.resetPasswordEmail(args);
   }
@@ -21,7 +21,7 @@ export class ResetPasswordController {
   @ResponseStatusCode()
   async resetPassPhone(
     @Body()
-    args: Partial<MerchantMerchantValidation>,
+    args: Partial<MerchantUsersValidation>,
   ): Promise<any> {
     return await this.resetPasswordService.resetPasswordPhone(args);
   }
@@ -30,7 +30,7 @@ export class ResetPasswordController {
   @ResponseStatusCode()
   async resetPassPassword(
     @Body()
-    args: Partial<MerchantMerchantValidation>,
+    args: Partial<MerchantUsersValidation>,
     @Query() qstring: Record<string, any>,
   ): Promise<any> {
     return await this.resetPasswordService.resetPasswordExec(args, qstring);
