@@ -1,4 +1,4 @@
-import { IsIn, IsNumber, IsOptional, ValidateIf } from 'class-validator';
+import { IsIn, IsNumberString, IsOptional, ValidateIf } from 'class-validator';
 import { CategoryGroup, GroupStatus } from 'src/database/entities/group.entity';
 
 export class ListStoreDTO {
@@ -6,11 +6,11 @@ export class ListStoreDTO {
   search: string;
 
   @IsOptional()
-  @IsNumber({}, { message: 'Limit yang diisi bukan format number' })
+  @IsNumberString({}, { message: 'Limit yang diisi bukan format number' })
   limit: number;
 
   @IsOptional()
-  @IsNumber({}, { message: 'Page yang diisi bukan format number' })
+  @IsNumberString({}, { message: 'Page yang diisi bukan format number' })
   page: string;
 
   @IsOptional()
