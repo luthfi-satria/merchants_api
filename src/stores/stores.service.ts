@@ -23,8 +23,8 @@ import {
   RSuccessMessage,
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime } from 'src/utils/general-utils';
-import { Brackets, Connection, Repository } from 'typeorm';
+import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
+import { Brackets, Repository } from 'typeorm';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -50,7 +50,6 @@ export class StoresService {
     private readonly storeOperationalService: StoreOperationalService,
     @InjectRepository(StoreCategoriesDocument)
     private readonly storeCategoriesRepository: Repository<StoreCategoriesDocument>,
-    private readonly connection: Connection,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -606,52 +605,64 @@ export class StoresService {
     // let totalItems: number;
 
     const store = this.storeRepository
-      .createQueryBuilder('merchant_store')
-      .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon');
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.service_addon', 'merchant_addon')
+      .leftJoinAndSelect('ms.merchant', 'merchant')
+      .leftJoinAndSelect('merchant.group', 'group');
     if (search) {
       store.andWhere(
         new Brackets((qb) => {
-          qb.where('lower(merchant_store.name) like :mname', {
+          qb.where('ms.name ilike :mname', {
             mname: '%' + search + '%',
           });
-          qb.orWhere('lower(merchant_store.phone) like :sname', {
+          qb.orWhere('ms.phone ilike :sname', {
             sname: '%' + search + '%',
           });
-          qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
+          qb.orWhere('ms.owner_phone ilike :shp', {
             shp: '%' + search + '%',
           });
-          qb.orWhere('lower(merchant_store.owner_email) like :smail', {
+          qb.orWhere('ms.owner_email ilike :smail', {
             smail: '%' + search + '%',
           });
-          qb.orWhere('lower(merchant_store.address) like :astrore', {
+          qb.orWhere('ms.address ilike :astrore', {
             astrore: '%' + search + '%',
           });
-          qb.orWhere('lower(merchant_store.post_code) like :pcode', {
+          qb.orWhere('ms.post_code ilike :pcode', {
             pcode: '%' + search + '%',
           });
-          qb.orWhere('lower(merchant_store.guidance) like :guidance', {
+          qb.orWhere('ms.guidance ilike :guidance', {
             guidance: '%' + search + '%',
           });
         }),
       );
     }
-
     if (param_usertype.user_type && param_usertype.user_type == 'merchant') {
-      store.andWhere('merchant_store.merchant_id = :mid', {
+      store.andWhere('ms.merchant_id = :mid', {
         mid: param_usertype.id,
       });
     } else if (
       param_usertype.user_type &&
       param_usertype.user_type == 'group'
     ) {
-      store
-        .innerJoin('merchant_store.merchant', 'merchant')
-        .andWhere('merchant.group_id = :group_id', {
-          group_id: param_usertype.id,
-        });
+      store.andWhere('merchant.group_id = :group_id', {
+        group_id: param_usertype.id,
+      });
     }
+
+    if (data.group_category) {
+      store.andWhere('group.category = :gcat', {
+        gcat: data.group_category,
+      });
+    }
+
+    if (data.status) {
+      store.andWhere('group.status = :gstat', {
+        gstat: data.status,
+      });
+    }
+
     store
-      .orderBy('merchant_store.created_at', 'ASC')
+      .orderBy('ms.created_at', 'ASC')
       .offset((currentPage - 1) * perPage)
       .limit(perPage);
 
@@ -659,12 +670,14 @@ export class StoresService {
       const totalItems = await store.getCount();
       const list = await store.getMany();
       list.map((element) => {
-        const row = dbOutputTime(element);
-        delete row.owner_password;
-        row.service_addon.forEach((sao) => {
-          delete sao.created_at;
-          delete sao.updated_at;
-        });
+        deleteCredParam(element);
+        deleteCredParam(element.merchant);
+        const row = deleteCredParam(element.merchant.group);
+        if (row.service_addon) {
+          row.service_addon.forEach((sao: any) => {
+            deleteCredParam(sao);
+          });
+        }
         return row;
       });
 
@@ -674,7 +687,12 @@ export class StoresService {
         current_page: Number(currentPage),
         items: list,
       };
-      return list_result;
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.liststore.success'),
+        list_result,
+      );
     } catch (error) {
       console.log(
         '===========================Start Database error=================================\n',

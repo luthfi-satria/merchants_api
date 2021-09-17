@@ -43,6 +43,7 @@ import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { RoleStoreCategoriesGuard } from 'src/auth/store-categories.guard';
 import { UpdateStoreCategoriesValidation } from './validation/update-store-categories.validation';
 import { RoleStoreGuard } from 'src/auth/store.guard';
+import { ListStoreDTO } from './validation/list-store.validation';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -364,84 +365,42 @@ export class StoresController {
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async getsores(
-    @Query() data: string[],
-    @Headers('Authorization') token: string,
-  ): Promise<any> {
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-    };
+  async getsores(@Req() req: any, @Query() data: ListStoreDTO): Promise<any> {
     const param_list_group_store: Record<string, string> = {
       user_type: '',
       id: '',
     };
-    return (await this.storesService.getHttp(url, headersRequest)).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
 
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        if (
-          response.data.payload.user_type != 'admin' &&
-          response.data.payload.user_type != 'merchant' &&
-          response.data.payload.level != 'merchant'
-        ) {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.general.invalid_token'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'UNAUTHORIZED',
-            ),
-          );
-        }
-        if (response.data.payload.level == 'merchant') {
-          param_list_group_store.user_type = 'merchant';
-          param_list_group_store.id = response.data.payload.merchant_id;
-        } else if (response.data.payload.level == 'group') {
-          param_list_group_store.user_type = 'group';
-          param_list_group_store.id = response.data.payload.group_id;
-        }
-        const listgroup: any = await this.storesService.listGroupStore(
-          data,
-          param_list_group_store,
-        );
-        if (!listgroup) {
-          const errors: RMessage = {
-            value: '',
-            property: 'listgroup',
-            constraint: [this.messageService.get('merchant.liststore.fail')],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.liststore.success'),
-          listgroup,
-        );
-      }),
+    if (req.user.level == 'merchant') {
+      param_list_group_store.user_type = 'merchant';
+      param_list_group_store.id = req.user.merchant_id;
+    } else if (req.user.level == 'group') {
+      param_list_group_store.user_type = 'group';
+      param_list_group_store.id = req.user.group_id;
+    }
+
+    const listgroup: any = await this.storesService.listGroupStore(
+      data,
+      param_list_group_store,
+    );
+    if (!listgroup) {
+      const errors: RMessage = {
+        value: '',
+        property: 'listgroup',
+        constraint: [this.messageService.get('merchant.liststore.fail')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.liststore.success'),
+      listgroup,
     );
   }
 
