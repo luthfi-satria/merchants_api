@@ -31,6 +31,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantUsersService } from './merchants_users.service';
 import { MerchantUser } from './interface/merchant_user.interface';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
+import { ListMerchantDTO } from './validation/list-merchant.validation';
 
 @Injectable()
 export class MerchantsService {
@@ -499,8 +500,8 @@ export class MerchantsService {
   }
 
   async listGroupMerchant(
-    data: Record<string, any>,
-    group_id: string,
+    data: ListMerchantDTO,
+    user: Record<string, any>,
   ): Promise<Record<string, any>> {
     let search = data.search || '';
     search = search.toLowerCase();
@@ -535,27 +536,45 @@ export class MerchantsService {
             .orWhere('merchant_merchant.pic_nip ilike :onik', {
               onik: '%' + search + '%',
             });
-          // .orWhere('merchant_merchant.pb1_tariff ilike :tpb', {
-          //   tpb: '%' + search + '%',
-          // });
         }),
       );
-    if (group_id) {
-      merchant.andWhere('group_id = :group_id', { group_id });
+
+    if (data.group_category) {
+      merchant.andWhere('mc_group.category = :gcat', {
+        gcat: data.group_category,
+      });
+    }
+
+    if (data.status) {
+      merchant.andWhere('mc_group.status = :gstat', {
+        gstat: data.status,
+      });
+    }
+    if (user.user_type == 'admin' && data.group_id) {
+      merchant.andWhere('mc_group.id = :mid', {
+        mid: data.group_id,
+      });
+    }
+
+    if (user.level == 'merchant') {
+      merchant.andWhere('merchant_merchant.id = :mid', {
+        mid: user.merchant_id,
+      });
+    }
+    if (user.level == 'group') {
+      merchant.andWhere('mc_group.id = :group_id', { group_id: user.group_id });
     }
     merchant
-      .orderBy('merchant_merchant.created_at', 'DESC')
-      .offset((currentPage - 1) * perPage)
+      .orderBy('merchant_merchant.created_at', 'ASC')
+      .offset((Number(currentPage) - 1) * perPage)
       .limit(perPage);
 
     try {
       const totalItems = await merchant.getCount();
       const list = await merchant.getMany();
       list.map((element) => {
-        let output = deleteCredParam(element); // dbOutputTime(element);
+        let output = deleteCredParam(element);
         output = deleteCredParam(element.group);
-        // output.owner_dob = moment(element.owner_dob).format('YYYY-MM-DD');
-        // delete output.owner_password;
         return output;
       });
 

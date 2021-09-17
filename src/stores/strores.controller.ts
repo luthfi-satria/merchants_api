@@ -366,22 +366,9 @@ export class StoresController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async getsores(@Req() req: any, @Query() data: ListStoreDTO): Promise<any> {
-    const param_list_group_store: Record<string, string> = {
-      user_type: '',
-      id: '',
-    };
-
-    if (req.user.level == 'merchant') {
-      param_list_group_store.user_type = 'merchant';
-      param_list_group_store.id = req.user.merchant_id;
-    } else if (req.user.level == 'group') {
-      param_list_group_store.user_type = 'group';
-      param_list_group_store.id = req.user.group_id;
-    }
-
     const listgroup: any = await this.storesService.listGroupStore(
       data,
-      param_list_group_store,
+      req.user,
     );
     if (!listgroup) {
       const errors: RMessage = {

@@ -13,7 +13,12 @@ import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
-import { OtpDto, ResponseMerchantDataDto, UpdateEmailDto, UpdatePhoneDto } from './validation/profile.dto';
+import {
+  OtpDto,
+  ResponseMerchantDataDto,
+  UpdateEmailDto,
+  UpdatePhoneDto,
+} from './validation/profile.dto';
 import { RMessage } from 'src/response/response.interface';
 import { catchError, map } from 'rxjs';
 
@@ -118,27 +123,27 @@ export class ProfileController {
         const rsp: Record<string, any> = response;
 
         if (rsp.success) {
-            data.id = userData.id;
-            const updateResult = await this.profileService.updateEmail(data);
-            const responseMerchantDataDto = new ResponseMerchantDataDto()
-            responseMerchantDataDto.id = updateResult.id
-            responseMerchantDataDto.name = updateResult.name
-            responseMerchantDataDto.email = updateResult.email
-            responseMerchantDataDto.phone = updateResult.phone
-            responseMerchantDataDto.group_id = updateResult.group_id
-            responseMerchantDataDto.merchant_id = updateResult.merchant_id
-            responseMerchantDataDto.nip = updateResult.nip
-            responseMerchantDataDto.created_at = updateResult.created_at
-            responseMerchantDataDto.updated_at = updateResult.updated_at
-            responseMerchantDataDto.deleted_at = updateResult.deleted_at
-            responseMerchantDataDto.store = updateResult.store
-            responseMerchantDataDto.merchant = updateResult.merchant
-            responseMerchantDataDto.group = updateResult.group
-            return this.responseService.success(
-                true,
-                this.messageService.get('merchant.general.success'),
-                responseMerchantDataDto,
-            );
+          data.id = userData.id;
+          const updateResult = await this.profileService.updateEmail(data);
+          const responseMerchantDataDto = new ResponseMerchantDataDto();
+          responseMerchantDataDto.id = updateResult.id;
+          responseMerchantDataDto.name = updateResult.name;
+          responseMerchantDataDto.email = updateResult.email;
+          responseMerchantDataDto.phone = updateResult.phone;
+          responseMerchantDataDto.group_id = updateResult.group_id;
+          responseMerchantDataDto.merchant_id = updateResult.merchant_id;
+          responseMerchantDataDto.nip = updateResult.nip;
+          responseMerchantDataDto.created_at = updateResult.created_at;
+          responseMerchantDataDto.updated_at = updateResult.updated_at;
+          responseMerchantDataDto.deleted_at = updateResult.deleted_at;
+          responseMerchantDataDto.store = updateResult.store;
+          responseMerchantDataDto.merchant = updateResult.merchant;
+          responseMerchantDataDto.group = updateResult.group;
+          return this.responseService.success(
+            true,
+            this.messageService.get('merchant.general.success'),
+            responseMerchantDataDto,
+          );
         }
         return response;
       }),
@@ -247,27 +252,27 @@ export class ProfileController {
         const rsp: Record<string, any> = response;
 
         if (rsp.success) {
-            data.id = userData.id;
-            const updateResult = await this.profileService.updatePhone(data);
-            const responseMerchantDataDto = new ResponseMerchantDataDto()
-            responseMerchantDataDto.id = updateResult.id
-            responseMerchantDataDto.name = updateResult.name
-            responseMerchantDataDto.email = updateResult.email
-            responseMerchantDataDto.phone = updateResult.phone
-            responseMerchantDataDto.group_id = updateResult.group_id
-            responseMerchantDataDto.merchant_id = updateResult.merchant_id
-            responseMerchantDataDto.nip = updateResult.nip
-            responseMerchantDataDto.created_at = updateResult.created_at
-            responseMerchantDataDto.updated_at = updateResult.updated_at
-            responseMerchantDataDto.deleted_at = updateResult.deleted_at
-            responseMerchantDataDto.store = updateResult.store
-            responseMerchantDataDto.merchant = updateResult.merchant
-            responseMerchantDataDto.group = updateResult.group
-            return this.responseService.success(
-                true,
-                this.messageService.get('merchant.general.success'),
-                responseMerchantDataDto,
-            );
+          data.id = userData.id;
+          const updateResult = await this.profileService.updatePhone(data);
+          const responseMerchantDataDto = new ResponseMerchantDataDto();
+          responseMerchantDataDto.id = updateResult.id;
+          responseMerchantDataDto.name = updateResult.name;
+          responseMerchantDataDto.email = updateResult.email;
+          responseMerchantDataDto.phone = updateResult.phone;
+          responseMerchantDataDto.group_id = updateResult.group_id;
+          responseMerchantDataDto.merchant_id = updateResult.merchant_id;
+          responseMerchantDataDto.nip = updateResult.nip;
+          responseMerchantDataDto.created_at = updateResult.created_at;
+          responseMerchantDataDto.updated_at = updateResult.updated_at;
+          responseMerchantDataDto.deleted_at = updateResult.deleted_at;
+          responseMerchantDataDto.store = updateResult.store;
+          responseMerchantDataDto.merchant = updateResult.merchant;
+          responseMerchantDataDto.group = updateResult.group;
+          return this.responseService.success(
+            true,
+            this.messageService.get('merchant.general.success'),
+            responseMerchantDataDto,
+          );
         }
         return response;
       }),
