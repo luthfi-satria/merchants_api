@@ -8,7 +8,7 @@ import { Message } from 'src/message/message.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { catchError, map, Observable } from 'rxjs';
 import { AxiosResponse } from 'axios';
-import { UpdateEmailDto, UpdatePhoneDto } from './validation/profile.validation';
+import { UpdateEmailDto, UpdatePhoneDto } from './validation/profile.dto';
 
 @Injectable()
 export class ProfileService {

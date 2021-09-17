@@ -1,4 +1,7 @@
 import { IsEmail, IsOptional, IsString } from "class-validator";
+import { GroupDocument } from "src/database/entities/group.entity";
+import { MerchantDocument } from "src/database/entities/merchant.entity";
+import { StoreDocument } from "src/database/entities/store.entity";
 
 export class UpdateEmailDto {
     @IsString()
@@ -53,4 +56,34 @@ export class UpdatePhoneDto {
   @IsString()
   @IsOptional()
   otp_code: string;
+}
+
+export class ResponseMerchantDataDto {
+  id: string;
+
+  name: string;
+
+  email: string;
+
+  phone: string;
+
+  group_id: string;
+
+  merchant_id: string;
+
+  store_id: string;
+
+  created_at: Date | string;
+
+  updated_at: Date | string;
+
+  deleted_at: Date;
+
+  group: GroupDocument;
+
+  merchant: MerchantDocument;
+
+  store: StoreDocument;
+  
+  nip: string;
 }
