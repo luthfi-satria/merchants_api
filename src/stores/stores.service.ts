@@ -32,6 +32,7 @@ import { CommonStorageService } from 'src/common/storage/storage.service';
 import { StoreOperationalService } from './stores-operational.service';
 import { UpdateStoreCategoriesValidation } from './validation/update-store-categories.validation';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
+import { ListStoreDTO } from './validation/list-store.validation';
 
 @Injectable()
 export class StoresService {
@@ -595,8 +596,8 @@ export class StoresService {
   }
 
   async listGroupStore(
-    data: Record<string, any>,
-    param_usertype: Record<string, string>,
+    data: ListStoreDTO,
+    user: Record<string, string>,
   ): Promise<Record<string, any>> {
     let search = data.search || '';
     search = search.toLowerCase();
@@ -636,18 +637,6 @@ export class StoresService {
         }),
       );
     }
-    if (param_usertype.user_type && param_usertype.user_type == 'merchant') {
-      store.andWhere('ms.merchant_id = :mid', {
-        mid: param_usertype.id,
-      });
-    } else if (
-      param_usertype.user_type &&
-      param_usertype.user_type == 'group'
-    ) {
-      store.andWhere('merchant.group_id = :group_id', {
-        group_id: param_usertype.id,
-      });
-    }
 
     if (data.group_category) {
       store.andWhere('group.category = :gcat', {
@@ -661,9 +650,32 @@ export class StoresService {
       });
     }
 
+    if (
+      (user.user_type == 'admin' || user.level == 'group') &&
+      data.merchant_id
+    ) {
+      store.andWhere('merchant.id = :mid', {
+        mid: data.merchant_id,
+      });
+    }
+
+    if (user.level == 'store') {
+      store.andWhere('ms.id = :mid', {
+        mid: user.store_id,
+      });
+    } else if (user.level == 'merchant') {
+      store.andWhere('merchant.id = :mid', {
+        mid: user.merchant_id,
+      });
+    } else if (user.level == 'group') {
+      store.andWhere('group.id = :group_id', {
+        group_id: user.group_id,
+      });
+    }
+
     store
       .orderBy('ms.created_at', 'ASC')
-      .offset((currentPage - 1) * perPage)
+      .offset((Number(currentPage) - 1) * perPage)
       .limit(perPage);
 
     try {

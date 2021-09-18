@@ -30,6 +30,7 @@ import { UserType } from 'src/auth/guard/user-type.decorator';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
+import { ListMerchantDTO } from './validation/list-merchant.validation';
 
 @Controller('api/v1/merchants')
 export class MerchantsController {
@@ -160,17 +161,20 @@ export class MerchantsController {
   }
 
   @Get('merchants')
-  @UserTypeAndLevel('admin.*', 'merchant.group')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async getmerchants(@Req() req: any, @Query() data: string[]): Promise<any> {
-    let group_id = null;
-    if (req.user.user_type == 'merchant' && req.user.level == 'group') {
-      group_id = req.user.group_id;
-    }
+  async getmerchants(
+    @Req() req: any,
+    @Query() data: ListMerchantDTO,
+  ): Promise<any> {
+    // let group_id = null;
+    // if (req.user.user_type == 'merchant' && req.user.level == 'group') {
+    //   group_id = req.user.group_id;
+    // }
     const listgroup: any = await this.merchantsService.listGroupMerchant(
       data,
-      group_id,
+      req.user,
     );
     if (!listgroup) {
       const errors: RMessage = {

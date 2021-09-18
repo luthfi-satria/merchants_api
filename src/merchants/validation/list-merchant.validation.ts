@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { CategoryGroup, GroupStatus } from 'src/database/entities/group.entity';
 
-export class ListStoreDTO {
+export class ListMerchantDTO {
   @IsOptional()
   search: string;
 
@@ -30,7 +30,7 @@ export class ListStoreDTO {
   status: GroupStatus;
 
   @IsOptional()
-  @ValidateIf((o) => o.merchant_id !== '')
-  @IsUUID('all', { message: 'Merchant ID yang diisi bukan format UUID' })
-  merchant_id: string;
+  @ValidateIf((o) => o.group_id !== '')
+  @IsUUID('all', { message: 'Group ID yang diisi bukan format UUID' })
+  group_id: string;
 }

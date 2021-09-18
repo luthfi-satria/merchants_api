@@ -1,13 +1,7 @@
-import {
-  IsIn,
-  IsNumberString,
-  IsOptional,
-  IsUUID,
-  ValidateIf,
-} from 'class-validator';
+import { IsIn, IsNumberString, IsOptional, ValidateIf } from 'class-validator';
 import { CategoryGroup, GroupStatus } from 'src/database/entities/group.entity';
 
-export class ListStoreDTO {
+export class ListGroupDTO {
   @IsOptional()
   search: string;
 
@@ -28,9 +22,4 @@ export class ListStoreDTO {
   @ValidateIf((o) => o.status !== '')
   @IsIn(Object.values(GroupStatus))
   status: GroupStatus;
-
-  @IsOptional()
-  @ValidateIf((o) => o.merchant_id !== '')
-  @IsUUID('all', { message: 'Merchant ID yang diisi bukan format UUID' })
-  merchant_id: string;
 }

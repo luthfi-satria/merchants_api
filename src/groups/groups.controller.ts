@@ -36,6 +36,8 @@ import { UserType } from 'src/auth/guard/user-type.decorator';
 import { CreateGroupDTO } from './validation/create_groups.dto';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
+import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
+import { ListGroupDTO } from './validation/list-group.validation';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -282,12 +284,12 @@ export class GroupsController {
   }
 
   @Get('groups')
-  @UserType('admin')
+  @UserTypeAndLevel('admin.*', 'merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async getgroups(@Query() data: string[]): Promise<any> {
+  async getgroups(@Req() req: any, @Query() data: ListGroupDTO): Promise<any> {
     try {
-      const listgroup: any = await this.groupsService.listGroup(data);
+      const listgroup: any = await this.groupsService.listGroup(data, req.user);
       return this.responseService.success(
         true,
         this.messageService.get('merchant.listgroup.success'),
