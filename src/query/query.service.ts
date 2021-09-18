@@ -104,7 +104,7 @@ export class QueryService {
         `merchant_store.status = :active
         AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
         ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
-        ${delivery_only ? `AND delivery_type in (:delivery_only)` : ''}
+        ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
         ${
           store_category_id ? `AND merchant_store_categories.id = :stocat` : ''
         }`,
@@ -335,7 +335,7 @@ export class QueryService {
           `merchant_store.status = :active
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
             ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
-            ${delivery_only ? `AND delivery_type in (:delivery_only)` : ''}
+            ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
             ${
               store_category_id
                 ? `AND merchant_store_categories.id = :stocat`
