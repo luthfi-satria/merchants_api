@@ -132,6 +132,10 @@ export default {
     merchantid_notactive: 'ID Merchant tidak aktif',
     empty_photo: 'File photo kosong.',
     addonid_unreg: 'ID Addon tidak terdaftar.',
+    store_category_not_found: {
+      code: 'STORE_CATEGORY_NOT_FOUND',
+      message: 'Category tidak ditemukan',
+    },
   },
   updatestore: {
     success: 'Update Store Success.',
