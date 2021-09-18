@@ -106,8 +106,9 @@ export class QueryService {
         ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
         ${delivery_only.map((data,index)=>{
           if(index === 0){
-            return `AND delivery_type = ${data[index]}`
+            return `AND delivery_type = ${data}`
           }
+          return `OR delivery_type = ${data}`
         })}
         ${
           store_category_id ? `AND merchant_store_categories.id = :stocat` : ''
