@@ -9,6 +9,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
+import { GroupsModule } from 'src/groups/groups.module';
 import { GroupsService } from 'src/groups/groups.service';
 import { GroupUsersService } from 'src/groups/group_users.service';
 import { HashService } from 'src/hash/hash.service';
@@ -21,6 +22,7 @@ import { MerchantUsersController } from './merchants_users.controller';
 import { MerchantUsersService } from './merchants_users.service';
 import { ResetPasswordController } from './reset-password.controller';
 import { ResetPasswordService } from './reset-password.service';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { ResetPasswordService } from './reset-password.service';
       limits: { fileSize: 2 * 1000 * 1000 },
     }),
     HttpModule,
+    GroupsModule,
+    ProfileModule,
   ],
   controllers: [
     MerchantsController,

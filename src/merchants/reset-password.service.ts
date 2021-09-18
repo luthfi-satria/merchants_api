@@ -10,8 +10,8 @@ import { randomUUID } from 'crypto';
 import { RMessage } from 'src/response/response.interface';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
-import { MerchantMerchantValidation } from './validation/merchants.validation';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { MerchantUsersValidation } from './validation/merchants_users.validation';
 
 @Injectable()
 export class ResetPasswordService {
@@ -25,7 +25,7 @@ export class ResetPasswordService {
   ) {}
 
   async resetPasswordEmail(
-    args: Partial<MerchantMerchantValidation>,
+    args: Partial<MerchantUsersValidation>,
   ): Promise<any> {
     const cekEmail = await this.merchantUserRepository
       .findOne({
@@ -93,7 +93,7 @@ export class ResetPasswordService {
   }
 
   async resetPasswordPhone(
-    args: Partial<MerchantMerchantValidation>,
+    args: Partial<MerchantUsersValidation>,
   ): Promise<any> {
     const cekPhone = await this.merchantUserRepository
       .findOne({
@@ -161,7 +161,7 @@ export class ResetPasswordService {
   }
 
   async resetPasswordExec(
-    args: Partial<MerchantMerchantValidation>,
+    args: Partial<MerchantUsersValidation>,
     qstring: Record<string, any>,
   ): Promise<any> {
     const cekToken = await this.merchantUserRepository

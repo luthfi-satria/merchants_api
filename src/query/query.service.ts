@@ -65,8 +65,8 @@ export class QueryService {
 
     const delivery_only =
       data.pickup == true
-        ? enumDeliveryType.delivery_and_pickup
-        : enumDeliveryType.delivery_only;
+        ? [enumDeliveryType.delivery_and_pickup,enumDeliveryType.pickup_only]
+        : [enumDeliveryType.delivery_only];
     const is24hour = data?.is_24hrs ? true : false;
     const open_24_hour = data.is_24hrs || false;
 
@@ -104,7 +104,7 @@ export class QueryService {
         `merchant_store.status = :active
         AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
         ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
-        ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
+        ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
         ${
           store_category_id ? `AND merchant_store_categories.id = :stocat` : ''
         }`,
@@ -273,9 +273,9 @@ export class QueryService {
 
       // ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
       const delivery_only =
-        data.pickup == true
-          ? enumDeliveryType.delivery_and_pickup
-          : enumDeliveryType.delivery_only;
+      data.pickup == true
+        ? [enumDeliveryType.delivery_and_pickup,enumDeliveryType.pickup_only]
+        : [enumDeliveryType.delivery_only];
       const is24hrs = data?.is_24hrs ? true : false;
       const open_24_hour = data.is_24hrs;
       const include_closed_stores = data.include_closed_stores || false;
@@ -335,7 +335,7 @@ export class QueryService {
           `merchant_store.status = :active
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
             ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
-            ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
+            ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
             ${
               store_category_id
                 ? `AND merchant_store_categories.id = :stocat`
@@ -450,7 +450,7 @@ export class QueryService {
           const merchant = await this.merchantRepository
             .findOne(row.merchant_id)
             .then((result) => {
-              delete result.owner_password;
+              delete result.pic_password;
               delete result.approved_at;
               delete result.created_at;
               delete result.updated_at;

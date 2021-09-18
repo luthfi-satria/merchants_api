@@ -6,7 +6,7 @@ import {
   Length,
 } from 'class-validator';
 
-export class MerchantMerchantUsersValidation {
+export class MerchantUsersValidation {
   @IsOptional()
   id: string;
 
