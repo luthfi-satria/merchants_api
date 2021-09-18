@@ -108,7 +108,6 @@ export class QueryService {
           if(index === 0){
             return `AND delivery_type = ${data[index]}`
           }
-          return `OR delivery_type = ${data[index]}`
         })}
         ${
           store_category_id ? `AND merchant_store_categories.id = :stocat` : ''
@@ -344,7 +343,6 @@ export class QueryService {
               if(index === 0){
                 return `AND delivery_type = ${data[index]}`
               }
-              return `OR delivery_type = ${data[index]}`
             })}
             ${
               store_category_id
