@@ -42,7 +42,7 @@ export class StoreDocument {
 
   @ManyToOne(() => MerchantDocument, (merchant) => merchant.id)
   @JoinColumn({ name: 'merchant_id' })
-  merchant: MerchantDocument;
+  merchant: Promise<MerchantDocument>;
 
   @Column('uuid')
   merchant_id: string;

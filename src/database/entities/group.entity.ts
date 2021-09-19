@@ -152,7 +152,7 @@ export class GroupDocument {
   deleted_at: Date;
 
   @OneToMany(() => MerchantDocument, (merchant) => merchant.group)
-  merchants: MerchantDocument[];
+  merchants: Promise<MerchantDocument[]>;
 
   @OneToMany(
     () => MerchantUsersDocument,
