@@ -200,7 +200,7 @@ export class StoresService {
     store_document.store_categories = await this.getCategoriesByIds(
       create_merchant_store_validation.category_ids,
     );
-    store_document.addons = await this.getAddonssBtIds(
+    store_document.service_addons = await this.getAddonssBtIds(
       create_merchant_store_validation.service_addons,
     );
     const create_store = await this.storeRepository.save(store_document);
@@ -231,7 +231,7 @@ export class StoresService {
     const store_document: StoreDocument = await this.storeRepository.findOne(
       update_merchant_store_validation.id,
       {
-        relations: ['addons', 'operational_hours'],
+        relations: ['service_addons', 'operational_hours'],
       },
     );
     if (!store_document) {
@@ -264,7 +264,7 @@ export class StoresService {
       );
     }
     if (update_merchant_store_validation.service_addons) {
-      store_document.addons = await this.getAddonssBtIds(
+      store_document.service_addons = await this.getAddonssBtIds(
         update_merchant_store_validation.service_addons,
       );
     }

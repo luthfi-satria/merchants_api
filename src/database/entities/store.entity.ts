@@ -115,7 +115,7 @@ export class StoreDocument {
 
   @ManyToMany(() => AddonDocument)
   @JoinTable({ name: 'merchant_store_addon' })
-  addons: AddonDocument[];
+  service_addons: AddonDocument[];
 
   //Data Bank
   @ManyToOne(() => ListBankDocument, (bank) => bank.id)

@@ -65,7 +65,7 @@ export class QueryService {
 
     const delivery_only =
       data.pickup == true
-        ? [enumDeliveryType.delivery_and_pickup,enumDeliveryType.pickup_only]
+        ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
         : [enumDeliveryType.delivery_only];
     const is24hour = data?.is_24hrs ? true : false;
     const open_24_hour = data.is_24hrs || false;
@@ -85,7 +85,7 @@ export class QueryService {
           ')) * SIN(RADIANS(merchant_store.location_latitude))))',
         'distance_in_km',
       )
-      .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon') //MANY TO MANY
+      .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
       .leftJoinAndSelect(
         'merchant_store.operational_hours',
         'operational_hours',
@@ -208,7 +208,7 @@ export class QueryService {
           ')) * SIN(RADIANS(merchant_store.location_latitude))))',
         'distance_in_km',
       )
-      .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon') //MANY TO MANY
+      .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
       .leftJoinAndSelect(
         'merchant_store.operational_hours',
         'operational_hours',
@@ -273,9 +273,9 @@ export class QueryService {
 
       // ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
       const delivery_only =
-      data.pickup == true
-        ? [enumDeliveryType.delivery_and_pickup,enumDeliveryType.pickup_only]
-        : [enumDeliveryType.delivery_only];
+        data.pickup == true
+          ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
+          : [enumDeliveryType.delivery_only];
       const is24hrs = data?.is_24hrs ? true : false;
       const open_24_hour = data.is_24hrs;
       const include_closed_stores = data.include_closed_stores || false;
@@ -309,7 +309,7 @@ export class QueryService {
           'distance_in_km',
         )
         // --- JOIN TABLES ---
-        .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon') //MANY TO MANY
+        .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
         .leftJoinAndSelect(
           'merchant_store.operational_hours',
           'operational_hours',
