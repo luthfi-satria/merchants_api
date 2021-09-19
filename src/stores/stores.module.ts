@@ -3,6 +3,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddonsService } from 'src/addons/addons.service';
 import { CommonService } from 'src/common/common.service';
+import { CityService } from 'src/common/services/admins/city.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { LobDocument } from 'src/database/entities/lob.entity';
@@ -63,6 +64,7 @@ import { StoresController } from './strores.controller';
     ImageValidationService,
     StoreUsersService,
     CommonService,
+    CityService,
     MerchantUsersService,
     GroupsService,
     LobService,

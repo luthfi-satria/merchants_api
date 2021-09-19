@@ -1,6 +1,7 @@
 import { DriverType, StorageModule } from '@codebrew/nestjs-storage';
 import { Global, HttpModule, Module } from '@nestjs/common';
 import { CommonService } from './common.service';
+import { CityService } from './services/admins/city.service';
 import { CommonStorageService } from './storage/storage.service';
 
 @Global()
@@ -28,7 +29,7 @@ import { CommonStorageService } from './storage/storage.service';
     }),
     HttpModule,
   ],
-  providers: [CommonStorageService, CommonService],
-  exports: [CommonStorageService],
+  providers: [CommonStorageService, CommonService, CityService],
+  exports: [CommonStorageService, CityService],
 })
 export class CommonModule {}

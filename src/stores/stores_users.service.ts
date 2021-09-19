@@ -130,7 +130,7 @@ export class StoreUsersService {
         dbOutputTime(result);
         dbOutputTime(result.store);
         delete result.password;
-        delete result.store.owner_password;
+        // delete result.store.owner_password;
 
         return this.responseService.success(
           true,
@@ -256,7 +256,7 @@ export class StoreUsersService {
         dbOutputTime(result);
         dbOutputTime(result.store);
         delete result.password;
-        delete result.store.owner_password;
+        // delete result.store.owner_password;
 
         return this.responseService.success(
           true,
@@ -379,7 +379,7 @@ export class StoreUsersService {
           dbOutputTime(raw);
           dbOutputTime(raw.store);
           delete raw.password;
-          delete raw.store.owner_password;
+          // delete raw.store.owner_password;
         });
 
         const listResult: ListResponse = {

@@ -1,3 +1,4 @@
+import { CityDTO } from 'src/common/services/admins/dto/city.dto';
 import {
   Column,
   CreateDateColumn,
@@ -13,6 +14,7 @@ import {
 } from 'typeorm';
 import { ColumnNumericTransformer } from '../helper/column_numberic_transformer';
 import { AddonDocument } from './addons.entity';
+import { ListBankDocument } from './list_banks';
 import { MerchantDocument } from './merchant.entity';
 import { StoreCategoriesDocument } from './store-categories.entity';
 import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
@@ -24,14 +26,17 @@ export enum enumDeliveryType {
 }
 
 export enum enumStoreStatus {
-  waiting_approval = 'WAITING_APPROVAL',
+  draf = 'DRAFT',
+  waiting_for_approval = 'WAITING_FOR_APPROVAL',
   active = 'ACTIVE',
+  inactive = 'INACTIVE',
   banned = 'BANNED',
   rejected = 'REJECTED',
 }
 
 @Entity({ name: 'merchant_store' })
 export class StoreDocument {
+  //General Info
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -48,23 +53,15 @@ export class StoreDocument {
   @Column()
   phone: string;
 
-  @Column()
-  owner_phone: string;
+  @Column({ nullable: true })
+  email: string;
 
-  @Column()
-  owner_email: string;
-
-  @Column()
-  owner_password: string;
+  @Column('uuid', { nullable: true })
+  city_id: string;
+  city: CityDTO;
 
   @Column()
   address: string;
-
-  @Column()
-  post_code: string;
-
-  @Column()
-  guidance: string;
 
   @Column('decimal', {
     default: '106.827153', //monas
@@ -79,28 +76,11 @@ export class StoreDocument {
   location_latitude: number;
 
   @Column({
-    default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
+    type: 'int',
+    nullable: true,
+    default: null,
   })
-  upload_photo: string;
-
-  @Column({
-    default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
-  })
-  upload_banner: string;
-
-  @Column({
-    type: 'enum',
-    enum: enumDeliveryType,
-    default: enumDeliveryType.delivery_only,
-  })
-  delivery_type: enumDeliveryType;
-
-  @Column({
-    type: 'enum',
-    enum: enumStoreStatus,
-    default: enumStoreStatus.waiting_approval,
-  })
-  status: enumStoreStatus;
+  gmt_offset: number;
 
   @Column({
     type: 'boolean',
@@ -114,20 +94,50 @@ export class StoreDocument {
   })
   is_open_24h: boolean;
 
+  @Column({ default: 0 })
+  average_price: number;
+
   @Column({
-    type: 'int',
-    nullable: true,
-    default: null,
+    default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Photo+Image',
   })
-  gmt_offset: number;
+  photo: string;
+
+  @ManyToMany(() => StoreCategoriesDocument)
+  @JoinTable({ name: 'merchant_store_store_categories' })
+  store_categories: StoreCategoriesDocument[];
+
+  @Column({
+    type: 'enum',
+    enum: enumDeliveryType,
+    default: enumDeliveryType.delivery_only,
+  })
+  delivery_type: enumDeliveryType;
 
   @ManyToMany(() => AddonDocument)
   @JoinTable({ name: 'merchant_store_addon' })
-  // @Column({ nullable: true })
-  service_addon: AddonDocument[];
+  addons: AddonDocument[];
 
-  // @Column({ type: 'timestamptz', nullable: true })
-  // approved_at: Date | string;
+  //Data Bank
+  @ManyToOne(() => ListBankDocument, (bank) => bank.id)
+  @JoinColumn({ name: 'bank_id' })
+  bank: ListBankDocument;
+
+  @Column('uuid', { nullable: true })
+  bank_id: string;
+
+  @Column({ nullable: true })
+  bank_account_no: string;
+
+  @Column({ nullable: true })
+  bank_account_name: string;
+
+  //Metadata
+  @Column({
+    type: 'enum',
+    enum: enumStoreStatus,
+    default: enumStoreStatus.waiting_for_approval,
+  })
+  status: enumStoreStatus;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date | string;
@@ -147,11 +157,4 @@ export class StoreDocument {
     },
   )
   operational_hours: StoreOperationalHoursDocument[];
-
-  @ManyToMany(() => StoreCategoriesDocument)
-  @JoinTable({ name: 'merchant_store_store_categories' })
-  store_categories: StoreCategoriesDocument[];
-
-  @Column({ default: 0 })
-  average_price: number;
 }
