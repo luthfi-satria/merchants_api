@@ -525,8 +525,8 @@ export class StoresService {
 
     if (data.delivery_type != null && data.delivery_type != '') {
       const deliveryType =
-        data.delivery_type == enumDeliveryType.delivery_only
-          ? enumDeliveryType.delivery_only
+        data.delivery_type == enumDeliveryType.delivery_only || data.delivery_type == enumDeliveryType.pickup_only
+          ? data.delivery_type
           : enumDeliveryType.delivery_and_pickup;
 
       store_exist.delivery_type = deliveryType;
