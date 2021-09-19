@@ -58,7 +58,7 @@ export class UpdatePhoneDto {
   otp_code: string;
 }
 
-export class ResponseMerchantDataDto {
+export class ResponseMerchantDto {
   id: string;
 
   name: string;

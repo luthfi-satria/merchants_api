@@ -15,7 +15,7 @@ import { UserType } from 'src/auth/guard/user-type.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import {
   OtpDto,
-  ResponseMerchantDataDto,
+  ResponseMerchantDto,
   UpdateEmailDto,
   UpdatePhoneDto,
 } from './validation/profile.dto';
@@ -125,7 +125,7 @@ export class ProfileController {
         if (rsp.success) {
           data.id = userData.id;
           const updateResult = await this.profileService.updateEmail(data);
-          const responseMerchantDataDto = new ResponseMerchantDataDto();
+          const responseMerchantDataDto = new ResponseMerchantDto();
           responseMerchantDataDto.id = updateResult.id;
           responseMerchantDataDto.name = updateResult.name;
           responseMerchantDataDto.email = updateResult.email;
@@ -254,7 +254,7 @@ export class ProfileController {
         if (rsp.success) {
           data.id = userData.id;
           const updateResult = await this.profileService.updatePhone(data);
-          const responseMerchantDataDto = new ResponseMerchantDataDto();
+          const responseMerchantDataDto = new ResponseMerchantDto();
           responseMerchantDataDto.id = updateResult.id;
           responseMerchantDataDto.name = updateResult.name;
           responseMerchantDataDto.email = updateResult.email;

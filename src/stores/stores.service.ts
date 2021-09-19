@@ -427,10 +427,10 @@ export class StoresService {
     try {
       const totalItems = await store.getCount();
       const list = await store.getMany();
-      list.map((element) => {
+      list.map(async (element) => {
         deleteCredParam(element);
         deleteCredParam(element.merchant);
-        const row = deleteCredParam(element.merchant.group);
+        const row = deleteCredParam((await element.merchant).group);
         if (row.service_addon) {
           row.service_addon.forEach((sao: any) => {
             deleteCredParam(sao);
