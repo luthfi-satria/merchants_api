@@ -134,9 +134,9 @@ export class MerchantDocument {
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date;
 
-  @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants)
+  @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants,{eager: true})
   @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })
-  group: Promise<GroupDocument>;
+  group: GroupDocument;
 
   // user = MerchantUsersDocument;
 
