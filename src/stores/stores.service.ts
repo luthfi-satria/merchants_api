@@ -93,7 +93,7 @@ export class StoresService {
 
   async getMerchantStoreDetailById(id: string): Promise<StoreDocument> {
     return await this.storeRepository.findOne(id, {
-      relations: ['operational_hours', 'service_addon'],
+      relations: ['operational_hours', 'service_addons'],
     });
   }
 
