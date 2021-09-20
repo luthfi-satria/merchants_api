@@ -136,7 +136,7 @@ export class MerchantDocument {
 
   @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants)
   @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })
-  group: Promise<GroupDocument>;
+  group: GroupDocument;
 
   // user = MerchantUsersDocument;
 

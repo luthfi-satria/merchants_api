@@ -34,9 +34,7 @@ import {
 } from 'src/utils/general-utils';
 import { StoresService } from './stores.service';
 import { catchError, map } from 'rxjs';
-import { MerchantsService } from 'src/merchants/merchants.service';
 import { ImageValidationService } from 'src/utils/image-validation.service';
-import { StoreOperationalService } from './stores-operational.service';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
@@ -46,18 +44,14 @@ import { RoleStoreGuard } from 'src/auth/store.guard';
 import { DeliveryTypeValidation } from './validation/delivery-type.validation';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { UpdateMerchantStoreValidation } from './validation/update-merchant-stores.validation';
-import { CityService } from 'src/common/services/admins/city.service';
 import { ListStoreDTO } from './validation/list-store.validation';
 
 @Controller('api/v1/merchants')
 export class StoresController {
   constructor(
     private readonly storesService: StoresService,
-    private readonly storesOperationalService: StoreOperationalService,
-    private readonly merchantService: MerchantsService,
     private readonly imageValidationService: ImageValidationService,
     private readonly storage: CommonStorageService,
-    private readonly cityService: CityService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
   ) {}
@@ -81,13 +75,15 @@ export class StoresController {
     create_merchant_store_validation: CreateMerchantStoreValidation,
     @UploadedFiles() files: Array<Express.Multer.File>,
   ): Promise<any> {
-    this.imageValidationService.setFilter('photo', 'required');
+    this.imageValidationService
+      .setFilter('photo', 'required')
+      .setFilter('banner', 'required');
     await this.imageValidationService.validate(req);
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file_name = '/upload_stores/' + files[i].filename;
+      for (const file of files) {
+        const file_name = '/upload_stores/' + file.filename;
         const url = await this.storage.store(file_name);
-        create_merchant_store_validation[files[i].fieldname] = url;
+        create_merchant_store_validation[file.fieldname] = url;
       }
       const result_db: StoreDocument =
         await this.storesService.createMerchantStoreProfile(
@@ -127,10 +123,10 @@ export class StoresController {
     await this.imageValidationService.validate(req);
     try {
       if (files.length > 0) {
-        for (let i = 0; i < files.length; i++) {
-          const file_name = '/upload_stores/' + files[i].filename;
+        for (const file of files) {
+          const file_name = '/upload_stores/' + file.filename;
           const url = await this.storage.store(file_name);
-          update_merchant_store_validation[files[i].fieldname] = url;
+          update_merchant_store_validation[file.fieldname] = url;
         }
       }
       const updateresult: StoreDocument =
@@ -251,7 +247,7 @@ export class StoresController {
   ): Promise<any> {
     data.store_id = id;
     data.payload = req.payload;
-    return await this.storesService.updateStoreCategories(data);
+    return this.storesService.updateStoreCategories(data);
   }
 
   @Put('stores/:store_id/delivery-type')

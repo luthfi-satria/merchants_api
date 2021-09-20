@@ -8,7 +8,6 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  MaxLength,
 } from 'class-validator';
 import { CityDTO } from 'src/common/services/admins/dto/city.dto';
 import {
@@ -48,6 +47,8 @@ export class CreateMerchantStoreValidation {
   gmt_offset: number;
 
   photo: string;
+
+  banner: string;
 
   @IsNotEmpty()
   @ArrayMaxSize(3)

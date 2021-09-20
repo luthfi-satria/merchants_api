@@ -25,11 +25,11 @@ export class AddonsService {
   ) {}
 
   async findAddonById(id: string): Promise<AddonDocument> {
-    return await this.addonRepository.findOne({ id: id });
+    return this.addonRepository.findOne({ id: id });
   }
 
   async findAddonByName(name: string): Promise<AddonDocument> {
-    return await this.addonRepository.findOne({ where: { name: name } });
+    return this.addonRepository.findOne({ where: { name: name } });
   }
 
   async createMerchantAddonProfile(
@@ -38,7 +38,7 @@ export class AddonsService {
     const create_lob: Partial<AddonDocument> = {
       name: data.name,
     };
-    return await this.addonRepository
+    return this.addonRepository
       .save(create_lob)
       .then((result) => {
         dbOutputTime(result);

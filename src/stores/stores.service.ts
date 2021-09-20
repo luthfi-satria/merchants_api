@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
@@ -13,18 +14,11 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
-import {
-  ListResponse,
-  RMessage,
-  RSuccessMessage,
-} from 'src/response/response.interface';
+import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
-import { HashService } from 'src/hash/hash.service';
-import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
-import { CommonStorageService } from 'src/common/storage/storage.service';
 import { StoreOperationalService } from './stores-operational.service';
 import { UpdateStoreCategoriesValidation } from './validation/update-store-categories.validation';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
@@ -45,12 +39,9 @@ export class StoresService {
     private readonly addonService: AddonsService,
     private httpService: HttpService,
     private readonly merchantService: MerchantsService,
-    @Hash() private readonly hashService: HashService,
-    private readonly storage: CommonStorageService,
     private readonly storeOperationalService: StoreOperationalService,
     @InjectRepository(StoreCategoriesDocument)
     private readonly storeCategoriesRepository: Repository<StoreCategoriesDocument>,
-    // private readonly connection: Connection,
     private readonly cityService: CityService,
   ) {}
 
@@ -59,7 +50,7 @@ export class StoresService {
   }
 
   async findMerchantById(id: string): Promise<StoreDocument> {
-    return await this.storeRepository
+    return this.storeRepository
       .findOne({
         where: { id: id },
       })
@@ -80,19 +71,19 @@ export class StoresService {
   }
 
   async findMerchantStoreByPhone(hp: string): Promise<StoreDocument> {
-    return await this.storeRepository.findOne({
+    return this.storeRepository.findOne({
       where: { owner_phone: hp },
     });
   }
 
   async findMerchantStoreByEmail(email: string): Promise<StoreDocument> {
-    return await this.storeRepository.findOne({
+    return this.storeRepository.findOne({
       where: { owner_email: email },
     });
   }
 
   async getMerchantStoreDetailById(id: string): Promise<StoreDocument> {
-    return await this.storeRepository.findOne(id, {
+    return this.storeRepository.findOne(id, {
       relations: ['operational_hours', 'service_addons'],
     });
   }
@@ -180,6 +171,7 @@ export class StoresService {
         ),
       );
     }
+
     if (merchant.status != 'ACTIVE') {
       const errors: RMessage = {
         value: create_merchant_store_validation.merchant_id,
@@ -196,15 +188,14 @@ export class StoresService {
         ),
       );
     }
-
     store_document.store_categories = await this.getCategoriesByIds(
       create_merchant_store_validation.category_ids,
     );
     store_document.service_addons = await this.getAddonssBtIds(
       create_merchant_store_validation.service_addons,
     );
-    const create_store = await this.storeRepository.save(store_document);
 
+    const create_store = await this.storeRepository.save(store_document);
     const operational_hours = await this.storeOperationalService
       .createStoreOperationalHours(create_store.id, create_store.gmt_offset)
       .catch((e) => {
@@ -221,6 +212,8 @@ export class StoresService {
         throw e;
       });
     } catch (e) {
+      const logger = new Logger();
+      logger.log(e, 'Catch Error :  ');
       throw e;
     }
   }
@@ -309,7 +302,6 @@ export class StoresService {
           ),
         );
       }
-      // store_exist.merchant_id = data.merchant_id;
     }
     return this.storeRepository.save(store_document);
   }
@@ -345,12 +337,9 @@ export class StoresService {
     data: ListStoreDTO,
     user: Record<string, string>,
   ): Promise<Record<string, any>> {
-    let search = data.search || '';
-    search = search.toLowerCase();
+    const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
-    // let totalItems: number;
-
     const store = this.storeRepository
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
@@ -360,26 +349,26 @@ export class StoresService {
       store.andWhere(
         new Brackets((qb) => {
           qb.where('ms.name ilike :mname', {
-            mname: '%' + search + '%',
+            mname: '%' + search.toLowerCase() + '%',
           });
           qb.orWhere('ms.phone ilike :sname', {
-            sname: '%' + search + '%',
+            sname: '%' + search.toLowerCase() + '%',
           });
-          qb.orWhere('ms.owner_phone ilike :shp', {
-            shp: '%' + search + '%',
-          });
-          qb.orWhere('ms.owner_email ilike :smail', {
-            smail: '%' + search + '%',
+          // qb.orWhere('ms.owner_phone ilike :shp', {
+          //   shp: '%' + search.toLowerCase() + '%',
+          // });
+          qb.orWhere('ms.email ilike :smail', {
+            smail: '%' + search.toLowerCase() + '%',
           });
           qb.orWhere('ms.address ilike :astrore', {
-            astrore: '%' + search + '%',
+            astrore: '%' + search.toLowerCase() + '%',
           });
-          qb.orWhere('ms.post_code ilike :pcode', {
-            pcode: '%' + search + '%',
-          });
-          qb.orWhere('ms.guidance ilike :guidance', {
-            guidance: '%' + search + '%',
-          });
+          // qb.orWhere('ms.post_code ilike :pcode', {
+          //   pcode: '%' + search.toLowerCase() + '%',
+          // });
+          // qb.orWhere('ms.guidance ilike :guidance', {
+          //   guidance: '%' + search.toLowerCase() + '%',
+          // });
         }),
       );
     }
@@ -427,7 +416,7 @@ export class StoresService {
     try {
       const totalItems = await store.getCount();
       const list = await store.getMany();
-      list.map(async (element) => {
+      list.forEach(async (element) => {
         deleteCredParam(element);
         deleteCredParam(element.merchant);
         const row = deleteCredParam((await element.merchant).group);
@@ -439,14 +428,12 @@ export class StoresService {
         return row;
       });
 
-      const list_result: ListResponse = {
+      return {
         total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
         items: list,
       };
-
-      return list_result;
     } catch (error) {
       console.log(
         '===========================Start Database error=================================\n',
@@ -456,316 +443,6 @@ export class StoresService {
         '\n============================End Database error==================================',
       );
     }
-
-    // if (merchant.user_type == 'merchant') {
-    //   return await this.storeRepository
-    //     .createQueryBuilder('merchant_store')
-    //     .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-    //     .leftJoinAndSelect(
-    //       'merchant_store.operational_hours',
-    //       'operational_hours',
-    //       'operational_hours.merchant_store_id = merchant_store.id',
-    //     )
-    //     .where('merchant_store.is_store_open = :is_open', { is_open: true })
-    //     .andWhere(
-    //       new Brackets((qb) => {
-    //         qb.where(':currTime >= operational_hours.open_hour', {
-    //           currTime: currTime,
-    //         });
-    //         qb.andWhere(':currTime < operational_hours.close_hour', {
-    //           currTime: currTime,
-    //         });
-    //         qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
-    //           weekOfDay: weekOfDay,
-    //         });
-    //       }),
-    //     )
-    //     .andWhere(
-    //       new Brackets((qb) => {
-    //         qb.where('(lower(merchant_store.name) like :mname', {
-    //           mname: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.phone) like :sname', {
-    //           sname: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
-    //           shp: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.owner_email) like :smail', {
-    //           smail: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.address) like :astrore', {
-    //           astrore: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.post_code) like :pcode', {
-    //           pcode: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.guidance) like :guidance', {
-    //           guidance: '%' + search + '%',
-    //         });
-    //         // .orWhere('merchant_store.location_longitude = :long', {
-    //         //   long: search,
-    //         // })
-    //         // .orWhere('merchant_store.location_latitude = :lat)', {
-    //         //   lat: search,
-    //         // })
-    //       }),
-    //     )
-    //     .andWhere('merchant_store.merchant_id = :mid', { mid: merchant.id })
-    //     .getCount()
-    //     .then(async (counts) => {
-    //       totalItems = counts;
-    //       return await this.storeRepository
-    //         .createQueryBuilder('merchant_store')
-    //         .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-    //         .leftJoinAndSelect(
-    //           'merchant_store.operational_hours',
-    //           'operational_hours',
-    //           'operational_hours.merchant_store_id = merchant_store.id',
-    //         )
-    //         .where('merchant_store.is_store_open = :is_open', { is_open: true })
-    //         .andWhere(
-    //           new Brackets((qb) => {
-    //             qb.where(':currTime >= operational_hours.open_hour', {
-    //               currTime: currTime,
-    //             });
-    //             qb.andWhere(':currTime < operational_hours.close_hour', {
-    //               currTime: currTime,
-    //             });
-    //             qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
-    //               weekOfDay: weekOfDay,
-    //             });
-    //           }),
-    //         )
-    //         .andWhere(
-    //           new Brackets((qb) => {
-    //             qb.where('(lower(merchant_store.name) like :mname', {
-    //               mname: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.phone) like :sname', {
-    //               sname: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
-    //               shp: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.owner_email) like :smail', {
-    //               smail: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.address) like :astrore', {
-    //               astrore: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.post_code) like :pcode', {
-    //               pcode: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.guidance) like :guidance', {
-    //               guidance: '%' + search + '%',
-    //             });
-    //             // .orWhere('merchant_store.location_longitude = :long', {
-    //             //   long: search,
-    //             // })
-    //             // .orWhere('merchant_store.location_latitude = :lat)', {
-    //             //   lat: search,
-    //             // })
-    //           }),
-    //         )
-    //         .andWhere('merchant_store.merchant_id = :mid', { mid: merchant.id })
-    //         .orderBy('merchant_store.created_at', 'DESC')
-    //         .offset((currentPage - 1) * perPage)
-    //         .limit(perPage)
-    //         .getMany();
-    //     })
-    //     .then((result) => {
-    //       result.forEach((row) => {
-    //         dbOutputTime(row);
-    //         delete row.owner_password;
-    //         row.service_addon.forEach((sao) => {
-    //           delete sao.created_at;
-    //           delete sao.updated_at;
-    //         });
-    //       });
-    //       const list_result: ListResponse = {
-    //         total_item: totalItems,
-    //         limit: Number(perPage),
-    //         current_page: Number(currentPage),
-    //         items: result,
-    //       };
-    //       return list_result;
-    //     })
-    //     .catch((err) => {
-    //       const errors: RMessage = {
-    //         value: '',
-    //         property: '',
-    //         constraint: [
-    //           this.messageService.getjson({
-    //             code: 'DB_ERROR',
-    //             message: err.message,
-    //           }),
-    //         ],
-    //       };
-    //       throw new BadRequestException(
-    //         this.responseService.error(
-    //           HttpStatus.BAD_REQUEST,
-    //           errors,
-    //           'Bad Request',
-    //         ),
-    //       );
-    //     });
-    // } else {
-    //   return await this.storeRepository
-    //     .createQueryBuilder('merchant_store')
-    //     .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-    //     .leftJoinAndSelect(
-    //       'merchant_store.operational_hours',
-    //       'operational_hours',
-    //       'operational_hours.merchant_store_id = merchant_store.id',
-    //     )
-    //     .where('merchant_store.is_store_open = :is_open', { is_open: true })
-    //     .andWhere(
-    //       new Brackets((qb) => {
-    //         qb.where(':currTime >= operational_hours.open_hour', {
-    //           currTime: currTime,
-    //         });
-    //         qb.andWhere(':currTime < operational_hours.close_hour', {
-    //           currTime: currTime,
-    //         });
-    //         qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
-    //           weekOfDay: weekOfDay,
-    //         });
-    //       }),
-    //     )
-    //     .andWhere(
-    //       new Brackets((qb) => {
-    //         qb.where('lower(merchant_store.name) like :mname', {
-    //           mname: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.phone) like :sname', {
-    //           sname: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
-    //           shp: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.owner_email) like :smail', {
-    //           smail: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.address) like :astrore', {
-    //           astrore: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.post_code) like :pcode', {
-    //           pcode: '%' + search + '%',
-    //         });
-    //         qb.orWhere('lower(merchant_store.guidance) like :guidance', {
-    //           guidance: '%' + search + '%',
-    //         });
-    //         // .orWhere('merchant_store.location_longitude = :long', {
-    //         //   long: search,
-    //         // })
-    //         // .orWhere('merchant_store.location_latitude = :lat', {
-    //         //   lat: search,
-    //         // })
-    //       }),
-    //     )
-    //     .getCount()
-    //     .then(async (counts) => {
-    //       totalItems = counts;
-    //       return await this.storeRepository
-    //         .createQueryBuilder('merchant_store')
-    //         .leftJoinAndSelect(
-    //           'merchant_store.operational_hours',
-    //           'operational_hours',
-    //           'operational_hours.merchant_store_id = merchant_store.id',
-    //         )
-    //         .leftJoinAndSelect('merchant_store.service_addon', 'merchant_addon')
-    //         .where('merchant_store.is_store_open = :is_open', { is_open: true })
-    //         .andWhere(
-    //           new Brackets((qb) => {
-    //             qb.where(':currTime >= operational_hours.open_hour', {
-    //               currTime: currTime,
-    //             });
-    //             qb.andWhere(':currTime < operational_hours.close_hour', {
-    //               currTime: currTime,
-    //             });
-    //             qb.andWhere('operational_hours.day_of_week = :weekOfDay', {
-    //               weekOfDay: weekOfDay,
-    //             });
-    //           }),
-    //         )
-    //         .andWhere(
-    //           new Brackets((qb) => {
-    //             qb.where('lower(merchant_store.name) like :mname', {
-    //               mname: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.phone) like :sname', {
-    //               sname: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.owner_phone) like :shp', {
-    //               shp: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.owner_email) like :smail', {
-    //               smail: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.address) like :astrore', {
-    //               astrore: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.post_code) like :pcode', {
-    //               pcode: '%' + search + '%',
-    //             });
-    //             qb.orWhere('lower(merchant_store.guidance) like :guidance', {
-    //               guidance: '%' + search + '%',
-    //             });
-    //             // .orWhere('merchant_store.location_longitude = :long', {
-    //             //   long: search,
-    //             // })
-    //             // .orWhere('merchant_store.location_latitude = :lat', {
-    //             //   lat: search,
-    //             // })
-    //           }),
-    //         )
-    //         .orderBy('merchant_store.created_at', 'ASC')
-    //         .offset((currentPage - 1) * perPage)
-    //         .limit(perPage)
-    //         .getMany();
-    //     })
-    //     .then((result) => {
-    //       result.forEach((row) => {
-    //         dbOutputTime(row);
-    //         delete row.owner_password;
-    //         row.service_addon.forEach((sao) => {
-    //           delete sao.created_at;
-    //           delete sao.updated_at;
-    //         });
-    //         row.operational_hours.forEach((oph) => {
-    //           delete oph.created_at;
-    //           delete oph.updated_at;
-    //         });
-    //       });
-    //       const list_result: ListResponse = {
-    //         total_item: totalItems,
-    //         limit: Number(perPage),
-    //         current_page: Number(currentPage),
-    //         items: result,
-    //       };
-    //       return list_result;
-    //     })
-    //     .catch((err) => {
-    //       const errors: RMessage = {
-    //         value: '',
-    //         property: '',
-    //         constraint: [
-    //           this.messageService.getjson({
-    //             code: 'DB_ERROR',
-    //             message: err.message,
-    //           }),
-    //         ],
-    //       };
-    //       throw new BadRequestException(
-    //         this.responseService.error(
-    //           HttpStatus.BAD_REQUEST,
-    //           errors,
-    //           'Bad Request',
-    //         ),
-    //       );
-    //     });
-    // }
   }
 
   async updateStoreCategories(
@@ -815,16 +492,15 @@ export class StoresService {
       .where('s.id = :sid', { sid: args.store_id })
       .getOne()
       .catch(() => {
+        const messages = {
+          value: args.store_id,
+          property: 'store_id',
+          constraint: [this.messageService.get('merchant.general.idNotFound')],
+        };
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
-            {
-              value: args.store_id,
-              property: 'store_id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
+            messages,
             'Bad Request',
           ),
         );
@@ -861,11 +537,10 @@ export class StoresService {
       );
     }
     stoCatExist.store_categories = listStoCat;
-    return await this.storeRepository
+    return this.storeRepository
       .save(stoCatExist)
       .then(async (updateResult) => {
         dbOutputTime(updateResult);
-        // delete updateResult.owner_password;
         updateResult.store_categories.forEach((sao) => {
           delete sao.created_at;
           delete sao.updated_at;
@@ -877,14 +552,15 @@ export class StoresService {
         );
       })
       .catch((err) => {
+        const messages = {
+          value: null,
+          property: '',
+          constraint: [err.message],
+        };
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
-            {
-              value: null,
-              property: '',
-              constraint: [err.message],
-            },
+            messages,
             'Bad Request',
           ),
         );

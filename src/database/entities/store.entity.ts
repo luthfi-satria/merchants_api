@@ -42,7 +42,7 @@ export class StoreDocument {
 
   @ManyToOne(() => MerchantDocument, (merchant) => merchant.id)
   @JoinColumn({ name: 'merchant_id' })
-  merchant: Promise<MerchantDocument>;
+  merchant: MerchantDocument;
 
   @Column('uuid')
   merchant_id: string;
@@ -101,6 +101,11 @@ export class StoreDocument {
     default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Photo+Image',
   })
   photo: string;
+
+  @Column({
+    default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Photo+Image',
+  })
+  banner: string;
 
   @ManyToMany(() => StoreCategoriesDocument)
   @JoinTable({ name: 'merchant_store_store_categories' })
