@@ -63,10 +63,19 @@ export class QueryService {
     let totalItems = 0;
     const store_category_id: string = data.store_category_id || null;
 
-    const delivery_only =
-      data.pickup == true
-        ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
-        : [enumDeliveryType.delivery_only];
+    let delivery_only;
+    if (data.pickup) {
+      delivery_only =
+        data.pickup == true
+          ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
+          : [enumDeliveryType.delivery_only];
+    } else {
+      delivery_only = [
+        enumDeliveryType.delivery_and_pickup,
+        enumDeliveryType.pickup_only,
+        enumDeliveryType.delivery_only,
+      ];
+    }
     const is24hour = data?.is_24hrs ? true : false;
     const open_24_hour = data.is_24hrs || false;
 
@@ -196,7 +205,7 @@ export class QueryService {
     listCount[0].forEach((item) => {
       listId.push(item.id);
     });
-    const qListData = await this.storeRepository
+    const qListData = this.storeRepository
       .createQueryBuilder('merchant_store')
       .addSelect(
         '(6371 * ACOS(COS(RADIANS(' +
@@ -262,20 +271,30 @@ export class QueryService {
 
   async getListQueryStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
     try {
-      const search = data.search || '';
       const radius = data.distance || 25;
       const lat = data.location_latitude;
       const long = data.location_longitude;
-      // search = search.toLowerCase();
       const currentPage = data.page || 1;
       const perPage = Number(data.limit) || 10;
       const store_category_id: string = data.store_category_id || null;
 
       // ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
-      const delivery_only =
-        data.pickup == true
-          ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
-          : [enumDeliveryType.delivery_only];
+      let delivery_only;
+      if (data.pickup) {
+        delivery_only =
+          data.pickup == true
+            ? [
+                enumDeliveryType.delivery_and_pickup,
+                enumDeliveryType.pickup_only,
+              ]
+            : [enumDeliveryType.delivery_only];
+      } else {
+        delivery_only = [
+          enumDeliveryType.delivery_and_pickup,
+          enumDeliveryType.pickup_only,
+          enumDeliveryType.delivery_only,
+        ];
+      }
       const is24hrs = data?.is_24hrs ? true : false;
       const open_24_hour = data.is_24hrs;
       const include_closed_stores = data.include_closed_stores || false;

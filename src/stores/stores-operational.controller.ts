@@ -3,7 +3,6 @@ import {
   Controller,
   Logger,
   NotFoundException,
-  ParseArrayPipe,
   Post,
   Req,
   UseGuards,
@@ -82,11 +81,10 @@ export class StoreOperationalController {
 
           console.log(`utc convert: ${utc_openHour} ${utc_closeHour}`);
 
-          const item = new StoreOperationalShiftDocument({
+          return new StoreOperationalShiftDocument({
             open_hour: utc_openHour,
             close_hour: utc_closeHour,
           });
-          return item;
         });
 
         //convert day of week into int
@@ -111,8 +109,8 @@ export class StoreOperationalController {
 
       const result = await this.mStoreOperationalService
         .updateStoreOperationalHours(store_id, parsedValue)
-        .then(async (res) => {
-          return await this.mStoreOperationalService
+        .then(() => {
+          return this.mStoreOperationalService
             .getAllStoreScheduleByStoreId(store_id)
             .catch((e) => {
               throw e;
@@ -159,7 +157,7 @@ export class StoreOperationalController {
       const { store_id } = req.user;
       const { is_open_24_hour } = data;
 
-      const result = await this.mStoreService
+      await this.mStoreService
         .getMerchantStoreDetailById(store_id)
         .catch((e) => {
           throw e;
@@ -185,29 +183,25 @@ export class StoreOperationalController {
           });
 
           if (is_open_24_hour) {
-            const x = await Promise.all(
+            return Promise.all(
               res.operational_hours.map(async (e) => {
-                return await this.mStoreOperationalService.forceAllScheduleToOpen(
+                return this.mStoreOperationalService.forceAllScheduleToOpen(
                   e.id,
                 );
               }),
             ).catch((e) => {
               throw e;
             });
-
-            return x;
           } else {
-            const y = await Promise.all(
+            return Promise.all(
               res.operational_hours.map(async (row) => {
-                return await this.mStoreOperationalService
+                return this.mStoreOperationalService
                   .resetScheduleToDefault(row.id)
                   .catch((e) => {
                     throw e;
                   });
               }),
             );
-
-            return y;
           }
         });
 

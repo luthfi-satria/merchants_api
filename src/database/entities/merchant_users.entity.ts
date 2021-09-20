@@ -49,15 +49,15 @@ export class MerchantUsersDocument {
 
   @ManyToOne(() => GroupDocument, (group) => group.id)
   @JoinColumn({ name: 'group_id' })
-  group: GroupDocument;
+  group: Promise<GroupDocument>;
 
   @ManyToOne(() => MerchantDocument, (merchant) => merchant.id)
   @JoinColumn({ name: 'merchant_id' })
-  merchant: MerchantDocument;
+  merchant: Promise<MerchantDocument>;
 
   @ManyToOne(() => StoreDocument, (store) => store.id)
   @JoinColumn({ name: 'store_id' })
-  store: StoreDocument;
+  store: Promise<StoreDocument>;
 
   @Column({ nullable: true })
   token_reset_password: string;

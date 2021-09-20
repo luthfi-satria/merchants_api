@@ -9,7 +9,7 @@ import {
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { ProfileService } from './profile.service';
-import { Response, ResponseStatusCode } from 'src/response/response.decorator';
+import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';

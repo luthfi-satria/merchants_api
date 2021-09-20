@@ -2,22 +2,15 @@ import {
   registerDecorator,
   ValidationOptions,
   ValidatorConstraintInterface,
-  ValidationArguments,
   ValidatorConstraint,
 } from 'class-validator';
 
-function convertTimeToSecond(time: string): number {
-  const str1: any = time.split(':');
-  const totalSeconds1 = parseInt(str1[0] * 3600 + str1[1] * 60 + str1[0]);
-  return totalSeconds1;
-}
-
 @ValidatorConstraint({ name: 'IsBiggerThan', async: false })
 export class IsBiggerThanConstraint implements ValidatorConstraintInterface {
-  validate(value: any, args: ValidationArguments) {
+  validate() {
     return false;
   }
-  defaultMessage(args: ValidationArguments) {
+  defaultMessage() {
     return `open hour should not more that than close_hour`;
   }
 }
@@ -40,10 +33,10 @@ export function IsBiggerThan(
 
 @ValidatorConstraint({ name: 'IsLowerThan', async: false })
 export class IsLowerThanConstraint implements ValidatorConstraintInterface {
-  validate(value: any, args: ValidationArguments) {
+  validate() {
     return false;
   }
-  defaultMessage(args: ValidationArguments) {
+  defaultMessage() {
     return `close_hour value should not below from open_hour`;
   }
 }

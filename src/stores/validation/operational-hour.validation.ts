@@ -1,21 +1,15 @@
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
-  IsDefined,
   IsIn,
   IsMilitaryTime,
   IsNotEmpty,
-  IsNotEmptyObject,
   IsNumber,
-  IsObject,
-  IsOptional,
   IsString,
-  IsUUID,
   Max,
   Min,
   ValidateNested,
 } from 'class-validator';
-import { IStoreOperationalPayload } from '../types';
 
 export class StoreOpenValidation {
   @IsNotEmpty()

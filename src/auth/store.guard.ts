@@ -102,7 +102,7 @@ export class RoleStoreGuard implements CanActivate {
           catchError((err: any) => {
             Logger.error(err.message, '', this.LOG_CONTEXT);
 
-            const { status, statusText } = err.response;
+            const { status } = err.response;
 
             if (status == 401) {
               throw new UnauthorizedException(

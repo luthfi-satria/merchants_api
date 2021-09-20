@@ -51,7 +51,7 @@ export class ProfileService {
     admin.email = data.email;
     const result = await this.merchantRepository.save(admin);
     if (result) {
-      return await this.merchantRepository.findOne(result.id);
+      return this.merchantRepository.findOne(result.id);
     }
   }
 
@@ -61,7 +61,7 @@ export class ProfileService {
     admin.phone = data.phone;
     const result = await this.merchantRepository.save(admin);
     if (result) {
-      return await this.merchantRepository.findOne(result.id);
+      return this.merchantRepository.findOne(result.id);
     }
   }
 }

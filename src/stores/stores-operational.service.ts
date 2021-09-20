@@ -144,8 +144,8 @@ export class StoreOperationalService {
 
   public async updateStoreOpenStatus(merchant_id: string, is_open: boolean) {
     try {
-      const weekDays = Array.from(Array(7)).map((e) => ({ is_open: is_open }));
-      const result = await this.storesRepository
+      const weekDays = Array.from(Array(7)).map(() => ({ is_open: is_open }));
+      return await this.storesRepository
         .update(merchant_id, {
           is_store_open: is_open,
         })
@@ -166,8 +166,6 @@ export class StoreOperationalService {
         .catch((e) => {
           throw e;
         });
-
-      return result;
     } catch (e) {
       throw e;
     }
@@ -205,19 +203,15 @@ export class StoreOperationalService {
     oldSchedule: StoreOperationalHoursDocument[],
     newSchedule: StoreOperationalHoursDocument[],
   ) {
-    const parsedValue = await Promise.all(
+    return Promise.all(
       oldSchedule.map(async (row) => {
         const isFound = newSchedule.find((e) => {
-          const isFounded =
-            e.day_of_week.toString() === row.day_of_week.toString(); // convert to string because typeorm find() result.
-          return isFounded;
+          return e.day_of_week.toString() === row.day_of_week.toString(); // convert to string because typeorm find() result.
         });
 
         if (isFound) {
           // Delete existing shifts and replace with new ones
-          const result = await this.deleteExistingOperationalShifts(
-            row.id,
-          ).catch((e) => {
+          await this.deleteExistingOperationalShifts(row.id).catch((e) => {
             throw e;
           });
 
@@ -231,13 +225,10 @@ export class StoreOperationalService {
           row.shifts = newSchedules;
           row.is_open_24h = isFound.is_open_24h;
           row.gmt_offset = isFound.gmt_offset;
-          //row.is_open = isFound.is_open;
         }
 
         return new StoreOperationalHoursDocument({ ...row });
       }),
     );
-
-    return parsedValue;
   }
 }

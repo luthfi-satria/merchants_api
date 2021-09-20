@@ -43,7 +43,7 @@ export class StoresService {
     @InjectRepository(StoreCategoriesDocument)
     private readonly storeCategoriesRepository: Repository<StoreCategoriesDocument>,
     private readonly cityService: CityService,
-  ) {}
+  ) { }
 
   createInstance(data: StoreDocument): StoreDocument {
     return this.storeRepository.create(data);
