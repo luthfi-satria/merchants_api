@@ -354,21 +354,12 @@ export class StoresService {
           qb.orWhere('ms.phone ilike :sname', {
             sname: '%' + search.toLowerCase() + '%',
           });
-          // qb.orWhere('ms.owner_phone ilike :shp', {
-          //   shp: '%' + search.toLowerCase() + '%',
-          // });
           qb.orWhere('ms.email ilike :smail', {
             smail: '%' + search.toLowerCase() + '%',
           });
           qb.orWhere('ms.address ilike :astrore', {
             astrore: '%' + search.toLowerCase() + '%',
           });
-          // qb.orWhere('ms.post_code ilike :pcode', {
-          //   pcode: '%' + search.toLowerCase() + '%',
-          // });
-          // qb.orWhere('ms.guidance ilike :guidance', {
-          //   guidance: '%' + search.toLowerCase() + '%',
-          // });
         }),
       );
     }
