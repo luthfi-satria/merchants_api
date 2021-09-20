@@ -446,11 +446,7 @@ export class StoresService {
         items: list,
       };
 
-      return this.responseService.success(
-        true,
-        this.messageService.get('merchant.liststore.success'),
-        list_result,
-      );
+      return list_result;
     } catch (error) {
       console.log(
         '===========================Start Database error=================================\n',
