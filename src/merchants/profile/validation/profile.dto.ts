@@ -79,11 +79,11 @@ export class ResponseMerchantDto {
 
   deleted_at: Date;
 
-  group: Promise<GroupDocument>;
+  group: GroupDocument;
 
-  merchant: Promise<MerchantDocument>;
+  merchant: MerchantDocument;
 
-  store: Promise<StoreDocument>;
+  store: StoreDocument;
 
   nip: string;
 }
