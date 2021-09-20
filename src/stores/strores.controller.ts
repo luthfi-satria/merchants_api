@@ -209,29 +209,33 @@ export class StoresController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async getsores(@Req() req: any, @Query() data: ListStoreDTO): Promise<any> {
-    const listgroup: any = await this.storesService.listGroupStore(
-      data,
-      req.user,
-    );
-    if (!listgroup) {
-      const errors: RMessage = {
-        value: '',
-        property: 'listgroup',
-        constraint: [this.messageService.get('merchant.liststore.fail')],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
+    try {
+      const listgroup: any = await this.storesService.listGroupStore(
+        data,
+        req.user,
       );
+      if (!listgroup) {
+        const errors: RMessage = {
+          value: '',
+          property: 'listgroup',
+          constraint: [this.messageService.get('merchant.liststore.fail')],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.liststore.success'),
+        listgroup,
+      );
+    } catch (error) {
+      Logger.error(error);
     }
-    return this.responseService.success(
-      true,
-      this.messageService.get('merchant.liststore.success'),
-      listgroup,
-    );
   }
 
   @Put('stores/:id/category')

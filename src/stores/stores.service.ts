@@ -353,7 +353,7 @@ export class StoresService {
 
     const store = this.storeRepository
       .createQueryBuilder('ms')
-      .leftJoinAndSelect('ms.service_addon', 'merchant_addon')
+      .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
       .leftJoinAndSelect('ms.merchant', 'merchant')
       .leftJoinAndSelect('merchant.group', 'group');
     if (search) {
