@@ -14,6 +14,8 @@ import {
   UnauthorizedException,
   Req,
   UploadedFiles,
+  ClassSerializerInterceptor,
+  SerializeOptions,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -102,10 +104,10 @@ export class GroupsController {
       );
     }
 
-    for (let i = 0; i < files.length; i++) {
-      const file_name = '/upload_groups/' + files[i].filename;
+    for (const file of files) {
+      const file_name = '/upload_groups/' + file.filename;
       const url = await this.storage.store(file_name);
-      createGroupDTO[files[i].fieldname] = url;
+      createGroupDTO[file.fieldname] = url;
     }
 
     try {
@@ -186,10 +188,10 @@ export class GroupsController {
       );
     }
 
-    for (let i = 0; i < files.length; i++) {
-      const file_name = '/upload_groups/' + files[i].filename;
+    for (const file of files) {
+      const file_name = '/upload_groups/' + file.filename;
       const url = await this.storage.store(file_name);
-      updateGroupDTO[files[i].fieldname] = url;
+      updateGroupDTO[file.fieldname] = url;
     }
     try {
       const updateresult: Record<string, any> =
@@ -281,6 +283,18 @@ export class GroupsController {
         throw err.response.data;
       }),
     );
+  }
+
+  @Get('groups/:id')
+  @UserTypeAndLevel('admin.*', 'merchant.group')
+  @AuthJwtGuard()
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    strategy: 'excludeAll',
+  })
+  @ResponseStatusCode()
+  async viewGroups(@Req() req: any, @Param('id') id: string): Promise<any> {
+    return this.groupsService.viewGroupDetail(id, req.user);
   }
 
   @Get('groups')

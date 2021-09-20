@@ -371,7 +371,7 @@ export class StoresService {
     }
 
     if (data.status) {
-      store.andWhere('group.status = :gstat', {
+      store.andWhere('ms.status = :gstat', {
         gstat: data.status,
       });
     }

@@ -546,7 +546,7 @@ export class MerchantsService {
     }
 
     if (data.status) {
-      merchant.andWhere('mc_group.status = :gstat', {
+      merchant.andWhere('merchant_merchant.status = :gstat', {
         gstat: data.status,
       });
     }

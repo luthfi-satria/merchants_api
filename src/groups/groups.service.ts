@@ -11,13 +11,12 @@ import { catchError, map } from 'rxjs/operators';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { Brackets, Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
-import { ListResponse } from 'src/response/response.interface';
+import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { deleteCredParam } from 'src/utils/general-utils';
-// import { MerchantsService } from 'src/merchants/merchants.service';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -27,7 +26,6 @@ import { GroupUsersService } from './group_users.service';
 import { GroupUser } from './interface/group_users.interface';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { ListGroupDTO } from './validation/list-group.validation';
-// import { MerchantsService } from 'src/merchants/merchants.service';
 
 @Injectable()
 export class GroupsService {
@@ -36,7 +34,6 @@ export class GroupsService {
     private readonly groupRepository: Repository<GroupDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
-    // private readonly merchantService: MerchantsService,
     private readonly groupUserService: GroupUsersService,
     private readonly storage: CommonStorageService,
     private httpService: HttpService,
@@ -46,22 +43,22 @@ export class GroupsService {
   ) {}
 
   async findMerchantById(id: string): Promise<GroupDocument> {
-    return await this.groupRepository.findOne({ id: id });
+    return this.groupRepository.findOne({ id: id });
   }
 
   async findMerchantByPhone(phone: string): Promise<GroupDocument> {
-    return await this.groupRepository.findOne({ where: { phone: phone } });
+    return this.groupRepository.findOne({ where: { phone: phone } });
   }
 
   async findMerchantByPhoneExceptId(
     phone: string,
     id: string,
   ): Promise<GroupDocument> {
-    return await this.groupRepository.findOne({ where: { phone, id } });
+    return this.groupRepository.findOne({ where: { phone, id } });
   }
 
   async findMerchantByEmail(email: string): Promise<GroupDocument> {
-    return await this.groupRepository.findOne({
+    return this.groupRepository.findOne({
       where: { email: email },
     });
   }
@@ -102,9 +99,6 @@ export class GroupsService {
         password: createGroupDTO.director_password,
         nip: createGroupDTO.director_nip,
       };
-      // const director = await this.groupUserService.createUserWithoutPassword(
-      //   create_director,
-      // );
       const director = await this.groupUserService.createUserPassword(
         create_director,
       );
@@ -120,9 +114,6 @@ export class GroupsService {
           nip: createGroupDTO.pic_operational_nip,
         };
         const pic_operational =
-          // await this.groupUserService.createUserWithoutPassword(
-          //   create_pic_operational,
-          // );
           await this.groupUserService.createUserPassword(
             create_pic_operational,
           );
@@ -139,9 +130,6 @@ export class GroupsService {
           nip: createGroupDTO.pic_finance_nip,
         };
         const pic_finance =
-          // await this.groupUserService.createUserWithoutPassword(
-          //   create_pic_finance,
-          // );
           await this.groupUserService.createUserPassword(create_pic_finance);
         create.users.push(pic_finance);
       }
@@ -262,6 +250,32 @@ export class GroupsService {
       });
   }
 
+  async viewGroupDetail(id: string, user: Record<string, any>): Promise<RSuccessMessage> {
+    try {
+      const gid = user.user_type == 'admin' ? id : user.group_id;
+      const result = await this.groupRepository.findOne(gid);
+      deleteCredParam(result);
+    return this.responseService.success(
+        true,
+        this.messageService.get('merchant.listgroup.success'),
+        result,
+      );
+    } catch (error) {
+      const errors: RMessage = {
+        value: '',
+        property: 'listgroup',
+        constraint: [this.messageService.get('merchant.listgroup.fail')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
   async listGroup(
     data: ListGroupDTO,
     user: Record<string, any>,
@@ -318,16 +332,15 @@ export class GroupsService {
 
     const count = await query.getCount();
     const list = await query.getMany();
-    list.map((element) => {
+    list.forEach(element => {
       return deleteCredParam(element);
     });
-    const list_result: ListResponse = {
+    return {
       total_item: count,
       limit: Number(perPage),
       current_page: Number(currentPage),
       items: list,
     };
-    return list_result;
   }
 
   //------------------------------------------------------------------------------
