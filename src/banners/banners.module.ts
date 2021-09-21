@@ -8,6 +8,6 @@ import { BannersService } from './banners.service';
   imports: [TypeOrmModule.forFeature([StoreDocument])],
   exports: [BannersService],
   controllers: [BannersController],
-  providers: [BannersService]
+  providers: [BannersService],
 })
-export class BannersModule { }
+export class BannersModule {}

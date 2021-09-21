@@ -1,9 +1,9 @@
 export class UpdateBannerByMerchantIdDto {
-    banner: string
-    merchant_id: string
+  banner: string;
+  merchant_id: string;
 }
 
 export class UpdateBannerByStoreIdDto {
-    store_id: string
-    banner: string
+  store_id: string;
+  banner: string;
 }
