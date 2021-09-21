@@ -22,9 +22,6 @@ export class ResponseInterceptor
     context: ExecutionContext,
     next: CallHandler,
   ): Promise<Observable<Promise<any> | string>> {
-    // const ctx: HttpArgumentsHost = context.switchToHttp();
-    // const responseExpress: any = ctx.getResponse();
-
     return next.handle().pipe(
       map(async (response: Promise<Record<string, any> | string>) => {
         // const status: number = responseExpress.statusCode;

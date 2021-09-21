@@ -404,72 +404,6 @@ export class MerchantsService {
         ),
       );
     }
-    //   //   try {
-    //   //     const url = await this.storage.store(data.owner_ktp);
-    //   //     merchantExist.owner_ktp = url;
-    //   //   } catch (e) {
-    //   //     console.error(e);
-    //   //     throw new InternalServerErrorException(e.message);
-    //   //   }
-    //   // }
-    //   // if (
-    //   //   data.owner_face_ktp != null &&
-    //   //   data.owner_face_ktp != '' &&
-    //   //   typeof data.owner_face_ktp != 'undefined'
-    //   // ) {
-    //   //   try {
-    //   //     const url = await this.storage.store(data.owner_face_ktp);
-    //   //     merchantExist.owner_face_ktp = url;
-    //   //   } catch (e) {
-    //   //     console.error(e);
-    //   //     throw new InternalServerErrorException(e.message);
-    //   //   }
-    //   // }
-    //   merchantExist.owner_ktp = await this.extendValidateImageUpdate(
-    //     data.owner_ktp,
-    //     merchantExist.owner_ktp,
-    //   );
-    //   merchantExist.owner_face_ktp = await this.extendValidateImageUpdate(
-    //     data.owner_face_ktp,
-    //     merchantExist.owner_face_ktp,
-    //   );
-    //   merchantExist.logo = await this.extendValidateImageUpdate(
-    //     data.logo,
-    //     merchantExist.logo,
-    //   );
-    //   return await this.merchantRepository
-    //     .save(merchantExist)
-    //     // .createQueryBuilder('merchant_merchant')
-    //     // .update(MerchantDocument)
-    //     // .set(merchantExist)
-    //     // .where('id= :id', { id: data.id })
-    //     // .returning('*')
-    //     // .execute()
-    //     .then(async (response) => {
-    //       dbOutputTime(response);
-    //       await this.merchantUsersRepository
-    //         .createQueryBuilder('merchant_users')
-    //         .update(MerchantUsersDocument)
-    //         .set(updateMUsers)
-    //         .where('merchant_id= :gid', { gid: data.id })
-    //         .execute();
-    //       delete response.owner_password;
-    //       return response;
-    //     })
-    //     .catch((err) => {
-    //       const errors: RMessage = {
-    //         value: '',
-    //         property: err.column,
-    //         constraint: [err.message],
-    //       };
-    //       throw new BadRequestException(
-    //         this.responseService.error(
-    //           HttpStatus.BAD_REQUEST,
-    //           errors,
-    //           'Bad Request',
-    //         ),
-    //       );
-    //     });
   }
 
   async deleteMerchantMerchantProfile(data: string): Promise<any> {
@@ -497,6 +431,37 @@ export class MerchantsService {
           ),
         );
       });
+  }
+
+  async viewMerchantDetail(
+    id: string,
+    user: Record<string, any>,
+  ): Promise<RSuccessMessage> {
+    try {
+      const mid = user.level == 'merchant' ? user.merchant_id : id;
+      const result = await this.merchantRepository.findOne({
+        where: { id: mid },
+        relations: ['group'],
+      });
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.listmerchant.success'),
+        result,
+      );
+    } catch (error) {
+      const errors: RMessage = {
+        value: '',
+        property: 'listmerchant',
+        constraint: [this.messageService.get('merchant.listmerchant.fail')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async listGroupMerchant(
@@ -594,122 +559,6 @@ export class MerchantsService {
         '\n============================End Database error==================================',
       );
     }
-
-    // return await this.merchantRepository
-    //   .createQueryBuilder('merchant_merchant')
-    //   .select('*')
-    //   .orWhere('lower(name) like :mname', {
-    //     mname: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(address) like :addr', {
-    //     addr: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(owner_name) like :oname', {
-    //     oname: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(owner_email) like :omail', {
-    //     omail: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(owner_phone) like :ophone', {
-    //     ophone: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(owner_password) like :opass', {
-    //     opass: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(owner_nik) like :onik', {
-    //     onik: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(owner_dob_city) like :odc', {
-    //     odc: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(owner_address) like :oaddr', {
-    //     oaddr: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(bank_acc_name) like :ban', {
-    //     ban: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(bank_acc_number) like :banu', {
-    //     banu: '%' + search + '%',
-    //   })
-    //   .orWhere('lower(tarif_pb1) like :tpb', {
-    //     tpb: '%' + search + '%',
-    //   })
-    //   .getCount()
-    //   .then(async (counts) => {
-    //     totalItems = counts;
-    //     return await this.merchantRepository
-    //       .createQueryBuilder('merchant_merchant')
-    //       .select('*')
-    //       .where('lower(name) like :mname', {
-    //         mname: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(address) like :addr', {
-    //         addr: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(owner_name) like :oname', {
-    //         oname: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(owner_email) like :omail', {
-    //         omail: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(owner_phone) like :ophone', {
-    //         ophone: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(owner_password) like :opass', {
-    //         opass: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(owner_nik) like :onik', {
-    //         onik: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(owner_dob_city) like :odc', {
-    //         odc: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(owner_address) like :oaddr', {
-    //         oaddr: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(bank_acc_name) like :ban', {
-    //         ban: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(bank_acc_number) like :banu', {
-    //         banu: '%' + search + '%',
-    //       })
-    //       .orWhere('lower(tarif_pb1) like :tpb', {
-    //         tpb: '%' + search + '%',
-    //       })
-    //       .orderBy('created_at', 'DESC')
-    //       .offset((currentPage - 1) * perPage)
-    //       .limit(perPage)
-    //       .getRawMany();
-    //   })
-    //   .then((result) => {
-    //     result.forEach((row) => {
-    //       dbOutputTime(row);
-    //       row.owner_dob = moment(row.owner_dob).format('YYYY-MM DD');
-    //       delete row.owner_password;
-    //     });
-
-    //     const list_result: ListResponse = {
-    //       total_item: totalItems,
-    //       limit: Number(perPage),
-    //       current_page: Number(currentPage),
-    //       items: result,
-    //     };
-    //     return list_result;
-    //   })
-    //   .catch((err) => {
-    //     const errors: RMessage = {
-    //       value: '',
-    //       property: '',
-    //       constraint: [err.message],
-    //     };
-    //     throw new BadRequestException(
-    //       this.responseService.error(
-    //         HttpStatus.BAD_REQUEST,
-    //         errors,
-    //         'Bad Request',
-    //       ),
-    //     );
-    //   });
   }
 
   async createCatalogs(data: Record<string, any>) {

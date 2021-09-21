@@ -205,7 +205,7 @@ export class StoresController {
   @UserTypeAndLevel('admin.*', 'merchant.*')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async viewGroups(@Req() req: any, @Param('id') id: string): Promise<any> {
+  async viewStores(@Req() req: any, @Param('id') id: string): Promise<any> {
     return this.storesService.viewStoreDetail(id, req.user);
   }
 

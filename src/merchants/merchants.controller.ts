@@ -31,6 +31,7 @@ import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
+import { ExcludeResponseMerchant } from 'src/merchants/exclude_response_merchant.interceptor';
 
 @Controller('api/v1/merchants')
 export class MerchantsController {
@@ -158,6 +159,15 @@ export class MerchantsController {
         ),
       );
     }
+  }
+
+  @Get('merchants/:id')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @AuthJwtGuard()
+  @UseInterceptors(ExcludeResponseMerchant)
+  @ResponseStatusCode()
+  async viewMerchant(@Req() req: any, @Param('id') id: string): Promise<any> {
+    return this.merchantsService.viewMerchantDetail(id, req.user);
   }
 
   @Get('merchants')

@@ -14,8 +14,6 @@ import {
   UnauthorizedException,
   Req,
   UploadedFiles,
-  ClassSerializerInterceptor,
-  SerializeOptions,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -288,10 +286,6 @@ export class GroupsController {
   @Get('groups/:id')
   @UserTypeAndLevel('admin.*', 'merchant.group')
   @AuthJwtGuard()
-  @UseInterceptors(ClassSerializerInterceptor)
-  @SerializeOptions({
-    strategy: 'excludeAll',
-  })
   @ResponseStatusCode()
   async viewGroups(@Req() req: any, @Param('id') id: string): Promise<any> {
     return this.groupsService.viewGroupDetail(id, req.user);
