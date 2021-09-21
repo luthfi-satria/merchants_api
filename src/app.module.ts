@@ -19,6 +19,7 @@ import { InternalModule } from './internal/internal.module';
 import { AuthModule } from './auth/auth.module';
 import { StoreCategoriesModule } from './store_categories/store_categories.module';
 import { PriceRangeModule } from './price_range/price_range.module';
+import { BannersModule } from './banners/banners.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { PriceRangeModule } from './price_range/price_range.module';
     AuthModule,
     StoreCategoriesModule,
     PriceRangeModule,
+    BannersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
