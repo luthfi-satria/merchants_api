@@ -96,6 +96,7 @@ export class StoresController {
       );
     } catch (error) {
       Logger.error(error);
+      throw error;
     }
   }
 
@@ -200,6 +201,14 @@ export class StoresController {
     );
   }
 
+  @Get('stores/:id')
+  @UserTypeAndLevel('admin.*', 'merchant.*')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async viewGroups(@Req() req: any, @Param('id') id: string): Promise<any> {
+    return this.storesService.viewStoreDetail(id, req.user);
+  }
+
   @Get('stores')
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
@@ -213,7 +222,7 @@ export class StoresController {
       if (!listgroup) {
         const errors: RMessage = {
           value: '',
-          property: 'listgroup',
+          property: 'liststore',
           constraint: [this.messageService.get('merchant.liststore.fail')],
         };
         throw new BadRequestException(

@@ -147,3 +147,15 @@ export const deleteCredParam = function (input: Record<string, any>) {
   // delete input.token_reset_password;
   return input;
 };
+
+export const delParamNoActiveUpdate = function (input: Record<string, any>) {
+  delete input.updated_at;
+  delete input.deleted_at;
+  delete input.director_password;
+  delete input.password;
+  delete input.owner_password;
+  delete input.pic_password;
+  delete input.pic_finance_password;
+  delete input.pic_operational_password;
+  return input;
+};

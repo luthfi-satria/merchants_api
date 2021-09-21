@@ -16,7 +16,7 @@ import { ResponseService } from 'src/response/response.service';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
-import { deleteCredParam } from 'src/utils/general-utils';
+import { deleteCredParam, delParamNoActiveUpdate } from 'src/utils/general-utils';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -254,7 +254,7 @@ export class GroupsService {
     try {
       const gid = user.user_type == 'admin' ? id : user.group_id;
       const result = await this.groupRepository.findOne(gid);
-      deleteCredParam(result);
+      delParamNoActiveUpdate(result);
     return this.responseService.success(
         true,
         this.messageService.get('merchant.listgroup.success'),

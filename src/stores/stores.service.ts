@@ -16,7 +16,11 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
+import {
+  dbOutputTime,
+  deleteCredParam,
+  delParamNoActiveUpdate,
+} from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreOperationalService } from './stores-operational.service';
@@ -43,7 +47,7 @@ export class StoresService {
     @InjectRepository(StoreCategoriesDocument)
     private readonly storeCategoriesRepository: Repository<StoreCategoriesDocument>,
     private readonly cityService: CityService,
-  ) { }
+  ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
     return this.storeRepository.create(data);
@@ -151,6 +155,7 @@ export class StoresService {
     store_document.city = await this.cityService.getCity(
       create_merchant_store_validation.city_id,
     );
+
     const merchant: MerchantDocument =
       await this.merchantService.findMerchantById(
         create_merchant_store_validation.merchant_id,
@@ -331,6 +336,48 @@ export class StoresService {
           ),
         );
       });
+  }
+
+  async viewStoreDetail(
+    id: string,
+    user: Record<string, any>,
+  ): Promise<RSuccessMessage> {
+    try {
+      const sid = user.level == 'store' ? user.store_id : id;
+      const store = this.storeRepository
+        .createQueryBuilder('ms')
+        .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
+        .leftJoinAndSelect('ms.merchant', 'merchant')
+        .leftJoinAndSelect('merchant.group', 'group')
+        .where('ms.id = :mid', {
+          mid: sid,
+        });
+      const list = await store.getMany();
+      list.forEach(async (element) => {
+        delParamNoActiveUpdate(element);
+        delParamNoActiveUpdate(element.merchant);
+        delParamNoActiveUpdate(element.merchant.group);
+      });
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.liststore.success'),
+        list,
+      );
+    } catch (error) {
+      const errors: RMessage = {
+        value: '',
+        property: 'liststore',
+        constraint: [this.messageService.get('merchant.liststore.fail')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async listGroupStore(
