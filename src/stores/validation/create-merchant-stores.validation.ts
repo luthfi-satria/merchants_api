@@ -52,7 +52,7 @@ export class CreateMerchantStoreValidation {
   banner: string;
 
   @IsNotEmpty()
-  @ArrayMaxSize(3)
+  @ArrayMaxSize(4)
   category_ids: string[];
 
   @IsNotEmpty()

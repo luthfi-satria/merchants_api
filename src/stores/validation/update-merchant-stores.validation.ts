@@ -51,7 +51,7 @@ export class UpdateMerchantStoreValidation {
   banner: string;
 
   @IsOptional()
-  @ArrayMaxSize(3)
+  @ArrayMaxSize(4)
   category_ids: string[];
 
   @IsOptional()
