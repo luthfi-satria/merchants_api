@@ -45,6 +45,8 @@ import { DeliveryTypeValidation } from './validation/delivery-type.validation';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { UpdateMerchantStoreValidation } from './validation/update-merchant-stores.validation';
 import { ListStoreDTO } from './validation/list-store.validation';
+import { ResponseExcludeParam } from 'src/response/response_exclude_param.decorator';
+import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -204,6 +206,8 @@ export class StoresController {
   @Get('stores/:id')
   @UserTypeAndLevel('admin.*', 'merchant.*')
   @AuthJwtGuard()
+  @ResponseExcludeParam('merchant', 'merchant.group')
+  @UseInterceptors(ResponseExcludeData)
   @ResponseStatusCode()
   async viewStores(@Req() req: any, @Param('id') id: string): Promise<any> {
     return this.storesService.viewStoreDetail(id, req.user);

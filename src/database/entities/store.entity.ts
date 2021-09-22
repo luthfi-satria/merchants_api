@@ -136,6 +136,12 @@ export class StoreDocument {
   @Column({ nullable: true })
   bank_account_name: string;
 
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  auto_accept_order: boolean;
+
   //Metadata
   @Column({
     type: 'enum',
@@ -152,6 +158,9 @@ export class StoreDocument {
 
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  approved_at: Date | string;
 
   @OneToMany(
     () => StoreOperationalHoursDocument,

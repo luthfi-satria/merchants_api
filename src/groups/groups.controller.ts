@@ -38,6 +38,7 @@ import { CommonStorageService } from 'src/common/storage/storage.service';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { ListGroupDTO } from './validation/list-group.validation';
+import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -286,6 +287,7 @@ export class GroupsController {
   @Get('groups/:id')
   @UserTypeAndLevel('admin.*', 'merchant.group')
   @AuthJwtGuard()
+  @UseInterceptors(ResponseExcludeData)
   @ResponseStatusCode()
   async viewGroups(@Req() req: any, @Param('id') id: string): Promise<any> {
     return this.groupsService.viewGroupDetail(id, req.user);
