@@ -27,6 +27,7 @@ import { UpdateMerchantStoreValidation } from './validation/update-merchant-stor
 import { CityService } from 'src/common/services/admins/city.service';
 import { ListStoreDTO } from './validation/list-store.validation';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
+import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 
 @Injectable()
 export class StoresService {
@@ -356,6 +357,7 @@ export class StoresService {
 
   async viewStoreDetail(
     id: string,
+    data: ViewStoreDetailDTO,
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
     try {
@@ -366,6 +368,10 @@ export class StoresService {
         .leftJoinAndSelect('ms.merchant', 'merchant')
         .leftJoinAndSelect('merchant.group', 'group')
         .leftJoinAndSelect('ms.store_categories', 'merchant_store_categories')
+        .leftJoinAndSelect(
+          'merchant_store_categories.languages',
+          'merchant_store_categories_languages',
+        )
         .leftJoinAndSelect(
           'ms.operational_hours',
           'operational_hours',
@@ -379,7 +385,22 @@ export class StoresService {
         .where('ms.id = :mid', {
           mid: sid,
         });
+
+      if (data.lang) {
+        store.andWhere('merchant_store_categories_languages.lang = :lid', {
+          lid: data.lang,
+        });
+      } else {
+        store.andWhere('merchant_store_categories_languages.lang = :lid', {
+          lid: 'id',
+        });
+      }
+
       const list = await store.getOne();
+      list.store_categories.forEach((element: Record<string, any>) => {
+        element.name = element.languages[0].name;
+        delete element.languages;
+      });
       list.operational_hours.forEach((element) => {
         element.day_of_week = DateTimeUtils.convertToDayOfWeek(
           Number(element.day_of_week),

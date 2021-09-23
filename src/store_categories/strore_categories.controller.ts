@@ -29,7 +29,6 @@ import { editFileName, imageFileFilter } from 'src/utils/general-utils';
 import { StoreCategoriesValidation } from './validation/store_categories.validation.dto';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { StoreCategoriesService } from './store_categories.service';
-import { RoleStoreCategoriesGuard } from 'src/auth/store-categories.guard';
 
 @Controller('api/v1/merchants')
 export class StoreCategoriesController {

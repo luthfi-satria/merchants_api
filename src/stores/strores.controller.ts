@@ -47,6 +47,7 @@ import { UpdateMerchantStoreValidation } from './validation/update-merchant-stor
 import { ListStoreDTO } from './validation/list-store.validation';
 import { ResponseExcludeParam } from 'src/response/response_exclude_param.decorator';
 import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
+import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -215,8 +216,12 @@ export class StoresController {
   @ResponseExcludeParam('merchant', 'merchant.group')
   @UseInterceptors(ResponseExcludeData)
   @ResponseStatusCode()
-  async viewStores(@Req() req: any, @Param('id') id: string): Promise<any> {
-    return this.storesService.viewStoreDetail(id, req.user);
+  async viewStores(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query() data: ViewStoreDetailDTO,
+  ): Promise<any> {
+    return this.storesService.viewStoreDetail(id, data, req.user);
   }
 
   @Get('stores')
