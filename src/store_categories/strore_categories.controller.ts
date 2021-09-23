@@ -148,7 +148,7 @@ export class StoreCategoriesController {
   }
 
   @Get('store/categories')
-  @UserType('admin')
+  @UserType('admin', 'merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async getMenusStores(
