@@ -33,7 +33,7 @@ export class BannersController {
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
     private readonly storage: CommonStorageService,
-  ) {}
+  ) { }
 
   @Put()
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
@@ -57,7 +57,7 @@ export class BannersController {
   ) {
     if (files.length > 0) {
       for (const file of files) {
-        const file_name = '/upload_merchants/' + file.filename;
+        const file_name = '/upload_stores/' + file.filename;
         const url = await this.storage.store(file_name);
         data[file.fieldname] = url;
       }
