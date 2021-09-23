@@ -1,21 +1,22 @@
 import { extname } from 'path';
 import momenttz from 'moment-timezone';
+import { randomBytes } from 'crypto';
 
 export function CreateRandomNumber(pjg: number): string {
+  const random_number = parseInt(randomBytes(4).toString('hex'), 16).toString();
   if (pjg == 4) {
-    const key: number = Math.floor(1000 + Math.random() * 9000);
-    return key + '';
+    return random_number.substring(random_number.length - 4);
   }
-  const key: number = Math.floor(100000 + Math.random() * 900000);
-  return key + '';
+  return random_number.substring(random_number.length - 6);
 }
 
 export const editFileName = (req: any, file: any, callback: any) => {
+  const random_number = parseInt('0.' + randomBytes(8).toString('hex'), 16);
   const name = file.originalname.split('.')[0];
   const fileExtName = extname(file.originalname);
   const randomName = Array(4)
     .fill(null)
-    .map(() => Math.round(Math.random() * 16).toString(16))
+    .map(() => Math.round(random_number * 16).toString(16))
     .join('');
   callback(null, `${name}-${randomName}${fileExtName}`);
 };
