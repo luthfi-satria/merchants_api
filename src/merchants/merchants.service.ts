@@ -540,10 +540,9 @@ export class MerchantsService {
     try {
       const totalItems = await merchant.getCount();
       const list = await merchant.getMany();
-      list.map((element) => {
-        let output = deleteCredParam(element);
-        output = deleteCredParam(element.group);
-        return output;
+      list.forEach((element) => {
+        deleteCredParam(element);
+        deleteCredParam(element.group);
       });
 
       const list_result: ListResponse = {
