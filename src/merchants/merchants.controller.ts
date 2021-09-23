@@ -33,6 +33,7 @@ import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
 import { ResponseExcludeParam } from 'src/response/response_exclude_param.decorator';
 import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
+import { MerchantStatus } from 'src/database/entities/merchant.entity';
 
 @Controller('api/v1/merchants')
 export class MerchantsController {
@@ -46,6 +47,7 @@ export class MerchantsController {
 
   @Post('merchants')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
@@ -66,6 +68,9 @@ export class MerchantsController {
     createMerchantDTO: CreateMerchantDTO,
     @UploadedFiles() files: Array<Express.Multer.File>,
   ): Promise<any> {
+    if (req.user.level == 'group') {
+      createMerchantDTO.status = MerchantStatus.Waiting_for_approval;
+    }
     this.imageValidationService
       .setFilter('logo', '')
       .setFilter('profile_store_photo', 'required');
