@@ -60,6 +60,9 @@ export class GroupsController {
         destination: './upload_groups',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageAndPdfFileFilter,
     }),
   )
@@ -137,6 +140,9 @@ export class GroupsController {
         destination: './upload_groups',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageAndPdfFileFilter,
     }),
   )
