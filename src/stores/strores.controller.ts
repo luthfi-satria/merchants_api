@@ -60,7 +60,7 @@ export class StoresController {
   ) {}
 
   @Post('stores')
-  @UserType('admin')
+  @UserType('admin', 'merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
