@@ -223,15 +223,15 @@ export class StoreOperationalController {
     }
   }
 
-  @Post('set-store-open')
-  @UserTypeAndLevel('merchant.store')
+  @Post('set-store-open/:store_id')
+  @UserTypeAndLevel('admin.*', 'merchant.store')
   @UseGuards(RoleStoreGuard)
   async updateStoreOpenStatus(
+    @Param('store_id') store_id: string,
     @Body(new ValidationPipe({ transform: true })) data: StoreOpenValidation,
     @Req() req: any,
   ) {
     try {
-      const { store_id } = req.user;
       const { is_store_open } = data;
 
       const result = await this.mStoreOperationalService
