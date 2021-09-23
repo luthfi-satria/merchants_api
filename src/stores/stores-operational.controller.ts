@@ -3,6 +3,7 @@ import {
   Controller,
   Logger,
   NotFoundException,
+  Param,
   Post,
   Req,
   UseGuards,
@@ -36,15 +37,15 @@ export class StoreOperationalController {
   ) {}
 
   @UseGuards(RoleStoreGuard)
-  @Post('set-operational-hours')
+  @Post('set-operational-hours/:store_id')
   @UserTypeAndLevel('admin.*', 'merchant.store')
   async updateOperationalHour(
+    @Param('store_id') store_id: string,
     @Body(new ValidationPipe())
     payload: StoreOpenHoursValidation,
     @Req() req: any,
   ) {
     try {
-      const { store_id } = req.user;
       const { gmt_offset, operational_hours } = payload;
 
       //populate store schedules if does not exists
