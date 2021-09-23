@@ -13,7 +13,6 @@ import {
   UseInterceptors,
   Req,
   UploadedFile,
-  UseGuards,
 } from '@nestjs/common';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { catchError, lastValueFrom, map } from 'rxjs';
@@ -44,7 +43,6 @@ export class StoreCategoriesController {
   @Post('store/categories')
   @UserType('admin')
   @AuthJwtGuard()
-  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   @UseInterceptors(
     FileInterceptor('image', {
@@ -91,7 +89,6 @@ export class StoreCategoriesController {
   @Put('store/categories/:id')
   @UserType('admin')
   @AuthJwtGuard()
-  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   @UseInterceptors(
     FileInterceptor('image', {
@@ -124,7 +121,6 @@ export class StoreCategoriesController {
   @Delete('store/categories/:id')
   @UserType('admin')
   @AuthJwtGuard()
-  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   async deleteMenusStores(
     @Param('id') id: string,
@@ -154,7 +150,6 @@ export class StoreCategoriesController {
   @Get('store/categories')
   @UserType('admin')
   @AuthJwtGuard()
-  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   async getMenusStores(
     @Req() req: any,
