@@ -52,6 +52,9 @@ export class StoreCategoriesController {
         destination: './upload_store_categories',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageFileFilter,
     }),
   )
@@ -96,6 +99,9 @@ export class StoreCategoriesController {
         destination: './upload_store_categories',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageFileFilter,
     }),
   )

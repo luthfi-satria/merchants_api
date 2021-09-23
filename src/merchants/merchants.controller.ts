@@ -54,6 +54,9 @@ export class MerchantsController {
         destination: './upload_merchants',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageFileFilter,
     }),
   )
@@ -93,6 +96,9 @@ export class MerchantsController {
         destination: './upload_merchants',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageFileFilter,
     }),
   )
