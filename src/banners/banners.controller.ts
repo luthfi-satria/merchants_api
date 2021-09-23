@@ -33,7 +33,7 @@ export class BannersController {
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
     private readonly storage: CommonStorageService,
-  ) { }
+  ) {}
 
   @Put()
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
