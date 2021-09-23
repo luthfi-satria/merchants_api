@@ -6,6 +6,7 @@ import {
   Put,
   Req,
   UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -21,6 +22,9 @@ import {
   UpdateBannerByMerchantIdDto,
   UpdateBannerByStoreIdDto,
 } from './dto/update-banner.dto';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { editFileName, imageJpgPngFileFilter } from 'src/utils/general-utils';
 
 @Controller('/api/v1/merchants/banners')
 export class BannersController {
@@ -34,6 +38,18 @@ export class BannersController {
   @Put()
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
+  @UseInterceptors(
+    AnyFilesInterceptor({
+      storage: diskStorage({
+        destination: './upload_stores',
+        filename: editFileName,
+      }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
+      fileFilter: imageJpgPngFileFilter,
+    }),
+  )
   async updateBannerAdmin(
     @Req() req: any,
     @Body() data: BannersDto,
@@ -74,18 +90,18 @@ export class BannersController {
         );
       }
     } else {
-      const collection = [];
+      var collection = [];
       const updateBannerDto = new UpdateBannerByStoreIdDto();
       updateBannerDto.banner = data.banner;
-      data.store_ids.forEach(async (value) => {
-        updateBannerDto.store_id = value;
+      for (const item of data.store_ids) {
+        updateBannerDto.store_id = item;
         const result = await this.bannersService.updateBannerByStoreId(
-          updateBannerDto,
+          updateBannerDto
         );
         if (result) {
           collection.push(result);
         }
-      });
+      }
       if (collection.length > 0) {
         return this.responseService.success(
           true,
