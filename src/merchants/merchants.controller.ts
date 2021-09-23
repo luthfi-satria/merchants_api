@@ -31,7 +31,8 @@ import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
-import { ExcludeResponseMerchant } from 'src/merchants/exclude_response_merchant.interceptor';
+import { ResponseExcludeParam } from 'src/response/response_exclude_param.decorator';
+import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
 
 @Controller('api/v1/merchants')
 export class MerchantsController {
@@ -53,6 +54,9 @@ export class MerchantsController {
         destination: './upload_merchants',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageFileFilter,
     }),
   )
@@ -77,7 +81,7 @@ export class MerchantsController {
       }
     }
 
-    return await this.merchantsService.createMerchantMerchantProfile(
+    return this.merchantsService.createMerchantMerchantProfile(
       createMerchantDTO,
     );
   }
@@ -92,6 +96,9 @@ export class MerchantsController {
         destination: './upload_merchants',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageFileFilter,
     }),
   )
@@ -112,7 +119,7 @@ export class MerchantsController {
         updateMerchantDTO[file.fieldname] = url;
       }
     }
-    return await this.merchantsService.updateMerchantMerchantProfile(
+    return this.merchantsService.updateMerchantMerchantProfile(
       updateMerchantDTO,
     );
   }
@@ -164,7 +171,8 @@ export class MerchantsController {
   @Get('merchants/:id')
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
-  @UseInterceptors(ExcludeResponseMerchant)
+  @ResponseExcludeParam('group')
+  @UseInterceptors(ResponseExcludeData)
   @ResponseStatusCode()
   async viewMerchant(@Req() req: any, @Param('id') id: string): Promise<any> {
     return this.merchantsService.viewMerchantDetail(id, req.user);
@@ -178,10 +186,6 @@ export class MerchantsController {
     @Req() req: any,
     @Query() data: ListMerchantDTO,
   ): Promise<any> {
-    // let group_id = null;
-    // if (req.user.user_type == 'merchant' && req.user.level == 'group') {
-    //   group_id = req.user.group_id;
-    // }
     const listgroup: any = await this.merchantsService.listGroupMerchant(
       data,
       req.user,

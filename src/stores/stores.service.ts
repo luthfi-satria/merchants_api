@@ -16,11 +16,7 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import {
-  dbOutputTime,
-  deleteCredParam,
-  delParamNoActiveUpdate,
-} from 'src/utils/general-utils';
+import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreOperationalService } from './stores-operational.service';
@@ -30,6 +26,8 @@ import { CreateMerchantStoreValidation } from './validation/create-merchant-stor
 import { UpdateMerchantStoreValidation } from './validation/update-merchant-stores.validation';
 import { CityService } from 'src/common/services/admins/city.service';
 import { ListStoreDTO } from './validation/list-store.validation';
+import { DateTimeUtils } from 'src/utils/date-time-utils';
+import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 
 @Injectable()
 export class StoresService {
@@ -200,6 +198,14 @@ export class StoresService {
       create_merchant_store_validation.service_addons,
     );
 
+    if (store_document.status == 'ACTIVE')
+      store_document.approved_at = new Date();
+
+    store_document.auto_accept_order =
+      create_merchant_store_validation.auto_accept_order == 'true'
+        ? true
+        : false;
+
     const create_store = await this.storeRepository.save(store_document);
     const operational_hours = await this.storeOperationalService
       .createStoreOperationalHours(create_store.id, create_store.gmt_offset)
@@ -308,6 +314,17 @@ export class StoresService {
         );
       }
     }
+
+    if (store_document.status == 'ACTIVE')
+      store_document.approved_at = new Date();
+
+    if (update_merchant_store_validation.auto_accept_order) {
+      store_document.auto_accept_order =
+        update_merchant_store_validation.auto_accept_order == 'true'
+          ? true
+          : false;
+    }
+
     return this.storeRepository.save(store_document);
   }
 
@@ -340,6 +357,7 @@ export class StoresService {
 
   async viewStoreDetail(
     id: string,
+    data: ViewStoreDetailDTO,
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
     try {
@@ -349,14 +367,44 @@ export class StoresService {
         .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
         .leftJoinAndSelect('ms.merchant', 'merchant')
         .leftJoinAndSelect('merchant.group', 'group')
+        .leftJoinAndSelect('ms.store_categories', 'merchant_store_categories')
+        .leftJoinAndSelect(
+          'merchant_store_categories.languages',
+          'merchant_store_categories_languages',
+        )
+        .leftJoinAndSelect(
+          'ms.operational_hours',
+          'operational_hours',
+          'operational_hours.merchant_store_id = ms.id',
+        )
+        .leftJoinAndSelect(
+          'operational_hours.shifts',
+          'operational_shifts',
+          'operational_shifts.store_operational_id = operational_hours.id',
+        )
         .where('ms.id = :mid', {
           mid: sid,
         });
-      const list = await store.getMany();
-      list.forEach(async (element) => {
-        delParamNoActiveUpdate(element);
-        delParamNoActiveUpdate(element.merchant);
-        delParamNoActiveUpdate(element.merchant.group);
+
+      if (data.lang) {
+        store.andWhere('merchant_store_categories_languages.lang = :lid', {
+          lid: data.lang,
+        });
+      } else {
+        store.andWhere('merchant_store_categories_languages.lang = :lid', {
+          lid: 'id',
+        });
+      }
+
+      const list = await store.getOne();
+      list.store_categories.forEach((element: Record<string, any>) => {
+        element.name = element.languages[0].name;
+        delete element.languages;
+      });
+      list.operational_hours.forEach((element) => {
+        element.day_of_week = DateTimeUtils.convertToDayOfWeek(
+          Number(element.day_of_week),
+        );
       });
 
       return this.responseService.success(
@@ -423,6 +471,12 @@ export class StoresService {
       });
     }
 
+    if (data.statuses) {
+      store.andWhere('ms.status = :gstat', {
+        gstat: data.status,
+      });
+    }
+
     if (
       (user.user_type == 'admin' || user.level == 'group') &&
       data.merchant_id
@@ -443,6 +497,12 @@ export class StoresService {
     } else if (user.level == 'group') {
       store.andWhere('group.id = :group_id', {
         group_id: user.group_id,
+      });
+    }
+
+    if (user.user_type == 'admin' && data.group_id) {
+      store.andWhere('group.id = :gid', {
+        gid: data.group_id,
       });
     }
 
@@ -612,7 +672,7 @@ export class StoresService {
     headers: Record<string, any>,
   ): Promise<Observable<AxiosResponse<any>>> {
     return this.httpService.get(url, { headers: headers }).pipe(
-      map((response) => response.data),
+      map((response: any) => response.data),
       catchError((err) => {
         throw err;
       }),

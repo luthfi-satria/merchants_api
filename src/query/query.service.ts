@@ -536,7 +536,9 @@ export class QueryService {
     let totalItems: number;
     const lang = data.lang || 'en';
     const listLang = ['en'];
-    lang != 'en' ? listLang.push(lang) : '';
+    if (lang != 'en') {
+      listLang.push(lang);
+    }
 
     return await this.storeCategoryRepository
       .createQueryBuilder('sc')

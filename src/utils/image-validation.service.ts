@@ -40,9 +40,9 @@ export class ImageValidationService {
       this.filter,
       '\n============================End Debug this.filter==================================',
     );
-    this.filter.map(async (filter) => {
-      if (filter.filtering == 'required') {
-        await this.requiredCheck(req, filter.name);
+    this.filter.forEach(async (element) => {
+      if (element.filtering == 'required') {
+        await this.requiredCheck(req, element.name);
       }
     });
     this.filter = [];

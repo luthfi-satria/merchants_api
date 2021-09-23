@@ -7,6 +7,7 @@ import {
   IsString,
   IsUUID,
   ArrayMaxSize,
+  IsBooleanString,
 } from 'class-validator';
 import { CityDTO } from 'src/common/services/admins/dto/city.dto';
 import {
@@ -50,7 +51,7 @@ export class UpdateMerchantStoreValidation {
   banner: string;
 
   @IsOptional()
-  @ArrayMaxSize(3)
+  @ArrayMaxSize(4)
   category_ids: string[];
 
   @IsOptional()
@@ -77,4 +78,8 @@ export class UpdateMerchantStoreValidation {
   @IsOptional()
   @IsIn(Object.values(enumStoreStatus))
   status: enumStoreStatus;
+
+  @IsOptional()
+  @IsBooleanString({ message: 'auto_accept_order bukan format Boolean' })
+  auto_accept_order: string;
 }

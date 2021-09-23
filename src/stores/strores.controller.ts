@@ -45,6 +45,9 @@ import { DeliveryTypeValidation } from './validation/delivery-type.validation';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { UpdateMerchantStoreValidation } from './validation/update-merchant-stores.validation';
 import { ListStoreDTO } from './validation/list-store.validation';
+import { ResponseExcludeParam } from 'src/response/response_exclude_param.decorator';
+import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
+import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -66,6 +69,9 @@ export class StoresController {
         destination: './upload_stores',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageJpgPngFileFilter,
     }),
   )
@@ -110,6 +116,9 @@ export class StoresController {
         destination: './upload_stores',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageFileFilter,
     }),
   )
@@ -141,7 +150,7 @@ export class StoresController {
       );
     } catch (error) {
       Logger.error(error);
-      return error.response;
+      throw error;
     }
   }
 
@@ -204,9 +213,15 @@ export class StoresController {
   @Get('stores/:id')
   @UserTypeAndLevel('admin.*', 'merchant.*')
   @AuthJwtGuard()
+  @ResponseExcludeParam('merchant', 'merchant.group')
+  @UseInterceptors(ResponseExcludeData)
   @ResponseStatusCode()
-  async viewStores(@Req() req: any, @Param('id') id: string): Promise<any> {
-    return this.storesService.viewStoreDetail(id, req.user);
+  async viewStores(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query() data: ViewStoreDetailDTO,
+  ): Promise<any> {
+    return this.storesService.viewStoreDetail(id, data, req.user);
   }
 
   @Get('stores')

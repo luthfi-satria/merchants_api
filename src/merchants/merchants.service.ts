@@ -215,6 +215,7 @@ export class MerchantsService {
       merchantDTO.npwp_name = data.npwp_name;
       merchantDTO.npwp_file = data.npwp_file;
     }
+    if (merchantDTO.status == 'ACTIVE') merchantDTO.approved_at = new Date();
 
     const createMerchant = this.merchantRepository.create(merchantDTO);
     try {
@@ -359,6 +360,8 @@ export class MerchantsService {
       flgUpdateMerchantUser = true;
     }
     if (data.status) existMerchant.status = data.status;
+    if (existMerchant.status == 'ACTIVE')
+      existMerchant.approved_at = new Date();
 
     try {
       const update: Record<string, any> = await this.merchantRepository.save(
@@ -537,10 +540,9 @@ export class MerchantsService {
     try {
       const totalItems = await merchant.getCount();
       const list = await merchant.getMany();
-      list.map((element) => {
-        let output = deleteCredParam(element);
-        output = deleteCredParam(element.group);
-        return output;
+      list.forEach((element) => {
+        deleteCredParam(element);
+        deleteCredParam(element.group);
       });
 
       const list_result: ListResponse = {

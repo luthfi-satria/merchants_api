@@ -33,4 +33,14 @@ export class ListStoreDTO {
   @ValidateIf((o) => o.merchant_id !== '')
   @IsUUID('all', { message: 'Merchant ID yang diisi bukan format UUID' })
   merchant_id: string;
+
+  @IsOptional()
+  @ValidateIf((o) => o.group_id !== '')
+  @IsUUID('all', { message: 'Group ID yang diisi bukan format UUID' })
+  group_id: string;
+
+  @IsOptional()
+  @ValidateIf((o) => o.statuses !== '')
+  @IsIn(Object.values(GroupStatus))
+  statuses: GroupStatus[];
 }

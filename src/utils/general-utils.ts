@@ -92,9 +92,11 @@ export const dbOutputTime = function (input: Record<string, any>) {
   input.created_at = momenttz(input.created_at)
     .tz('Asia/Jakarta')
     .format('YYYY-MM-DD HH:mm:ss');
-  input.updated_at = momenttz(input.updated_at)
-    .tz('Asia/Jakarta')
-    .format('YYYY-MM-DD HH:mm:ss');
+  if (input.approved_at && input.approved_at != null) {
+    input.approved_at = momenttz(input.approved_at)
+      .tz('Asia/Jakarta')
+      .format('YYYY-MM-DD HH:mm:ss');
+  }
   return input;
 };
 
@@ -157,5 +159,18 @@ export const delParamNoActiveUpdate = function (input: Record<string, any>) {
   delete input.pic_password;
   delete input.pic_finance_password;
   delete input.pic_operational_password;
+  return input;
+};
+
+export const delExcludeParam = function (input: Record<string, any>) {
+  delete input.updated_at;
+  delete input.deleted_at;
+  delete input.director_password;
+  delete input.password;
+  delete input.owner_password;
+  delete input.pic_password;
+  delete input.pic_finance_password;
+  delete input.pic_operational_password;
+  dbOutputTime(input);
   return input;
 };

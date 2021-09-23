@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  IsBooleanString,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -51,7 +52,7 @@ export class CreateMerchantStoreValidation {
   banner: string;
 
   @IsNotEmpty()
-  @ArrayMaxSize(3)
+  @ArrayMaxSize(4)
   category_ids: string[];
 
   @IsNotEmpty()
@@ -78,4 +79,8 @@ export class CreateMerchantStoreValidation {
   @IsNotEmpty()
   @IsIn(Object.values(enumStoreStatus))
   status: enumStoreStatus;
+
+  @IsOptional()
+  @IsBooleanString({ message: 'auto_accept_order bukan format Boolean' })
+  auto_accept_order: string;
 }
