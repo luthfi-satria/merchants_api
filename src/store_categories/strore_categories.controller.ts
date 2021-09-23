@@ -13,7 +13,6 @@ import {
   UseInterceptors,
   Req,
   UploadedFile,
-  UseGuards,
 } from '@nestjs/common';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { catchError, lastValueFrom, map } from 'rxjs';
@@ -44,7 +43,6 @@ export class StoreCategoriesController {
   @Post('store/categories')
   @UserType('admin')
   @AuthJwtGuard()
-  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   @UseInterceptors(
     FileInterceptor('image', {
@@ -58,7 +56,7 @@ export class StoreCategoriesController {
       fileFilter: imageFileFilter,
     }),
   )
-  async createmenusstores(
+  async createStoreCategory(
     @Req() req: any,
     @Body(RequestValidationPipe(StoreCategoriesValidation))
     data: StoreCategoriesValidation,
@@ -91,7 +89,6 @@ export class StoreCategoriesController {
   @Put('store/categories/:id')
   @UserType('admin')
   @AuthJwtGuard()
-  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
   @UseInterceptors(
     FileInterceptor('image', {
@@ -105,7 +102,7 @@ export class StoreCategoriesController {
       fileFilter: imageFileFilter,
     }),
   )
-  async updatemenusStores(
+  async updateStoreCategories(
     @Req() req: any,
     @Body()
     data: Partial<StoreCategoriesValidation>,
@@ -124,9 +121,8 @@ export class StoreCategoriesController {
   @Delete('store/categories/:id')
   @UserType('admin')
   @AuthJwtGuard()
-  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
-  async deleteMenusStores(
+  async deleteStoreCategories(
     @Param('id') id: string,
     // @Headers('Authorization') token: string,
   ): Promise<any> {
@@ -152,15 +148,14 @@ export class StoreCategoriesController {
   }
 
   @Get('store/categories')
-  @UserType('admin')
+  @UserType('admin', 'merchant')
   @AuthJwtGuard()
-  @UseGuards(RoleStoreCategoriesGuard)
   @ResponseStatusCode()
-  async getMenusStores(
+  async getStoreCategories(
     @Req() req: any,
     @Query() data: Partial<StoreCategoriesValidation>,
   ): Promise<any> {
-    return await this.storeCategoriesService.listStoreCategories(data);
+    return this.storeCategoriesService.listStoreCategories(data);
   }
 
   //-------------------------------------------------------------------------------------
