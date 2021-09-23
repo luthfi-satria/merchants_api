@@ -143,7 +143,8 @@ export class StoresController {
       );
     } catch (error) {
       Logger.error(error);
-      return error.response;
+      // return error.response;
+      throw error;
     }
   }
 
