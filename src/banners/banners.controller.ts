@@ -33,7 +33,7 @@ export class BannersController {
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
     private readonly storage: CommonStorageService,
-  ) { }
+  ) {}
 
   @Put()
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
@@ -90,13 +90,13 @@ export class BannersController {
         );
       }
     } else {
-      var collection = [];
+      const collection = [];
       const updateBannerDto = new UpdateBannerByStoreIdDto();
       updateBannerDto.banner = data.banner;
       for (const item of data.store_ids) {
         updateBannerDto.store_id = item;
         const result = await this.bannersService.updateBannerByStoreId(
-          updateBannerDto
+          updateBannerDto,
         );
         if (result) {
           collection.push(result);
