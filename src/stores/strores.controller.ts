@@ -68,6 +68,9 @@ export class StoresController {
         destination: './upload_stores',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageJpgPngFileFilter,
     }),
   )
@@ -112,6 +115,9 @@ export class StoresController {
         destination: './upload_stores',
         filename: editFileName,
       }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
       fileFilter: imageFileFilter,
     }),
   )
