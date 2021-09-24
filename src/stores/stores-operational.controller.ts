@@ -96,7 +96,7 @@ export class StoreOperationalController {
           merchant_store_id: store_id,
           day_of_week: dayOfWeek,
           is_open_24h: e.open_24hrs,
-          // is_open: e.is_open, // niel- comment first
+          is_open: e.is_open,
           shifts: shifts,
         });
       });

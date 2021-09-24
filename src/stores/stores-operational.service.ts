@@ -222,6 +222,7 @@ export class StoreOperationalService {
             });
           });
 
+          row.is_open = isFound.is_open;
           row.shifts = newSchedules;
           row.is_open_24h = isFound.is_open_24h;
           row.gmt_offset = isFound.gmt_offset;

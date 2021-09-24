@@ -42,10 +42,10 @@ export class OperationalHoursValidation {
   @Transform(({ value }) => JSON.parse(value))
   open_24hrs: boolean;
 
-  // @IsBoolean()
-  // @IsNotEmpty()
-  // @Transform(({ value }) => JSON.parse(value))
-  // is_open: boolean;
+  @IsBoolean()
+  @IsNotEmpty()
+  @Transform(({ value }) => JSON.parse(value))
+  is_open: boolean;
 
   @IsNotEmpty()
   @IsString({ each: true })
