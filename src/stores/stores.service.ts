@@ -407,6 +407,8 @@ export class StoresService {
         );
       });
 
+      list.city = await this.cityService.getCity(list.city_id);
+
       return this.responseService.success(
         true,
         this.messageService.get('merchant.liststore.success'),
