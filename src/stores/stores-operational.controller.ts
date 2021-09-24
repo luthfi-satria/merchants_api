@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  HttpStatus,
   Logger,
   NotFoundException,
   Param,
@@ -14,6 +16,7 @@ import { RoleStoreGuard } from 'src/auth/store.guard';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 import { MessageService } from 'src/message/message.service';
+import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreOperationalService } from './stores-operational.service';
@@ -36,14 +39,13 @@ export class StoreOperationalController {
     private readonly responseService: ResponseService,
   ) {}
 
-  @UseGuards(RoleStoreGuard)
+  // @UseGuards(RoleStoreGuard)
   @Post('set-operational-hours/:store_id')
   @UserTypeAndLevel('admin.*', 'merchant.store')
   async updateOperationalHour(
     @Param('store_id') store_id: string,
-    @Body(new ValidationPipe())
+    @Body()
     payload: StoreOpenHoursValidation,
-    @Req() req: any,
   ) {
     try {
       const { gmt_offset, operational_hours } = payload;
@@ -67,8 +69,24 @@ export class StoreOperationalController {
 
       //parse from validation to entity class
       const updPayload = operational_hours.map((e) => {
-        const shifts = e.operational_hours.map((e) => {
-          const { open_hour, close_hour } = e;
+        const shifts = e.operational_hours.map((element) => {
+          const { open_hour, close_hour } = element;
+          if (!open_hour || !close_hour) {
+            const errors: RMessage = {
+              value: '',
+              property: !open_hour ? 'open_hour' : 'close_hour',
+              constraint: [
+                this.messageService.get('merchant.updatestore.invalid_hour'),
+              ],
+            };
+            throw new BadRequestException(
+              this.responseService.error(
+                HttpStatus.BAD_REQUEST,
+                errors,
+                'Bad Request',
+              ),
+            );
+          }
 
           //Convert and save to UTC+0
           const utc_openHour = DateTimeUtils.convertTimeToUTC(

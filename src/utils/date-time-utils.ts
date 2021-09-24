@@ -36,14 +36,13 @@ export class DateTimeUtils {
    * @returns converted clock Time, based on difference by currTimeGMTOffset with UTC +0
    */
   static convertTimeToUTC(currTime: string, currTimeGMTOffset: number): string {
+    if (!currTime) {
+      currTime = '00:00';
+    }
     const gmtOffset = this.getDiffFromUTCOffset(currTimeGMTOffset);
 
     const inputTime = moment(currTime, 'HH:mm').format('HH:mm');
-    const timeWithOffset = moment(inputTime, 'HH:mm')
-      .utcOffset(gmtOffset)
-      .format('HH:mm');
-
-    return timeWithOffset;
+    return moment(inputTime, 'HH:mm').utcOffset(gmtOffset).format('HH:mm');
   }
 
   /**
