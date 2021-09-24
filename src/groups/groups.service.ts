@@ -284,6 +284,7 @@ export class GroupsService {
     search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
+    const statuses = data.statuses || [];
 
     const query = this.groupRepository.createQueryBuilder();
 
@@ -314,8 +315,11 @@ export class GroupsService {
     }
 
     if (data.status) {
-      query.andWhere('status = :gstat', {
-        gstat: data.status,
+      statuses.push(data.status);
+    }
+    if (statuses.length > 0) {
+      query.andWhere('status in (:...mstat)', {
+        mstat: statuses,
       });
     }
 

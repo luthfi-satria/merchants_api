@@ -475,6 +475,7 @@ export class MerchantsService {
     search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
+    const statuses = data.statuses || [];
 
     const merchant = this.merchantRepository
       .createQueryBuilder('merchant_merchant')
@@ -514,10 +515,14 @@ export class MerchantsService {
     }
 
     if (data.status) {
-      merchant.andWhere('merchant_merchant.status = :gstat', {
-        gstat: data.status,
+      statuses.push(data.status);
+    }
+    if (statuses.length > 0) {
+      merchant.andWhere('merchant_merchant.status in (:...mstat)', {
+        mstat: statuses,
       });
     }
+
     if (user.user_type == 'admin' && data.group_id) {
       merchant.andWhere('mc_group.id = :mid', {
         mid: data.group_id,

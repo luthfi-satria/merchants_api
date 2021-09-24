@@ -26,7 +26,10 @@ import { RMessage } from 'src/response/response.interface';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { CreateMerchantStoreValidation } from './validation/create-merchant-stores.validation';
-import { StoreDocument } from 'src/database/entities/store.entity';
+import {
+  enumStoreStatus,
+  StoreDocument,
+} from 'src/database/entities/store.entity';
 import {
   editFileName,
   imageFileFilter,
@@ -60,7 +63,7 @@ export class StoresController {
   ) {}
 
   @Post('stores')
-  @UserType('admin', 'merchant')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
@@ -81,6 +84,9 @@ export class StoresController {
     create_merchant_store_validation: CreateMerchantStoreValidation,
     @UploadedFiles() files: Array<Express.Multer.File>,
   ): Promise<any> {
+    if (req.user.user_type == 'merchant' && req.user.level == 'merchant')
+      create_merchant_store_validation.status =
+        enumStoreStatus.waiting_for_approval;
     this.imageValidationService
       .setFilter('photo', 'required')
       .setFilter('banner', 'required');
@@ -91,6 +97,7 @@ export class StoresController {
         const url = await this.storage.store(file_name);
         create_merchant_store_validation[file.fieldname] = url;
       }
+
       const result_db: StoreDocument =
         await this.storesService.createMerchantStoreProfile(
           create_merchant_store_validation,
