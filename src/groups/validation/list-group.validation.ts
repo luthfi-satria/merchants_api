@@ -1,4 +1,10 @@
-import { IsIn, IsNumberString, IsOptional, ValidateIf } from 'class-validator';
+import {
+  IsArray,
+  IsIn,
+  IsNumberString,
+  IsOptional,
+  ValidateIf,
+} from 'class-validator';
 import { CategoryGroup, GroupStatus } from 'src/database/entities/group.entity';
 
 export class ListGroupDTO {
@@ -22,4 +28,9 @@ export class ListGroupDTO {
   @ValidateIf((o) => o.status !== '')
   @IsIn(Object.values(GroupStatus))
   status: GroupStatus;
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(Object.values(GroupStatus), { each: true })
+  statuses: GroupStatus[];
 }

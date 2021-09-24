@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsIn,
   IsNumberString,
   IsOptional,
@@ -40,7 +41,7 @@ export class ListStoreDTO {
   group_id: string;
 
   @IsOptional()
-  @ValidateIf((o) => o.statuses !== '')
-  @IsIn(Object.values(GroupStatus))
+  @IsArray()
+  @IsIn(Object.values(GroupStatus), { each: true })
   statuses: GroupStatus[];
 }

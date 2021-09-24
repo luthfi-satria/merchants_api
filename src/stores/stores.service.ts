@@ -435,6 +435,8 @@ export class StoresService {
     const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
+    const statuses = data.statuses || [];
+
     const store = this.storeRepository
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
@@ -466,14 +468,11 @@ export class StoresService {
     }
 
     if (data.status) {
-      store.andWhere('ms.status = :gstat', {
-        gstat: data.status,
-      });
+      statuses.push(data.status);
     }
-
-    if (data.statuses) {
-      store.andWhere('ms.status = :gstat', {
-        gstat: data.status,
+    if (statuses.length > 0) {
+      store.andWhere('ms.status in (:...gstat)', {
+        gstat: statuses,
       });
     }
 
@@ -517,7 +516,7 @@ export class StoresService {
       list.forEach(async (element) => {
         deleteCredParam(element);
         deleteCredParam(element.merchant);
-        const row = deleteCredParam((await element.merchant).group);
+        const row = deleteCredParam(element.merchant.group);
         if (row.service_addon) {
           row.service_addon.forEach((sao: any) => {
             deleteCredParam(sao);
