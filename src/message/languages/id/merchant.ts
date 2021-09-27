@@ -151,6 +151,10 @@ export default {
     unreg: 'Nomor Telepon Pemilik tidak terdaftar',
     id_notfound: 'ID Store tidak ditemukan',
     empty_token: 'Kode Token tidak ada.',
+    invalid_hour: {
+      code: 'INVALID_HOUR',
+      message: 'Jam tidak valid.',
+    },
   },
   deletestore: {
     success: 'Delete Store Success.',
