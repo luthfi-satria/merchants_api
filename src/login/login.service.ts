@@ -420,16 +420,15 @@ export class LoginService {
         where: { email: request.email },
         relations: ['group', 'merchant', 'store'],
       })
-      .catch((err) => {
-        const errors: RMessage = {
-          value: '',
-          property: err.column,
-          constraint: [err.message],
-        };
+      .catch((err2) => {
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
-            errors,
+            {
+              value: '',
+              property: err2.column,
+              constraint: [err2.message],
+            },
             'Bad Request',
           ),
         );
@@ -496,7 +495,29 @@ export class LoginService {
       storeID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
-      if (existMerchantUser.merchant.status != 'ACTIVE') {
+      const lang = request.lang || 'id';
+      if (existMerchantUser.email_verified_at == null) {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: request.email,
+              property: 'email',
+              constraint: [
+                this.messageService.getLang(
+                  `${lang}.merchant.general.unverifiedEmail`,
+                ),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
+
+      if (
+        existMerchantUser.status != 'ACTIVE' ||
+        existMerchantUser.merchant.status != 'ACTIVE'
+      ) {
         throw new UnauthorizedException(
           this.responseService.error(
             HttpStatus.UNAUTHORIZED,
@@ -640,7 +661,28 @@ export class LoginService {
       storeID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
-      if (existMerchantUser.merchant.status != 'ACTIVE') {
+      const lang = request.lang || 'id';
+      if (existMerchantUser.phone_verified_at == null) {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: request.phone,
+              property: 'phone',
+              constraint: [
+                this.messageService.getLang(
+                  `${lang}.merchant.general.unverifiedPhone`,
+                ),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
+      if (
+        existMerchantUser.status != 'ACTIVE' ||
+        existMerchantUser.merchant.status != 'ACTIVE'
+      ) {
         throw new UnauthorizedException(
           this.responseService.error(
             HttpStatus.UNAUTHORIZED,

@@ -21,15 +21,15 @@ export class ProfileService {
   ) {}
 
   async findOneMerchantByEmail(email: string): Promise<MerchantUsersDocument> {
-    return await this.merchantRepository.findOne({ where: { email: email } });
+    return this.merchantRepository.findOne({ where: { email: email } });
   }
 
   async findOneMerchantByPhone(phone: string): Promise<MerchantUsersDocument> {
-    return await this.merchantRepository.findOne({ phone: phone });
+    return this.merchantRepository.findOne({ phone: phone });
   }
 
   async findOneById(id: string): Promise<MerchantUsersDocument> {
-    return await this.merchantRepository.findOne({ where: { id: id } });
+    return this.merchantRepository.findOne({ where: { id: id } });
   }
 
   async postHttp(
@@ -38,7 +38,7 @@ export class ProfileService {
     headers: Record<string, any>,
   ): Promise<Observable<AxiosResponse<any>>> {
     return this.httpService.post(url, body, { headers: headers }).pipe(
-      map((response) => response.data),
+      map((response: any) => response.data),
       catchError((err) => {
         throw err;
       }),
@@ -49,6 +49,7 @@ export class ProfileService {
     const admin = new MerchantUsersDocument();
     admin.id = data.id;
     admin.email = data.email;
+    admin.email_verified_at = new Date();
     const result = await this.merchantRepository.save(admin);
     if (result) {
       return this.merchantRepository.findOne(result.id);
@@ -59,6 +60,7 @@ export class ProfileService {
     const admin = new MerchantUsersDocument();
     admin.id = data.id;
     admin.phone = data.phone;
+    admin.phone_verified_at = new Date();
     const result = await this.merchantRepository.save(admin);
     if (result) {
       return this.merchantRepository.findOne(result.id);

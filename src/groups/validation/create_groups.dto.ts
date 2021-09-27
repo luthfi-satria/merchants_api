@@ -69,7 +69,7 @@ export class CreateGroupDTO {
   director_phone: string;
 
   @IsNotEmpty()
-  @IsString()
+  @IsEmail()
   director_email: string;
 
   @IsNotEmpty()

@@ -7,4 +7,7 @@ export class LoginEmailValidation {
 
   @IsOptional()
   password: string;
+
+  @IsOptional()
+  lang: string;
 }

@@ -39,4 +39,22 @@ export class MessageService {
     });
     return messageErrors[0];
   }
+
+  getLang(key: string): string {
+    // Env Variable
+    const keys: string[] = key.split('.');
+    // const defaultMessage = keys[0];
+    let selectedMessage: Record<string, any> | string = this.languages;
+
+    for (const i of keys) {
+      selectedMessage = selectedMessage[i];
+
+      if (!selectedMessage) {
+        selectedMessage = key;
+        break;
+      }
+    }
+
+    return selectedMessage as string;
+  }
 }

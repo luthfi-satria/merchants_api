@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
   Put,
+  Query,
   Req,
 } from '@nestjs/common';
 import { GroupsService } from 'src/groups/groups.service';
@@ -141,8 +142,10 @@ export class LoginController {
   async loginByEmailPassword(
     @Body()
     data: LoginEmailValidation,
+    @Query() queryData: Partial<LoginEmailValidation>,
   ): Promise<any> {
-    return await this.loginService.loginEmailPasswordProcess(data);
+    data.lang = queryData.lang ? queryData.lang : 'id';
+    return this.loginService.loginEmailPasswordProcess(data);
   }
 
   @Post('login/phone-password')
@@ -150,8 +153,10 @@ export class LoginController {
   async loginByPhonePassword(
     @Body()
     data: LoginPhoneValidation,
+    @Query() queryData: Partial<LoginPhoneValidation>,
   ): Promise<any> {
-    return await this.loginService.loginPhonePasswordProcess(data);
+    data.lang = queryData.lang ? queryData.lang : 'id';
+    return this.loginService.loginPhonePasswordProcess(data);
   }
 
   @Put('profile/password')

@@ -6,12 +6,11 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import {
-  ListResponse,
-  RMessage,
-  RSuccessMessage,
-} from 'src/response/response.interface';
+  MerchantDocument,
+  MerchantStatus,
+} from 'src/database/entities/merchant.entity';
+import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { deleteCredParam } from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
@@ -20,7 +19,10 @@ import { MessageService } from 'src/message/message.service';
 import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
-import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import {
+  MerchantUsersDocument,
+  MerchantUsersStatus,
+} from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { CommonService } from 'src/common/common.service';
 import { CreateMerchantDTO } from './validation/create_merchant.dto';
@@ -29,7 +31,6 @@ import { GroupsService } from 'src/groups/groups.service';
 import { LobService } from 'src/lob/lob.service';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantUsersService } from './merchants_users.service';
-import { MerchantUser } from './interface/merchant_user.interface';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
 
@@ -51,7 +52,7 @@ export class MerchantsService {
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
-    return await this.merchantRepository
+    return this.merchantRepository
       .findOne({
         where: { id: id },
       })
@@ -72,13 +73,13 @@ export class MerchantsService {
   }
 
   async findMerchantMerchantByPhone(id: string): Promise<MerchantDocument> {
-    return await this.merchantRepository.findOne({
+    return this.merchantRepository.findOne({
       where: { pic_phone: id },
     });
   }
 
   async findMerchantMerchantByEmail(id: string): Promise<MerchantDocument> {
-    return await this.merchantRepository.findOne({
+    return this.merchantRepository.findOne({
       where: { pic_email: id },
     });
   }
@@ -226,7 +227,7 @@ export class MerchantsService {
         throw new Error('failed insert to merchant_group');
       }
 
-      const createMerchantUser: Partial<MerchantUser> = {
+      const createMerchantUser: Partial<MerchantUsersDocument> = {
         merchant_id: create.id,
         name: createMerchant.pic_name,
         phone: createMerchant.pic_phone,
@@ -234,6 +235,21 @@ export class MerchantsService {
         password: createMerchant.pic_password,
         nip: createMerchant.pic_nip,
       };
+
+      switch (merchantDTO.status) {
+        case MerchantStatus.Active:
+          createMerchantUser.status = MerchantUsersStatus.Active;
+          break;
+        case MerchantStatus.Inactive:
+          createMerchantUser.status = MerchantUsersStatus.Inactive;
+          break;
+        case MerchantStatus.Waiting_for_approval:
+          createMerchantUser.status = MerchantUsersStatus.Waiting_for_approval;
+          break;
+        case MerchantStatus.Rejected:
+          createMerchantUser.status = MerchantUsersStatus.Rejected;
+          break;
+      }
 
       const result =
         await this.merchantUserService.createMerchantUsersFromMerchant(
@@ -372,13 +388,29 @@ export class MerchantsService {
       }
       update.user = {};
       if (flgUpdateMerchantUser) {
-        const updateMerchantUser: Partial<MerchantUser> = {
+        const updateMerchantUser: Partial<MerchantUsersDocument> = {
           merchant_id: existMerchant.id,
           name: existMerchant.pic_name,
           phone: existMerchant.pic_phone,
           email: existMerchant.pic_email,
           nip: existMerchant.pic_nip,
         };
+
+        switch (existMerchant.status) {
+          case MerchantStatus.Active:
+            updateMerchantUser.status = MerchantUsersStatus.Active;
+            break;
+          case MerchantStatus.Inactive:
+            updateMerchantUser.status = MerchantUsersStatus.Inactive;
+            break;
+          case MerchantStatus.Waiting_for_approval:
+            updateMerchantUser.status =
+              MerchantUsersStatus.Waiting_for_approval;
+            break;
+          case MerchantStatus.Rejected:
+            updateMerchantUser.status = MerchantUsersStatus.Rejected;
+            break;
+        }
 
         const result =
           await this.merchantUserService.updateMerchantUsersFromMerchant(
@@ -550,13 +582,12 @@ export class MerchantsService {
         deleteCredParam(element.group);
       });
 
-      const list_result: ListResponse = {
+      return {
         total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
         items: list,
       };
-      return list_result;
     } catch (error) {
       console.log(
         '===========================Start Database error=================================\n',

@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
@@ -125,7 +126,7 @@ export class MerchantUsersService {
       merchant: cekMerchantId,
     };
 
-    return await this.merchantUsersRepository
+    return this.merchantUsersRepository
       .save(createMerchantUser)
       .then((result) => {
         dbOutputTime(result);
@@ -251,18 +252,18 @@ export class MerchantUsersService {
       gUsersExist.password = passwordHash;
     }
 
-    return await this.merchantUsersRepository
+    return this.merchantUsersRepository
       .save(gUsersExist)
-      .then(async (result) => {
-        dbOutputTime(result);
-        dbOutputTime(result.merchant);
-        delete result.password;
-        delete result.merchant.pic_password;
+      .then(async (resultUpdate) => {
+        dbOutputTime(resultUpdate);
+        dbOutputTime(resultUpdate.merchant);
+        delete resultUpdate.password;
+        delete resultUpdate.merchant.pic_password;
 
         return this.responseService.success(
           true,
           this.messageService.get('merchant.general.success'),
-          result,
+          resultUpdate,
         );
       })
       .catch((err) => {
@@ -290,7 +291,9 @@ export class MerchantUsersService {
           where: { id: args.id, merchant_id: args.merchant_id },
           relations: ['merchant'],
         })
-        .catch(() => {
+        .catch((err) => {
+          const logger = new Logger();
+          logger.error(err, 'Catch Error');
           throw new BadRequestException(
             this.responseService.error(
               HttpStatus.BAD_REQUEST,
@@ -353,7 +356,7 @@ export class MerchantUsersService {
     const perPage = Number(args.limit) || 10;
     let totalItems: number;
 
-    return await this.merchantUsersRepository
+    return this.merchantUsersRepository
       .createQueryBuilder('mu')
       .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
       .where(
@@ -494,7 +497,7 @@ export class MerchantUsersService {
     headers: Record<string, any>,
   ): Promise<Observable<AxiosResponse<any>>> {
     return this.httpService.get(url, { headers: headers }).pipe(
-      map((response) => response.data),
+      map((response: any) => response.data),
       catchError((err) => {
         throw err;
       }),

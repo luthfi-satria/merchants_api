@@ -8,4 +8,7 @@ export class LoginPhoneValidation {
 
   @IsOptional()
   password: string;
+
+  @IsOptional()
+  lang: string;
 }

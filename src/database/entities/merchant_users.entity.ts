@@ -12,6 +12,13 @@ import { GroupDocument } from './group.entity';
 import { MerchantDocument } from './merchant.entity';
 import { StoreDocument } from './store.entity';
 
+export enum MerchantUsersStatus {
+  Waiting_for_approval = 'WAITING_FOR_APPROVAL',
+  Active = 'ACTIVE',
+  Inactive = 'INACTIVE',
+  Rejected = 'REJECTED',
+}
+
 @Entity({ name: 'merchant_users' })
 export class MerchantUsersDocument {
   @PrimaryGeneratedColumn('uuid')
@@ -64,4 +71,17 @@ export class MerchantUsersDocument {
 
   @Column({ nullable: true })
   nip: string;
+
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  email_verified_at: Date;
+
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  phone_verified_at: Date;
+
+  @Column({
+    type: 'enum',
+    enum: MerchantUsersStatus,
+    default: MerchantUsersStatus.Waiting_for_approval,
+  })
+  status: MerchantUsersStatus;
 }

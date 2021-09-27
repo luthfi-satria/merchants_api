@@ -42,20 +42,20 @@ export class ProfileController {
     const existEmail = await this.profileService.findOneMerchantByEmail(
       data.email,
     );
-    if (existEmail) {
-      const errors: RMessage = {
-        value: data.email,
-        property: 'email',
-        constraint: [this.messageService.get('merchant.general.emailExist')],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
+    // if (existEmail) {
+    //   const errors: RMessage = {
+    //     value: data.email,
+    //     property: 'email',
+    //     constraint: [this.messageService.get('merchant.general.emailExist')],
+    //   };
+    //   throw new BadRequestException(
+    //     this.responseService.error(
+    //       HttpStatus.BAD_REQUEST,
+    //       errors,
+    //       'Bad Request',
+    //     ),
+    //   );
+    // }
     const userData = await this.profileService.findOneById(req.user.id);
     const otpDto = new OtpDto();
     otpDto.email = data.email;
@@ -96,20 +96,20 @@ export class ProfileController {
     const existEmail = await this.profileService.findOneMerchantByEmail(
       data.email,
     );
-    if (existEmail) {
-      const errors: RMessage = {
-        value: data.email,
-        property: 'email',
-        constraint: [this.messageService.get('merchant.general.emailExist')],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
+    // if (existEmail) {
+    //   const errors: RMessage = {
+    //     value: data.email,
+    //     property: 'email',
+    //     constraint: [this.messageService.get('merchant.general.emailExist')],
+    //   };
+    //   throw new BadRequestException(
+    //     this.responseService.error(
+    //       HttpStatus.BAD_REQUEST,
+    //       errors,
+    //       'Bad Request',
+    //     ),
+    //   );
+    // }
     const userData = await this.profileService.findOneById(req.user.id);
     const otpDto = new OtpDto();
     otpDto.email = data.email;

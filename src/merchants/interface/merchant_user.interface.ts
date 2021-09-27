@@ -1,3 +1,5 @@
+import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
+
 export interface MerchantUser {
   name: string;
 
@@ -12,4 +14,6 @@ export interface MerchantUser {
   token_reset_password: string;
 
   nip: string;
+
+  status: MerchantUsersStatus;
 }

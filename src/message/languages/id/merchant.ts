@@ -55,6 +55,14 @@ export default {
       code: 'UNVERIFICATED_USER',
       message: 'User belum terverifikasi.',
     },
+    unverifiedEmail: {
+      code: 'EMAIL_NOT_VERIFIED',
+      message: 'Email belum terverifikasi.',
+    },
+    unverifiedPhone: {
+      code: 'PHONE_NOT_VERIFIED',
+      message: 'Nomer telepon belum terverifikasi.',
+    },
   },
   creategroup: {
     success: 'SUCCESS',

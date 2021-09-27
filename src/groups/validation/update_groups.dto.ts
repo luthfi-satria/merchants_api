@@ -61,7 +61,7 @@ export class UpdateGroupDTO {
   director_phone: string;
 
   @IsOptional()
-  @IsString()
+  @IsEmail()
   director_email: string;
 
   @IsOptional()
