@@ -49,7 +49,6 @@ export class ProfileService {
     const admin = new MerchantUsersDocument();
     admin.id = data.id;
     admin.email = data.email;
-    admin.email_verified_at = new Date();
     const result = await this.merchantRepository.save(admin);
     if (result) {
       return this.merchantRepository.findOne(result.id);
@@ -60,7 +59,6 @@ export class ProfileService {
     const admin = new MerchantUsersDocument();
     admin.id = data.id;
     admin.phone = data.phone;
-    admin.phone_verified_at = new Date();
     const result = await this.merchantRepository.save(admin);
     if (result) {
       return this.merchantRepository.findOne(result.id);
