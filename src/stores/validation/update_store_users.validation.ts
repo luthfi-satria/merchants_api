@@ -9,25 +9,26 @@ import {
 } from 'class-validator';
 import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
 
-export class MerchantStoreUsersValidation {
+export class UpdateMerchantStoreUsersValidation {
   @IsOptional()
   id: string;
 
-  @IsNotEmpty({ message: 'Nama tidak boleh kosong' })
+  @IsOptional()
   name: string;
 
-  @IsNotEmpty({ message: 'Nip tidak boleh kosong' })
+  @IsOptional()
   nip: string;
 
-  @IsNotEmpty({ message: 'Email tidak boleh kosong' })
+  @IsOptional()
   @IsEmail()
   email: string;
 
+  @IsOptional()
   @IsNumberString({}, { message: 'Nomer telpon bukan angka' })
   @Length(10, 15)
   phone: string;
 
-  @IsNotEmpty({ message: 'Password tidak boleh kosong' })
+  @IsOptional()
   password: string;
 
   @IsNotEmpty({ message: 'Store ID tidak boleh kosong' })

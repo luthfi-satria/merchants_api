@@ -29,4 +29,21 @@ export class CommonService {
       throw error;
     }
   }
+
+  async getHttp(url: string): Promise<AxiosResponse<any>> {
+    const post_response = this.httpService.get(url).pipe(
+      map((axiosResponse: AxiosResponse) => {
+        return axiosResponse.data;
+      }),
+      catchError((err) => {
+        throw err;
+      }),
+    );
+    try {
+      return await lastValueFrom(post_response);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
 }

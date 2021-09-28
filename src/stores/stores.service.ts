@@ -261,7 +261,6 @@ export class StoresService {
         update_merchant_store_validation.city_id,
       );
     }
-
     if (update_merchant_store_validation.category_ids) {
       store_document.store_categories = await this.getCategoriesByIds(
         update_merchant_store_validation.category_ids,

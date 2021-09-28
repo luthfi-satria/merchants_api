@@ -12,75 +12,64 @@ import {
 
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
-import { UserType } from 'src/auth/guard/user-type.decorator';
 import { StoreUsersService } from './stores_users.service';
 import { MerchantStoreUsersValidation } from './validation/store_users.validation';
+import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
+import { UpdateMerchantStoreUsersValidation } from './validation/update_store_users.validation';
+import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
 
 @Controller('api/v1/merchants/stores')
 export class StoreUsersController {
   constructor(private readonly storeUsersService: StoreUsersService) {}
 
-  @Post(':sid/users')
-  @UserType('admin')
+  @Post('users')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async createStoreUsers(
     @Req() req: any,
     @Body()
-    args: Partial<MerchantStoreUsersValidation>,
-    @Param('sid') storeId: string,
+    args: MerchantStoreUsersValidation,
   ): Promise<any> {
-    args.store_id = storeId;
     return this.storeUsersService.createStoreUsers(args);
   }
 
-  @Put(':sid/users/:uid')
-  @UserType('admin')
+  @Put('users/:uid')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateStoreUsers(
     @Req() req: any,
     @Body()
-    args: Partial<MerchantStoreUsersValidation>,
-    @Param('sid') storeId: string,
+    args: UpdateMerchantStoreUsersValidation,
     @Param('uid') storeUserId: string,
   ): Promise<any> {
-    args.store_id = storeId;
     args.id = storeUserId;
-    return await this.storeUsersService.updateStoreUsers(args);
+    return this.storeUsersService.updateStoreUsers(args);
   }
 
-  @Delete(':sid/users/:uid')
-  @UserType('admin')
+  @Delete('users/:uid')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async deleteStoreUsers(
     @Req() req: any,
-    @Param('sid') storeId: string,
     @Param('uid') storeUserId: string,
   ): Promise<any> {
     const args: Partial<MerchantStoreUsersValidation> = {
-      store_id: storeId,
       id: storeUserId,
     };
-    return await this.storeUsersService.deleteStoreUsers(args);
+    return this.storeUsersService.deleteStoreUsers(args, req.user);
   }
 
-  @Get(':sid/users')
-  @UserType('admin')
+  @Get('users/list')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listStoreUsers(
     @Req() req: any,
-    @Query() data: Record<string, any>,
-    @Param('sid') storeId: string,
+    @Query() data: ListMerchantStoreUsersValidation,
   ): Promise<any> {
-    const args: Partial<MerchantStoreUsersValidation> = {
-      store_id: storeId,
-      search: data.search,
-      limit: data.limit,
-      page: data.page,
-    };
-    return await this.storeUsersService.listStoreUsers(args);
+    return this.storeUsersService.listStoreUsers(data, req.user);
   }
 }

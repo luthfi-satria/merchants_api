@@ -114,7 +114,12 @@ export class StoresController {
   }
 
   @Put('stores/:id')
-  @UserType('admin')
+  @UserTypeAndLevel(
+    'admin.*',
+    'merchant.group',
+    'merchant.merchant',
+    'merchant.store',
+  )
   @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
@@ -136,6 +141,23 @@ export class StoresController {
     @Param('id') id: string,
     @UploadedFiles() files: Array<Express.Multer.File>,
   ): Promise<any> {
+    if (req.user.user_type == 'merchant' && req.user.level == 'store') {
+      if (req.user.store_id != id) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: req.user.store_id,
+              property: 'store_id',
+              constraint: [
+                this.messageService.get('merchant.general.unauthorizedUser'),
+              ],
+            },
+            'UNAUTHORIZED',
+          ),
+        );
+      }
+    }
     update_merchant_store_validation.id = id;
     await this.imageValidationService.validate(req);
     try {
@@ -223,7 +245,7 @@ export class StoresController {
   @ResponseExcludeParam('merchant', 'merchant.group')
   @UseInterceptors(ResponseExcludeData)
   @ResponseStatusCode()
-  async viewStores(
+  async viewStoreDetail(
     @Req() req: any,
     @Param('id') id: string,
     @Query() data: ViewStoreDetailDTO,
@@ -235,7 +257,7 @@ export class StoresController {
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async getsores(@Req() req: any, @Query() data: ListStoreDTO): Promise<any> {
+  async getStores(@Req() req: any, @Query() data: ListStoreDTO): Promise<any> {
     try {
       const listgroup: any = await this.storesService.listGroupStore(
         data,

@@ -51,6 +51,10 @@ export default {
       code: 'STORE_ID_NOT_MATCH',
       message: 'Store ID bukan milik merchant.',
     },
+    unauthorizedUser: {
+      code: 'USER_UNAUTHORIZED',
+      message: 'User tidak mendapatkan akses.',
+    },
     unverificatedUser: {
       code: 'USER_NOT_VERIFIED',
       message: 'User belum terverifikasi.',

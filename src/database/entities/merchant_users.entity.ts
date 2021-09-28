@@ -84,4 +84,7 @@ export class MerchantUsersDocument {
     default: MerchantUsersStatus.Waiting_for_approval,
   })
   status: MerchantUsersStatus;
+
+  @Column('uuid', { nullable: true })
+  role_id: string;
 }

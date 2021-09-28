@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
@@ -19,6 +20,10 @@ import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MerchantStoreUsersValidation } from './validation/store_users.validation';
+import { CommonService } from 'src/common/common.service';
+import { MerchantsService } from 'src/merchants/merchants.service';
+import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
+import { UpdateMerchantStoreUsersValidation } from './validation/update_store_users.validation';
 
 @Injectable()
 export class StoreUsersService {
@@ -31,11 +36,31 @@ export class StoreUsersService {
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
     @Hash() private readonly hashService: HashService,
+    private commonService: CommonService,
+    private readonly merchantService: MerchantsService,
   ) {}
 
   async createStoreUsers(
-    args: Partial<MerchantStoreUsersValidation>,
+    args: MerchantStoreUsersValidation,
   ): Promise<RSuccessMessage> {
+    const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/roles/${args.role_id}`;
+    const role = await this.commonService.getHttp(url);
+    if (!role || (role && !role.data)) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: args.role_id,
+            property: 'role_id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
     const cekStoreId = await this.storeRepository
       .findOne({
         id: args.store_id,
@@ -117,20 +142,22 @@ export class StoreUsersService {
     );
     const createMerchantUser: Partial<MerchantUsersDocument> = {
       name: args.name,
+      nip: args.nip,
       phone: args.phone,
       email: args.email,
       store_id: args.store_id,
       password: passwordHash,
       store: cekStoreId,
+      role_id: args.role_id,
+      status: args.status,
     };
 
-    return await this.merchantUsersRepository
+    return this.merchantUsersRepository
       .save(createMerchantUser)
       .then((result) => {
         dbOutputTime(result);
         dbOutputTime(result.store);
         delete result.password;
-        // delete result.store.owner_password;
 
         return this.responseService.success(
           true,
@@ -154,8 +181,27 @@ export class StoreUsersService {
   }
 
   async updateStoreUsers(
-    args: Partial<MerchantStoreUsersValidation>,
+    args: UpdateMerchantStoreUsersValidation,
   ): Promise<RSuccessMessage> {
+    if (args.role_id) {
+      const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/roles/${args.role_id}`;
+      const role = await this.commonService.getHttp(url);
+      if (!role || (role && !role.data)) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: args.role_id,
+              property: 'role_id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+    }
     const gUsersExist: MerchantUsersDocument =
       await this.merchantUsersRepository
         .findOne({
@@ -192,10 +238,9 @@ export class StoreUsersService {
         ),
       );
     }
-
-    if (typeof args.name != 'undefined' && args.name != '')
-      gUsersExist.name = args.name;
-    if (typeof args.phone != 'undefined' && args.phone != '') {
+    gUsersExist.role_id = args.role_id;
+    if (args.name) gUsersExist.name = args.name;
+    if (args.phone) {
       const cekphone: MerchantUsersDocument =
         await this.merchantUsersRepository.findOne({
           where: { phone: args.phone },
@@ -218,7 +263,7 @@ export class StoreUsersService {
       }
       gUsersExist.phone = args.phone;
     }
-    if (typeof args.email != 'undefined' && args.email != '') {
+    if (args.email) {
       const cekemail: MerchantUsersDocument =
         await this.merchantUsersRepository.findOne({
           where: { email: args.email },
@@ -241,7 +286,7 @@ export class StoreUsersService {
       }
       gUsersExist.email = args.email;
     }
-    if (typeof args.password != 'undefined' && args.password != '') {
+    if (args.password) {
       const salt: string = await this.hashService.randomSalt();
       const passwordHash = await this.hashService.hashPassword(
         args.password,
@@ -249,14 +294,15 @@ export class StoreUsersService {
       );
       gUsersExist.password = passwordHash;
     }
+    if (args.nip) gUsersExist.nip = args.nip;
+    if (args.status) gUsersExist.status = args.status;
 
-    return await this.merchantUsersRepository
+    return this.merchantUsersRepository
       .save(gUsersExist)
       .then(async (result) => {
         dbOutputTime(result);
         dbOutputTime(result.store);
         delete result.password;
-        // delete result.store.owner_password;
 
         return this.responseService.success(
           true,
@@ -282,11 +328,12 @@ export class StoreUsersService {
 
   async deleteStoreUsers(
     args: Partial<MerchantStoreUsersValidation>,
+    user: Record<string, any>,
   ): Promise<RSuccessMessage> {
     const gUsersExist: MerchantUsersDocument =
       await this.merchantUsersRepository
         .findOne({
-          where: { id: args.id, store_id: args.store_id },
+          where: { id: args.id },
           relations: ['store'],
         })
         .catch(() => {
@@ -318,6 +365,60 @@ export class StoreUsersService {
           'Bad Request',
         ),
       );
+    }
+
+    if (user.user_type == 'merchant' && user.level == 'merchant') {
+      if (user.merchant_id != gUsersExist.store.merchant_id) {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: user.merchant_id,
+              property: 'merchant_id',
+              constraint: [
+                this.messageService.get('merchant.general.unauthorizedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
+    }
+
+    if (user.user_type == 'merchant' && user.level == 'group') {
+      const cekGroup = await this.merchantService.findMerchantById(
+        gUsersExist.store.merchant_id,
+      );
+      if (!cekGroup) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: user.group_id,
+              property: 'group_id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      if (user.group_id != cekGroup.group_id) {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: user.group_id,
+              property: 'group_id',
+              constraint: [
+                this.messageService.get('merchant.general.unauthorizedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
     }
     return this.merchantUsersRepository
       .softDelete({ id: args.id })
@@ -345,16 +446,20 @@ export class StoreUsersService {
   }
 
   async listStoreUsers(
-    args: Partial<MerchantStoreUsersValidation>,
+    args: ListMerchantStoreUsersValidation,
+    user: Record<string, any>,
   ): Promise<RSuccessMessage> {
     const search = args.search || '';
-    const currentPage = Number(args.page) || 1;
-    const perPage = Number(args.limit) || 10;
+    const currentPage = args.page || 1;
+    const perPage = args.limit || 10;
     let totalItems: number;
+    const statuses = args.statuses || [];
 
-    return await this.merchantUsersRepository
+    const query = this.merchantUsersRepository
       .createQueryBuilder('mu')
       .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
       .where(
         new Brackets((qb) => {
           qb.where('mu.name ilike :mname', {
@@ -367,8 +472,52 @@ export class StoreUsersService {
               semail: '%' + search + '%',
             });
         }),
-      )
-      .andWhere('mu.store_id = :gid', { gid: args.store_id })
+      );
+
+    if (statuses.length > 0) {
+      query.andWhere('mu.status in (:...gstat)', {
+        gstat: statuses,
+      });
+    }
+
+    if (args.role_id) {
+      query.andWhere('mu.role_id = :sid', {
+        sid: args.role_id,
+      });
+    }
+
+    if (args.store_id) {
+      query.andWhere('mu.store_id = :sid', {
+        sid: args.store_id,
+      });
+    }
+
+    if (
+      (user.user_type == 'admin' || user.level == 'group') &&
+      args.merchant_id
+    ) {
+      query.andWhere('mu.merchant_id = :mid', {
+        mid: args.merchant_id,
+      });
+    }
+
+    if (user.user_type == 'admin' && args.group_id) {
+      query.andWhere('mu.group_id = :gid', {
+        gid: args.group_id,
+      });
+    }
+
+    if (user.level == 'merchant') {
+      query.andWhere('mu.merchant_id = :mid', {
+        mid: user.merchant_id,
+      });
+    } else if (user.level == 'group') {
+      query.andWhere('mu.group_id = :group_id', {
+        group_id: user.group_id,
+      });
+    }
+
+    return query
       .orderBy('mu.name')
       .offset((currentPage - 1) * perPage)
       .limit(perPage)
@@ -376,10 +525,15 @@ export class StoreUsersService {
       .then(async (result) => {
         totalItems = result[1];
         result[0].forEach((raw) => {
-          dbOutputTime(raw);
-          dbOutputTime(raw.store);
+          if (raw.merchant) {
+            delete raw.merchant.pic_password;
+          }
+          if (raw.group) {
+            delete raw.group.director_password;
+            delete raw.group.pic_operational_password;
+            delete raw.group.pic_finance_password;
+          }
           delete raw.password;
-          // delete raw.store.owner_password;
         });
 
         const listResult: ListResponse = {
@@ -421,7 +575,7 @@ export class StoreUsersService {
     headers: Record<string, any>,
   ): Promise<Observable<AxiosResponse<any>>> {
     return this.httpService.get(url, { headers: headers }).pipe(
-      map((response) => response.data),
+      map((response: any) => response.data),
       catchError((err) => {
         throw err;
       }),
