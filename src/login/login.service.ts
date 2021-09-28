@@ -57,7 +57,7 @@ export class LoginService {
     headers: Record<string, any>,
   ): Promise<Observable<AxiosResponse<any>>> {
     return this.httpService.post(url, body, { headers: headers }).pipe(
-      map((response) => response.data),
+      map((response: any) => response.data),
       catchError((err) => {
         throw err;
       }),
@@ -67,7 +67,6 @@ export class LoginService {
   async loginEmailOtpValidationProcess(
     data: OtpEmailValidateValidation,
   ): Promise<Observable<Promise<any>>> {
-    // let existMerchantUser: MerchantUsersDocument;
     const existMerchantUser = await this.merchantUsersRepository
       .findOne({ where: { email: data.email } })
       .catch((err) => {

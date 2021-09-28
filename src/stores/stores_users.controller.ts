@@ -31,7 +31,7 @@ export class StoreUsersController {
     @Param('sid') storeId: string,
   ): Promise<any> {
     args.store_id = storeId;
-    return await this.storeUsersService.createStoreUsers(args);
+    return this.storeUsersService.createStoreUsers(args);
   }
 
   @Put(':sid/users/:uid')

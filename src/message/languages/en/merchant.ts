@@ -52,7 +52,7 @@ export default {
       message: 'Store ID bukan milik merchant.',
     },
     unverificatedUser: {
-      code: 'UNVERIFICATED_USER',
+      code: 'USER_NOT_VERIFIED',
       message: 'User belum terverifikasi.',
     },
     unverifiedEmail: {
