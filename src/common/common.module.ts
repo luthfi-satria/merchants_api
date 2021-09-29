@@ -3,6 +3,7 @@ import { Global, HttpModule, Module } from '@nestjs/common';
 import { CommonService } from './common.service';
 import { CityService } from './services/admins/city.service';
 import { CommonStorageService } from './storage/storage.service';
+import { MailerService } from './mailer/mailer.service';
 
 @Global()
 @Module({
@@ -29,7 +30,7 @@ import { CommonStorageService } from './storage/storage.service';
     }),
     HttpModule,
   ],
-  providers: [CommonStorageService, CommonService, CityService],
+  providers: [CommonStorageService, CommonService, CityService, MailerService],
   exports: [CommonStorageService, CityService],
 })
 export class CommonModule {}

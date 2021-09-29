@@ -12,6 +12,7 @@ import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { MerchantUsersValidation } from './validation/merchants_users.validation';
+import { MailerService } from 'src/common/mailer/mailer.service';
 
 @Injectable()
 export class ResetPasswordService {
@@ -22,6 +23,7 @@ export class ResetPasswordService {
     private readonly merchantUserRepository: Repository<MerchantUsersDocument>,
     private readonly commonService: CommonService,
     @Hash() private readonly hashService: HashService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async resetPasswordEmail(
@@ -65,31 +67,32 @@ export class ResetPasswordService {
     //Generate Random String
     const token = randomUUID();
     cekEmail.token_reset_password = token;
-    return await this.merchantUserRepository
-      .save(cekEmail)
-      .then(() => {
-        const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-        if (process.env.NODE_ENV == 'test') {
-          return { status: true, token: token, url: url };
-        } else {
-          return { status: true };
-        }
-      })
-      .catch((err) => {
-        const errors: RMessage = {
-          value: '',
-          property: err.column,
-          constraint: [err.message],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      });
+    try {
+      this.mailerService.sendEmail();
+      await this.merchantUserRepository.save(cekEmail);
+      const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      if (process.env.NODE_ENV == 'test') {
+        return { status: true, token: token, url: url };
+      } else {
+        return { status: true };
+      }
+    } catch (err) {
+      console.error(err);
+      const errors: RMessage = {
+        value: '',
+        property: err.column,
+        constraint: [err.message],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async resetPasswordPhone(
