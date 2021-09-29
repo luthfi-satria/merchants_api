@@ -534,6 +534,7 @@ export class StoreUsersService {
             delete raw.group.pic_finance_password;
           }
           delete raw.password;
+          raw.role_name = raw.role_id || '';
         });
 
         const listResult: ListResponse = {
