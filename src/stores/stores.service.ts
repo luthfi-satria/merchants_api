@@ -370,6 +370,8 @@ export class StoresService {
         .leftJoinAndSelect(
           'merchant_store_categories.languages',
           'merchant_store_categories_languages',
+          'merchant_store_categories_languages.lang = :lid',
+          { lid: data.lang ? data.lang : 'id' },
         )
         .leftJoinAndSelect(
           'ms.operational_hours',
@@ -385,17 +387,8 @@ export class StoresService {
           mid: sid,
         });
 
-      if (data.lang) {
-        store.andWhere('merchant_store_categories_languages.lang = :lid', {
-          lid: data.lang,
-        });
-      } else {
-        store.andWhere('merchant_store_categories_languages.lang = :lid', {
-          lid: 'id',
-        });
-      }
-
       const list = await store.getOne();
+
       list.store_categories.forEach((element: Record<string, any>) => {
         element.name = element.languages[0].name;
         delete element.languages;
