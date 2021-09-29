@@ -87,4 +87,6 @@ export class MerchantUsersDocument {
 
   @Column('uuid', { nullable: true })
   role_id: string;
+
+  role_name: string;
 }
