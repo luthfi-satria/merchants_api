@@ -8,6 +8,11 @@ import {
   Get,
   Req,
   Query,
+  BadRequestException,
+  ConflictException,
+  HttpStatus,
+  Logger,
+  NotFoundException,
 } from '@nestjs/common';
 
 import { ResponseStatusCode } from 'src/response/response.decorator';
@@ -17,10 +22,18 @@ import { MerchantStoreUsersValidation } from './validation/store_users.validatio
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { UpdateMerchantStoreUsersValidation } from './validation/update_store_users.validation';
 import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
+import { firstValueFrom, map, catchError, EMPTY } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { ResponseService } from 'src/response/response.service';
+import { ListResponse } from 'src/response/response.interface';
 
 @Controller('api/v1/merchants/stores')
 export class StoreUsersController {
-  constructor(private readonly storeUsersService: StoreUsersService) {}
+  constructor(
+    private readonly storeUsersService: StoreUsersService,
+    private readonly httpService: HttpService,
+    private readonly responseService: ResponseService,
+  ) {}
 
   @Post('users')
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
@@ -68,8 +81,75 @@ export class StoreUsersController {
   @ResponseStatusCode()
   async listStoreUsers(
     @Req() req: any,
-    @Query() data: ListMerchantStoreUsersValidation,
+    @Query() query: ListMerchantStoreUsersValidation,
   ): Promise<any> {
-    return this.storeUsersService.listStoreUsers(data, req.user);
+    const result = await this.storeUsersService.listStoreUsers(query, req.user);
+
+    // niel TODO: tidy up this
+    const { items } = result.data;
+    const payload = items.map((e) => {
+      return e.role_id;
+    });
+    const headerRequest = {
+      'Content-Type': 'application/json',
+    };
+    const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/roles/batchs`;
+    const res = await firstValueFrom(
+      this.httpService.post(url, payload, { headers: headerRequest }).pipe(
+        map((resp) => {
+          const { data } = resp?.data;
+
+          return data;
+        }),
+        catchError((err: any) => {
+          Logger.error(err.message, '', 'AdminsRoles Create Module');
+
+          const { status, data } = err.response;
+          const { error, message } = data; // statusCode, message, error
+          const { constraint, value, property } = message[0];
+
+          if (status == HttpStatus.BAD_REQUEST) {
+            throw new BadRequestException(
+              this.responseService.error(HttpStatus.BAD_REQUEST, {
+                constraint: constraint,
+                property: property,
+                value: value,
+              }),
+              `ERROR Create Module Permission`,
+            );
+          } else if (status == HttpStatus.CONFLICT) {
+            throw new ConflictException(
+              this.responseService.error(HttpStatus.CONFLICT, {
+                constraint: constraint,
+                property: property,
+                value: value,
+              }),
+              `ERROR ${error}`,
+            );
+          } else if (status == HttpStatus.NOT_FOUND) {
+            throw new NotFoundException(
+              this.responseService.error(HttpStatus.NOT_FOUND, {
+                constraint: constraint,
+                property: property,
+                value: value,
+              }),
+              `ERROR ${error}`,
+            );
+          }
+          return EMPTY;
+        }),
+      ),
+    );
+
+    //parse into new map
+    const parsedData = this.storeUsersService.parseRoleDetails(items, res);
+    const listResponse: ListResponse = {
+      current_page: result.data.current_page,
+      limit: result.data.limit,
+      total_item: result.data.total_item,
+      items: parsedData,
+    };
+
+    return listResponse;
   }
 }

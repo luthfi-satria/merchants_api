@@ -7,7 +7,7 @@ export interface RMessage {
 export interface RSuccessMessage {
   readonly success: boolean;
   readonly message: string;
-  readonly data?: Record<string, any> | Record<string, any>[];
+  readonly data?: Record<string, any> | Record<string, any>[] | any;
 }
 
 export interface IResponse {
