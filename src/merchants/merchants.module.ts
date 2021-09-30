@@ -23,7 +23,7 @@ import { MerchantUsersService } from './merchants_users.service';
 import { ResetPasswordController } from './reset-password.controller';
 import { ResetPasswordService } from './reset-password.service';
 import { ProfileModule } from './profile/profile.module';
-import { MailerService } from 'src/common/mailer/mailer.service';
+import { NotificationService } from 'src/common/notification/notification.service';
 
 @Module({
   imports: [
@@ -59,7 +59,7 @@ import { MailerService } from 'src/common/mailer/mailer.service';
     GroupUsersService,
     CommonService,
     ResetPasswordService,
-    MailerService,
+    NotificationService,
   ],
 })
 export class MerchantsModule {}

@@ -12,7 +12,7 @@ import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { MerchantUsersValidation } from './validation/merchants_users.validation';
-import { MailerService } from 'src/common/mailer/mailer.service';
+import { NotificationService } from 'src/common/notification/notification.service';
 
 @Injectable()
 export class ResetPasswordService {
@@ -23,7 +23,7 @@ export class ResetPasswordService {
     private readonly merchantUserRepository: Repository<MerchantUsersDocument>,
     private readonly commonService: CommonService,
     @Hash() private readonly hashService: HashService,
-    private readonly mailerService: MailerService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async resetPasswordEmail(
@@ -69,9 +69,19 @@ export class ResetPasswordService {
     cekEmail.token_reset_password = token;
 
     try {
-      this.mailerService.sendEmail();
       await this.merchantUserRepository.save(cekEmail);
       const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      // biarkan tanpa await karena dilakukan secara asynchronous
+      this.notificationService.sendEmail(
+        cekEmail.email,
+        'Reset Password',
+        '',
+        `
+      <p>Silahkan klik link berikut untuk mereset password Anda,</p>
+      <a href="${url}">${url}</a>
+      `,
+      );
 
       if (process.env.NODE_ENV == 'test') {
         return { status: true, token: token, url: url };
@@ -136,31 +146,32 @@ export class ResetPasswordService {
     //Generate Random String
     const token = randomUUID();
     cekPhone.token_reset_password = token;
-    return await this.merchantUserRepository
-      .save(cekPhone)
-      .then(() => {
-        const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-        if (process.env.NODE_ENV == 'test') {
-          return { status: true, token: token, url: url };
-        } else {
-          return { status: true };
-        }
-      })
-      .catch((err) => {
-        const errors: RMessage = {
-          value: '',
-          property: err.column,
-          constraint: [err.message],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      });
+    try {
+      await this.merchantUserRepository.save(cekPhone);
+      const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      this.notificationService.sendSms(cekPhone.phone, url);
+
+      if (process.env.NODE_ENV == 'test') {
+        return { status: true, token: token, url: url };
+      } else {
+        return { status: true };
+      }
+    } catch (err) {
+      const errors: RMessage = {
+        value: '',
+        property: err.column,
+        constraint: [err.message],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async resetPasswordExec(
