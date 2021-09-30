@@ -15,7 +15,6 @@ import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { MerchantUsersService } from './merchants_users.service';
 import { MerchantUsersValidation } from './validation/merchants_users.validation';
-import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 
 @Controller('api/v1/merchants/merchants')

@@ -575,7 +575,7 @@ export class StoreUsersService {
   ): MerchantUsersDocument[] {
     return exist.map((row) => {
       const role_name = role_detail.find((item) => item.id == row.role_id);
-      return new MerchantUsersDocument({ 
+      return new MerchantUsersDocument({
         ...row,
         role_name: role_name.name ? role_name.name : '#undefined',
       });
