@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -573,13 +574,17 @@ export class StoreUsersService {
     exist: MerchantUsersDocument[],
     role_detail: Record<string, any>[],
   ): MerchantUsersDocument[] {
-    return exist.map((row) => {
-      const role_name = role_detail.find((item) => item.id == row.role_id);
-      return new MerchantUsersDocument({
-        ...row,
-        role_name: role_name.name ? role_name.name : '#undefined',
+    try {
+      return exist.map((row) => {
+        const role_name = role_detail.find((item) => item.id == row.role_id);
+        return new MerchantUsersDocument({
+          ...row,
+          role_name: role_name ? role_name.name : '#undefined',
+        });
       });
-    });
+    } catch (error) {
+      Logger.error(error);
+    }
   }
   //------------------------------------------------------------------------------
 
