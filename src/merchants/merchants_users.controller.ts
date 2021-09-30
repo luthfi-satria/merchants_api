@@ -75,7 +75,6 @@ export class MerchantUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listMerchantUsers(
-    @Req() req: any,
     @Query() data: Record<string, any>,
     @Param('mid') merchantId: string,
   ): Promise<any> {
@@ -86,6 +85,6 @@ export class MerchantUsersController {
       page: data.page,
     };
 
-    return await this.merchantUsersService.listMerchantUsers(args);
+    return this.merchantUsersService.listMerchantUsers(args);
   }
 }

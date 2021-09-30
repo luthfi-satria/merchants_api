@@ -25,7 +25,9 @@ import { ListMerchantStoreUsersValidation } from './validation/list_store_users.
 import { firstValueFrom, map, catchError, EMPTY } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ResponseService } from 'src/response/response.service';
-import { ListResponse } from 'src/response/response.interface';
+import { ListResponse, RMessage } from 'src/response/response.interface';
+import { Message } from 'src/message/message.decorator';
+import { MessageService } from 'src/message/message.service';
 
 @Controller('api/v1/merchants/stores')
 export class StoreUsersController {
@@ -33,6 +35,7 @@ export class StoreUsersController {
     private readonly storeUsersService: StoreUsersService,
     private readonly httpService: HttpService,
     private readonly responseService: ResponseService,
+    @Message() private readonly messageService: MessageService,
   ) {}
 
   @Post('users')
@@ -151,5 +154,37 @@ export class StoreUsersController {
     };
 
     return listResponse;
+  }
+
+  @Get('users/:store_user_id')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async detailStoreUsers(
+    @Param('store_user_id') storeUserId: string,
+  ): Promise<any> {
+    const store_user = await this.storeUsersService.detailStoreUsers(
+      storeUserId,
+    );
+    if (!store_user) {
+      const errors: RMessage = {
+        value: storeUserId,
+        property: 'store_user_id',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      store_user,
+    );
   }
 }
