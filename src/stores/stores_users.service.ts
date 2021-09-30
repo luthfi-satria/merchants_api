@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,7 +12,7 @@ import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
 import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime } from 'src/utils/general-utils';
+import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
@@ -24,6 +25,7 @@ import { CommonService } from 'src/common/common.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
 import { UpdateMerchantStoreUsersValidation } from './validation/update_store_users.validation';
+import { RoleService } from 'src/common/services/admins/role.service';
 
 @Injectable()
 export class StoreUsersService {
@@ -37,6 +39,7 @@ export class StoreUsersService {
     @Message() private readonly messageService: MessageService,
     @Hash() private readonly hashService: HashService,
     private commonService: CommonService,
+    private roleService: RoleService,
     private readonly merchantService: MerchantsService,
   ) {}
 
@@ -569,6 +572,56 @@ export class StoreUsersService {
       });
   }
 
+  async detailStoreUsers(user_id: string): Promise<MerchantUsersDocument> {
+    const store_user = await this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      .where('mu.id = :user_id', { user_id })
+      .andWhere('mu.store_id is not null')
+      .getOne();
+    if (!store_user) {
+      return null;
+    }
+
+    const roles = await this.roleService.getRole([store_user.role_id]);
+    if (roles) {
+      store_user.role_name = roles[0].name;
+    }
+
+    deleteCredParam(store_user);
+    deleteCredParam(store_user.store);
+    delete store_user.token_reset_password;
+    delete store_user.email_verified_at;
+    delete store_user.phone_verified_at;
+
+    if (store_user.merchant) {
+      deleteCredParam(store_user.merchant);
+    }
+    if (store_user.group) {
+      deleteCredParam(store_user.group);
+    }
+
+    return store_user;
+  }
+
+  parseRoleDetails(
+    exist: MerchantUsersDocument[],
+    role_detail: Record<string, any>[],
+  ): MerchantUsersDocument[] {
+    try {
+      return exist.map((row) => {
+        const role_name = role_detail.find((item) => item.id == row.role_id);
+        return new MerchantUsersDocument({
+          ...row,
+          role_name: role_name ? role_name.name : '#undefined',
+        });
+      });
+    } catch (error) {
+      Logger.error(error);
+    }
+  }
   //------------------------------------------------------------------------------
 
   async getHttp(

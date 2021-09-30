@@ -89,4 +89,8 @@ export class MerchantUsersDocument {
   role_id: string;
 
   role_name: string;
+
+  constructor(init?: Partial<MerchantUsersDocument>) {
+    Object.assign(this, init);
+  }
 }

@@ -15,10 +15,14 @@ import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { MerchantUsersService } from './merchants_users.service';
 import { MerchantUsersValidation } from './validation/merchants_users.validation';
+import { HttpService } from '@nestjs/axios';
 
 @Controller('api/v1/merchants/merchants')
 export class MerchantUsersController {
-  constructor(private readonly merchantUsersService: MerchantUsersService) {}
+  constructor(
+    private readonly merchantUsersService: MerchantUsersService,
+    private readonly httpService: HttpService,
+  ) {}
 
   @Post(':mid/users')
   @UserType('admin')
@@ -71,7 +75,6 @@ export class MerchantUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listMerchantUsers(
-    @Req() req: any,
     @Query() data: Record<string, any>,
     @Param('mid') merchantId: string,
   ): Promise<any> {
@@ -81,6 +84,7 @@ export class MerchantUsersController {
       limit: data.limit,
       page: data.page,
     };
-    return await this.merchantUsersService.listMerchantUsers(args);
+
+    return this.merchantUsersService.listMerchantUsers(args);
   }
 }
