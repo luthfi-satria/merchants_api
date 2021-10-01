@@ -26,6 +26,8 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
 import { UpdateMerchantStoreUsersValidation } from './validation/update_store_users.validation';
 import { RoleService } from 'src/common/services/admins/role.service';
+import { NotificationService } from 'src/common/notification/notification.service';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class StoreUsersService {
@@ -41,6 +43,7 @@ export class StoreUsersService {
     private commonService: CommonService,
     private roleService: RoleService,
     private readonly merchantService: MerchantsService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createStoreUsers(
@@ -155,32 +158,43 @@ export class StoreUsersService {
       status: args.status,
     };
 
-    return this.merchantUsersRepository
-      .save(createMerchantUser)
-      .then((result) => {
-        dbOutputTime(result);
-        dbOutputTime(result.store);
-        delete result.password;
+    const token = randomUUID();
+    createMerchantUser.token_reset_password = token;
 
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          result,
-        );
-      })
-      .catch((err) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+    try {
+      const result = await this.merchantUsersRepository.save(
+        createMerchantUser,
+      );
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      this.notificationService.sendSms(
+        createMerchantUser.phone,
+        urlVerification,
+      );
+
+      dbOutputTime(result);
+      dbOutputTime(result.store);
+      delete result.password;
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async updateStoreUsers(
