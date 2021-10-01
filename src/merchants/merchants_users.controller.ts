@@ -8,6 +8,8 @@ import {
   Get,
   Req,
   Query,
+  HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { Response, ResponseStatusCode } from 'src/response/response.decorator';
@@ -65,14 +67,22 @@ export class MerchantUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async deleteMerchantUsers(@Param('user_id') user_id: string): Promise<any> {
-    const result = await this.merchantUsersService.deleteMerchantUsers(user_id);
-    console.log(
-    '===========================Start Debug result=================================\n',
-    new Date(Date.now()).toLocaleString(),
-    '\n',
-    result,
-    '\n============================End Debug result==================================',
+    const deleteUser = await this.merchantUsersService.deleteMerchantUsers(
+      user_id,
     );
+    if (!deleteUser) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'id',
+            constraint: [this.messageService.get('merchant_user.delete.fail')],
+          },
+          'Bad Request',
+        ),
+      );
+    }
     return this.responseService.success(
       true,
       this.messageService.get('merchant.general.success'),

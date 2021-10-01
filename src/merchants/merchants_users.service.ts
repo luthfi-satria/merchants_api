@@ -322,7 +322,9 @@ export class MerchantUsersService {
           {
             value: user_id,
             property: 'id',
-            constraint: [this.messageService.get('merchant.general.invalidID')],
+            constraint: [
+              this.messageService.get('merchant_user.delete.invalid_id'),
+            ],
           },
           'Bad Request',
         ),
