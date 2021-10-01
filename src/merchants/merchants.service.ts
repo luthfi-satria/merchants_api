@@ -378,6 +378,8 @@ export class MerchantsService {
     if (data.status) existMerchant.status = data.status;
     if (existMerchant.status == 'ACTIVE')
       existMerchant.approved_at = new Date();
+    if (data.rejection_reason)
+      existMerchant.rejection_reason = data.rejection_reason;
 
     try {
       const update: Record<string, any> = await this.merchantRepository.save(

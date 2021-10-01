@@ -238,27 +238,30 @@ export class ResetPasswordService {
     cekToken.password = passwordHash;
     cekToken.token_reset_password = null;
 
-    return await this.merchantUserRepository
-      .save(cekToken)
-      .then(() => {
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-        );
-      })
-      .catch((err) => {
-        const errors: RMessage = {
-          value: '',
-          property: err.column,
-          constraint: [err.message],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      });
+    if (cekToken.phone_verified_at === null) {
+      cekToken.phone_verified_at = new Date();
+    }
+
+    try {
+      await this.merchantUserRepository.save(cekToken);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+      );
+    } catch (err) {
+      const errors: RMessage = {
+        value: '',
+        property: err.column,
+        constraint: [err.message],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 }

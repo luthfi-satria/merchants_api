@@ -26,6 +26,10 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
 import { UpdateMerchantStoreUsersValidation } from './validation/update_store_users.validation';
 import { RoleService } from 'src/common/services/admins/role.service';
+import { NotificationService } from 'src/common/notification/notification.service';
+import { randomUUID } from 'crypto';
+import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
+import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
 
 @Injectable()
 export class StoreUsersService {
@@ -41,6 +45,7 @@ export class StoreUsersService {
     private commonService: CommonService,
     private roleService: RoleService,
     private readonly merchantService: MerchantsService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createStoreUsers(
@@ -155,32 +160,265 @@ export class StoreUsersService {
       status: args.status,
     };
 
-    return this.merchantUsersRepository
-      .save(createMerchantUser)
-      .then((result) => {
-        dbOutputTime(result);
-        dbOutputTime(result.store);
-        delete result.password;
+    const token = randomUUID();
+    createMerchantUser.token_reset_password = token;
 
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          result,
-        );
-      })
-      .catch((err) => {
+    try {
+      const result = await this.merchantUsersRepository.save(
+        createMerchantUser,
+      );
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      this.notificationService.sendSms(
+        createMerchantUser.phone,
+        urlVerification,
+      );
+
+      dbOutputTime(result);
+      dbOutputTime(result.store);
+      delete result.password;
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async updatePhoneStoreUsers(
+    userId: string,
+    args: UpdatePhoneStoreUsersValidation,
+  ) {
+    const user: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { id: userId },
+        relations: ['store'],
+      });
+
+    if (!user) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: userId,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    if (args.phone) {
+      const cekphone: MerchantUsersDocument =
+        await this.merchantUsersRepository.findOne({
+          where: { phone: args.phone },
+        });
+
+      if (cekphone && cekphone.id != userId) {
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
             {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
+              value: args.phone,
+              property: 'phone',
+              constraint: [
+                this.messageService.get('merchant.general.phoneExist'),
+              ],
             },
             'Bad Request',
           ),
         );
+      }
+      user.phone = args.phone;
+    }
+
+    try {
+      const result = await this.merchantUsersRepository.save(user);
+      dbOutputTime(result);
+      dbOutputTime(result.store);
+      delete result.password;
+
+      this.notificationService.sendSms(
+        user.phone,
+        'Nomor Anda telah digunakan sebagai login baru',
+      );
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async updateEmailStoreUsers(
+    userId: string,
+    args: UpdateEmailStoreUsersValidation,
+  ) {
+    const user: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { id: userId },
+        relations: ['store'],
       });
+
+    if (!user) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: userId,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    if (args.email) {
+      const cekemail: MerchantUsersDocument =
+        await this.merchantUsersRepository.findOne({
+          where: { email: args.email },
+        });
+
+      if (cekemail && cekemail.id != userId) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: args.email,
+              property: 'email',
+              constraint: [
+                this.messageService.get('merchant.general.emailExist'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      user.email = args.email;
+    }
+
+    try {
+      const result = await this.merchantUsersRepository.save(user);
+      dbOutputTime(result);
+      dbOutputTime(result.store);
+      delete result.password;
+
+      this.notificationService.sendEmail(
+        user.email,
+        'Email Anda telah aktif',
+        'Alamat email Anda telah digunakan sebagai login baru',
+      );
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async updatePasswordStoreUsers(userId: string) {
+    const user: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { id: userId },
+        relations: ['store'],
+      });
+
+    if (!user) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: userId,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    const token = randomUUID();
+    user.token_reset_password = token;
+
+    try {
+      const result = await this.merchantUsersRepository.save(user);
+      dbOutputTime(result);
+      dbOutputTime(result.store);
+      delete result.password;
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      this.notificationService.sendSms(user.phone, urlVerification);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async updateStoreUsers(
