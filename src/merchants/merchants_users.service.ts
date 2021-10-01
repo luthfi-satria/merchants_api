@@ -17,7 +17,7 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, IsNull, Not, Repository, UpdateResult } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
@@ -291,39 +291,19 @@ export class MerchantUsersService {
       });
   }
 
-  async deleteMerchantUsers(
-    args: Partial<MerchantUsersValidation>,
-  ): Promise<RSuccessMessage> {
+  async deleteMerchantUsers(user_id: string): Promise<UpdateResult> {
     const gUsersExist: MerchantUsersDocument =
-      await this.merchantUsersRepository
-        .findOne({
-          where: { id: args.id, merchant_id: args.merchant_id },
-          relations: ['merchant'],
-        })
-        .catch((err) => {
-          const logger = new Logger();
-          logger.error(err, 'Catch Error');
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: args.id,
-                property: 'id',
-                constraint: [
-                  this.messageService.get('merchant.general.idNotFound'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        });
+      await this.merchantUsersRepository.findOne({
+        where: { id: user_id, merchant_id: Not(IsNull()) },
+        relations: ['merchant'],
+      });
     if (!gUsersExist) {
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
           {
-            value: args.id,
-            property: 'id',
+            value: user_id,
+            property: 'user_id',
             constraint: [
               this.messageService.get('merchant.general.idNotFound'),
             ],
@@ -332,29 +312,22 @@ export class MerchantUsersService {
         ),
       );
     }
-    return this.merchantUsersRepository
-      .softDelete({ id: args.id })
-      .then(async () => {
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-        );
-      })
-      .catch(() => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.general.invalidID'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+
+    try {
+      return await this.merchantUsersRepository.softDelete({ id: user_id });
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'id',
+            constraint: [this.messageService.get('merchant.general.invalidID')],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async listMerchantUsers(

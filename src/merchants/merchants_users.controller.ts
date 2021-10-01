@@ -60,20 +60,23 @@ export class MerchantUsersController {
     return await this.merchantUsersService.updateMerchantUsers(args);
   }
 
-  @Delete(':mid/users/:uid')
+  @Delete('users/:user_id')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async deleteMerchantUsers(
-    @Req() req: any,
-    @Param('mid') merchantId: string,
-    @Param('uid') merchantUserId: string,
-  ): Promise<any> {
-    const args: Partial<MerchantUsersValidation> = {
-      merchant_id: merchantId,
-      id: merchantUserId,
-    };
-    return await this.merchantUsersService.deleteMerchantUsers(args);
+  async deleteMerchantUsers(@Param('user_id') user_id: string): Promise<any> {
+    const result = await this.merchantUsersService.deleteMerchantUsers(user_id);
+    console.log(
+    '===========================Start Debug result=================================\n',
+    new Date(Date.now()).toLocaleString(),
+    '\n',
+    result,
+    '\n============================End Debug result==================================',
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+    );
   }
 
   @Get('users')
