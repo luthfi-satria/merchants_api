@@ -94,6 +94,9 @@ export class MerchantDocument {
   })
   status: MerchantStatus;
 
+  @Column({ nullable: true })
+  rejection_reason: string;
+
   // @Type(() => Date)
   // @Transform((owner_dob: any) => moment(owner_dob).format('YYYY-MM-DD'), {
   //   toPlainOnly: true,
@@ -137,8 +140,6 @@ export class MerchantDocument {
   @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants)
   @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })
   group: GroupDocument;
-
-  // user = MerchantUsersDocument;
 
   constructor(init?: Partial<MerchantDocument>) {
     Object.assign(this, init);

@@ -171,4 +171,7 @@ export class StoreDocument {
     },
   )
   operational_hours: StoreOperationalHoursDocument[];
+
+  @Column({ nullable: true })
+  rejection_reason: string;
 }

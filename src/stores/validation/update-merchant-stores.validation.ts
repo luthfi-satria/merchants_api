@@ -82,4 +82,7 @@ export class UpdateMerchantStoreValidation {
   @IsOptional()
   @IsBooleanString({ message: 'auto_accept_order bukan format Boolean' })
   auto_accept_order: string;
+
+  @IsOptional()
+  rejection_reason: string;
 }

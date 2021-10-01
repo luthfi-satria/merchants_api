@@ -323,6 +323,9 @@ export class StoresService {
           ? true
           : false;
     }
+    if (update_merchant_store_validation.rejection_reason)
+      store_document.rejection_reason =
+        update_merchant_store_validation.rejection_reason;
 
     return this.storeRepository.save(store_document);
   }

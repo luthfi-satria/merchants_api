@@ -90,4 +90,7 @@ export class UpdateMerchantDTO {
   @IsOptional()
   @IsIn(Object.values(MerchantStatus))
   status: MerchantStatus;
+
+  @IsOptional()
+  rejection_reason: string;
 }
