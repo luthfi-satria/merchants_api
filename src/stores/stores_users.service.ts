@@ -364,6 +364,63 @@ export class StoreUsersService {
     }
   }
 
+  async updatePasswordStoreUsers(userId: string) {
+    const user: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { id: userId },
+        relations: ['store'],
+      });
+
+    if (!user) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: userId,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    const token = randomUUID();
+    user.token_reset_password = token;
+
+    try {
+      const result = await this.merchantUsersRepository.save(user);
+      dbOutputTime(result);
+      dbOutputTime(result.store);
+      delete result.password;
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      this.notificationService.sendSms(user.phone, urlVerification);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
   async updateStoreUsers(
     args: UpdateMerchantStoreUsersValidation,
   ): Promise<RSuccessMessage> {

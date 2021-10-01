@@ -92,6 +92,17 @@ export class StoreUsersController {
     return this.storeUsersService.updateEmailStoreUsers(storeUserId, args);
   }
 
+  @Put('users/:uid/password')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updatePasswordStoreUsers(
+    @Req() req: any,
+    @Param('uid') storeUserId: string,
+  ): Promise<any> {
+    return this.storeUsersService.updatePasswordStoreUsers(storeUserId);
+  }
+
   @Delete('users/:uid')
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
