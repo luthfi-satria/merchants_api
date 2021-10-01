@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -34,6 +35,7 @@ export class MerchantUsersDocument {
   phone: string;
 
   @Column({ nullable: true })
+  @Exclude()
   password: string;
 
   @Column('uuid', { nullable: true })
@@ -67,6 +69,7 @@ export class MerchantUsersDocument {
   store: StoreDocument;
 
   @Column({ nullable: true })
+  @Exclude()
   token_reset_password: string;
 
   @Column({ nullable: true })

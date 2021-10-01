@@ -32,12 +32,11 @@ export class ListMerchantUsersValidation {
   @IsUUID('all', { message: 'Group ID yang diisi bukan format UUID' })
   group_id: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID('all', { message: 'Merchant ID yang diisi bukan format UUID' })
   merchant_id: string;
 
   @IsOptional()
   @IsArray()
-  @IsIn(Object.values(ListMerchantUserStatuses), { each: true })
   statuses: ListMerchantUserStatuses[];
 }

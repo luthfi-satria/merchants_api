@@ -11,7 +11,12 @@ import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
 import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime } from 'src/utils/general-utils';
+import {
+  dbOutputTime,
+  deleteCredParam,
+  formatingAllOutputTime,
+  removeAllFieldPassword,
+} from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
@@ -359,9 +364,11 @@ export class MerchantUsersService {
     const currentPage = Number(args.page) || 1;
     const perPage = Number(args.limit) || 10;
 
-    const result_merchant = await this.merchantUsersRepository
+    const query = this.merchantUsersRepository
       .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.store', 'merchant_store')
       .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
       .where(
         new Brackets((qb) => {
           qb.where('mu.name ilike :mname', {
@@ -374,38 +381,77 @@ export class MerchantUsersService {
               semail: '%' + search + '%',
             });
         }),
-      )
-      .andWhere('mu.merchant_id = :gid', { gid: args.merchant_id })
-      .orderBy('mu.name')
-      .offset((currentPage - 1) * perPage)
-      .limit(perPage)
-      .getManyAndCount();
+      );
 
-    const role_ids: string[] = [];
-    result_merchant[0].forEach((raw) => {
-      if (raw.role_id) {
-        role_ids.push(raw.role_id);
+    if (args.merchant_id) {
+      query.andWhere('mu.merchant_id = :merchant_id', {
+        merchant_id: args.merchant_id,
+      });
+    }
+
+    if (args.role_id) {
+      query.andWhere('mu.role_id = :role_id', { role_id: args.role_id });
+    }
+
+    if (args.group_id) {
+      query.andWhere('mu.group_id = :group_id', { group_id: args.group_id });
+    }
+
+    if (args.statuses) {
+      query.andWhere('mu.status in (:...statuses)', {
+        statuses: args.statuses,
+      });
+    }
+
+    try {
+      const result_merchant = await query
+        .orderBy('mu.name')
+        .offset((currentPage - 1) * perPage)
+        .limit(perPage)
+        .getManyAndCount();
+
+      formatingAllOutputTime(result_merchant[0]);
+      removeAllFieldPassword(result_merchant[0]);
+
+      const role_ids: string[] = [];
+      result_merchant[0].forEach((raw) => {
+        if (raw.role_id) {
+          role_ids.push(raw.role_id);
+        }
+      });
+
+      const roles = await this.roleService.getRole(role_ids);
+
+      if (roles) {
+        result_merchant[0].forEach((raw) => {
+          const roleName = _.find(roles, { id: raw.role_id });
+          raw.role_name = roleName ? roleName.name : null;
+        });
       }
-    });
 
-    const roles = await this.roleService.getRole(role_ids);
-
-    result_merchant[0].forEach((raw) => {
-      raw.role_name = _.find(roles, { id: raw.role_id }).name;
-
-      dbOutputTime(raw);
-      dbOutputTime(raw.merchant);
-      delete raw.password;
-      delete raw.merchant.pic_password;
-    });
-
-    const listResult: ListResponse = {
-      total_item: result_merchant[1],
-      limit: perPage,
-      current_page: currentPage,
-      items: result_merchant[0],
-    };
-    return listResult;
+      const listResult: ListResponse = {
+        total_item: result_merchant[1],
+        limit: perPage,
+        current_page: currentPage,
+        items: result_merchant[0],
+      };
+      return listResult;
+    } catch (error) {
+      Logger.error(error);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: '',
+            constraint: [
+              this.messageService.get('merchant.http.internalServerError'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async checkExistEmailPhone(

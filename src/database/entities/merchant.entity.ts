@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Column,
   CreateDateColumn,
@@ -85,6 +86,7 @@ export class MerchantDocument {
   pic_email: string;
 
   @Column({ nullable: true })
+  @Exclude()
   pic_password: string;
 
   @Column({
