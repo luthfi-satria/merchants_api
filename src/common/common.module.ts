@@ -4,6 +4,7 @@ import { CommonService } from './common.service';
 import { CityService } from './services/admins/city.service';
 import { RoleService } from './services/admins/role.service';
 import { CommonStorageService } from './storage/storage.service';
+import { NotificationService } from './notification/notification.service';
 
 @Global()
 @Module({
@@ -30,7 +31,18 @@ import { CommonStorageService } from './storage/storage.service';
     }),
     HttpModule,
   ],
-  providers: [CommonStorageService, CommonService, CityService, RoleService],
-  exports: [CommonStorageService, CityService, RoleService],
+  providers: [
+    CommonStorageService,
+    CommonService,
+    CityService,
+    RoleService,
+    NotificationService,
+  ],
+  exports: [
+    CommonStorageService,
+    CityService,
+    RoleService,
+    NotificationService,
+  ],
 })
 export class CommonModule {}
