@@ -90,9 +90,11 @@ export const dbOutputTime = function (input: Record<string, any>) {
   //     .tz('Asia/Jakarta')
   //     .format('YYYY-MM-DD HH:mm:ss');
   // }
-  input.created_at = momenttz(input.created_at)
-    .tz('Asia/Jakarta')
-    .format('YYYY-MM-DD HH:mm:ss');
+  if (input.created_at) {
+    input.created_at = momenttz(input.created_at)
+      .tz('Asia/Jakarta')
+      .format('YYYY-MM-DD HH:mm:ss');
+  }
   if (input.approved_at && input.approved_at != null) {
     input.approved_at = momenttz(input.approved_at)
       .tz('Asia/Jakarta')
@@ -174,4 +176,21 @@ export const delExcludeParam = function (input: Record<string, any>) {
   delete input.pic_operational_password;
   dbOutputTime(input);
   return input;
+};
+
+export const formatingOutputTime = function formatingOutputTime(time: string) {
+  return momenttz(time).tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss');
+};
+
+export const formatingAllOutputTime = function formatingAllOutputTime(
+  object: any,
+) {
+  for (const key in object) {
+    if (object[key] && key.endsWith('_at')) {
+      object[key] = this.formatingOutputTime(object[key]);
+    }
+    if (object[key] && typeof object[key] === 'object') {
+      this.formatingAllOutputTime(object[key]);
+    }
+  }
 };
