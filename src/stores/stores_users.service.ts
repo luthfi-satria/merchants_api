@@ -29,6 +29,7 @@ import { RoleService } from 'src/common/services/admins/role.service';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { randomUUID } from 'crypto';
 import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
+import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
 
 @Injectable()
 export class StoreUsersService {
@@ -257,6 +258,89 @@ export class StoreUsersService {
       this.notificationService.sendSms(
         user.phone,
         'Nomor Anda telah digunakan sebagai login baru',
+      );
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async updateEmailStoreUsers(
+    userId: string,
+    args: UpdateEmailStoreUsersValidation,
+  ) {
+    const user: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { id: userId },
+        relations: ['store'],
+      });
+
+    if (!user) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: userId,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    if (args.email) {
+      const cekemail: MerchantUsersDocument =
+        await this.merchantUsersRepository.findOne({
+          where: { email: args.email },
+        });
+
+      if (cekemail && cekemail.id != userId) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: args.email,
+              property: 'email',
+              constraint: [
+                this.messageService.get('merchant.general.emailExist'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      user.email = args.email;
+    }
+
+    try {
+      const result = await this.merchantUsersRepository.save(user);
+      dbOutputTime(result);
+      dbOutputTime(result.store);
+      delete result.password;
+
+      this.notificationService.sendEmail(
+        user.email,
+        'Email Anda telah aktif',
+        'Alamat email Anda telah digunakan sebagai login baru',
       );
 
       return this.responseService.success(
