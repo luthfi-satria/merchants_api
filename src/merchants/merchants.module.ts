@@ -42,8 +42,8 @@ import { ProfileModule } from './profile/profile.module';
     ProfileModule,
   ],
   controllers: [
-    MerchantsController,
     MerchantUsersController,
+    MerchantsController,
     ResetPasswordController,
   ],
   providers: [

@@ -21,6 +21,9 @@ import { MerchantUsersDocument } from 'src/database/entities/merchant_users.enti
 import { MerchantUsersValidation } from './validation/merchants_users.validation';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { randomUUID } from 'crypto';
+import { RoleService } from 'src/common/services/admins/role.service';
+import _ from 'lodash';
+import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
 
 @Injectable()
 export class MerchantUsersService {
@@ -33,6 +36,7 @@ export class MerchantUsersService {
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
     @Hash() private readonly hashService: HashService,
+    private roleService: RoleService,
   ) {}
 
   async createMerchantUsers(
@@ -349,14 +353,13 @@ export class MerchantUsersService {
   }
 
   async listMerchantUsers(
-    args: Partial<MerchantUsersValidation>,
-  ): Promise<RSuccessMessage> {
+    args: Partial<ListMerchantUsersValidation>,
+  ): Promise<ListResponse> {
     const search = args.search || '';
     const currentPage = Number(args.page) || 1;
     const perPage = Number(args.limit) || 10;
-    let totalItems: number;
 
-    return this.merchantUsersRepository
+    const result_merchant = await this.merchantUsersRepository
       .createQueryBuilder('mu')
       .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
       .where(
@@ -376,46 +379,33 @@ export class MerchantUsersService {
       .orderBy('mu.name')
       .offset((currentPage - 1) * perPage)
       .limit(perPage)
-      .getManyAndCount()
-      .then(async (result) => {
-        totalItems = result[1];
-        result[0].forEach((raw) => {
-          dbOutputTime(raw);
-          dbOutputTime(raw.merchant);
-          delete raw.password;
-          delete raw.merchant.pic_password;
-        });
+      .getManyAndCount();
 
-        const listResult: ListResponse = {
-          total_item: totalItems,
-          limit: perPage,
-          current_page: currentPage,
-          items: result[0],
-        };
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          listResult,
-        );
-      })
-      .catch((err) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.id,
-              property: 'id',
-              constraint: [
-                this.messageService.getjson({
-                  code: 'DATA_NOT_FOUND',
-                  message: err.message,
-                }),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+    const role_ids: string[] = [];
+    result_merchant[0].forEach((raw) => {
+      if (raw.role_id) {
+        role_ids.push(raw.role_id);
+      }
+    });
+
+    const roles = await this.roleService.getRole(role_ids);
+
+    result_merchant[0].forEach((raw) => {
+      raw.role_name = _.find(roles, { id: raw.role_id }).name;
+
+      dbOutputTime(raw);
+      dbOutputTime(raw.merchant);
+      delete raw.password;
+      delete raw.merchant.pic_password;
+    });
+
+    const listResult: ListResponse = {
+      total_item: result_merchant[1],
+      limit: perPage,
+      current_page: currentPage,
+      items: result_merchant[0],
+    };
+    return listResult;
   }
 
   async checkExistEmailPhone(
