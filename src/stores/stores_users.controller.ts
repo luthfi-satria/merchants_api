@@ -28,6 +28,7 @@ import { ResponseService } from 'src/response/response.service';
 import { ListResponse, RMessage } from 'src/response/response.interface';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
+import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
 
 @Controller('api/v1/merchants/stores')
 export class StoreUsersController {
@@ -62,6 +63,19 @@ export class StoreUsersController {
   ): Promise<any> {
     args.id = storeUserId;
     return this.storeUsersService.updateStoreUsers(args);
+  }
+
+  @Put('users/:uid/phone')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updatePhoneStoreUsers(
+    @Req() req: any,
+    @Body()
+    args: UpdatePhoneStoreUsersValidation,
+    @Param('uid') storeUserId: string,
+  ): Promise<any> {
+    return this.storeUsersService.updatePhoneStoreUsers(storeUserId, args);
   }
 
   @Delete('users/:uid')
