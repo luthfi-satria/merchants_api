@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  forwardRef,
   HttpService,
   HttpStatus,
+  Inject,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -13,7 +15,6 @@ import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
   dbOutputTime,
-  deleteCredParam,
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
@@ -29,6 +30,7 @@ import { randomUUID } from 'crypto';
 import { RoleService } from 'src/common/services/admins/role.service';
 import _ from 'lodash';
 import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
+import { MerchantsService } from './merchants.service';
 
 @Injectable()
 export class MerchantUsersService {
@@ -41,86 +43,21 @@ export class MerchantUsersService {
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
     @Hash() private readonly hashService: HashService,
-    private roleService: RoleService,
+    private readonly roleService: RoleService,
+    @Inject(forwardRef(() => MerchantsService))
+    private readonly merchantService: MerchantsService,
   ) {}
 
   async createMerchantUsers(
     args: Partial<MerchantUsersValidation>,
-  ): Promise<RSuccessMessage> {
-    const cekMerchantId = await this.merchantRepository
-      .findOne({
-        id: args.merchant_id,
-      })
-      .catch(() => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.merchant_id,
-              property: 'merchant_id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
-    if (!cekMerchantId) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.merchant_id,
-            property: 'merchant_id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
-    const cekemail: MerchantUsersDocument =
-      await this.merchantUsersRepository.findOne({
-        where: { email: args.email },
-      });
+  ): Promise<Partial<MerchantUsersDocument> & MerchantUsersDocument> {
+    const merchant = await this.merchantService.getAndValidateMerchantById(
+      args.merchant_id,
+    );
 
-    if (cekemail) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.email,
-            property: 'email',
-            constraint: [
-              this.messageService.get('merchant.general.emailExist'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
-    const cekphone: MerchantUsersDocument =
-      await this.merchantUsersRepository.findOne({
-        where: { phone: args.phone },
-      });
+    await this.getAndValidateMerchantUserByEmail(args.email);
+    await this.getAndValidateMerchantUserByPhone(args.phone);
 
-    if (cekphone) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.phone,
-            property: 'phone',
-            constraint: [
-              this.messageService.get('merchant.general.phoneExist'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
     const salt: string = await this.hashService.randomSalt();
     const passwordHash = await this.hashService.hashPassword(
       args.password,
@@ -132,36 +69,30 @@ export class MerchantUsersService {
       email: args.email,
       merchant_id: args.merchant_id,
       password: passwordHash,
-      merchant: cekMerchantId,
+      merchant,
     };
+    try {
+      const createMerchant = await this.merchantUsersRepository.save(
+        createMerchantUser,
+      );
 
-    return this.merchantUsersRepository
-      .save(createMerchantUser)
-      .then((result) => {
-        dbOutputTime(result);
-        dbOutputTime(result.merchant);
-        delete result.password;
-        delete result.merchant.pic_password;
+      formatingAllOutputTime(createMerchant);
+      removeAllFieldPassword(createMerchant);
 
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          result,
-        );
-      })
-      .catch((err) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+      return createMerchant;
+    } catch (err) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async updateMerchantUsers(
@@ -500,6 +431,52 @@ export class MerchantUsersService {
     const result = await this.merchantUsersRepository.save(args);
     delete result.password;
     return result;
+  }
+
+  async getAndValidateMerchantUserByPhone(phone: string) {
+    const cekphone: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { phone },
+      });
+
+    if (cekphone) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.get('merchant.general.phoneExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async getAndValidateMerchantUserByEmail(email: string) {
+    const cekemail: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { email },
+      });
+
+    if (cekemail) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: email,
+            property: 'email',
+            constraint: [
+              this.messageService.get('merchant.general.emailExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
   //------------------------------------------------------------------------------
 

@@ -684,4 +684,44 @@ export class MerchantsService {
     }
     return imageUrl;
   }
+
+  async getAndValidateMerchantById(
+    merchantId: string,
+  ): Promise<MerchantDocument> {
+    try {
+      const cekMerchantId = await this.merchantRepository.findOne({
+        id: merchantId,
+      });
+      if (!cekMerchantId) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: merchantId,
+              property: 'merchant_id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      return cekMerchantId;
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: merchantId,
+            property: 'merchant_id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
 }

@@ -22,6 +22,7 @@ import { Message } from 'src/message/message.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
+import { RSuccessMessage } from 'src/response/response.interface';
 
 @Controller('api/v1/merchants/merchants')
 export class MerchantUsersController {
@@ -32,18 +33,22 @@ export class MerchantUsersController {
     @Message() private readonly messageService: MessageService,
   ) {}
 
-  @Post(':mid/users')
+  @Post('users')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async createMerchantUsers(
-    @Req() req: any,
     @Body()
-    args: Partial<MerchantUsersValidation>,
-    @Param('mid') merchantId: string,
-  ): Promise<any> {
-    args.merchant_id = merchantId;
-    return await this.merchantUsersService.createMerchantUsers(args);
+    merchantUserValidation: Partial<MerchantUsersValidation>,
+  ): Promise<RSuccessMessage> {
+    const result = await this.merchantUsersService.createMerchantUsers(
+      merchantUserValidation,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
   }
 
   @Put(':mid/users/:uid')

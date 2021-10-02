@@ -24,7 +24,7 @@ export class MerchantUsersValidation {
   @IsNotEmpty({ message: 'Password tidak boleh kosong' })
   password: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   merchant_id: string;
 
   @IsOptional()
