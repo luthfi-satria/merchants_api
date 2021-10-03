@@ -37,6 +37,8 @@ import { RoleService } from 'src/common/services/admins/role.service';
 import _ from 'lodash';
 import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
 import { MerchantsService } from './merchants.service';
+import { NotificationService } from 'src/common/notification/notification.service';
+import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
 
 @Injectable()
 export class MerchantUsersService {
@@ -52,6 +54,7 @@ export class MerchantUsersService {
     private readonly roleService: RoleService,
     @Inject(forwardRef(() => MerchantsService))
     private readonly merchantService: MerchantsService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createMerchantUsers(
@@ -147,6 +150,46 @@ export class MerchantUsersService {
     }
   }
 
+  async updatePhoneMerchantUsers(
+    args: MerchantUsersUpdatePhoneValidation,
+  ): Promise<any> {
+    const merchantUser = await this.getAndValidateMerchantUserById(
+      args.id,
+      args.merchant_id,
+    );
+    Object.assign(merchantUser, args);
+
+    const token = randomUUID();
+    merchantUser.token_reset_password = token;
+
+    try {
+      await this.merchantUsersRepository.save(merchantUser);
+      const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      // biarkan tanpa await karena dilakukan secara asynchronous
+      this.notificationService.sendSms(merchantUser.phone, url);
+
+      if (process.env.NODE_ENV == 'test') {
+        return { status: true, token: token, url: url };
+      } else {
+        return { status: true };
+      }
+    } catch (err) {
+      console.error(err);
+      const errors: RMessage = {
+        value: '',
+        property: err.column,
+        constraint: [err.message],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+  }
   async deleteMerchantUsers(user_id: string): Promise<UpdateResult> {
     const gUsersExist: MerchantUsersDocument =
       await this.merchantUsersRepository.findOne({
