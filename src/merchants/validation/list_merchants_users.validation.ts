@@ -1,11 +1,4 @@
-import {
-  IsArray,
-  IsIn,
-  IsNotEmpty,
-  IsNumberString,
-  IsOptional,
-  IsUUID,
-} from 'class-validator';
+import { IsArray, IsNumberString, IsOptional, IsUUID } from 'class-validator';
 
 export class ListMerchantUserStatuses {
   ACTIVE = 'ACTIVE';

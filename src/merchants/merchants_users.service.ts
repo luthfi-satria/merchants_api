@@ -11,10 +11,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
-import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
+import { ListResponse } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
-  dbOutputTime,
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
@@ -38,7 +37,6 @@ import { RoleService } from 'src/common/services/admins/role.service';
 import _ from 'lodash';
 import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
 import { MerchantsService } from './merchants.service';
-import { MerchantUser } from './interface/merchant_user.interface';
 
 @Injectable()
 export class MerchantUsersService {
@@ -137,7 +135,11 @@ export class MerchantUsersService {
     }
 
     if (args.password) {
-      
+      const salt: string = await this.hashService.randomSalt();
+      const passwordHash = await this.hashService.hashPassword(
+        args.password,
+        salt,
+      );
       usersExist.password = passwordHash;
     }
 
