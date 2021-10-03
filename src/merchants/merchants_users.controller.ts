@@ -79,7 +79,6 @@ export class MerchantUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateMerchantUsersPassword(
-    @Req() req: any,
     @Body()
     param: MerchantUsersUpdatePasswordValidation,
     @Param('uid') merchantUserId: string,

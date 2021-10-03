@@ -104,32 +104,10 @@ export class MerchantUsersService {
   async updateMerchantUsers(
     args: Partial<MerchantUsersValidation>,
   ): Promise<MerchantUsersDocument> {
-    const where: { id: string; merchant_id?: FindOperator<string> } = {
-      id: args.id,
-    };
-    if (args.merchant_id) {
-      where.merchant_id = Not(args.merchant_id);
-    }
-    const usersExist: MerchantUsersDocument =
-      await this.merchantUsersRepository.findOne({
-        where,
-        relations: ['merchant'],
-      });
-    if (!usersExist) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.id,
-            property: 'id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
+    const usersExist = await this.getAndValidateMerchantUserById(
+      args.id,
+      args.merchant_id,
+    );
     Object.assign(usersExist, args);
 
     if (args.email) {
@@ -444,6 +422,42 @@ export class MerchantUsersService {
     }
 
     return cekemail;
+  }
+
+  async getAndValidateMerchantUserById(
+    id: string,
+    merchant_id?: string,
+  ): Promise<MerchantUsersDocument> {
+    const where: { id: string; merchant_id?: string } = { id };
+    if (merchant_id) {
+      where.merchant_id = merchant_id;
+    }
+    try {
+      const merchant_user: MerchantUsersDocument =
+        await this.merchantUsersRepository.findOne({
+          where,
+        });
+
+      if (!merchant_user) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: id,
+              property: 'id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+
+      return merchant_user;
+    } catch (error) {
+      Logger.error(error);
+    }
   }
   //------------------------------------------------------------------------------
 
