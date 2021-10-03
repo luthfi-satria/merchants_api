@@ -104,9 +104,15 @@ export class MerchantUsersService {
   async updateMerchantUsers(
     args: Partial<MerchantUsersValidation>,
   ): Promise<MerchantUsersDocument> {
+    const where: { id: string; merchant_id?: FindOperator<string> } = {
+      id: args.id,
+    };
+    if (args.merchant_id) {
+      where.merchant_id = Not(args.merchant_id);
+    }
     const usersExist: MerchantUsersDocument =
       await this.merchantUsersRepository.findOne({
-        where: { id: args.id, merchant_id: args.merchant_id },
+        where,
         relations: ['merchant'],
       });
     if (!usersExist) {

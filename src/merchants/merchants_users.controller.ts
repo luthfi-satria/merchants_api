@@ -23,6 +23,7 @@ import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
 import { RSuccessMessage } from 'src/response/response.interface';
+import { MerchantUsersUpdatePasswordValidation } from './validation/merchants_users_update_password.validation';
 
 @Controller('api/v1/merchants/merchants')
 export class MerchantUsersController {
@@ -64,6 +65,28 @@ export class MerchantUsersController {
     args.id = merchantUserId;
     const resultUpdate = await this.merchantUsersService.updateMerchantUsers(
       args,
+    );
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      resultUpdate,
+    );
+  }
+
+  @Put('users/:uid/password')
+  @UserType('admin')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updateMerchantUsersPassword(
+    @Req() req: any,
+    @Body()
+    param: MerchantUsersUpdatePasswordValidation,
+    @Param('uid') merchantUserId: string,
+  ): Promise<any> {
+    param.id = merchantUserId;
+    const resultUpdate = await this.merchantUsersService.updateMerchantUsers(
+      param,
     );
 
     return this.responseService.success(
