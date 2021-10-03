@@ -215,6 +215,7 @@ export class MerchantUsersService {
       .createQueryBuilder('mu')
       .leftJoinAndSelect('mu.store', 'merchant_store')
       .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_group_merchant')
       .leftJoinAndSelect('mu.group', 'merchant_group')
       .where(
         new Brackets((qb) => {
