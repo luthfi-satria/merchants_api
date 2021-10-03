@@ -39,7 +39,7 @@ export class MerchantUsersController {
   @ResponseStatusCode()
   async createMerchantUsers(
     @Body()
-    merchantUserValidation: Partial<MerchantUsersValidation>,
+    merchantUserValidation: MerchantUsersValidation,
   ): Promise<RSuccessMessage> {
     const result = await this.merchantUsersService.createMerchantUsers(
       merchantUserValidation,
@@ -51,7 +51,7 @@ export class MerchantUsersController {
     );
   }
 
-  @Put(':mid/users/:uid')
+  @Put('users/:uid')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -59,12 +59,18 @@ export class MerchantUsersController {
     @Req() req: any,
     @Body()
     args: Partial<MerchantUsersValidation>,
-    @Param('mid') merchantId: string,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
-    args.merchant_id = merchantId;
     args.id = merchantUserId;
-    return await this.merchantUsersService.updateMerchantUsers(args);
+    const resultUpdate = await this.merchantUsersService.updateMerchantUsers(
+      args,
+    );
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      resultUpdate,
+    );
   }
 
   @Delete('users/:user_id')

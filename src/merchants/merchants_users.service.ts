@@ -18,7 +18,14 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, IsNull, Not, Repository, UpdateResult } from 'typeorm';
+import {
+  Brackets,
+  FindOperator,
+  IsNull,
+  Not,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
@@ -31,6 +38,7 @@ import { RoleService } from 'src/common/services/admins/role.service';
 import _ from 'lodash';
 import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
 import { MerchantsService } from './merchants.service';
+import { MerchantUser } from './interface/merchant_user.interface';
 
 @Injectable()
 export class MerchantUsersService {
@@ -97,29 +105,13 @@ export class MerchantUsersService {
 
   async updateMerchantUsers(
     args: Partial<MerchantUsersValidation>,
-  ): Promise<RSuccessMessage> {
-    const gUsersExist: MerchantUsersDocument =
-      await this.merchantUsersRepository
-        .findOne({
-          where: { id: args.id, merchant_id: args.merchant_id },
-          relations: ['merchant'],
-        })
-        .catch(() => {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: args.id,
-                property: 'id',
-                constraint: [
-                  this.messageService.get('merchant.general.idNotFound'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        });
-    if (!gUsersExist) {
+  ): Promise<MerchantUsersDocument> {
+    const usersExist: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where: { id: args.id, merchant_id: args.merchant_id },
+        relations: ['merchant'],
+      });
+    if (!usersExist) {
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
@@ -134,92 +126,39 @@ export class MerchantUsersService {
         ),
       );
     }
+    Object.assign(usersExist, args);
 
-    if (typeof args.name != 'undefined' && args.name != '')
-      gUsersExist.name = args.name;
-    if (typeof args.phone != 'undefined' && args.phone != '') {
-      const cekphone: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where: { phone: args.phone },
-        });
-
-      if (cekphone && cekphone.id != args.id) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.phone,
-              property: 'phone',
-              constraint: [
-                this.messageService.get('merchant.general.phoneExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      gUsersExist.phone = args.phone;
+    if (args.email) {
+      await this.getAndValidateMerchantUserByEmail(args.email, args.id);
     }
-    if (typeof args.email != 'undefined' && args.email != '') {
-      const cekemail: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where: { email: args.email },
-        });
 
-      if (cekemail && cekemail.id != args.id) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.email,
-              property: 'email',
-              constraint: [
-                this.messageService.get('merchant.general.emailExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      gUsersExist.email = args.email;
+    if (args.phone) {
+      await this.getAndValidateMerchantUserByPhone(args.phone, args.id);
     }
-    if (typeof args.password != 'undefined' && args.password != '') {
-      const salt: string = await this.hashService.randomSalt();
-      const passwordHash = await this.hashService.hashPassword(
-        args.password,
-        salt,
+
+    if (args.password) {
+      
+      usersExist.password = passwordHash;
+    }
+
+    try {
+      const resultUpdate = await this.merchantUsersRepository.save(usersExist);
+      removeAllFieldPassword(resultUpdate);
+      return resultUpdate;
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
       );
-      gUsersExist.password = passwordHash;
     }
-
-    return this.merchantUsersRepository
-      .save(gUsersExist)
-      .then(async (resultUpdate) => {
-        dbOutputTime(resultUpdate);
-        dbOutputTime(resultUpdate.merchant);
-        delete resultUpdate.password;
-        delete resultUpdate.merchant.pic_password;
-
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          resultUpdate,
-        );
-      })
-      .catch((err) => {
-        console.error('catch error: ', err);
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
-            },
-            'Bad Request',
-          ),
-        );
-      });
   }
 
   async deleteMerchantUsers(user_id: string): Promise<UpdateResult> {
@@ -433,10 +372,18 @@ export class MerchantUsersService {
     return result;
   }
 
-  async getAndValidateMerchantUserByPhone(phone: string) {
+  async getAndValidateMerchantUserByPhone(
+    phone: string,
+    id?: string,
+  ): Promise<MerchantUsersDocument> {
+    const where: { phone: string; id?: FindOperator<string> } = { phone };
+    if (id) {
+      where.id = Not(id);
+    }
+
     const cekphone: MerchantUsersDocument =
       await this.merchantUsersRepository.findOne({
-        where: { phone },
+        where,
       });
 
     if (cekphone) {
@@ -454,12 +401,21 @@ export class MerchantUsersService {
         ),
       );
     }
+
+    return cekphone;
   }
 
-  async getAndValidateMerchantUserByEmail(email: string) {
+  async getAndValidateMerchantUserByEmail(
+    email: string,
+    id?: string,
+  ): Promise<MerchantUsersDocument> {
+    const where: { email: string; id?: FindOperator<string> } = { email };
+    if (id) {
+      where.id = Not(id);
+    }
     const cekemail: MerchantUsersDocument =
       await this.merchantUsersRepository.findOne({
-        where: { email },
+        where,
       });
 
     if (cekemail) {
@@ -477,6 +433,8 @@ export class MerchantUsersService {
         ),
       );
     }
+
+    return cekemail;
   }
   //------------------------------------------------------------------------------
 
