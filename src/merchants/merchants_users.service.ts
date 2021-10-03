@@ -11,7 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
-import { ListResponse } from 'src/response/response.interface';
+import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
   formatingAllOutputTime,
@@ -39,6 +39,7 @@ import { ListMerchantUsersValidation } from './validation/list_merchants_users.v
 import { MerchantsService } from './merchants.service';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
+import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
 
 @Injectable()
 export class MerchantUsersService {
@@ -190,6 +191,56 @@ export class MerchantUsersService {
       );
     }
   }
+
+  async updateEmailMerchantUsers(
+    args: MerchantUsersUpdateEmailValidation,
+  ): Promise<any> {
+    const merchantUser = await this.getAndValidateMerchantUserById(
+      args.id,
+      args.merchant_id,
+    );
+    Object.assign(merchantUser, args);
+
+    const token = randomUUID();
+    merchantUser.token_reset_password = token;
+
+    try {
+      await this.merchantUsersRepository.save(merchantUser);
+      const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      // biarkan tanpa await karena dilakukan secara asynchronous
+      this.notificationService.sendEmail(
+        merchantUser.email,
+        'Reset Password',
+        '',
+        `
+      <p>Silahkan klik link berikut untuk mereset password Anda,</p>
+      <a href="${url}">${url}</a>
+      `,
+      );
+
+      if (process.env.NODE_ENV == 'test') {
+        return { status: true, token: token, url: url };
+      } else {
+        return { status: true };
+      }
+    } catch (err) {
+      console.error(err);
+      const errors: RMessage = {
+        value: '',
+        property: err.column,
+        constraint: [err.message],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
   async deleteMerchantUsers(user_id: string): Promise<UpdateResult> {
     const gUsersExist: MerchantUsersDocument =
       await this.merchantUsersRepository.findOne({

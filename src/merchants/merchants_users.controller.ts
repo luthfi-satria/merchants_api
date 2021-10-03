@@ -25,6 +25,7 @@ import { ListMerchantUsersValidation } from './validation/list_merchants_users.v
 import { RSuccessMessage } from 'src/response/response.interface';
 import { MerchantUsersUpdatePasswordValidation } from './validation/merchants_users_update_password.validation';
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
+import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
 
 @Controller('api/v1/merchants/merchants')
 export class MerchantUsersController {
@@ -115,6 +116,27 @@ export class MerchantUsersController {
       resultUpdate,
     );
   }
+
+  @Put('users/:uid/email')
+  @UserType('admin')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updateMerchantUsersEmail(
+    @Body()
+    param: MerchantUsersUpdateEmailValidation,
+    @Param('uid') merchantUserId: string,
+  ): Promise<any> {
+    param.id = merchantUserId;
+    const resultUpdate =
+      await this.merchantUsersService.updateEmailMerchantUsers(param);
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      resultUpdate,
+    );
+  }
+
   @Delete('users/:user_id')
   @UserType('admin')
   @AuthJwtGuard()
