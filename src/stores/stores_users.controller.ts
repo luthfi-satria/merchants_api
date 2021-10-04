@@ -25,7 +25,7 @@ import { ListMerchantStoreUsersValidation } from './validation/list_store_users.
 import { firstValueFrom, map, catchError, EMPTY } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ResponseService } from 'src/response/response.service';
-import { ListResponse, RMessage } from 'src/response/response.interface';
+import { ListResponse } from 'src/response/response.interface';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
@@ -194,5 +194,4 @@ export class StoreUsersController {
 
     return listResponse;
   }
-
 }

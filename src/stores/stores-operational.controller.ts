@@ -247,7 +247,6 @@ export class StoreOperationalController {
   async updateStoreOpenStatus(
     @Param('store_id') store_id: string,
     @Body(new ValidationPipe({ transform: true })) data: StoreOpenValidation,
-    @Req() req: any,
   ) {
     try {
       const { is_store_open } = data;
