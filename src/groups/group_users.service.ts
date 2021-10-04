@@ -155,6 +155,9 @@ export class GroupUsersService {
     );
     await this.getAndValidateGroupUserByPhone(args.phone);
     await this.getAndValidateGroupUserByEmail(args.email);
+    const role = await this.roleService.getAndValodateRoleByRoleId(
+      args.role_id,
+    );
 
     const salt: string = await this.hashService.randomSalt();
     const passwordHash = await this.hashService.hashPassword(
@@ -162,13 +165,10 @@ export class GroupUsersService {
       salt,
     );
     const createGroupUser: Partial<MerchantUsersDocument> = {
-      name: args.name,
-      phone: args.phone,
-      email: args.email,
-      group_id: args.group_id,
       password: passwordHash,
       group,
     };
+    Object.assign(createGroupUser, args);
 
     try {
       const resultCreate = await this.merchantUsersRepository.save(
@@ -177,6 +177,7 @@ export class GroupUsersService {
 
       removeAllFieldPassword(resultCreate);
       formatingAllOutputTime(resultCreate);
+      resultCreate.role_name = role.name;
 
       return resultCreate;
     } catch (err) {

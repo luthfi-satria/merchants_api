@@ -21,7 +21,7 @@ import { Message } from 'src/message/message.decorator';
 import { ListGroupUserDTO } from './validation/list-group-user.validation';
 import { RSuccessMessage } from 'src/response/response.interface';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
-import { User } from 'src/auth/guard/interface/user.interface';
+import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
 
 @Controller('api/v1/merchants/groups')
 export class GroupUsersController {
@@ -45,6 +45,11 @@ export class GroupUsersController {
       req.user,
       args.group_id,
     );
+
+    if (req.user.user_type != 'admin') {
+      args.status = MerchantUsersStatus.Waiting_for_approval;
+    }
+
     const result = await this.groupUsersService.createGroupUsers(args);
     return this.responseService.success(
       true,
