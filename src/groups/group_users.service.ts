@@ -357,14 +357,17 @@ export class GroupUsersService {
     group_id?: string,
   ): Promise<MerchantUsersDocument> {
     try {
-      const user_group = await this.merchantUsersRepository
+      const query = this.merchantUsersRepository
         .createQueryBuilder('mu')
         .leftJoinAndSelect('mu.store', 'merchant_store')
         .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
         .leftJoinAndSelect('mu.group', 'merchant_group')
         .where('mu.id = :user_id', { user_id })
-        .andWhere('mu.group_id is not null')
-        .getOne();
+        .andWhere('mu.group_id is not null');
+      if (group_id) {
+        query.andWhere('mu.group_id = :group_id', { group_id });
+      }
+      const user_group = await query.getOne();
       if (!user_group) {
         throw new BadRequestException(
           this.responseService.error(
