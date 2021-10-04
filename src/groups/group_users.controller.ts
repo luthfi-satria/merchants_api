@@ -58,8 +58,9 @@ export class GroupUsersController {
     );
   }
 
-  @Put(':gid/users/:uid')
+  @Put('users/:uid')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateGroupUsers(
@@ -68,10 +69,25 @@ export class GroupUsersController {
     args: Partial<MerchantGroupUsersValidation>,
     @Param('gid') groupId: string,
     @Param('uid') groupUserId: string,
-  ): Promise<any> {
+  ): Promise<RSuccessMessage> {
     args.group_id = groupId;
     args.id = groupUserId;
-    return await this.groupUsersService.updateGroupUsers(args);
+
+    await this.groupUsersService.isCanModifDataValidation(
+      req.user,
+      args.group_id,
+    );
+
+    if (req.user.user_type != 'admin') {
+      delete args.status;
+    }
+
+    const result = await this.groupUsersService.updateGroupUsers(args);
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
   }
 
   @Delete(':gid/users/:uid')

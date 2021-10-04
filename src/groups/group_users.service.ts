@@ -19,7 +19,6 @@ import {
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
-  dbOutputTime,
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
@@ -198,129 +197,58 @@ export class GroupUsersService {
 
   async updateGroupUsers(
     args: Partial<MerchantGroupUsersValidation>,
-  ): Promise<RSuccessMessage> {
-    const gUsersExist: MerchantUsersDocument =
-      await this.merchantUsersRepository
-        .findOne({
-          where: { id: args.id, group_id: args.group_id },
-          relations: ['group'],
-        })
-        .catch(() => {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: args.id,
-                property: 'id',
-                constraint: [
-                  this.messageService.get('merchant.general.idNotFound'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        });
-    if (!gUsersExist) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.id,
-            property: 'id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
+  ): Promise<MerchantUsersDocument> {
+    const getUsersExist = await this.getAndValidateGroupUserById(
+      args.id,
+      args.group_id,
+    );
+    Object.assign(getUsersExist, args);
+
+    if (args.phone) {
+      await this.getAndValidateGroupUserByPhone(args.phone, args.id);
+    }
+    if (args.email) {
+      await this.getAndValidateGroupUserByEmail(args.email, args.id);
+    }
+    let role = null;
+    if (args.role_id) {
+      role = await this.roleService.getAndValodateRoleByRoleId(args.role_id);
     }
 
-    if (typeof args.name != 'undefined' && args.name != '')
-      gUsersExist.name = args.name;
-    if (typeof args.phone != 'undefined' && args.phone != '') {
-      const cekphone: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where: { phone: args.phone },
-        });
-
-      if (cekphone && cekphone.id != args.id) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.phone,
-              property: 'phone',
-              constraint: [
-                this.messageService.get('merchant.general.phoneExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      gUsersExist.phone = args.phone;
-    }
-    if (typeof args.email != 'undefined' && args.email != '') {
-      const cekemail: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where: { email: args.email },
-        });
-
-      if (cekemail && cekemail.id != args.id) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.email,
-              property: 'email',
-              constraint: [
-                this.messageService.get('merchant.general.emailExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      gUsersExist.email = args.email;
-    }
     if (typeof args.password != 'undefined' && args.password != '') {
       const salt: string = await this.hashService.randomSalt();
       const passwordHash = await this.hashService.hashPassword(
         args.password,
         salt,
       );
-      gUsersExist.password = passwordHash;
+      getUsersExist.password = passwordHash;
     }
 
-    return await this.merchantUsersRepository
-      .save(gUsersExist)
-      .then(async (result) => {
-        dbOutputTime(result);
-        dbOutputTime(result.group);
-        delete result.password;
-        // delete result.group.owner_password;
+    try {
+      const createResult = await this.merchantUsersRepository.save(
+        getUsersExist,
+      );
+      formatingAllOutputTime(createResult);
+      removeAllFieldPassword(createResult);
+      if (args.role_id) {
+        createResult.role_name = role.name;
+      }
 
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          result,
-        );
-      })
-      .catch((err) => {
-        console.error('catch error: ', err);
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+      return createResult;
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async deleteGroupUsers(
@@ -533,11 +461,11 @@ export class GroupUsersService {
 
   async getAndValidateGroupUserById(
     id: string,
-    merchant_id?: string,
+    group_id?: string,
   ): Promise<MerchantUsersDocument> {
-    const where: { id: string; merchant_id?: string } = { id };
-    if (merchant_id) {
-      where.merchant_id = merchant_id;
+    const where: { id: string; group_id?: string } = { id };
+    if (group_id) {
+      where.group_id = group_id;
     }
     try {
       const merchant_user: MerchantUsersDocument =
