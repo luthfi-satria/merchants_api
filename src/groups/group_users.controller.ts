@@ -60,7 +60,6 @@ export class GroupUsersController {
 
   @Put('users/:uid')
   @UserType('admin')
-  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateGroupUsers(
@@ -90,20 +89,21 @@ export class GroupUsersController {
     );
   }
 
-  @Delete(':gid/users/:uid')
+  @Delete('users/:user_id')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async deleteGroupUsers(
     @Req() req: any,
     @Param('gid') groupId: string,
-    @Param('uid') groupUserId: string,
-  ): Promise<any> {
-    const args: Partial<MerchantGroupUsersValidation> = {
-      group_id: groupId,
-      id: groupUserId,
-    };
-    return await this.groupUsersService.deleteGroupUsers(args);
+    @Param('user_id') user_id: string,
+  ): Promise<RSuccessMessage> {
+    await this.groupUsersService.deleteGroupUsers(user_id, req.user);
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+    );
   }
 
   @Get('users')

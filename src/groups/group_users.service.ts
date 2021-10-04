@@ -12,17 +12,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
-import {
-  ListResponse,
-  RMessage,
-  RSuccessMessage,
-} from 'src/response/response.interface';
+import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, FindOperator, Not, Repository } from 'typeorm';
+import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
 import { MerchantGroupUsersValidation } from './validation/groups_users.validation';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
@@ -251,68 +247,30 @@ export class GroupUsersService {
     }
   }
 
-  async deleteGroupUsers(
-    args: Partial<MerchantGroupUsersValidation>,
-  ): Promise<RSuccessMessage> {
-    const gUsersExist: MerchantUsersDocument =
-      await this.merchantUsersRepository
-        .findOne({
-          where: { id: args.id, group_id: args.group_id },
-          relations: ['group'],
-        })
-        .catch(() => {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: args.id,
-                property: 'id',
-                constraint: [
-                  this.messageService.get('merchant.general.idNotFound'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        });
-    if (!gUsersExist) {
+  async deleteGroupUsers(user_id: string, user: any): Promise<UpdateResult> {
+    if (user.user_type == UserType.Admin) {
+      await this.getAndValidateGroupUserById(user_id);
+    } else {
+      await this.getAndValidateGroupUserById(user_id, user.group_id);
+    }
+    try {
+      return await this.merchantUsersRepository.softDelete({
+        id: user_id,
+      });
+    } catch (err) {
+      console.error('catch error: ', err);
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
           {
-            value: args.id,
-            property: 'id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
+            value: '',
+            property: err.column,
+            constraint: [err.message],
           },
           'Bad Request',
         ),
       );
     }
-    return this.merchantUsersRepository
-      .softDelete({ id: args.id })
-      .then(async () => {
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-        );
-      })
-      .catch(() => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.general.invalidID'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
   }
 
   async listGroupUsers(args: Partial<ListGroupUserDTO>): Promise<ListResponse> {
@@ -467,32 +425,27 @@ export class GroupUsersService {
     if (group_id) {
       where.group_id = group_id;
     }
-    try {
-      const merchant_user: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where,
-        });
+    const merchant_user = await this.merchantUsersRepository.findOne({
+      where,
+    });
 
-      if (!merchant_user) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-
-      return merchant_user;
-    } catch (error) {
-      Logger.error(error);
+    if (!merchant_user) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: id,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
     }
+
+    return merchant_user;
   }
 
   async isCanModifDataValidation(user: any, group_id: string) {
