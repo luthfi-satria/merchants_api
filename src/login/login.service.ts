@@ -22,7 +22,11 @@ import { OtpEmailValidateValidation } from './validation/otp.email-validate.vali
 import { CommonService } from 'src/common/common.service';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
 import { UbahPasswordValidation } from './validation/ubah-password.validation';
-import { deleteCredParam } from 'src/utils/general-utils';
+import {
+  deleteCredParam,
+  formatingAllOutputTime,
+  removeAllFieldPassword,
+} from 'src/utils/general-utils';
 import { UpdateProfileValidation } from './validation/update-profile.validation';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
@@ -391,26 +395,34 @@ export class LoginService {
   }
 
   async getProfile(id: string) {
-    return this.merchantUsersRepository
-      .findOne({
-        relations: ['group', 'merchant', 'store'],
-        where: {
-          id,
-        },
-      })
-      .catch((err) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+    try {
+      const merchant_user = await this.merchantUsersRepository
+        .createQueryBuilder('mu')
+        .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('mu.group', 'merchant_group')
+        .where('mu.id = :id', { id })
+        .andWhere('mu.role_id is not null')
+        .andWhere("mu.status = 'ACTIVE'")
+        .getOne();
+
+      removeAllFieldPassword(merchant_user);
+      formatingAllOutputTime(merchant_user);
+
+      return merchant_user;
+    } catch (err) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async loginEmailPasswordProcess(request: LoginEmailValidation): Promise<any> {
