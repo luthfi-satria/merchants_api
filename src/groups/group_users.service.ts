@@ -37,7 +37,7 @@ import { ListGroupUserDTO } from './validation/list-group-user.validation';
 import { RoleService } from 'src/common/services/admins/role.service';
 import _ from 'lodash';
 import { GroupsService } from './groups.service';
-import { User, UserType } from 'src/auth/guard/interface/user.interface';
+import { UserType } from 'src/auth/guard/interface/user.interface';
 
 @Injectable()
 export class GroupUsersService {
