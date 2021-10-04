@@ -427,11 +427,16 @@ export class LoginService {
 
   async loginEmailPasswordProcess(request: LoginEmailValidation): Promise<any> {
     const existMerchantUser = await this.merchantUsersRepository
-      .findOne({
-        where: { email: request.email },
-        relations: ['group', 'merchant', 'store'],
-      })
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      .where('mu.email = :email', { email: request.email })
+      .andWhere('mu.role_id is not null')
+      .andWhere("mu.status = 'ACTIVE'")
+      .getOne()
       .catch((err2) => {
+        console.error(err2);
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
