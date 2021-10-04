@@ -3,6 +3,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
@@ -10,7 +11,11 @@ import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
 import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime } from 'src/utils/general-utils';
+import {
+  dbOutputTime,
+  formatingAllOutputTime,
+  removeAllFieldPassword,
+} from 'src/utils/general-utils';
 import { Brackets, Not, Repository } from 'typeorm';
 import { MerchantGroupUsersValidation } from './validation/groups_users.validation';
 import { Response } from 'src/response/response.decorator';
@@ -21,6 +26,7 @@ import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { GroupUser } from './interface/group_users.interface';
 import { randomUUID } from 'crypto';
+import { ListGroupUserDTO } from './validation/list-group-user.validation';
 
 @Injectable()
 export class GroupUsersService {
@@ -37,7 +43,7 @@ export class GroupUsersService {
 
   async createUserWithoutPassword(groupUser: Partial<GroupUser>) {
     groupUser.token_reset_password = randomUUID();
-    return await this.merchantUsersRepository.save(groupUser);
+    return this.merchantUsersRepository.save(groupUser);
   }
 
   async createUserPassword(groupUser: Partial<GroupUser>) {
@@ -438,16 +444,16 @@ export class GroupUsersService {
       });
   }
 
-  async listGroupUsers(
-    args: Partial<MerchantGroupUsersValidation>,
-  ): Promise<RSuccessMessage> {
+  async listGroupUsers(args: Partial<ListGroupUserDTO>): Promise<ListResponse> {
     const search = args.search || '';
     const currentPage = Number(args.page) || 1;
     const perPage = Number(args.limit) || 10;
-    let totalItems: number;
 
-    return await this.merchantUsersRepository
+    const query = this.merchantUsersRepository
       .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
       .leftJoinAndSelect('mu.group', 'merchant_group')
       .where(
         new Brackets((qb) => {
@@ -461,51 +467,44 @@ export class GroupUsersService {
               semail: '%' + search + '%',
             });
         }),
-      )
-      .andWhere('mu.group_id = :gid', { gid: args.group_id })
+      );
+    if (args.group_id) {
+      query.andWhere('mu.group_id = :group_id', { group_id: args.group_id });
+    }
+    query
       .orderBy('mu.name')
       .offset((currentPage - 1) * perPage)
-      .limit(perPage)
-      .getManyAndCount()
-      .then(async (result) => {
-        totalItems = result[1];
-        result[0].forEach((raw) => {
-          dbOutputTime(raw);
-          dbOutputTime(raw.group);
-          delete raw.password;
-          // delete raw.group.owner_password;
-        });
+      .limit(perPage);
+    try {
+      const listGroupUsers = await query.getMany();
+      const countGroupUsers = await query.getCount();
 
-        const listResult: ListResponse = {
-          total_item: totalItems,
-          limit: perPage,
-          current_page: currentPage,
-          items: result[0],
-        };
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          listResult,
-        );
-      })
-      .catch((err) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.id,
-              property: 'id',
-              constraint: [
-                this.messageService.getjson({
-                  code: 'DATA_NOT_FOUND',
-                  message: err.message,
-                }),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+      formatingAllOutputTime(listGroupUsers);
+      removeAllFieldPassword(listGroupUsers);
+
+      const listResult: ListResponse = {
+        total_item: countGroupUsers,
+        limit: perPage,
+        current_page: currentPage,
+        items: listGroupUsers,
+      };
+      return listResult;
+    } catch (error) {
+      Logger.error(error);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: '',
+            constraint: [
+              this.messageService.get('merchant.http.internalServerError'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   //------------------------------------------------------------------------------

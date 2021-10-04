@@ -10,15 +10,24 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { ResponseStatusCode } from 'src/response/response.decorator';
+import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { GroupUsersService } from './group_users.service';
 import { MerchantGroupUsersValidation } from './validation/groups_users.validation';
+import { ResponseService } from 'src/response/response.service';
+import { MessageService } from 'src/message/message.service';
+import { Message } from 'src/message/message.decorator';
+import { ListGroupUserDTO } from './validation/list-group-user.validation';
+import { RSuccessMessage } from 'src/response/response.interface';
 
 @Controller('api/v1/merchants/groups')
 export class GroupUsersController {
-  constructor(private readonly groupUsersService: GroupUsersService) {}
+  constructor(
+    private readonly groupUsersService: GroupUsersService,
+    @Response() private readonly responseService: ResponseService,
+    @Message() private readonly messageService: MessageService,
+  ) {}
 
   @Post(':gid/users')
   @UserType('admin')
@@ -66,21 +75,20 @@ export class GroupUsersController {
     return await this.groupUsersService.deleteGroupUsers(args);
   }
 
-  @Get(':gid/users')
+  @Get('users')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listGroupUsers(
-    @Req() req: any,
-    @Query() data: Record<string, any>,
-    @Param('gid') groupId: string,
-  ): Promise<any> {
-    const args: Partial<MerchantGroupUsersValidation> = {
-      group_id: groupId,
-      search: data.search,
-      limit: data.limit,
-      page: data.page,
-    };
-    return await this.groupUsersService.listGroupUsers(args);
+    @Query() listGroupUserDTO: ListGroupUserDTO,
+  ): Promise<RSuccessMessage> {
+    const listGroupUsers = await this.groupUsersService.listGroupUsers(
+      listGroupUserDTO,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      listGroupUsers,
+    );
   }
 }
