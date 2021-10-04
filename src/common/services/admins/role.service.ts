@@ -67,4 +67,26 @@ export class RoleService {
       throw new BadRequestException(error.response.data);
     }
   }
+
+  async getAndValodateRoleByRoleId(role_id: string): Promise<RoleDTO> {
+    try {
+      const roles = await this.getRole([role_id]);
+      if (!roles) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: role_id,
+              property: 'role_id',
+              constraint: [this.messageService.get('common.role.not_found')],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      return roles[0];
+    } catch (error) {
+      throw new BadRequestException(error.response.data);
+    }
+  }
 }
