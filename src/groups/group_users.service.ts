@@ -27,6 +27,8 @@ import { MerchantUsersDocument } from 'src/database/entities/merchant_users.enti
 import { GroupUser } from './interface/group_users.interface';
 import { randomUUID } from 'crypto';
 import { ListGroupUserDTO } from './validation/list-group-user.validation';
+import { RoleService } from 'src/common/services/admins/role.service';
+import _ from 'lodash';
 
 @Injectable()
 export class GroupUsersService {
@@ -39,6 +41,7 @@ export class GroupUsersService {
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
     @Hash() private readonly hashService: HashService,
+    private readonly roleService: RoleService,
   ) {}
 
   async createUserWithoutPassword(groupUser: Partial<GroupUser>) {
@@ -478,6 +481,22 @@ export class GroupUsersService {
     try {
       const listGroupUsers = await query.getMany();
       const countGroupUsers = await query.getCount();
+
+      const role_ids: string[] = [];
+      listGroupUsers.forEach((raw) => {
+        if (raw.role_id) {
+          role_ids.push(raw.role_id);
+        }
+      });
+
+      const roles = await this.roleService.getRole(role_ids);
+
+      if (roles) {
+        listGroupUsers.forEach((raw) => {
+          const roleName = _.find(roles, { id: raw.role_id });
+          raw.role_name = roleName ? roleName.name : null;
+        });
+      }
 
       formatingAllOutputTime(listGroupUsers);
       removeAllFieldPassword(listGroupUsers);
