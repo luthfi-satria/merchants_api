@@ -12,7 +12,11 @@ import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
 import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime } from 'src/utils/general-utils';
+import {
+  dbOutputTime,
+  formatingAllOutputTime,
+  removeAllFieldPassword,
+} from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
@@ -701,7 +705,8 @@ export class StoreUsersService {
       .leftJoinAndSelect('mu.store', 'merchant_store')
       .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
       .leftJoinAndSelect('mu.group', 'merchant_group')
-      .where(
+      .where('mu.store_id is not null')
+      .andWhere(
         new Brackets((qb) => {
           qb.where('mu.name ilike :mname', {
             mname: '%' + search + '%',
@@ -810,6 +815,34 @@ export class StoreUsersService {
       });
   }
 
+  async detailStoreUsers(user_id: string): Promise<MerchantUsersDocument> {
+    try {
+      const store_user = await this.merchantUsersRepository
+        .createQueryBuilder('mu')
+        .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('mu.group', 'merchant_group')
+        .where('mu.id = :user_id', { user_id })
+        .andWhere('mu.store_id is not null')
+        .getOne();
+      if (!store_user) {
+        return null;
+      }
+
+      const roles = await this.roleService.getRole([store_user.role_id]);
+      if (roles) {
+        this.parseRoleDetails([store_user], roles);
+      }
+
+      removeAllFieldPassword(store_user);
+      formatingAllOutputTime(store_user);
+
+      return store_user;
+    } catch (error) {
+      Logger.error(error);
+    }
+  }
+
   parseRoleDetails(
     exist: MerchantUsersDocument[],
     role_detail: Record<string, any>[],
@@ -819,7 +852,7 @@ export class StoreUsersService {
         const role_name = role_detail.find((item) => item.id == row.role_id);
         return new MerchantUsersDocument({
           ...row,
-          role_name: role_name ? role_name.name : '#undefined',
+          role_name: role_name ? role_name.name : null,
         });
       });
     } catch (error) {
