@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
   Put,
+  Get,
   Query,
   Req,
 } from '@nestjs/common';
@@ -18,7 +19,6 @@ import { LoginEmailValidation } from './validation/login.email.validation';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
 import { LoginService } from './login.service';
 import { catchError, map } from 'rxjs';
-import { Get } from '@nestjs/common';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RMessage } from 'src/response/response.interface';
