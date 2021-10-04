@@ -91,12 +91,10 @@ export class GroupUsersController {
 
   @Delete('users/:user_id')
   @UserType('admin')
-  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async deleteGroupUsers(
     @Req() req: any,
-    @Param('gid') groupId: string,
     @Param('user_id') user_id: string,
   ): Promise<RSuccessMessage> {
     await this.groupUsersService.deleteGroupUsers(user_id, req.user);
@@ -121,6 +119,31 @@ export class GroupUsersController {
       true,
       this.messageService.get('merchant.general.success'),
       listGroupUsers,
+    );
+  }
+
+  @Get('users/:user_id')
+  @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async detailGroupUsers(
+    @Req() req: any,
+    @Param('user_id') user_id: string,
+  ): Promise<RSuccessMessage> {
+    let detailGroupUser = null;
+    if (req.user.user_type == 'admin') {
+      detailGroupUser = await this.groupUsersService.detailGroupUser(user_id);
+    } else {
+      detailGroupUser = await this.groupUsersService.detailGroupUser(
+        user_id,
+        req.user.group_id,
+      );
+    }
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      detailGroupUser,
     );
   }
 }

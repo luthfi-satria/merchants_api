@@ -352,6 +352,51 @@ export class GroupUsersService {
     }
   }
 
+  async detailGroupUser(
+    user_id: string,
+    group_id?: string,
+  ): Promise<MerchantUsersDocument> {
+    try {
+      const user_group = await this.merchantUsersRepository
+        .createQueryBuilder('mu')
+        .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('mu.group', 'merchant_group')
+        .where('mu.id = :user_id', { user_id })
+        .andWhere('mu.group_id is not null')
+        .getOne();
+      if (!user_group) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: user_id,
+              property: 'id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+
+      const roles = await this.roleService.getRole([user_group.role_id]);
+
+      if (roles && user_group.role_id) {
+        const roleName = _.find(roles, { id: user_group.role_id });
+        user_group.role_name = roleName ? roleName.name : null;
+      }
+
+      removeAllFieldPassword(user_group);
+      formatingAllOutputTime(user_group);
+
+      return user_group;
+    } catch (error) {
+      Logger.error(error);
+    }
+  }
+
   async getAndValidateGroupUserByPhone(
     phone: string,
     id?: string,
@@ -425,11 +470,11 @@ export class GroupUsersService {
     if (group_id) {
       where.group_id = group_id;
     }
-    const merchant_user = await this.merchantUsersRepository.findOne({
+    const user_group = await this.merchantUsersRepository.findOne({
       where,
     });
 
-    if (!merchant_user) {
+    if (!user_group) {
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
@@ -445,7 +490,7 @@ export class GroupUsersService {
       );
     }
 
-    return merchant_user;
+    return user_group;
   }
 
   async isCanModifDataValidation(user: any, group_id: string) {
