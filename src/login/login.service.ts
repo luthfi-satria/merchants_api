@@ -597,10 +597,14 @@ export class LoginService {
 
   async loginPhonePasswordProcess(request: LoginPhoneValidation): Promise<any> {
     const existMerchantUser = await this.merchantUsersRepository
-      .findOne({
-        where: { phone: request.phone },
-        relations: ['group', 'merchant', 'store'],
-      })
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      .where('mu.phone = :phone', { phone: request.phone })
+      .andWhere('mu.role_id is not null')
+      .andWhere("mu.status = 'ACTIVE'")
+      .getOne()
       .catch((err) => {
         const errors: RMessage = {
           value: '',
