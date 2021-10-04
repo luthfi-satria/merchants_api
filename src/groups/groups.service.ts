@@ -4,6 +4,7 @@ import {
   HttpService,
   HttpStatus,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
@@ -345,6 +346,44 @@ export class GroupsService {
       current_page: Number(currentPage),
       items: list,
     };
+  }
+
+  async getAndValidateGroupByGroupId(group_id: string): Promise<GroupDocument> {
+    try {
+      const group = await this.groupRepository
+        .findOne({
+          id: group_id,
+        });
+      if (!group) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: group_id,
+              property: 'group_id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      return group;
+    } catch (err) {
+      Logger.error(err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   //------------------------------------------------------------------------------

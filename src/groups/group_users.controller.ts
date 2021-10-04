@@ -20,6 +20,8 @@ import { MessageService } from 'src/message/message.service';
 import { Message } from 'src/message/message.decorator';
 import { ListGroupUserDTO } from './validation/list-group-user.validation';
 import { RSuccessMessage } from 'src/response/response.interface';
+import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
+import { User } from 'src/auth/guard/interface/user.interface';
 
 @Controller('api/v1/merchants/groups')
 export class GroupUsersController {
@@ -29,18 +31,26 @@ export class GroupUsersController {
     @Message() private readonly messageService: MessageService,
   ) {}
 
-  @Post(':gid/users')
+  @Post('users')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async createGroupUsers(
     @Req() req: any,
     @Body()
-    args: Partial<MerchantGroupUsersValidation>,
-    @Param('gid') groupId: string,
+    args: MerchantGroupUsersValidation,
   ): Promise<any> {
-    args.group_id = groupId;
-    return await this.groupUsersService.createGroupUsers(args);
+    await this.groupUsersService.isCanModifDataValidation(
+      req.user,
+      args.group_id,
+    );
+    const result = await this.groupUsersService.createGroupUsers(args);
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
   }
 
   @Put(':gid/users/:uid')
@@ -77,6 +87,7 @@ export class GroupUsersController {
 
   @Get('users')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listGroupUsers(

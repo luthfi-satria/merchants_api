@@ -1,7 +1,10 @@
 import {
   BadRequestException,
+  ForbiddenException,
+  forwardRef,
   HttpService,
   HttpStatus,
+  Inject,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -9,14 +12,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
-import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
+import {
+  ListResponse,
+  RMessage,
+  RSuccessMessage,
+} from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
   dbOutputTime,
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, Not, Repository } from 'typeorm';
+import { Brackets, FindOperator, Not, Repository } from 'typeorm';
 import { MerchantGroupUsersValidation } from './validation/groups_users.validation';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
@@ -29,6 +36,8 @@ import { randomUUID } from 'crypto';
 import { ListGroupUserDTO } from './validation/list-group-user.validation';
 import { RoleService } from 'src/common/services/admins/role.service';
 import _ from 'lodash';
+import { GroupsService } from './groups.service';
+import { User, UserType } from 'src/auth/guard/interface/user.interface';
 
 @Injectable()
 export class GroupUsersService {
@@ -42,6 +51,8 @@ export class GroupUsersService {
     @Message() private readonly messageService: MessageService,
     @Hash() private readonly hashService: HashService,
     private readonly roleService: RoleService,
+    @Inject(forwardRef(() => GroupsService))
+    private readonly groupService: GroupsService,
   ) {}
 
   async createUserWithoutPassword(groupUser: Partial<GroupUser>) {
@@ -137,82 +148,14 @@ export class GroupUsersService {
   }
 
   async createGroupUsers(
-    args: Partial<MerchantGroupUsersValidation>,
-  ): Promise<RSuccessMessage> {
-    const cekGroupId = await this.groupRepository
-      .findOne({
-        id: args.group_id,
-      })
-      .catch(() => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.group_id,
-              property: 'group_id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
-    if (!cekGroupId) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.group_id,
-            property: 'group_id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
-    const cekemail: MerchantUsersDocument =
-      await this.merchantUsersRepository.findOne({
-        where: { email: args.email },
-      });
+    args: MerchantGroupUsersValidation,
+  ): Promise<MerchantUsersDocument> {
+    const group = await this.groupService.getAndValidateGroupByGroupId(
+      args.group_id,
+    );
+    await this.getAndValidateGroupUserByPhone(args.phone);
+    await this.getAndValidateGroupUserByEmail(args.email);
 
-    if (cekemail) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.email,
-            property: 'email',
-            constraint: [
-              this.messageService.get('merchant.general.emailExist'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
-    const cekphone: MerchantUsersDocument =
-      await this.merchantUsersRepository.findOne({
-        where: { phone: args.phone },
-      });
-
-    if (cekphone) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.phone,
-            property: 'phone',
-            constraint: [
-              this.messageService.get('merchant.general.phoneExist'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
     const salt: string = await this.hashService.randomSalt();
     const passwordHash = await this.hashService.hashPassword(
       args.password,
@@ -224,36 +167,32 @@ export class GroupUsersService {
       email: args.email,
       group_id: args.group_id,
       password: passwordHash,
-      group: cekGroupId,
+      group,
     };
 
-    return await this.merchantUsersRepository
-      .save(createGroupUser)
-      .then((result) => {
-        dbOutputTime(result);
-        dbOutputTime(result.group);
-        delete result.password;
-        // delete result.group.owner_password;
+    try {
+      const resultCreate = await this.merchantUsersRepository.save(
+        createGroupUser,
+      );
 
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          result,
-        );
-      })
-      .catch((err) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+      removeAllFieldPassword(resultCreate);
+      formatingAllOutputTime(resultCreate);
+
+      return resultCreate;
+    } catch (err) {
+      Logger.error(err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async updateGroupUsers(
@@ -526,6 +465,132 @@ export class GroupUsersService {
     }
   }
 
+  async getAndValidateGroupUserByPhone(
+    phone: string,
+    id?: string,
+  ): Promise<MerchantUsersDocument> {
+    const where: { phone: string; id?: FindOperator<string> } = { phone };
+    if (id) {
+      where.id = Not(id);
+    }
+
+    const cekphone: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where,
+      });
+
+    if (cekphone) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.get('merchant.general.phoneExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    return cekphone;
+  }
+
+  async getAndValidateGroupUserByEmail(
+    email: string,
+    id?: string,
+  ): Promise<MerchantUsersDocument> {
+    const where: { email: string; id?: FindOperator<string> } = { email };
+    if (id) {
+      where.id = Not(id);
+    }
+    const cekemail: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where,
+      });
+
+    if (cekemail) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: email,
+            property: 'email',
+            constraint: [
+              this.messageService.get('merchant.general.emailExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    return cekemail;
+  }
+
+  async getAndValidateGroupUserById(
+    id: string,
+    merchant_id?: string,
+  ): Promise<MerchantUsersDocument> {
+    const where: { id: string; merchant_id?: string } = { id };
+    if (merchant_id) {
+      where.merchant_id = merchant_id;
+    }
+    try {
+      const merchant_user: MerchantUsersDocument =
+        await this.merchantUsersRepository.findOne({
+          where,
+        });
+
+      if (!merchant_user) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: id,
+              property: 'id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+
+      return merchant_user;
+    } catch (error) {
+      Logger.error(error);
+    }
+  }
+
+  async isCanModifDataValidation(user: any, group_id: string) {
+    if (user.user_type == UserType.Admin) {
+      return true;
+    }
+
+    if (user.group_id == group_id) {
+      return true;
+    }
+
+    Logger.error(
+      'User forbidden, because users can only create for their own data.',
+    );
+    const errors: RMessage = {
+      value: user.group_id,
+      property: 'user_group_id',
+      constraint: [this.messageService.get('merchant_user.general.forbidden')],
+    };
+    throw new ForbiddenException(
+      this.responseService.error(
+        HttpStatus.FORBIDDEN,
+        errors,
+        'Forbidden Access',
+      ),
+    );
+  }
   //------------------------------------------------------------------------------
 
   async getHttp(
