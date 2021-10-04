@@ -9,6 +9,7 @@ import { StoreDocument } from 'src/database/entities/store.entity';
 import { GroupsService } from 'src/groups/groups.service';
 import { GroupUsersService } from 'src/groups/group_users.service';
 import { HashService } from 'src/hash/hash.service';
+import { InternalModule } from 'src/internal/internal.module';
 import { LobService } from 'src/lob/lob.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantUsersService } from 'src/merchants/merchants_users.service';
@@ -25,6 +26,7 @@ import { LoginService } from './login.service';
       LobDocument,
     ]),
     HttpModule,
+    InternalModule,
   ],
   controllers: [LoginController],
   providers: [
