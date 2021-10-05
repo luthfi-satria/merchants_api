@@ -536,6 +536,16 @@ export class StoreUsersService {
 
     query
       .leftJoinAndSelect('mu.group', 'merchant_group')
+      .leftJoinAndSelect(
+        'merchant_store.store_categories',
+        'merchant_store_categories',
+      )
+      .leftJoinAndSelect(
+        'merchant_store_categories.languages',
+        'merchant_store_categories_languages',
+        'merchant_store_categories_languages.lang = :lid',
+        { lid: 'id' },
+      )
       // get data group in merchant
       .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
       .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
@@ -611,7 +621,7 @@ export class StoreUsersService {
       .getManyAndCount()
       .then(async (result) => {
         totalItems = result[1];
-        result[0].forEach((raw) => {
+        result[0].forEach((raw: Record<string, any>) => {
           if (raw.merchant) {
             delete raw.merchant.pic_password;
           }
@@ -619,6 +629,16 @@ export class StoreUsersService {
             delete raw.group.director_password;
             delete raw.group.pic_operational_password;
             delete raw.group.pic_finance_password;
+          }
+          if (raw.store) {
+            raw.store.store_categories.forEach(
+              (element: Record<string, any>) => {
+                element.name = element.languages[0].name;
+                delete element.languages;
+              },
+            );
+            raw.store_categories = raw.store.store_categories;
+            delete raw.store.store_categories;
           }
           delete raw.password;
           raw.role_name = raw.role_id || '';
