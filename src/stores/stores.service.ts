@@ -72,6 +72,10 @@ export class StoresService {
       });
   }
 
+  async findMerchantStoresByIds(ids: string[]): Promise<StoreDocument[]> {
+    return this.storeRepository.findByIds(ids);
+  }
+
   async findMerchantStoreByPhone(hp: string): Promise<StoreDocument> {
     return this.storeRepository.findOne({
       where: { owner_phone: hp },
@@ -328,6 +332,25 @@ export class StoresService {
         update_merchant_store_validation.rejection_reason;
 
     return this.storeRepository.save(store_document);
+  }
+
+  async updateBulkStoresBankDetail(
+    role_ids: string[],
+    bank_account_name: string,
+    bank_account_no: string,
+    bank_id: string,
+  ) {
+    return this.storeRepository
+      .createQueryBuilder('stores')
+      .update(StoreDocument)
+      .set({
+        bank_id: bank_id,
+        bank_account_name: bank_account_name,
+        bank_account_no: bank_account_no,
+      })
+      .whereInIds(role_ids)
+      .useTransaction(true)
+      .execute();
   }
 
   async deleteMerchantStoreProfile(data: string): Promise<any> {
