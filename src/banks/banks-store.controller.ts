@@ -12,14 +12,12 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 
 import { ResponseService } from 'src/response/response.service';
 import { StoresService } from 'src/stores/stores.service';
-import { BanksService } from './banks.service';
 import { BanksStoreDto } from './validations/banks-store.dto';
 
 @Controller('api/v1/merchants/banks/stores')
 export class BanksStoresController {
   constructor(
     private readonly responseService: ResponseService,
-    private readonly bankService: BanksService,
     private readonly storeService: StoresService,
   ) {}
 
