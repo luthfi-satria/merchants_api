@@ -215,67 +215,21 @@ export class StoreUsersService {
   async updatePhoneStoreUsers(
     userId: string,
     args: UpdatePhoneStoreUsersValidation,
+    user: any,
   ) {
-    const user: MerchantUsersDocument =
-      await this.merchantUsersRepository.findOne({
-        where: { id: userId },
-        relations: ['store'],
-      });
-    console.log(
-      '===========================Start Debug user=================================\n',
-      new Date(Date.now()).toLocaleString(),
-      '\n',
-      user,
-      '\n============================End Debug user==================================',
-    );
-    if (!user) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: userId,
-            property: 'id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
+    const store_user = await this.getAndValidateStoreUserById(userId, user);
 
-    if (args.phone) {
-      const cekphone: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where: { phone: args.phone },
-        });
-
-      if (cekphone && cekphone.id != userId) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.phone,
-              property: 'phone',
-              constraint: [
-                this.messageService.get('merchant.general.phoneExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      user.phone = args.phone;
-    }
+    await this.getAndValidateStoreUserByPhone(args.phone, userId);
+    store_user.phone = args.phone;
 
     try {
-      const result = await this.merchantUsersRepository.save(user);
+      const result = await this.merchantUsersRepository.save(store_user);
       dbOutputTime(result);
       dbOutputTime(result.store);
       delete result.password;
 
       this.notificationService.sendSms(
-        user.phone,
+        store_user.phone,
         'Nomor Anda telah digunakan sebagai login baru',
       );
 
@@ -303,61 +257,21 @@ export class StoreUsersService {
   async updateEmailStoreUsers(
     userId: string,
     args: UpdateEmailStoreUsersValidation,
+    user: any,
   ) {
-    const user: MerchantUsersDocument =
-      await this.merchantUsersRepository.findOne({
-        where: { id: userId },
-        relations: ['store'],
-      });
+    const storeUser = await this.getAndValidateStoreUserById(userId, user);
 
-    if (!user) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: userId,
-            property: 'id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
-
-    if (args.email) {
-      const cekemail: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where: { email: args.email },
-        });
-
-      if (cekemail && cekemail.id != userId) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.email,
-              property: 'email',
-              constraint: [
-                this.messageService.get('merchant.general.emailExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      user.email = args.email;
-    }
+    await this.getAndValidateStoreUserByEmail(args.email, userId);
+    storeUser.email = args.email;
 
     try {
-      const result = await this.merchantUsersRepository.save(user);
+      const result = await this.merchantUsersRepository.save(storeUser);
       dbOutputTime(result);
       dbOutputTime(result.store);
       delete result.password;
 
       this.notificationService.sendEmail(
-        user.email,
+        storeUser.email,
         'Email Anda telah aktif',
         'Alamat email Anda telah digunakan sebagai login baru',
       );
@@ -383,41 +297,21 @@ export class StoreUsersService {
     }
   }
 
-  async updatePasswordStoreUsers(userId: string) {
-    const user: MerchantUsersDocument =
-      await this.merchantUsersRepository.findOne({
-        where: { id: userId },
-        relations: ['store'],
-      });
-
-    if (!user) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: userId,
-            property: 'id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
+  async updatePasswordStoreUsers(userId: string, user?: any) {
+    const storeUser = await this.getAndValidateStoreUserById(userId, user);
 
     const token = randomUUID();
-    user.token_reset_password = token;
+    storeUser.token_reset_password = token;
 
     try {
-      const result = await this.merchantUsersRepository.save(user);
+      const result = await this.merchantUsersRepository.save(storeUser);
       dbOutputTime(result);
       dbOutputTime(result.store);
       delete result.password;
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(user.phone, urlVerification);
+      this.notificationService.sendSms(storeUser.phone, urlVerification);
 
       return this.responseService.success(
         true,
@@ -832,11 +726,11 @@ export class StoreUsersService {
       .where('mu.id = :user_id', { user_id })
       .andWhere('mu.store_id is not null');
 
-    if (user.level == 'merchant') {
+    if (user && user.level == 'merchant') {
       query.andWhere('merchant_store.merchant_id = :mid', {
         mid: user.merchant_id,
       });
-    } else if (user.level == 'group') {
+    } else if (user && user.level == 'group') {
       query.andWhere('merchant_store_merchant.group_id = :group_id', {
         group_id: user.group_id,
       });

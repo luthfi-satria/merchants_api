@@ -84,7 +84,11 @@ export class StoreUsersController {
     args: UpdatePhoneStoreUsersValidation,
     @Param('uid') storeUserId: string,
   ): Promise<any> {
-    return this.storeUsersService.updatePhoneStoreUsers(storeUserId, args);
+    return this.storeUsersService.updatePhoneStoreUsers(
+      storeUserId,
+      args,
+      req.user,
+    );
   }
 
   @Put('users/:uid/email')
@@ -97,7 +101,11 @@ export class StoreUsersController {
     args: UpdateEmailStoreUsersValidation,
     @Param('uid') storeUserId: string,
   ): Promise<any> {
-    return this.storeUsersService.updateEmailStoreUsers(storeUserId, args);
+    return this.storeUsersService.updateEmailStoreUsers(
+      storeUserId,
+      args,
+      req.user,
+    );
   }
 
   @Put('users/:uid/password')
@@ -108,7 +116,10 @@ export class StoreUsersController {
     @Req() req: any,
     @Param('uid') storeUserId: string,
   ): Promise<any> {
-    return this.storeUsersService.updatePasswordStoreUsers(storeUserId);
+    return this.storeUsersService.updatePasswordStoreUsers(
+      storeUserId,
+      req.user,
+    );
   }
 
   @Delete('users/:uid')
