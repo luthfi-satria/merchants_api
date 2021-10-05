@@ -101,6 +101,7 @@ export class StoresController {
       const result_db: StoreDocument =
         await this.storesService.createMerchantStoreProfile(
           create_merchant_store_validation,
+          req.user,
         );
       return this.responseService.success(
         true,
@@ -171,6 +172,7 @@ export class StoresController {
       const updateresult: StoreDocument =
         await this.storesService.updateMerchantStoreProfile(
           update_merchant_store_validation,
+          req.user,
         );
       return this.responseService.success(
         true,

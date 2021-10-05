@@ -146,6 +146,7 @@ export class StoresService {
 
   async createMerchantStoreProfile(
     create_merchant_store_validation: CreateMerchantStoreValidation,
+    user: Record<string, any>,
   ): Promise<StoreDocument> {
     const store_document: Partial<StoreDocument> = {};
     Object.assign(store_document, create_merchant_store_validation);
@@ -175,21 +176,25 @@ export class StoresService {
       );
     }
 
-    if (merchant.status != 'ACTIVE') {
-      const errors: RMessage = {
-        value: create_merchant_store_validation.merchant_id,
-        property: 'merchant_id',
-        constraint: [
-          this.messageService.get('merchant.createstore.merchantid_notactive'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
+    if (user.user_type == 'merchant') {
+      if (merchant.status != 'ACTIVE') {
+        const errors: RMessage = {
+          value: create_merchant_store_validation.merchant_id,
+          property: 'merchant_id',
+          constraint: [
+            this.messageService.get(
+              'merchant.createstore.merchantid_notactive',
+            ),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
     }
     store_document.store_categories = await this.getCategoriesByIds(
       create_merchant_store_validation.category_ids,
@@ -231,6 +236,7 @@ export class StoresService {
 
   async updateMerchantStoreProfile(
     update_merchant_store_validation: UpdateMerchantStoreValidation,
+    user: Record<string, any>,
   ): Promise<StoreDocument> {
     const store_document: StoreDocument = await this.storeRepository.findOne(
       update_merchant_store_validation.id,
@@ -294,23 +300,26 @@ export class StoresService {
           ),
         );
       }
-      if (cekmerchant.status != 'ACTIVE') {
-        const errors: RMessage = {
-          value: update_merchant_store_validation.merchant_id,
-          property: 'merchant_id',
-          constraint: [
-            this.messageService.get(
-              'merchant.createstore.merchantid_notactive',
+
+      if (user.user_type == 'merchant') {
+        if (cekmerchant.status != 'ACTIVE') {
+          const errors: RMessage = {
+            value: update_merchant_store_validation.merchant_id,
+            property: 'merchant_id',
+            constraint: [
+              this.messageService.get(
+                'merchant.createstore.merchantid_notactive',
+              ),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
             ),
-          ],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
+          );
+        }
       }
     }
 

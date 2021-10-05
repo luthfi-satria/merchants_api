@@ -306,7 +306,7 @@ export class MerchantsService {
         ),
       );
     }
-    let flgUpdateMerchantUser = false;
+    // let flgUpdateMerchantUser = false;
     if (data.pic_phone) {
       const cekphone: MerchantDocument = await this.findMerchantMerchantByPhone(
         data.pic_phone,
@@ -327,7 +327,7 @@ export class MerchantsService {
           ),
         );
       }
-      flgUpdateMerchantUser = true;
+      // flgUpdateMerchantUser = true;
       existMerchant.pic_phone = data.pic_phone;
     }
     if (data.pic_email) {
@@ -350,7 +350,7 @@ export class MerchantsService {
           ),
         );
       }
-      flgUpdateMerchantUser = true;
+      // flgUpdateMerchantUser = true;
       existMerchant.pic_email = data.pic_email;
     }
     if (data.type) existMerchant.type = data.type;
@@ -369,11 +369,11 @@ export class MerchantsService {
     if (data.npwp_file) existMerchant.npwp_file = data.npwp_file;
     if (data.pic_name) {
       existMerchant.pic_name = data.pic_name;
-      flgUpdateMerchantUser = true;
+      // flgUpdateMerchantUser = true;
     }
     if (data.pic_nip) {
       existMerchant.pic_nip = data.pic_nip;
-      flgUpdateMerchantUser = true;
+      // flgUpdateMerchantUser = true;
     }
     if (data.status) existMerchant.status = data.status;
     if (existMerchant.status == 'ACTIVE')
@@ -389,38 +389,38 @@ export class MerchantsService {
         throw new Error('failed insert to merchant_group');
       }
       update.user = {};
-      if (flgUpdateMerchantUser) {
-        const updateMerchantUser: Partial<MerchantUsersDocument> = {
-          merchant_id: existMerchant.id,
-          name: existMerchant.pic_name,
-          phone: existMerchant.pic_phone,
-          email: existMerchant.pic_email,
-          nip: existMerchant.pic_nip,
-        };
+      // if (flgUpdateMerchantUser) {
+      //   const updateMerchantUser: Partial<MerchantUsersDocument> = {
+      //     merchant_id: existMerchant.id,
+      //     name: existMerchant.pic_name,
+      //     phone: existMerchant.pic_phone,
+      //     email: existMerchant.pic_email,
+      //     nip: existMerchant.pic_nip,
+      //   };
 
-        switch (existMerchant.status) {
-          case MerchantStatus.Active:
-            updateMerchantUser.status = MerchantUsersStatus.Active;
-            break;
-          case MerchantStatus.Inactive:
-            updateMerchantUser.status = MerchantUsersStatus.Inactive;
-            break;
-          case MerchantStatus.Waiting_for_approval:
-            updateMerchantUser.status =
-              MerchantUsersStatus.Waiting_for_approval;
-            break;
-          case MerchantStatus.Rejected:
-            updateMerchantUser.status = MerchantUsersStatus.Rejected;
-            break;
-        }
+      //   switch (existMerchant.status) {
+      //     case MerchantStatus.Active:
+      //       updateMerchantUser.status = MerchantUsersStatus.Active;
+      //       break;
+      //     case MerchantStatus.Inactive:
+      //       updateMerchantUser.status = MerchantUsersStatus.Inactive;
+      //       break;
+      //     case MerchantStatus.Waiting_for_approval:
+      //       updateMerchantUser.status =
+      //         MerchantUsersStatus.Waiting_for_approval;
+      //       break;
+      //     case MerchantStatus.Rejected:
+      //       updateMerchantUser.status = MerchantUsersStatus.Rejected;
+      //       break;
+      //   }
 
-        const result =
-          await this.merchantUserService.updateMerchantUsersFromMerchant(
-            updateMerchantUser,
-          );
-        deleteCredParam(result);
-        update.user = result;
-      }
+      // const result =
+      //   await this.merchantUserService.updateMerchantUsersFromMerchant(
+      //     updateMerchantUser,
+      //   );
+      // deleteCredParam(result);
+      // update.user = result;
+      // }
       deleteCredParam(update);
 
       return this.responseService.success(
