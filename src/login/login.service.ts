@@ -482,7 +482,7 @@ export class LoginService {
           },
           'Unauthorized',
         ),
-      )
+      );
     }
     let merchantLevel = '';
     let groupID = '';

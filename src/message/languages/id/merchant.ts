@@ -257,8 +257,8 @@ export default {
     },
     waiting_approval: {
       code: 'WAITING_APPROVAL',
-      message: 'User belum mendapatkan approval'
-    }
+      message: 'User belum mendapatkan approval',
+    },
   },
   user: {
     success: 'Ambil data Sukses.',
