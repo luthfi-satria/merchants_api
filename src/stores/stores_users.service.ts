@@ -536,16 +536,6 @@ export class StoreUsersService {
 
     query
       .leftJoinAndSelect('mu.group', 'merchant_group')
-      .leftJoinAndSelect(
-        'merchant_store.store_categories',
-        'merchant_store_categories',
-      )
-      .leftJoinAndSelect(
-        'merchant_store_categories.languages',
-        'merchant_store_categories_languages',
-        'merchant_store_categories_languages.lang = :lid',
-        { lid: 'id' },
-      )
       // get data group in merchant
       .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
       .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
@@ -555,6 +545,17 @@ export class StoreUsersService {
       .leftJoinAndSelect(
         'merchant_store_merchant.group',
         'merchant_store_merchant_group',
+      )
+      // get store category
+      .leftJoinAndSelect(
+        'merchant_store.store_categories',
+        'merchant_store_categories',
+      )
+      .leftJoinAndSelect(
+        'merchant_store_categories.languages',
+        'merchant_store_categories_languages',
+        'merchant_store_categories_languages.lang = :lid',
+        { lid: 'id' },
       )
       .where('mu.store_id is not null')
       .andWhere(
