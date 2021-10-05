@@ -301,8 +301,19 @@ export class GroupUsersService {
             });
         }),
       );
+
     if (args.group_id) {
       query.andWhere('mu.group_id = :group_id', { group_id: args.group_id });
+    }
+
+    if (args.role_id) {
+      query.andWhere('mu.role_id = :role_id', { role_id: args.role_id });
+    }
+
+    if (args.statuses) {
+      query.andWhere('mu.status in (:...statuses)', {
+        statuses: args.statuses,
+      });
     }
     query
       .orderBy('mu.name')
