@@ -4,7 +4,7 @@ import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 
 @Injectable()
@@ -12,6 +12,8 @@ export class InternalService {
   constructor(
     @InjectRepository(StoreDocument)
     private readonly storeRepository: Repository<StoreDocument>,
+    @InjectRepository(MerchantUsersDocument)
+    private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
@@ -53,6 +55,12 @@ export class InternalService {
           ),
         );
       });
+  }
+
+  async checkIsActiveRole(role_id: string): Promise<number> {
+    return this.merchantUsersRepository.count({
+      where: [{ role_id: role_id }, { deleted_at: Not(IsNull()) }],
+    });
   }
 
   async updateStoreAveragePrice(
