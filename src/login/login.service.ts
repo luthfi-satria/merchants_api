@@ -474,8 +474,8 @@ export class LoginService {
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           {
-            value: '',
-            property: 'password',
+            value: 'WAITING_FOR_APPROVAL',
+            property: 'status',
             constraint: [
               this.messageService.get('merchant.login.waiting_approval'),
             ],
