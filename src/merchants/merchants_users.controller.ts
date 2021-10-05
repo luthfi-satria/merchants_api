@@ -26,6 +26,7 @@ import { RSuccessMessage } from 'src/response/response.interface';
 import { MerchantUsersUpdatePasswordValidation } from './validation/merchants_users_update_password.validation';
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
 import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
+import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 
 @Controller('api/v1/merchants/merchants')
 export class MerchantUsersController {
@@ -178,6 +179,30 @@ export class MerchantUsersController {
       true,
       this.messageService.get('merchant.general.success'),
       list_merchant,
+    );
+  }
+
+  @Get('users/:user_id')
+  @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async detailMerchantUsers(
+    @Req() req: any,
+    @Param('user_id') user_id: string,
+  ): Promise<any> {
+    let group_id = null;
+    if (req.user.level == 'group') {
+      group_id = req.user.group_id;
+    }
+    const user = await this.merchantUsersService.detailMerchantUsers(
+      user_id,
+      group_id,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      user,
     );
   }
 }
