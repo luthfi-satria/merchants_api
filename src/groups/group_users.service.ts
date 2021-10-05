@@ -419,13 +419,7 @@ export class GroupUsersService {
       const result = await this.merchantUsersRepository.save(user);
       formatingAllOutputTime(result);
       removeAllFieldPassword(result);
-      console.log(
-      '===========================Start Debug result=================================\n',
-      new Date(Date.now()).toLocaleString(),
-      '\n',
-      result,
-      '\n============================End Debug result==================================',
-      );
+
       this.notificationService.sendSms(
         user.phone,
         'Nomor Anda telah digunakan sebagai login baru',
