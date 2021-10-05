@@ -255,6 +255,10 @@ export default {
       code: 'INVALID_PASSWORD',
       message: 'Password tidak valid',
     },
+    waiting_approval: {
+      code: 'WAITING_APPROVAL',
+      message: 'User belum mendapatkan approval',
+    },
   },
   user: {
     success: 'Ambil data Sukses.',

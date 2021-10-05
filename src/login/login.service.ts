@@ -22,7 +22,11 @@ import { OtpEmailValidateValidation } from './validation/otp.email-validate.vali
 import { CommonService } from 'src/common/common.service';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
 import { UbahPasswordValidation } from './validation/ubah-password.validation';
-import { deleteCredParam } from 'src/utils/general-utils';
+import {
+  deleteCredParam,
+  formatingAllOutputTime,
+  removeAllFieldPassword,
+} from 'src/utils/general-utils';
 import { UpdateProfileValidation } from './validation/update-profile.validation';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
@@ -162,7 +166,6 @@ export class LoginService {
   async loginEmailProcess(
     request: LoginEmailValidation,
   ): Promise<Observable<Promise<any>>> {
-    // let existMerchantUser: MerchantUsersDocument;
     const existMerchantUser = await this.merchantUsersRepository
       .findOne({ where: { email: request.email } })
       .catch((err) => {
@@ -391,35 +394,48 @@ export class LoginService {
   }
 
   async getProfile(id: string) {
-    return this.merchantUsersRepository
-      .findOne({
-        relations: ['group', 'merchant', 'store'],
-        where: {
-          id,
-        },
-      })
-      .catch((err) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+    try {
+      const merchant_user = await this.merchantUsersRepository
+        .createQueryBuilder('mu')
+        .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('mu.group', 'merchant_group')
+        .where('mu.id = :id', { id })
+        .andWhere('mu.role_id is not null')
+        .andWhere("mu.status = 'ACTIVE'")
+        .getOne();
+
+      removeAllFieldPassword(merchant_user);
+      formatingAllOutputTime(merchant_user);
+
+      return merchant_user;
+    } catch (err) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async loginEmailPasswordProcess(request: LoginEmailValidation): Promise<any> {
     const existMerchantUser = await this.merchantUsersRepository
-      .findOne({
-        where: { email: request.email },
-        relations: ['group', 'merchant', 'store'],
-      })
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      .where('mu.email = :email', { email: request.email })
+      .andWhere('mu.role_id is not null')
+      .andWhere("mu.status = 'ACTIVE'")
+      .getOne()
       .catch((err2) => {
+        console.error(err2);
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
@@ -468,11 +484,46 @@ export class LoginService {
         ),
       );
     }
+
+    if (existMerchantUser.status === 'WAITING_FOR_APPROVAL') {
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          {
+            value: 'WAITING_FOR_APPROVAL',
+            property: 'status',
+            constraint: [
+              this.messageService.get('merchant.login.waiting_approval'),
+            ],
+          },
+          'Unauthorized',
+        ),
+      );
+    }
     let merchantLevel = '';
     let groupID = '';
     let merchantID = '';
     let storeID = '';
     const id = existMerchantUser.id;
+    const lang = request.lang || 'id';
+
+    if (existMerchantUser.email_verified_at == null) {
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          {
+            value: request.email,
+            property: 'email',
+            constraint: [
+              this.messageService.getLang(
+                `${lang}.merchant.general.unverifiedEmail`,
+              ),
+            ],
+          },
+          'Unauthorized',
+        ),
+      );
+    }
 
     if (existMerchantUser.store_id != null) {
       if (existMerchantUser.store.status != 'ACTIVE') {
@@ -494,25 +545,6 @@ export class LoginService {
       storeID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
-      const lang = request.lang || 'id';
-      if (existMerchantUser.email_verified_at == null) {
-        throw new UnauthorizedException(
-          this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
-            {
-              value: request.email,
-              property: 'email',
-              constraint: [
-                this.messageService.getLang(
-                  `${lang}.merchant.general.unverifiedEmail`,
-                ),
-              ],
-            },
-            'Unauthorized',
-          ),
-        );
-      }
-
       if (
         existMerchantUser.status != 'ACTIVE' ||
         existMerchantUser.merchant.status != 'ACTIVE'
@@ -580,10 +612,14 @@ export class LoginService {
 
   async loginPhonePasswordProcess(request: LoginPhoneValidation): Promise<any> {
     const existMerchantUser = await this.merchantUsersRepository
-      .findOne({
-        where: { phone: request.phone },
-        relations: ['group', 'merchant', 'store'],
-      })
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      .where('mu.phone = :phone', { phone: request.phone })
+      .andWhere('mu.role_id is not null')
+      .andWhere("mu.status = 'ACTIVE'")
+      .getOne()
       .catch((err) => {
         const errors: RMessage = {
           value: '',
@@ -639,6 +675,25 @@ export class LoginService {
     let merchantID = '';
     let storeID = '';
     const id = existMerchantUser.id;
+    const lang = request.lang || 'id';
+
+    if (existMerchantUser.phone_verified_at == null) {
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          {
+            value: request.phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.getLang(
+                `${lang}.merchant.general.unverifiedPhone`,
+              ),
+            ],
+          },
+          'Unauthorized',
+        ),
+      );
+    }
 
     if (existMerchantUser.store_id != null) {
       if (existMerchantUser.store.status != 'ACTIVE') {
@@ -660,24 +715,6 @@ export class LoginService {
       storeID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
-      const lang = request.lang || 'id';
-      if (existMerchantUser.phone_verified_at == null) {
-        throw new UnauthorizedException(
-          this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
-            {
-              value: request.phone,
-              property: 'phone',
-              constraint: [
-                this.messageService.getLang(
-                  `${lang}.merchant.general.unverifiedPhone`,
-                ),
-              ],
-            },
-            'Unauthorized',
-          ),
-        );
-      }
       if (
         existMerchantUser.status != 'ACTIVE' ||
         existMerchantUser.merchant.status != 'ACTIVE'

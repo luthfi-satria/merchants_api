@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
   Put,
+  Get,
   Query,
   Req,
 } from '@nestjs/common';
@@ -18,18 +19,20 @@ import { LoginEmailValidation } from './validation/login.email.validation';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
 import { LoginService } from './login.service';
 import { catchError, map } from 'rxjs';
-import { Get } from '@nestjs/common';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RMessage } from 'src/response/response.interface';
 import { UbahPasswordValidation } from './validation/ubah-password.validation';
 import { UpdateProfileValidation } from './validation/update-profile.validation';
+import { AuthInternalService } from 'src/internal/auth-internal.service';
+import { MerchantProfileResponse } from './types';
 
 @Controller('api/v1/merchants')
 export class LoginController {
   constructor(
     private readonly groupsService: GroupsService,
     private readonly loginService: LoginService,
+    private readonly authInternalService: AuthInternalService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
   ) {}
@@ -130,10 +133,20 @@ export class LoginController {
       );
     }
     delete profile.password;
+
+    const user_role = await this.authInternalService.getMerchantUserRoleDetail(
+      profile.role_id,
+    );
+    // parse to new Response with additional attribute
+    const result = new MerchantProfileResponse({
+      ...profile,
+      role: user_role,
+    });
+
     return this.responseService.success(
       true,
       this.messageService.get('merchant.login.success'),
-      profile,
+      result,
     );
   }
 

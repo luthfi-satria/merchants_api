@@ -7,4 +7,10 @@ export default {
       message: 'User ID tidak valid.',
     },
   },
+  general: {
+    forbidden: {
+      code: 'FORBIDDEN',
+      message: 'User hanya boleh mengubah data milik group nya saja.',
+    },
+  },
 };

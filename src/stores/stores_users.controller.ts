@@ -63,7 +63,15 @@ export class StoreUsersController {
     @Param('uid') storeUserId: string,
   ): Promise<any> {
     args.id = storeUserId;
-    return this.storeUsersService.updateStoreUsers(args);
+    const result = await this.storeUsersService.updateStoreUsers(
+      args,
+      req.user,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
   }
 
   @Put('users/:uid/phone')
@@ -76,7 +84,11 @@ export class StoreUsersController {
     args: UpdatePhoneStoreUsersValidation,
     @Param('uid') storeUserId: string,
   ): Promise<any> {
-    return this.storeUsersService.updatePhoneStoreUsers(storeUserId, args);
+    return this.storeUsersService.updatePhoneStoreUsers(
+      storeUserId,
+      args,
+      req.user,
+    );
   }
 
   @Put('users/:uid/email')
@@ -89,7 +101,11 @@ export class StoreUsersController {
     args: UpdateEmailStoreUsersValidation,
     @Param('uid') storeUserId: string,
   ): Promise<any> {
-    return this.storeUsersService.updateEmailStoreUsers(storeUserId, args);
+    return this.storeUsersService.updateEmailStoreUsers(
+      storeUserId,
+      args,
+      req.user,
+    );
   }
 
   @Put('users/:uid/password')
@@ -100,7 +116,10 @@ export class StoreUsersController {
     @Req() req: any,
     @Param('uid') storeUserId: string,
   ): Promise<any> {
-    return this.storeUsersService.updatePasswordStoreUsers(storeUserId);
+    return this.storeUsersService.updatePasswordStoreUsers(
+      storeUserId,
+      req.user,
+    );
   }
 
   @Delete('users/:uid')
@@ -200,10 +219,12 @@ export class StoreUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async detailStoreUsers(
+    @Req() req: any,
     @Param('store_user_id') storeUserId: string,
   ): Promise<any> {
     const store_user = await this.storeUsersService.detailStoreUsers(
       storeUserId,
+      req.user,
     );
     if (!store_user) {
       const errors: RMessage = {

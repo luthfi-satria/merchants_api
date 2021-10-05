@@ -58,6 +58,12 @@ export class MerchantUsersService {
     private readonly notificationService: NotificationService,
   ) {}
 
+  async findByMerchantId(mid: string): Promise<MerchantUsersDocument> {
+    return this.merchantUsersRepository.findOne({
+      where: { merchant_id: mid },
+    });
+  }
+
   async createMerchantUsers(
     args: Partial<MerchantUsersValidation>,
   ): Promise<Partial<MerchantUsersDocument> & MerchantUsersDocument> {
@@ -284,6 +290,7 @@ export class MerchantUsersService {
 
   async listMerchantUsers(
     args: Partial<ListMerchantUsersValidation>,
+    group_id?: string,
   ): Promise<ListResponse> {
     const search = args.search || '';
     const currentPage = Number(args.page) || 1;
@@ -291,11 +298,19 @@ export class MerchantUsersService {
 
     const query = this.merchantUsersRepository
       .createQueryBuilder('mu')
-      .leftJoinAndSelect('mu.store', 'merchant_store')
-      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
-      .leftJoinAndSelect('merchant_merchant.group', 'merchant_group_merchant')
       .leftJoinAndSelect('mu.group', 'merchant_group')
-      .where(
+      // get data group in merchant
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.store', 'merchant_store_store')
+      .leftJoinAndSelect(
+        'merchant_store_store.group',
+        'merchant_store_store_group',
+      )
+      .where('mu.merchant_id IS NOT NULL')
+      .andWhere(
         new Brackets((qb) => {
           qb.where('mu.name ilike :mname', {
             mname: '%' + search + '%',
@@ -308,6 +323,10 @@ export class MerchantUsersService {
             });
         }),
       );
+
+    if (group_id) {
+      query.andWhere('mu.group_id = :group_id', { group_id });
+    }
 
     if (args.merchant_id) {
       query.andWhere('mu.merchant_id = :merchant_id', {
@@ -362,6 +381,77 @@ export class MerchantUsersService {
         items: result_merchant[0],
       };
       return listResult;
+    } catch (error) {
+      Logger.error(error);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: '',
+            constraint: [
+              this.messageService.get('merchant.http.internalServerError'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async detailMerchantUsers(
+    user_id: string,
+    group_id?: string,
+  ): Promise<MerchantUsersDocument> {
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in merchant
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.store', 'merchant_store_store')
+      .leftJoinAndSelect(
+        'merchant_store_store.group',
+        'merchant_store_store_group',
+      )
+      .where('mu.id = :user_id', { user_id })
+      .andWhere('mu.merchant_id IS NOT NULL');
+
+    if (group_id) {
+      query.andWhere('mu.group_id = :group_id', { group_id });
+    }
+
+    const user = await query.getOne();
+    if (!user) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    try {
+      formatingAllOutputTime(user);
+      removeAllFieldPassword(user);
+
+      const roles = await this.roleService.getRole([user.role_id]);
+
+      if (roles) {
+        const roleName = _.find(roles, { id: user.role_id });
+        user.role_name = roleName ? roleName.name : null;
+      }
+
+      return user;
     } catch (error) {
       Logger.error(error);
       throw new BadRequestException(
