@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  forwardRef,
   HttpService,
   HttpStatus,
+  Inject,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -10,14 +12,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
-import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
+import {
+  ListResponse,
+  RMessage,
+  RSuccessMessage,
+} from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
   dbOutputTime,
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, FindOperator, Not, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
@@ -34,6 +40,7 @@ import { NotificationService } from 'src/common/notification/notification.servic
 import { randomUUID } from 'crypto';
 import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
 import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
+import { StoresService } from './stores.service';
 
 @Injectable()
 export class StoreUsersService {
@@ -50,6 +57,8 @@ export class StoreUsersService {
     private roleService: RoleService,
     private readonly merchantService: MerchantsService,
     private readonly notificationService: NotificationService,
+    @Inject(forwardRef(() => StoresService))
+    private readonly storeService: StoresService,
   ) {}
 
   async createStoreUsers(
@@ -212,7 +221,13 @@ export class StoreUsersService {
         where: { id: userId },
         relations: ['store'],
       });
-
+    console.log(
+      '===========================Start Debug user=================================\n',
+      new Date(Date.now()).toLocaleString(),
+      '\n',
+      user,
+      '\n============================End Debug user==================================',
+    );
     if (!user) {
       throw new BadRequestException(
         this.responseService.error(
@@ -427,7 +442,8 @@ export class StoreUsersService {
 
   async updateStoreUsers(
     args: UpdateMerchantStoreUsersValidation,
-  ): Promise<RSuccessMessage> {
+    user?: any,
+  ): Promise<MerchantUsersDocument> {
     if (args.role_id) {
       const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/roles/${args.role_id}`;
       const role = await this.commonService.getHttp(url);
@@ -447,90 +463,17 @@ export class StoreUsersService {
         );
       }
     }
-    const gUsersExist: MerchantUsersDocument =
-      await this.merchantUsersRepository
-        .findOne({
-          where: { id: args.id, store_id: args.store_id },
-          relations: ['store'],
-        })
-        .catch(() => {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: args.id,
-                property: 'id',
-                constraint: [
-                  this.messageService.get('merchant.general.idNotFound'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        });
-    if (!gUsersExist) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.id,
-            property: 'id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
+    const gUsersExist = await this.getAndValidateStoreUserById(args.id, user);
+    if (gUsersExist.store_id != args.store_id) {
+      await this.storeService.getAndValidateStoreByStoreId(args.store_id);
     }
-    gUsersExist.role_id = args.role_id;
-    if (args.name) gUsersExist.name = args.name;
     if (args.phone) {
-      const cekphone: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where: { phone: args.phone },
-        });
-
-      if (cekphone && cekphone.id != args.id) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.phone,
-              property: 'phone',
-              constraint: [
-                this.messageService.get('merchant.general.phoneExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      gUsersExist.phone = args.phone;
+      await this.getAndValidateStoreUserByPhone(args.phone, args.id);
     }
     if (args.email) {
-      const cekemail: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where: { email: args.email },
-        });
-
-      if (cekemail && cekemail.id != args.id) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.email,
-              property: 'email',
-              constraint: [
-                this.messageService.get('merchant.general.emailExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      gUsersExist.email = args.email;
+      await this.getAndValidateStoreUserByEmail(args.email, args.id);
     }
+    Object.assign(gUsersExist, args);
     if (args.password) {
       const salt: string = await this.hashService.randomSalt();
       const passwordHash = await this.hashService.hashPassword(
@@ -539,21 +482,14 @@ export class StoreUsersService {
       );
       gUsersExist.password = passwordHash;
     }
-    if (args.nip) gUsersExist.nip = args.nip;
-    if (args.status) gUsersExist.status = args.status;
 
     return this.merchantUsersRepository
       .save(gUsersExist)
       .then(async (result) => {
-        dbOutputTime(result);
-        dbOutputTime(result.store);
-        delete result.password;
+        formatingAllOutputTime(result);
+        removeAllFieldPassword(result);
 
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          result,
-        );
+        return result;
       })
       .catch((err) => {
         console.error('catch error: ', err);
@@ -872,6 +808,118 @@ export class StoreUsersService {
     } catch (error) {
       Logger.error(error);
     }
+  }
+
+  async getAndValidateStoreUserById(
+    user_id: string,
+    user?: any,
+  ): Promise<MerchantUsersDocument> {
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in merchant
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+      .leftJoinAndSelect(
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
+      )
+      .where('mu.id = :user_id', { user_id })
+      .andWhere('mu.store_id is not null');
+
+    if (user.level == 'merchant') {
+      query.andWhere('merchant_store.merchant_id = :mid', {
+        mid: user.merchant_id,
+      });
+    } else if (user.level == 'group') {
+      query.andWhere('merchant_store_merchant.group_id = :group_id', {
+        group_id: user.group_id,
+      });
+    }
+    const store_user = await query.getOne();
+    if (!store_user) {
+      const errors: RMessage = {
+        value: user_id,
+        property: 'store_user_id',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return store_user;
+  }
+
+  async getAndValidateStoreUserByPhone(
+    phone: string,
+    id?: string,
+  ): Promise<MerchantUsersDocument> {
+    const where: { phone: string; id?: FindOperator<string> } = { phone };
+    if (id) {
+      where.id = Not(id);
+    }
+
+    const cekphone: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where,
+      });
+
+    if (cekphone) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.get('merchant.general.phoneExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    return cekphone;
+  }
+
+  async getAndValidateStoreUserByEmail(
+    email: string,
+    id?: string,
+  ): Promise<MerchantUsersDocument> {
+    const where: { email: string; id?: FindOperator<string> } = { email };
+    if (id) {
+      where.id = Not(id);
+    }
+    const cekemail: MerchantUsersDocument =
+      await this.merchantUsersRepository.findOne({
+        where,
+      });
+
+    if (cekemail) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: email,
+            property: 'email',
+            constraint: [
+              this.messageService.get('merchant.general.emailExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    return cekemail;
   }
 
   parseRoleDetails(

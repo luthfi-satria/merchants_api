@@ -63,7 +63,15 @@ export class StoreUsersController {
     @Param('uid') storeUserId: string,
   ): Promise<any> {
     args.id = storeUserId;
-    return this.storeUsersService.updateStoreUsers(args);
+    const result = await this.storeUsersService.updateStoreUsers(
+      args,
+      req.user,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
   }
 
   @Put('users/:uid/phone')

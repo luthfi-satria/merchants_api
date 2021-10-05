@@ -661,6 +661,26 @@ export class StoresService {
       });
   }
 
+  async getAndValidateStoreByStoreId(storeId: string): Promise<StoreDocument> {
+    const store = await this.findMerchantById(storeId);
+    if (!store) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: storeId,
+            property: 'store_id',
+            constraint: [
+              this.messageService.get('merchant.updatestore.id_notfound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    return store;
+  }
   //------------------------------------------------------------------------------
 
   async getHttp(
