@@ -39,6 +39,9 @@ export class MerchantGroupUsersValidation {
   @IsIn(Object.values(MerchantUsersStatus))
   status: MerchantUsersStatus;
 
+  @IsOptional()
+  rejection_reason: string;
+
   @IsNotEmpty()
   @IsUUID()
   role_id: string;

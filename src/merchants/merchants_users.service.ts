@@ -58,6 +58,12 @@ export class MerchantUsersService {
     private readonly notificationService: NotificationService,
   ) {}
 
+  async findByMerchantId(mid: string): Promise<MerchantUsersDocument> {
+    return this.merchantUsersRepository.findOne({
+      where: { merchant_id: mid },
+    });
+  }
+
   async createMerchantUsers(
     args: Partial<MerchantUsersValidation>,
   ): Promise<Partial<MerchantUsersDocument> & MerchantUsersDocument> {

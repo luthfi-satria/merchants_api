@@ -166,7 +166,6 @@ export class LoginService {
   async loginEmailProcess(
     request: LoginEmailValidation,
   ): Promise<Observable<Promise<any>>> {
-    // let existMerchantUser: MerchantUsersDocument;
     const existMerchantUser = await this.merchantUsersRepository
       .findOne({ where: { email: request.email } })
       .catch((err) => {
@@ -506,6 +505,25 @@ export class LoginService {
     let merchantID = '';
     let storeID = '';
     const id = existMerchantUser.id;
+    const lang = request.lang || 'id';
+
+    if (existMerchantUser.email_verified_at == null) {
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          {
+            value: request.email,
+            property: 'email',
+            constraint: [
+              this.messageService.getLang(
+                `${lang}.merchant.general.unverifiedEmail`,
+              ),
+            ],
+          },
+          'Unauthorized',
+        ),
+      );
+    }
 
     if (existMerchantUser.store_id != null) {
       if (existMerchantUser.store.status != 'ACTIVE') {
@@ -527,25 +545,6 @@ export class LoginService {
       storeID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
-      const lang = request.lang || 'id';
-      if (existMerchantUser.email_verified_at == null) {
-        throw new UnauthorizedException(
-          this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
-            {
-              value: request.email,
-              property: 'email',
-              constraint: [
-                this.messageService.getLang(
-                  `${lang}.merchant.general.unverifiedEmail`,
-                ),
-              ],
-            },
-            'Unauthorized',
-          ),
-        );
-      }
-
       if (
         existMerchantUser.status != 'ACTIVE' ||
         existMerchantUser.merchant.status != 'ACTIVE'
@@ -676,6 +675,25 @@ export class LoginService {
     let merchantID = '';
     let storeID = '';
     const id = existMerchantUser.id;
+    const lang = request.lang || 'id';
+
+    if (existMerchantUser.phone_verified_at == null) {
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          {
+            value: request.phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.getLang(
+                `${lang}.merchant.general.unverifiedPhone`,
+              ),
+            ],
+          },
+          'Unauthorized',
+        ),
+      );
+    }
 
     if (existMerchantUser.store_id != null) {
       if (existMerchantUser.store.status != 'ACTIVE') {
@@ -697,24 +715,6 @@ export class LoginService {
       storeID = existMerchantUser.store_id;
     }
     if (existMerchantUser.merchant_id != null) {
-      const lang = request.lang || 'id';
-      if (existMerchantUser.phone_verified_at == null) {
-        throw new UnauthorizedException(
-          this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
-            {
-              value: request.phone,
-              property: 'phone',
-              constraint: [
-                this.messageService.getLang(
-                  `${lang}.merchant.general.unverifiedPhone`,
-                ),
-              ],
-            },
-            'Unauthorized',
-          ),
-        );
-      }
       if (
         existMerchantUser.status != 'ACTIVE' ||
         existMerchantUser.merchant.status != 'ACTIVE'
