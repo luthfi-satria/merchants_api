@@ -301,7 +301,8 @@ export class GroupUsersService {
               semail: '%' + search + '%',
             });
         }),
-      );
+      )
+      .andWhere('mu.group_id is not null');
 
     if (args.group_id) {
       query.andWhere('mu.group_id = :group_id', { group_id: args.group_id });
@@ -372,6 +373,7 @@ export class GroupUsersService {
     user_id: string,
     group_id?: string,
   ): Promise<MerchantUsersDocument> {
+    let user_group = null;
     try {
       const query = this.merchantUsersRepository
         .createQueryBuilder('mu')
@@ -385,37 +387,37 @@ export class GroupUsersService {
         query.andWhere('mu.group_id = :group_id', { group_id });
       }
 
-      const user_group = await query.getOne();
-      if (!user_group) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: user_id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-
-      const roles = await this.roleService.getRole([user_group.role_id]);
-
-      if (roles && user_group.role_id) {
-        const roleName = _.find(roles, { id: user_group.role_id });
-        user_group.role_name = roleName ? roleName.name : null;
-      }
-
-      removeAllFieldPassword(user_group);
-      formatingAllOutputTime(user_group);
-
-      return user_group;
+      user_group = await query.getOne();
     } catch (error) {
       Logger.error(error);
     }
+    if (!user_group) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    const roles = await this.roleService.getRole([user_group.role_id]);
+
+    if (roles && user_group.role_id) {
+      const roleName = _.find(roles, { id: user_group.role_id });
+      user_group.role_name = roleName ? roleName.name : null;
+    }
+
+    removeAllFieldPassword(user_group);
+    formatingAllOutputTime(user_group);
+
+    return user_group;
   }
 
   async updatePhoneGroupUsers(
