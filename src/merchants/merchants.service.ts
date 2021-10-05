@@ -11,7 +11,11 @@ import {
   MerchantStatus,
 } from 'src/database/entities/merchant.entity';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
-import { deleteCredParam } from 'src/utils/general-utils';
+import {
+  deleteCredParam,
+  formatingAllOutputTime,
+  removeAllFieldPassword,
+} from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
@@ -306,7 +310,7 @@ export class MerchantsService {
         ),
       );
     }
-    // let flgUpdateMerchantUser = false;
+
     if (data.pic_phone) {
       const cekphone: MerchantDocument = await this.findMerchantMerchantByPhone(
         data.pic_phone,
@@ -327,7 +331,6 @@ export class MerchantsService {
           ),
         );
       }
-      // flgUpdateMerchantUser = true;
       existMerchant.pic_phone = data.pic_phone;
     }
     if (data.pic_email) {
@@ -350,7 +353,6 @@ export class MerchantsService {
           ),
         );
       }
-      // flgUpdateMerchantUser = true;
       existMerchant.pic_email = data.pic_email;
     }
     if (data.type) existMerchant.type = data.type;
@@ -369,11 +371,9 @@ export class MerchantsService {
     if (data.npwp_file) existMerchant.npwp_file = data.npwp_file;
     if (data.pic_name) {
       existMerchant.pic_name = data.pic_name;
-      // flgUpdateMerchantUser = true;
     }
     if (data.pic_nip) {
       existMerchant.pic_nip = data.pic_nip;
-      // flgUpdateMerchantUser = true;
     }
     if (data.status) existMerchant.status = data.status;
     if (existMerchant.status == 'ACTIVE')
@@ -388,40 +388,15 @@ export class MerchantsService {
       if (!update) {
         throw new Error('failed insert to merchant_group');
       }
-      update.user = {};
-      // if (flgUpdateMerchantUser) {
-      //   const updateMerchantUser: Partial<MerchantUsersDocument> = {
-      //     merchant_id: existMerchant.id,
-      //     name: existMerchant.pic_name,
-      //     phone: existMerchant.pic_phone,
-      //     email: existMerchant.pic_email,
-      //     nip: existMerchant.pic_nip,
-      //   };
 
-      //   switch (existMerchant.status) {
-      //     case MerchantStatus.Active:
-      //       updateMerchantUser.status = MerchantUsersStatus.Active;
-      //       break;
-      //     case MerchantStatus.Inactive:
-      //       updateMerchantUser.status = MerchantUsersStatus.Inactive;
-      //       break;
-      //     case MerchantStatus.Waiting_for_approval:
-      //       updateMerchantUser.status =
-      //         MerchantUsersStatus.Waiting_for_approval;
-      //       break;
-      //     case MerchantStatus.Rejected:
-      //       updateMerchantUser.status = MerchantUsersStatus.Rejected;
-      //       break;
-      //   }
+      update.user = await this.merchantUserService.findByMerchantId(
+        existMerchant.id,
+      );
+      formatingAllOutputTime(update.user);
+      removeAllFieldPassword(update.user);
 
-      // const result =
-      //   await this.merchantUserService.updateMerchantUsersFromMerchant(
-      //     updateMerchantUser,
-      //   );
-      // deleteCredParam(result);
-      // update.user = result;
-      // }
-      deleteCredParam(update);
+      formatingAllOutputTime(update);
+      removeAllFieldPassword(update);
 
       return this.responseService.success(
         true,

@@ -166,7 +166,6 @@ export class LoginService {
   async loginEmailProcess(
     request: LoginEmailValidation,
   ): Promise<Observable<Promise<any>>> {
-    // let existMerchantUser: MerchantUsersDocument;
     const existMerchantUser = await this.merchantUsersRepository
       .findOne({ where: { email: request.email } })
       .catch((err) => {

@@ -278,48 +278,43 @@ export class StoresService {
       );
     }
 
-    if (update_merchant_store_validation.merchant_id) {
-      const cekmerchant: MerchantDocument =
-        await this.merchantService.findMerchantById(
-          update_merchant_store_validation.merchant_id,
-        );
-      if (!cekmerchant) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: update_merchant_store_validation.merchant_id,
-              property: 'merchant_id',
-              constraint: [
-                this.messageService.get(
-                  'merchant.createstore.merchantid_notfound',
-                ),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-
-      if (user.user_type == 'merchant') {
-        if (cekmerchant.status != 'ACTIVE') {
-          const errors: RMessage = {
+    const cekmerchant: MerchantDocument =
+      await this.merchantService.findMerchantById(store_document.merchant_id);
+    if (!cekmerchant) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
             value: update_merchant_store_validation.merchant_id,
             property: 'merchant_id',
             constraint: [
               this.messageService.get(
-                'merchant.createstore.merchantid_notactive',
+                'merchant.createstore.merchantid_notfound',
               ),
             ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    if (user.user_type == 'merchant') {
+      if (cekmerchant.status != 'ACTIVE') {
+        const errors: RMessage = {
+          value: store_document.merchant_id,
+          property: 'merchant_id',
+          constraint: [
+            this.messageService.get(
+              'merchant.createstore.merchantid_notactive',
             ),
-          );
-        }
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
       }
     }
 
