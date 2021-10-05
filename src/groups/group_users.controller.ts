@@ -22,6 +22,8 @@ import { ListGroupUserDTO } from './validation/list-group-user.validation';
 import { RSuccessMessage } from 'src/response/response.interface';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
+import { UpdatePhoneGroupUsersValidation } from './validation/update_phone_group_users.validation';
+import { UpdateEmailGroupUsersValidation } from './validation/update_email_group_users.validation';
 
 @Controller('api/v1/merchants/groups')
 export class GroupUsersController {
@@ -58,7 +60,7 @@ export class GroupUsersController {
     );
   }
 
-  @Put('users/:uid')
+  @Put('users/:user_id')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -67,7 +69,7 @@ export class GroupUsersController {
     @Body()
     args: Partial<MerchantGroupUsersValidation>,
     @Param('gid') groupId: string,
-    @Param('uid') groupUserId: string,
+    @Param('user_id') groupUserId: string,
   ): Promise<RSuccessMessage> {
     args.group_id = groupId;
     args.id = groupUserId;
@@ -144,6 +146,66 @@ export class GroupUsersController {
       true,
       this.messageService.get('merchant.general.success'),
       detailGroupUser,
+    );
+  }
+
+  @Put('users/:user_id/phone')
+  @UserType('admin')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updatePhoneGroupUsers(
+    @Req() req: any,
+    @Body()
+    args: UpdatePhoneGroupUsersValidation,
+    @Param('user_id') groupUserId: string,
+  ): Promise<RSuccessMessage> {
+    const result = await this.groupUsersService.updatePhoneGroupUsers(
+      groupUserId,
+      args,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
+  }
+
+  @Put('users/:user_id/email')
+  @UserType('admin')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updateEmailGroupUsers(
+    @Req() req: any,
+    @Body()
+    args: UpdateEmailGroupUsersValidation,
+    @Param('user_id') groupUserId: string,
+  ): Promise<any> {
+    const result = await this.groupUsersService.updateEmailGroupUsers(
+      groupUserId,
+      args,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
+  }
+
+  @Put('users/:user_id/password')
+  @UserType('admin')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updatePasswordGroupUsers(
+    @Req() req: any,
+    @Param('user_id') groupUserId: string,
+  ): Promise<any> {
+    const result = await this.groupUsersService.updatePasswordGroupUsers(
+      groupUserId,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
     );
   }
 }

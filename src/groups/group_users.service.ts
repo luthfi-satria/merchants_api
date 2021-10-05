@@ -33,6 +33,9 @@ import { RoleService } from 'src/common/services/admins/role.service';
 import _ from 'lodash';
 import { GroupsService } from './groups.service';
 import { UserType } from 'src/auth/guard/interface/user.interface';
+import { NotificationService } from 'src/common/notification/notification.service';
+import { UpdatePhoneGroupUsersValidation } from './validation/update_phone_group_users.validation';
+import { UpdateEmailGroupUsersValidation } from './validation/update_email_group_users.validation';
 
 @Injectable()
 export class GroupUsersService {
@@ -48,6 +51,7 @@ export class GroupUsersService {
     private readonly roleService: RoleService,
     @Inject(forwardRef(() => GroupsService))
     private readonly groupService: GroupsService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createUserWithoutPassword(groupUser: Partial<GroupUser>) {
@@ -361,12 +365,14 @@ export class GroupUsersService {
         .createQueryBuilder('mu')
         .leftJoinAndSelect('mu.store', 'merchant_store')
         .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
         .leftJoinAndSelect('mu.group', 'merchant_group')
         .where('mu.id = :user_id', { user_id })
         .andWhere('mu.group_id is not null');
       if (group_id) {
         query.andWhere('mu.group_id = :group_id', { group_id });
       }
+
       const user_group = await query.getOne();
       if (!user_group) {
         throw new BadRequestException(
@@ -399,6 +405,118 @@ export class GroupUsersService {
       Logger.error(error);
     }
   }
+
+  async updatePhoneGroupUsers(
+    userId: string,
+    args: UpdatePhoneGroupUsersValidation,
+  ) {
+    const user = await this.getAndValidateGroupUserById(userId);
+
+    await this.getAndValidateGroupUserByPhone(args.phone, userId);
+    user.phone = args.phone;
+
+    try {
+      const result = await this.merchantUsersRepository.save(user);
+      formatingAllOutputTime(result);
+      removeAllFieldPassword(result);
+      console.log(
+      '===========================Start Debug result=================================\n',
+      new Date(Date.now()).toLocaleString(),
+      '\n',
+      result,
+      '\n============================End Debug result==================================',
+      );
+      this.notificationService.sendSms(
+        user.phone,
+        'Nomor Anda telah digunakan sebagai login baru',
+      );
+
+      return result;
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async updateEmailGroupUsers(
+    userId: string,
+    args: UpdateEmailGroupUsersValidation,
+  ) {
+    const user = await this.getAndValidateGroupUserById(userId);
+
+    await this.getAndValidateGroupUserByEmail(args.email, userId);
+    user.email = args.email;
+
+    try {
+      const result = await this.merchantUsersRepository.save(user);
+      formatingAllOutputTime(result);
+      removeAllFieldPassword(result);
+
+      this.notificationService.sendEmail(
+        user.email,
+        'Email Anda telah aktif',
+        'Alamat email Anda telah digunakan sebagai login baru',
+      );
+
+      return result;
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async updatePasswordGroupUsers(userId: string) {
+    const user = await this.getAndValidateGroupUserById(userId);
+
+    const token = randomUUID();
+    user.token_reset_password = token;
+
+    try {
+      const result = await this.merchantUsersRepository.save(user);
+      formatingAllOutputTime(result);
+      removeAllFieldPassword(result);
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      this.notificationService.sendSms(user.phone, urlVerification);
+
+      return result;
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+  //--------------------------------General Function------------------------------------
 
   async getAndValidateGroupUserByPhone(
     phone: string,
@@ -473,10 +591,19 @@ export class GroupUsersService {
     if (group_id) {
       where.group_id = group_id;
     }
-    const user_group = await this.merchantUsersRepository.findOne({
-      where,
-    });
 
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      .where('mu.id = :id', { id })
+      .andWhere('mu.group_id is not null');
+    if (group_id) {
+      query.andWhere('mu.group_id = :group_id', { group_id });
+    }
+    const user_group = await query.getOne();
     if (!user_group) {
       throw new BadRequestException(
         this.responseService.error(
