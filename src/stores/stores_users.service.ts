@@ -465,7 +465,9 @@ export class StoreUsersService {
     }
     const gUsersExist = await this.getAndValidateStoreUserById(args.id, user);
     if (gUsersExist.store_id != args.store_id) {
-      await this.storeService.getAndValidateStoreByStoreId(args.store_id);
+      gUsersExist.store = await this.storeService.getAndValidateStoreByStoreId(
+        args.store_id,
+      );
     }
     if (args.phone) {
       await this.getAndValidateStoreUserByPhone(args.phone, args.id);
