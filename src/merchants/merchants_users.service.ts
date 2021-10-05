@@ -17,14 +17,7 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import {
-  Brackets,
-  FindOperator,
-  IsNull,
-  Not,
-  Repository,
-  UpdateResult,
-} from 'typeorm';
+import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
@@ -113,11 +106,9 @@ export class MerchantUsersService {
 
   async updateMerchantUsers(
     args: Partial<MerchantUsersValidation>,
+    user: any,
   ): Promise<MerchantUsersDocument> {
-    const usersExist = await this.getAndValidateMerchantUserById(
-      args.id,
-      args.merchant_id,
-    );
+    const usersExist = await this.getAndValidateMerchantUserById(args.id, user);
     Object.assign(usersExist, args);
 
     if (args.email) {
@@ -159,10 +150,11 @@ export class MerchantUsersService {
 
   async updatePhoneMerchantUsers(
     args: MerchantUsersUpdatePhoneValidation,
+    user: any,
   ): Promise<any> {
     const merchantUser = await this.getAndValidateMerchantUserById(
       args.id,
-      args.merchant_id,
+      user,
     );
     Object.assign(merchantUser, args);
 
@@ -200,10 +192,11 @@ export class MerchantUsersService {
 
   async updateEmailMerchantUsers(
     args: MerchantUsersUpdateEmailValidation,
+    user: any,
   ): Promise<any> {
     const merchantUser = await this.getAndValidateMerchantUserById(
       args.id,
-      args.merchant_id,
+      user,
     );
     Object.assign(merchantUser, args);
 
@@ -247,27 +240,8 @@ export class MerchantUsersService {
     }
   }
 
-  async deleteMerchantUsers(user_id: string): Promise<UpdateResult> {
-    const gUsersExist: MerchantUsersDocument =
-      await this.merchantUsersRepository.findOne({
-        where: { id: user_id, merchant_id: Not(IsNull()) },
-        relations: ['merchant'],
-      });
-    if (!gUsersExist) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: user_id,
-            property: 'user_id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
+  async deleteMerchantUsers(user_id: string, user: any): Promise<UpdateResult> {
+    await this.getAndValidateMerchantUserById(user_id, user);
 
     try {
       return await this.merchantUsersRepository.softDelete({ id: user_id });
@@ -290,7 +264,7 @@ export class MerchantUsersService {
 
   async listMerchantUsers(
     args: Partial<ListMerchantUsersValidation>,
-    group_id?: string,
+    user: any,
   ): Promise<ListResponse> {
     const search = args.search || '';
     const currentPage = Number(args.page) || 1;
@@ -304,12 +278,12 @@ export class MerchantUsersService {
       .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
       // get data group in store
       .leftJoinAndSelect('mu.store', 'merchant_store')
-      .leftJoinAndSelect('merchant_store.store', 'merchant_store_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
       .leftJoinAndSelect(
-        'merchant_store_store.group',
-        'merchant_store_store_group',
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
       )
-      .where('mu.merchant_id IS NOT NULL')
+      .where('mu.store_id is not null')
       .andWhere(
         new Brackets((qb) => {
           qb.where('mu.name ilike :mname', {
@@ -324,8 +298,15 @@ export class MerchantUsersService {
         }),
       );
 
-    if (group_id) {
-      query.andWhere('mu.group_id = :group_id', { group_id });
+    // filter by access use
+    if (user && user.level == 'merchant') {
+      query.andWhere('merchant_store.merchant_id = :mid', {
+        mid: user.merchant_id,
+      });
+    } else if (user && user.level == 'group') {
+      query.andWhere('merchant_store_merchant.group_id = :group_id', {
+        group_id: user.group_id,
+      });
     }
 
     if (args.merchant_id) {
@@ -401,57 +382,23 @@ export class MerchantUsersService {
 
   async detailMerchantUsers(
     user_id: string,
-    group_id?: string,
+    user: any,
   ): Promise<MerchantUsersDocument> {
-    const query = this.merchantUsersRepository
-      .createQueryBuilder('mu')
-      .leftJoinAndSelect('mu.group', 'merchant_group')
-      // get data group in merchant
-      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
-      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
-      // get data group in store
-      .leftJoinAndSelect('mu.store', 'merchant_store')
-      .leftJoinAndSelect('merchant_store.store', 'merchant_store_store')
-      .leftJoinAndSelect(
-        'merchant_store_store.group',
-        'merchant_store_store_group',
-      )
-      .where('mu.id = :user_id', { user_id })
-      .andWhere('mu.merchant_id IS NOT NULL');
-
-    if (group_id) {
-      query.andWhere('mu.group_id = :group_id', { group_id });
-    }
-
-    const user = await query.getOne();
-    if (!user) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: user_id,
-            property: 'id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
+    const merchantUser = await this.getAndValidateMerchantUserById(
+      user_id,
+      user,
+    );
+    formatingAllOutputTime(merchantUser);
+    removeAllFieldPassword(merchantUser);
 
     try {
-      formatingAllOutputTime(user);
-      removeAllFieldPassword(user);
-
-      const roles = await this.roleService.getRole([user.role_id]);
-
+      const roles = await this.roleService.getRole([merchantUser.role_id]);
       if (roles) {
-        const roleName = _.find(roles, { id: user.role_id });
-        user.role_name = roleName ? roleName.name : null;
+        const roleName = _.find(roles, { id: merchantUser.role_id });
+        merchantUser.role_name = roleName ? roleName.name : null;
       }
 
-      return user;
+      return merchantUser;
     } catch (error) {
       Logger.error(error);
       throw new BadRequestException(
@@ -609,39 +556,50 @@ export class MerchantUsersService {
   }
 
   async getAndValidateMerchantUserById(
-    id: string,
-    merchant_id?: string,
+    user_id: string,
+    user?: any,
   ): Promise<MerchantUsersDocument> {
-    const where: { id: string; merchant_id?: string } = { id };
-    if (merchant_id) {
-      where.merchant_id = merchant_id;
-    }
-    try {
-      const merchant_user: MerchantUsersDocument =
-        await this.merchantUsersRepository.findOne({
-          where,
-        });
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in merchant
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+      .leftJoinAndSelect(
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
+      )
+      .where('mu.id = :user_id', { user_id })
+      .andWhere('mu.store_id is not null');
 
-      if (!merchant_user) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-
-      return merchant_user;
-    } catch (error) {
-      Logger.error(error);
+    if (user && user.level == 'merchant') {
+      query.andWhere('merchant_store.merchant_id = :mid', {
+        mid: user.merchant_id,
+      });
+    } else if (user && user.level == 'group') {
+      query.andWhere('merchant_store_merchant.group_id = :group_id', {
+        group_id: user.group_id,
+      });
     }
+    const merechant_user = await query.getOne();
+    if (!merechant_user) {
+      const errors: RMessage = {
+        value: user_id,
+        property: 'merechant_user_id',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return merechant_user;
   }
   //------------------------------------------------------------------------------
 

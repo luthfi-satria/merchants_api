@@ -1,10 +1,12 @@
 import {
   IsEmail,
+  IsIn,
   IsNotEmpty,
   IsNumberString,
   IsOptional,
   Length,
 } from 'class-validator';
+import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
 
 export class MerchantUsersValidation {
   @IsOptional()
@@ -35,4 +37,8 @@ export class MerchantUsersValidation {
 
   @IsOptional()
   page: string;
+
+  @IsOptional()
+  @IsIn(Object.values(MerchantUsersStatus))
+  status: MerchantUsersStatus;
 }

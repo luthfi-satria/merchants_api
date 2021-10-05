@@ -27,6 +27,7 @@ import { MerchantUsersUpdatePasswordValidation } from './validation/merchants_us
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
 import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
+import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
 
 @Controller('api/v1/merchants/merchants')
 export class MerchantUsersController {
@@ -39,12 +40,17 @@ export class MerchantUsersController {
 
   @Post('users')
   @UserType('admin')
+  @UserTypeAndLevel('merchnat.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async createMerchantUsers(
+    @Req() req: any,
     @Body()
     merchantUserValidation: MerchantUsersValidation,
   ): Promise<RSuccessMessage> {
+    if (req.user.level == 'merchant') {
+      merchantUserValidation.status = MerchantUsersStatus.Waiting_for_approval;
+    }
     const result = await this.merchantUsersService.createMerchantUsers(
       merchantUserValidation,
     );
@@ -57,6 +63,7 @@ export class MerchantUsersController {
 
   @Put('users/:uid')
   @UserType('admin')
+  @UserTypeAndLevel('merchnat.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateMerchantUsers(
@@ -65,9 +72,18 @@ export class MerchantUsersController {
     args: Partial<MerchantUsersValidation>,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
+    // user level group hanya bisa mengubah status
+    if (req.user.leve == 'group') {
+      for (const key in args) {
+        if (key != 'status') {
+          delete args[key];
+        }
+      }
+    }
     args.id = merchantUserId;
     const resultUpdate = await this.merchantUsersService.updateMerchantUsers(
       args,
+      req.user,
     );
 
     return this.responseService.success(
@@ -82,6 +98,7 @@ export class MerchantUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateMerchantUsersPassword(
+    @Req() req: any,
     @Body()
     param: MerchantUsersUpdatePasswordValidation,
     @Param('uid') merchantUserId: string,
@@ -89,6 +106,7 @@ export class MerchantUsersController {
     param.id = merchantUserId;
     const resultUpdate = await this.merchantUsersService.updateMerchantUsers(
       param,
+      req.user,
     );
 
     return this.responseService.success(
@@ -103,13 +121,14 @@ export class MerchantUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateMerchantUsersPhone(
+    @Req() req: any,
     @Body()
     param: MerchantUsersUpdatePhoneValidation,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
     param.id = merchantUserId;
     const resultUpdate =
-      await this.merchantUsersService.updatePhoneMerchantUsers(param);
+      await this.merchantUsersService.updatePhoneMerchantUsers(param, req.user);
 
     return this.responseService.success(
       true,
@@ -123,13 +142,14 @@ export class MerchantUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateMerchantUsersEmail(
+    @Req() req: any,
     @Body()
     param: MerchantUsersUpdateEmailValidation,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
     param.id = merchantUserId;
     const resultUpdate =
-      await this.merchantUsersService.updateEmailMerchantUsers(param);
+      await this.merchantUsersService.updateEmailMerchantUsers(param, req.user);
 
     return this.responseService.success(
       true,
@@ -142,9 +162,13 @@ export class MerchantUsersController {
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async deleteMerchantUsers(@Param('user_id') user_id: string): Promise<any> {
+  async deleteMerchantUsers(
+    @Req() req: any,
+    @Param('user_id') user_id: string,
+  ): Promise<any> {
     const deleteUser = await this.merchantUsersService.deleteMerchantUsers(
       user_id,
+      req.user,
     );
     if (!deleteUser) {
       throw new BadRequestException(
@@ -167,18 +191,16 @@ export class MerchantUsersController {
 
   @Get('users')
   @UserType('admin')
-  @UserTypeAndLevel('merchant.group')
+  @UserTypeAndLevel('merchnat.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listMerchantUsers(
     @Req() req: any,
     @Query() param: ListMerchantUsersValidation,
   ): Promise<any> {
-    if (req.user.level == 'group') {
-      param.group_id = req.user.group_id;
-    }
     const list_merchant = await this.merchantUsersService.listMerchantUsers(
       param,
+      req.user,
     );
     return this.responseService.success(
       true,
@@ -189,20 +211,16 @@ export class MerchantUsersController {
 
   @Get('users/:user_id')
   @UserType('admin')
-  @UserTypeAndLevel('merchant.group')
+  @UserTypeAndLevel('merchnat.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async detailMerchantUsers(
     @Req() req: any,
     @Param('user_id') user_id: string,
   ): Promise<any> {
-    let group_id = null;
-    if (req.user.level == 'group') {
-      group_id = req.user.group_id;
-    }
     const user = await this.merchantUsersService.detailMerchantUsers(
       user_id,
-      group_id,
+      req.user,
     );
     return this.responseService.success(
       true,
