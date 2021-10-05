@@ -199,10 +199,11 @@ export const removeAllFieldPassword = function removeAllFieldPassword(
   object: any,
 ) {
   for (const key in object) {
-    if (object[key] && key.endsWith('password')) {
+    console.log(key + ' : ' + object[key] + ' << in');
+    if (key.endsWith('password')) {
+      console.log(key+' >> has deleted');
       delete object[key];
-    }
-    if (object[key] && typeof object[key] === 'object') {
+    } else if (object[key] && typeof object[key] === 'object') {
       this.removeAllFieldPassword(object[key]);
     }
   }
