@@ -164,10 +164,11 @@ export class GroupUsersService {
       salt,
     );
     const createGroupUser: Partial<MerchantUsersDocument> = {
+      ...args,
       password: passwordHash,
       group,
     };
-    Object.assign(createGroupUser, args);
+    // Object.assign(createGroupUser, args);
 
     try {
       const resultCreate = await this.merchantUsersRepository.save(
