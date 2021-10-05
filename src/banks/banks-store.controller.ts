@@ -5,16 +5,19 @@ import {
   Logger,
   NotFoundException,
   Put,
+  UseGuards,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
-
+import { UserType } from 'src/auth/guard/user-type.decorator';
+import { RoleStoreGuard } from 'src/auth/store.guard';
 import { ResponseService } from 'src/response/response.service';
 import { StoresService } from 'src/stores/stores.service';
 import { BanksStoreDto } from './validations/banks-store.dto';
 
 @Controller('api/v1/merchants/banks/stores')
+@UseGuards(RoleStoreGuard)
 export class BanksStoresController {
   constructor(
     private readonly responseService: ResponseService,
@@ -22,6 +25,7 @@ export class BanksStoresController {
   ) {}
 
   @Put()
+  @UserType('admin')
   @UseInterceptors(AnyFilesInterceptor())
   async updateStoresBankData(
     @Body(new ValidationPipe({ transform: true })) body: BanksStoreDto,

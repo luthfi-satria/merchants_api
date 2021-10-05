@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { HttpModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ListBankDocument } from 'src/database/entities/list_banks';
@@ -12,6 +12,7 @@ import { BanksService } from './banks.service';
   imports: [
     TypeOrmModule.forFeature([ListBankDocument, StoreDocument]),
     ConfigModule.forRoot(),
+    HttpModule,
     StoresModule,
   ],
   controllers: [BanksController, BanksStoresController],
