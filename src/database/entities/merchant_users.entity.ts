@@ -88,6 +88,9 @@ export class MerchantUsersDocument {
   })
   status: MerchantUsersStatus;
 
+  @Column({ nullable: true })
+  rejection_reason: string;
+
   @Column('uuid', { nullable: true })
   role_id: string;
 
