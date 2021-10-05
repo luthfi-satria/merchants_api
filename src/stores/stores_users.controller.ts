@@ -200,10 +200,12 @@ export class StoreUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async detailStoreUsers(
+    @Req() req: any,
     @Param('store_user_id') storeUserId: string,
   ): Promise<any> {
     const store_user = await this.storeUsersService.detailStoreUsers(
       storeUserId,
+      req.user,
     );
     if (!store_user) {
       const errors: RMessage = {

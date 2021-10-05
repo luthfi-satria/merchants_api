@@ -763,11 +763,11 @@ export class StoreUsersService {
     }
 
     if (user.level == 'merchant') {
-      query.andWhere('mu.merchant_id = :mid', {
+      query.andWhere('merchant_store.merchant_id = :mid', {
         mid: user.merchant_id,
       });
     } else if (user.level == 'group') {
-      query.andWhere('mu.group_id = :group_id', {
+      query.andWhere('merchant_store_merchant.group_id = :group_id', {
         group_id: user.group_id,
       });
     }
@@ -825,9 +825,12 @@ export class StoreUsersService {
       });
   }
 
-  async detailStoreUsers(user_id: string): Promise<MerchantUsersDocument> {
+  async detailStoreUsers(
+    user_id: string,
+    user?: any,
+  ): Promise<MerchantUsersDocument> {
     try {
-      const store_user = await this.merchantUsersRepository
+      const query = this.merchantUsersRepository
         .createQueryBuilder('mu')
         .leftJoinAndSelect('mu.group', 'merchant_group')
         // get data group in merchant
@@ -835,14 +838,24 @@ export class StoreUsersService {
         .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
         // get data group in store
         .leftJoinAndSelect('mu.store', 'merchant_store')
-        .leftJoinAndSelect('merchant_store.store', 'merchant_store_store')
+        .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
         .leftJoinAndSelect(
-          'merchant_store_store.group',
-          'merchant_store_store_group',
+          'merchant_store_merchant.group',
+          'merchant_store_merchant_group',
         )
         .where('mu.id = :user_id', { user_id })
-        .andWhere('mu.store_id is not null')
-        .getOne();
+        .andWhere('mu.store_id is not null');
+
+      if (user.level == 'merchant') {
+        query.andWhere('merchant_store.merchant_id = :mid', {
+          mid: user.merchant_id,
+        });
+      } else if (user.level == 'group') {
+        query.andWhere('merchant_store_merchant.group_id = :group_id', {
+          group_id: user.group_id,
+        });
+      }
+      const store_user = await query.getOne();
       if (!store_user) {
         return null;
       }
