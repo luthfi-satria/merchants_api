@@ -700,11 +700,20 @@ export class StoreUsersService {
     let totalItems: number;
     const statuses = args.statuses || [];
 
-    const query = this.merchantUsersRepository
-      .createQueryBuilder('mu')
-      .leftJoinAndSelect('mu.store', 'merchant_store')
-      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+    const query = this.merchantUsersRepository.createQueryBuilder('mu');
+
+    query
       .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in merchant
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+      .leftJoinAndSelect(
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
+      )
       .where('mu.store_id is not null')
       .andWhere(
         new Brackets((qb) => {
@@ -796,6 +805,7 @@ export class StoreUsersService {
         );
       })
       .catch((err) => {
+        console.error(err);
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
@@ -819,9 +829,17 @@ export class StoreUsersService {
     try {
       const store_user = await this.merchantUsersRepository
         .createQueryBuilder('mu')
-        .leftJoinAndSelect('mu.store', 'merchant_store')
-        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
         .leftJoinAndSelect('mu.group', 'merchant_group')
+        // get data group in merchant
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+        // get data group in store
+        .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect('merchant_store.store', 'merchant_store_store')
+        .leftJoinAndSelect(
+          'merchant_store_store.group',
+          'merchant_store_store_group',
+        )
         .where('mu.id = :user_id', { user_id })
         .andWhere('mu.store_id is not null')
         .getOne();
