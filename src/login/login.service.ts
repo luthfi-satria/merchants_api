@@ -469,21 +469,6 @@ export class LoginService {
       );
     }
 
-    if (existMerchantUser.status === 'WAITING_FOR_APPROVAL') {
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          {
-            value: 'WAITING_FOR_APPROVAL',
-            property: 'status',
-            constraint: [
-              this.messageService.get('merchant.login.waiting_approval'),
-            ],
-          },
-          'Unauthorized',
-        ),
-      );
-    }
     let merchantLevel = '';
     let groupID = '';
     let merchantID = '';
