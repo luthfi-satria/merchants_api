@@ -167,11 +167,16 @@ export class MerchantUsersController {
 
   @Get('users')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listMerchantUsers(
+    @Req() req: any,
     @Query() param: ListMerchantUsersValidation,
   ): Promise<any> {
+    if (req.user.level == 'group') {
+      param.group_id = req.user.group_id;
+    }
     const list_merchant = await this.merchantUsersService.listMerchantUsers(
       param,
     );

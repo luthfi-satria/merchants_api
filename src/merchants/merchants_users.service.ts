@@ -284,6 +284,7 @@ export class MerchantUsersService {
 
   async listMerchantUsers(
     args: Partial<ListMerchantUsersValidation>,
+    group_id?: string,
   ): Promise<ListResponse> {
     const search = args.search || '';
     const currentPage = Number(args.page) || 1;
@@ -291,11 +292,19 @@ export class MerchantUsersService {
 
     const query = this.merchantUsersRepository
       .createQueryBuilder('mu')
-      .leftJoinAndSelect('mu.store', 'merchant_store')
-      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
-      .leftJoinAndSelect('merchant_merchant.group', 'merchant_group_merchant')
       .leftJoinAndSelect('mu.group', 'merchant_group')
-      .where(
+      // get data group in merchant
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.store', 'merchant_store_store')
+      .leftJoinAndSelect(
+        'merchant_store_store.group',
+        'merchant_store_store_group',
+      )
+      .where('mu.merchant_id IS NOT NULL')
+      .andWhere(
         new Brackets((qb) => {
           qb.where('mu.name ilike :mname', {
             mname: '%' + search + '%',
@@ -308,6 +317,10 @@ export class MerchantUsersService {
             });
         }),
       );
+
+    if (group_id) {
+      query.andWhere('mu.group_id = :group_id', { group_id });
+    }
 
     if (args.merchant_id) {
       query.andWhere('mu.merchant_id = :merchant_id', {
