@@ -1,9 +1,11 @@
 import {
+  IsArray,
   IsEmail,
   IsIn,
   IsNotEmpty,
   IsNumberString,
   IsOptional,
+  IsUUID,
   Length,
 } from 'class-validator';
 import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
@@ -41,4 +43,8 @@ export class MerchantUsersValidation {
   @IsOptional()
   @IsIn(Object.values(MerchantUsersStatus))
   status: MerchantUsersStatus;
+
+  @IsNotEmpty()
+  @IsArray()
+  stores: string[];
 }

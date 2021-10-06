@@ -48,11 +48,9 @@ export class MerchantUsersController {
     @Body()
     merchantUserValidation: MerchantUsersValidation,
   ): Promise<RSuccessMessage> {
-    if (req.user.level == 'merchant') {
-      merchantUserValidation.status = MerchantUsersStatus.Waiting_for_approval;
-    }
     const result = await this.merchantUsersService.createMerchantUsers(
       merchantUserValidation,
+      req.user,
     );
     return this.responseService.success(
       true,

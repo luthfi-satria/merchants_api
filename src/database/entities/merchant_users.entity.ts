@@ -5,6 +5,8 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -99,4 +101,17 @@ export class MerchantUsersDocument {
   constructor(init?: Partial<MerchantUsersDocument>) {
     Object.assign(this, init);
   }
+
+  @ManyToMany(() => StoreDocument)
+  @JoinTable({
+    joinColumn: {
+      name: 'merchant_user_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'merchant_store_id',
+      referencedColumnName: 'id',
+    },
+  })
+  stores: StoreDocument[];
 }

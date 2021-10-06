@@ -33,6 +33,7 @@ import { MerchantsService } from './merchants.service';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
 import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
+import { StoreDocument } from 'src/database/entities/store.entity';
 
 @Injectable()
 export class MerchantUsersService {
@@ -49,6 +50,8 @@ export class MerchantUsersService {
     @Inject(forwardRef(() => MerchantsService))
     private readonly merchantService: MerchantsService,
     private readonly notificationService: NotificationService,
+    @InjectRepository(StoreDocument)
+    private readonly storeRepository: Repository<StoreDocument>,
   ) {}
 
   async findByMerchantId(mid: string): Promise<MerchantUsersDocument> {
@@ -59,11 +62,16 @@ export class MerchantUsersService {
 
   async createMerchantUsers(
     args: Partial<MerchantUsersValidation>,
+    user: any,
   ): Promise<Partial<MerchantUsersDocument> & MerchantUsersDocument> {
     const merchant = await this.merchantService.getAndValidateMerchantById(
       args.merchant_id,
     );
 
+    let stores = null;
+    if (args.stores) {
+      stores = await this.getAndValidateStoreByStoreIds(args.stores, user);
+    }
     await this.getAndValidateMerchantUserByEmail(args.email);
     await this.getAndValidateMerchantUserByPhone(args.phone);
 
@@ -73,13 +81,11 @@ export class MerchantUsersService {
       salt,
     );
     const createMerchantUser: Partial<MerchantUsersDocument> = {
-      name: args.name,
-      phone: args.phone,
-      email: args.email,
-      merchant_id: args.merchant_id,
       password: passwordHash,
       merchant,
     };
+    Object.assign(createMerchantUser, args);
+    createMerchantUser.stores = stores;
     try {
       const createMerchant = await this.merchantUsersRepository.save(
         createMerchantUser,
@@ -603,6 +609,79 @@ export class MerchantUsersService {
       );
     }
     return merechant_user;
+  }
+
+  async getAndValidateStoreByStoreIds(
+    storeIds: string[],
+    user?: any,
+  ): Promise<StoreDocument[]> {
+    const query = this.storeRepository
+      .createQueryBuilder('merchant_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+      .leftJoinAndSelect(
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
+      )
+      .where('merchant_store.id IN (:...ids)', { ids: storeIds });
+
+    if (user && user.level == 'group') {
+      query.andWhere('merchant_store_merchant.group_id = :group_id', {
+        group_id: user.group_id,
+      });
+    } else if (user && user.level == 'merchant') {
+      query.andWhere('merchant_store.merchant_id = :merchant_id', {
+        merchant_id: user.merchant_id,
+      });
+    } else if (user && user.level == 'store') {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user.level,
+            property: 'user_level',
+            constraint: [
+              this.messageService.get('merchant_user.general.forbidden'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    const stores = await query.getMany();
+    if (!stores) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: 'All store_id',
+            property: 'store_id',
+            constraint: [
+              this.messageService.get('merchant.updatestore.id_notfound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    for (const key in stores) {
+      if (!storeIds.includes(stores[key].id)) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: stores[key].id,
+              property: 'store_id',
+              constraint: [
+                this.messageService.get('merchant.updatestore.id_notfound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+    }
+    return stores;
   }
   //------------------------------------------------------------------------------
 
