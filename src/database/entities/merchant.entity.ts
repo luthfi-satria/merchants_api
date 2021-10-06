@@ -99,34 +99,6 @@ export class MerchantDocument {
   @Column({ nullable: true })
   rejection_reason: string;
 
-  // @Type(() => Date)
-  // @Transform((owner_dob: any) => moment(owner_dob).format('YYYY-MM-DD'), {
-  //   toPlainOnly: true,
-  // })
-  // @Column({ type: 'date', nullable: true })
-  // owner_dob: Date;
-
-  // @Column()
-  // owner_dob_city: string;
-
-  // @Column()
-  // owner_address: string;
-
-  // @Column()
-  // owner_ktp: string;
-
-  // @Column()
-  // owner_face_ktp: string;
-
-  // @Column('uuid')
-  // bank_id: string;
-
-  // @Column()
-  // bank_acc_name: string;
-
-  // @Column()
-  // bank_acc_number: string;
-
   @Column({ type: 'timestamptz', nullable: true })
   approved_at: Date | string;
 
@@ -138,6 +110,9 @@ export class MerchantDocument {
 
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date;
+
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  rejected_at: Date;
 
   @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants)
   @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })

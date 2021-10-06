@@ -25,7 +25,10 @@ import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { GroupDocument } from 'src/database/entities/group.entity';
-import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import {
+  MerchantUsersDocument,
+  MerchantUsersStatus,
+} from 'src/database/entities/merchant_users.entity';
 import { GroupUser } from './interface/group_users.interface';
 import { randomUUID } from 'crypto';
 import { ListGroupUserDTO } from './validation/list-group-user.validation';
@@ -168,7 +171,8 @@ export class GroupUsersService {
       password: passwordHash,
       group,
     };
-    // Object.assign(createGroupUser, args);
+    if (args.status && args.status == MerchantUsersStatus.Rejected)
+      createGroupUser.rejected_at = new Date();
 
     try {
       const resultCreate = await this.merchantUsersRepository.save(
@@ -224,6 +228,8 @@ export class GroupUsersService {
       );
       getUsersExist.password = passwordHash;
     }
+    if (args.status && args.status == MerchantUsersStatus.Rejected)
+      getUsersExist.rejected_at = new Date();
 
     try {
       const createResult = await this.merchantUsersRepository.save(

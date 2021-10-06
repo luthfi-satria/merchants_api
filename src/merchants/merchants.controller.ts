@@ -88,6 +88,7 @@ export class MerchantsController {
 
     return this.merchantsService.createMerchantMerchantProfile(
       createMerchantDTO,
+      req.user,
     );
   }
 

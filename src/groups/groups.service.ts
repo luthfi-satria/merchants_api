@@ -83,6 +83,7 @@ export class GroupsService {
     );
     const create_group = this.groupRepository.create(createGroupDTO);
     if (createGroupDTO.status == 'ACTIVE') create_group.approved_at = new Date();
+    if (createGroupDTO.status == 'REJECTED') create_group.rejected_at = new Date();
     try {
       const create = await this.groupRepository.save(create_group);
       if (!create) {
@@ -200,6 +201,7 @@ export class GroupsService {
     );
     group.users.push(pic_finance);
     if (updateGroupDTO.status == 'ACTIVE') group.approved_at = new Date();
+    if (updateGroupDTO.status == 'REJECTED') group.rejected_at = new Date();
 
     Object.assign(group, updateGroupDTO);
     const update_group = this.groupRepository.save(group);
