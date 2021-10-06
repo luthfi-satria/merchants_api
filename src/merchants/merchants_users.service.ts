@@ -283,7 +283,7 @@ export class MerchantUsersService {
         'merchant_store_merchant.group',
         'merchant_store_merchant_group',
       )
-      .where('mu.store_id is not null')
+      .where('mu.merchant_id is not null')
       .andWhere(
         new Brackets((qb) => {
           qb.where('mu.name ilike :mname', {
@@ -308,6 +308,7 @@ export class MerchantUsersService {
         group_id: user.group_id,
       });
     }
+    // end filter by access use
 
     if (args.merchant_id) {
       query.andWhere('mu.merchant_id = :merchant_id', {
@@ -320,7 +321,9 @@ export class MerchantUsersService {
     }
 
     if (args.group_id) {
-      query.andWhere('mu.group_id = :group_id', { group_id: args.group_id });
+      query.andWhere('merchant_merchant.group_id = :group_id', {
+        group_id: args.group_id,
+      });
     }
 
     if (args.statuses) {
@@ -573,7 +576,7 @@ export class MerchantUsersService {
         'merchant_store_merchant_group',
       )
       .where('mu.id = :user_id', { user_id })
-      .andWhere('mu.store_id is not null');
+      .andWhere('mu.merchant_id is not null');
 
     if (user && user.level == 'merchant') {
       query.andWhere('merchant_store.merchant_id = :mid', {
