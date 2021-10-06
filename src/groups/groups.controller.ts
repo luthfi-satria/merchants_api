@@ -193,10 +193,12 @@ export class GroupsController {
       );
     }
 
-    for (const file of files) {
-      const file_name = '/upload_groups/' + file.filename;
-      const url = await this.storage.store(file_name);
-      updateGroupDTO[file.fieldname] = url;
+    if (files) {
+      for (const file of files) {
+        const file_name = '/upload_groups/' + file.filename;
+        const url = await this.storage.store(file_name);
+        updateGroupDTO[file.fieldname] = url;
+      }
     }
     try {
       const updateresult: Record<string, any> =
