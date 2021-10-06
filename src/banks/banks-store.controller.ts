@@ -14,6 +14,7 @@ import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RoleStoreGuard } from 'src/auth/store.guard';
 import { ResponseService } from 'src/response/response.service';
 import { StoresService } from 'src/stores/stores.service';
+import { BanksService } from './banks.service';
 import { BanksStoreDto } from './validations/banks-store.dto';
 
 @Controller('api/v1/merchants/banks/stores')
@@ -22,6 +23,7 @@ export class BanksStoresController {
   constructor(
     private readonly responseService: ResponseService,
     private readonly storeService: StoresService,
+    private readonly bankService: BanksService,
   ) {}
 
   @Put()
@@ -31,6 +33,19 @@ export class BanksStoresController {
     @Body(new ValidationPipe({ transform: true })) body: BanksStoreDto,
   ) {
     try {
+      const { bank_account_name, bank_account_no, bank_id } = body;
+
+      const bankIsExists = await this.bankService.findBankById(bank_id);
+      if (!bankIsExists) {
+        throw new NotFoundException(
+          this.responseService.error(HttpStatus.NOT_FOUND, {
+            constraint: [`'bank_id' id does not found!`],
+            property: 'bank_id',
+            value: bank_id,
+          }),
+        );
+      }
+
       const stores_ids = await this.storeService
         .findMerchantStoresByIds(body.store_ids)
         .then((res) => res.map((row) => row.id));
@@ -48,7 +63,6 @@ export class BanksStoresController {
         );
       }
 
-      const { bank_account_name, bank_account_no, bank_id } = body;
       const updateResult = await this.storeService
         .updateBulkStoresBankDetail(
           stores_ids,
