@@ -449,17 +449,13 @@ export class MerchantsService {
     id: string,
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
+    let result = null;
     try {
       const mid = user.level == 'merchant' ? user.merchant_id : id;
-      const result = await this.merchantRepository.findOne({
+      result = await this.merchantRepository.findOne({
         where: { id: mid },
         relations: ['group'],
       });
-      return this.responseService.success(
-        true,
-        this.messageService.get('merchant.listmerchant.success'),
-        result,
-      );
     } catch (error) {
       const errors: RMessage = {
         value: '',
@@ -474,6 +470,25 @@ export class MerchantsService {
         ),
       );
     }
+    if (!result) {
+      const errors: RMessage = {
+        value: id,
+        property: 'id',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.listmerchant.success'),
+      result,
+    );
   }
 
   async listGroupMerchant(
