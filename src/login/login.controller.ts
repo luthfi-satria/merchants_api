@@ -18,7 +18,6 @@ import { MessageService } from 'src/message/message.service';
 import { LoginEmailValidation } from './validation/login.email.validation';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
 import { LoginService } from './login.service';
-import { catchError, map } from 'rxjs';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RMessage } from 'src/response/response.interface';

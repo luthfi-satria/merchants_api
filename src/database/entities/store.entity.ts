@@ -162,6 +162,9 @@ export class StoreDocument {
   @Column({ type: 'timestamptz', nullable: true })
   approved_at: Date | string;
 
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  rejected_at: Date;
+
   @OneToMany(
     () => StoreOperationalHoursDocument,
     (operational_hours) => operational_hours.store,

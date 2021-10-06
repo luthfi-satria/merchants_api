@@ -180,7 +180,10 @@ export class StoresService {
       );
     }
 
-    if (user.user_type == 'merchant') {
+    if (
+      user.user_type != 'admin' ||
+      (user.user_type == 'admin' && merchant.status != 'DRAFT')
+    ) {
       if (merchant.status != 'ACTIVE') {
         const errors: RMessage = {
           value: create_merchant_store_validation.merchant_id,
@@ -209,6 +212,8 @@ export class StoresService {
 
     if (store_document.status == 'ACTIVE')
       store_document.approved_at = new Date();
+    if (store_document.status == 'REJECTED')
+      store_document.rejected_at = new Date();
 
     store_document.auto_accept_order =
       create_merchant_store_validation.auto_accept_order == 'true'
@@ -301,7 +306,7 @@ export class StoresService {
         ),
       );
     }
-    if (user.user_type == 'merchant') {
+    if (user.user_type != 'admin') {
       if (cekmerchant.status != 'ACTIVE') {
         const errors: RMessage = {
           value: store_document.merchant_id,
@@ -324,6 +329,8 @@ export class StoresService {
 
     if (store_document.status == 'ACTIVE')
       store_document.approved_at = new Date();
+    if (store_document.status == 'REJECTED')
+      store_document.rejected_at = new Date();
 
     if (update_merchant_store_validation.auto_accept_order) {
       store_document.auto_accept_order =

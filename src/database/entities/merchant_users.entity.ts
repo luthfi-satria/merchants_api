@@ -81,6 +81,9 @@ export class MerchantUsersDocument {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   phone_verified_at: Date;
 
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  rejected_at: Date;
+
   @Column({
     type: 'enum',
     enum: MerchantUsersStatus,

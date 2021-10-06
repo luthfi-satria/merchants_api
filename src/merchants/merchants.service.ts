@@ -37,7 +37,6 @@ import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantUsersService } from './merchants_users.service';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
-
 @Injectable()
 export class MerchantsService {
   constructor(
@@ -90,6 +89,7 @@ export class MerchantsService {
 
   async createMerchantMerchantProfile(
     data: CreateMerchantDTO,
+    user: Record<string, any>,
   ): Promise<RSuccessMessage> {
     const cekphone: MerchantDocument = await this.merchantRepository.findOne({
       where: { pic_phone: data.pic_phone },
@@ -148,21 +148,28 @@ export class MerchantsService {
         ),
       );
     }
-    if (cekgroup.status != 'ACTIVE') {
-      const errors: RMessage = {
-        value: data.group_id,
-        property: 'group_id',
-        constraint: [
-          this.messageService.get('merchant.createmerchant.groupid_notactive'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
+    if (
+      user.user_type != 'admin' ||
+      (user.user_type == 'admin' && cekgroup.status != 'DRAFT')
+    ) {
+      if (cekgroup.status != 'ACTIVE') {
+        const errors: RMessage = {
+          value: data.group_id,
+          property: 'group_id',
+          constraint: [
+            this.messageService.get(
+              'merchant.createmerchant.groupid_notactive',
+            ),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
     }
     const ceklob: LobDocument = await this.lobService.findMerchantById(
       data.lob_id,
@@ -221,6 +228,7 @@ export class MerchantsService {
       merchantDTO.npwp_file = data.npwp_file;
     }
     if (merchantDTO.status == 'ACTIVE') merchantDTO.approved_at = new Date();
+    if (merchantDTO.status == 'REJECTED') merchantDTO.rejected_at = new Date();
 
     const createMerchant = this.merchantRepository.create(merchantDTO);
     try {
@@ -378,6 +386,8 @@ export class MerchantsService {
     if (data.status) existMerchant.status = data.status;
     if (existMerchant.status == 'ACTIVE')
       existMerchant.approved_at = new Date();
+    if (existMerchant.status == 'REJECTED')
+      existMerchant.rejected_at = new Date();
     if (data.rejection_reason)
       existMerchant.rejection_reason = data.rejection_reason;
 

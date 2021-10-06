@@ -151,6 +151,9 @@ export class GroupDocument {
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date;
 
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  rejected_at: Date;
+
   @OneToMany(() => MerchantDocument, (merchant) => merchant.group)
   merchants: Promise<MerchantDocument[]>;
 

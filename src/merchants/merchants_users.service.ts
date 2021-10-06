@@ -80,6 +80,7 @@ export class MerchantUsersService {
       password: passwordHash,
       merchant,
     };
+
     try {
       const createMerchant = await this.merchantUsersRepository.save(
         createMerchantUser,
