@@ -40,7 +40,7 @@ export class MerchantUsersController {
 
   @Post('users')
   @UserType('admin')
-  @UserTypeAndLevel('merchnat.group')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async createMerchantUsers(
@@ -63,7 +63,7 @@ export class MerchantUsersController {
 
   @Put('users/:uid')
   @UserType('admin')
-  @UserTypeAndLevel('merchnat.group')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateMerchantUsers(
@@ -211,7 +211,7 @@ export class MerchantUsersController {
 
   @Get('users/:user_id')
   @UserType('admin')
-  @UserTypeAndLevel('merchnat.group')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async detailMerchantUsers(
