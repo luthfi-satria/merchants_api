@@ -191,7 +191,7 @@ export class MerchantUsersController {
 
   @Get('users')
   @UserType('admin')
-  @UserTypeAndLevel('merchnat.group')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listMerchantUsers(
