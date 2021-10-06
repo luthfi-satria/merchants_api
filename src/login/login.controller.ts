@@ -76,39 +76,7 @@ export class LoginController {
 
   @Post('login/refresh-token')
   async refreshToken(@Headers('Authorization') token: string): Promise<any> {
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/refresh-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-      'request-from': 'merchant',
-    };
-    const http_req: Record<string, any> = {
-      user_type: 'merchant',
-      roles: ['merchant'],
-    };
-
-    return (
-      await this.loginService.postHttp(url, http_req, headersRequest)
-    ).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        return response;
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
-    );
+    return this.loginService.refreshToken(token);
   }
 
   @Get('profile')
