@@ -977,4 +977,29 @@ export class LoginService {
       existUser,
     );
   }
+
+  async refreshToken(token: string): Promise<any> {
+    const url: string =
+      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/refresh-token';
+    const headersRequest: Record<string, any> = {
+      'Content-Type': 'application/json',
+      Authorization: token,
+      'request-from': 'merchant',
+    };
+    const http_req: Record<string, any> = {
+      user_type: 'merchant',
+      roles: ['merchant'],
+    };
+
+    const resp: Record<string, any> = await this.commonService.postHttp(
+      url,
+      http_req,
+      headersRequest,
+    );
+    if (resp.statusCode) {
+      throw resp;
+    } else {
+      return resp;
+    }
+  }
 }
