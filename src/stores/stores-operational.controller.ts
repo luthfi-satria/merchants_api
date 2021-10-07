@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { RoleStoreGuard } from 'src/auth/store.guard';
+import { CommonStoresService } from 'src/common/own/stores.service';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 import { MessageService } from 'src/message/message.service';
@@ -37,6 +38,7 @@ export class StoreOperationalController {
     private readonly mStoreService: StoresService,
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
+    private readonly commonStoresService: CommonStoresService,
   ) {}
 
   // @UseGuards(RoleStoreGuard)
@@ -48,10 +50,16 @@ export class StoreOperationalController {
     'merchant.store',
   )
   async updateOperationalHour(
+    @Req() req: any,
     @Param('store_id') store_id: string,
     @Body()
     payload: StoreOpenHoursValidation,
   ) {
+    await this.commonStoresService.getAndValidateStoreByStoreIds(
+      [store_id],
+      req.user,
+    );
+
     try {
       const { gmt_offset, operational_hours } = payload;
 
