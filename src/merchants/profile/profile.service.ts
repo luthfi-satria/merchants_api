@@ -64,20 +64,22 @@ export class ProfileService {
   }
 
   async updateEmail(data: UpdateEmailDto): Promise<MerchantUsersDocument> {
-    const admin = new MerchantUsersDocument();
-    admin.id = data.id;
-    admin.email = data.email;
-    const result = await this.merchantRepository.save(admin);
+    const merchantUser = new MerchantUsersDocument();
+    merchantUser.id = data.id;
+    merchantUser.email = data.email;
+    merchantUser.email_verified_at = new Date();
+    const result = await this.merchantRepository.save(merchantUser);
     if (result) {
       return this.merchantRepository.findOne(result.id);
     }
   }
 
   async updatePhone(data: UpdatePhoneDto): Promise<MerchantUsersDocument> {
-    const admin = new MerchantUsersDocument();
-    admin.id = data.id;
-    admin.phone = data.phone;
-    const result = await this.merchantRepository.save(admin);
+    const merchantUser = new MerchantUsersDocument();
+    merchantUser.id = data.id;
+    merchantUser.phone = data.phone;
+    merchantUser.phone_verified_at = new Date();
+    const result = await this.merchantRepository.save(merchantUser);
     if (result) {
       return this.merchantRepository.findOne(result.id);
     }
