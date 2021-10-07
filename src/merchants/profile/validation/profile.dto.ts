@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
@@ -56,6 +56,17 @@ export class UpdatePhoneDto {
   @IsString()
   @IsOptional()
   otp_code: string;
+}
+
+export class UbahEmailDto {
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+}
+
+export class VerifikasiUbahEmailDto {
+  @IsNotEmpty()
+  token: string;
 }
 
 export class ResponseMerchantDto {

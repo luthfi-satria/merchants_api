@@ -16,13 +16,15 @@ import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import {
   OtpDto,
   ResponseMerchantDto,
+  UbahEmailDto,
   UpdateEmailDto,
   UpdatePhoneDto,
+  VerifikasiUbahEmailDto,
 } from './validation/profile.dto';
 import { RMessage } from 'src/response/response.interface';
 import { catchError, map } from 'rxjs';
 
-@Controller('api/v1/merchants/profile')
+@Controller('api/v1/merchants')
 export class ProfileController {
   constructor(
     private readonly profileService: ProfileService,
@@ -30,61 +32,73 @@ export class ProfileController {
     @Message() private readonly messageService: MessageService, // private httpService: HttpService,
   ) {}
 
-  @Post('verify-email')
+  // @Post('verify-email')
+  // @UserType('merchant')
+  // @AuthJwtGuard()
+  // async updateEmail(@Req() req: any, @Body() data: UpdateEmailDto) {
+  //   const url: string =
+  //     process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-email';
+  //   const defaultJsonHeader: Record<string, any> = {
+  //     'Content-Type': 'application/json',
+  //   };
+  //   const existEmail = await this.profileService.findOneMerchantByEmail(
+  //     data.email,
+  //   );
+  //   if (existEmail) {
+  //     const errors: RMessage = {
+  //       value: data.email,
+  //       property: 'email',
+  //       constraint: [this.messageService.get('merchant.general.emailExist')],
+  //     };
+  //     throw new BadRequestException(
+  //       this.responseService.error(
+  //         HttpStatus.BAD_REQUEST,
+  //         errors,
+  //         'Bad Request',
+  //       ),
+  //     );
+  //   }
+  //   const userData = await this.profileService.findOneById(req.user.id);
+  //   const otpDto = new OtpDto();
+  //   otpDto.email = data.email;
+  //   otpDto.id_otp = userData.id;
+  //   otpDto.user_type = 'merchant';
+  //   return (
+  //     await this.profileService.postHttp(url, otpDto, defaultJsonHeader)
+  //   ).pipe(
+  //     map(async (response) => {
+  //       const rsp: Record<string, any> = response;
+
+  //       if (rsp.statusCode) {
+  //         throw new BadRequestException(
+  //           this.responseService.error(
+  //             HttpStatus.BAD_REQUEST,
+  //             rsp.message[0],
+  //             'Bad Request',
+  //           ),
+  //         );
+  //       }
+  //       return response;
+  //     }),
+  //     catchError((err) => {
+  //       throw err.response.data;
+  //     }),
+  //   );
+  // }
+
+  @Post('profile/verify-email')
   @UserType('merchant')
   @AuthJwtGuard()
-  async updateEmail(@Req() req: any, @Body() data: UpdateEmailDto) {
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-email';
-    const defaultJsonHeader: Record<string, any> = {
-      'Content-Type': 'application/json',
-    };
-    const existEmail = await this.profileService.findOneMerchantByEmail(
-      data.email,
-    );
-    if (existEmail) {
-      const errors: RMessage = {
-        value: data.email,
-        property: 'email',
-        constraint: [this.messageService.get('merchant.general.emailExist')],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-    const userData = await this.profileService.findOneById(req.user.id);
-    const otpDto = new OtpDto();
-    otpDto.email = data.email;
-    otpDto.id_otp = userData.id;
-    otpDto.user_type = 'merchant';
-    return (
-      await this.profileService.postHttp(url, otpDto, defaultJsonHeader)
-    ).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        return response;
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
-    );
+  async updateEmail(@Req() req: any, @Body() data: UbahEmailDto) {
+    return this.profileService.ubahEmail(data, req.user);
   }
 
-  @Post('verify-email-validation')
+  @Post('verifications/verify')
+  async verifikasiUbahEmail(@Body() data: VerifikasiUbahEmailDto) {
+    return this.profileService.verifikasiUbahEmail(data);
+  }
+
+  @Post('profile/verify-email-validation')
   @UserType('merchant')
   @AuthJwtGuard()
   async updateEmailValidation(@Req() req: any, @Body() data: UpdateEmailDto) {
@@ -159,7 +173,7 @@ export class ProfileController {
     );
   }
 
-  @Post('verify-phone')
+  @Post('profile/verify-phone')
   @UserType('merchant')
   @AuthJwtGuard()
   async updatePhone(@Req() req: any, @Body() data: UpdatePhoneDto) {
@@ -213,7 +227,7 @@ export class ProfileController {
     );
   }
 
-  @Post('verify-phone-validation')
+  @Post('profile/verify-phone-validation')
   @UserType('merchant')
   @AuthJwtGuard()
   async updatePhoneValidation(@Req() req: any, @Body() data: UpdatePhoneDto) {
