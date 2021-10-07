@@ -301,6 +301,8 @@ export class MerchantUsersService {
         'merchant_store_merchant.group',
         'merchant_store_merchant_group',
       )
+      // get data group in stores
+      .leftJoinAndSelect('mu.stores', 'user_stores')
       .where('mu.merchant_id is not null')
       .andWhere(
         new Brackets((qb) => {
