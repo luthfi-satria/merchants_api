@@ -41,7 +41,12 @@ export class StoreOperationalController {
 
   // @UseGuards(RoleStoreGuard)
   @Post('set-operational-hours/:store_id')
-  @UserTypeAndLevel('admin.*', 'merchant.store')
+  @UserTypeAndLevel(
+    'admin.*',
+    'merchant.group',
+    'merchant.merchant',
+    'merchant.store',
+  )
   async updateOperationalHour(
     @Param('store_id') store_id: string,
     @Body()
