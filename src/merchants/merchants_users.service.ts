@@ -70,7 +70,11 @@ export class MerchantUsersService {
 
     let stores = null;
     if (args.stores) {
-      stores = await this.getAndValidateStoreByStoreIds(args.stores, user);
+      stores = await this.getAndValidateStoreByStoreIds(
+        args.stores,
+        args.merchant_id,
+        user,
+      );
     }
     await this.getAndValidateMerchantUserByEmail(args.email);
     await this.getAndValidateMerchantUserByPhone(args.phone);
@@ -116,6 +120,14 @@ export class MerchantUsersService {
   ): Promise<MerchantUsersDocument> {
     const usersExist = await this.getAndValidateMerchantUserById(args.id, user);
     Object.assign(usersExist, args);
+
+    if (args.stores) {
+      usersExist.stores = await this.getAndValidateStoreByStoreIds(
+        args.stores,
+        usersExist.merchant_id,
+        user,
+      );
+    }
 
     if (args.email) {
       await this.getAndValidateMerchantUserByEmail(args.email, args.id);
@@ -613,6 +625,7 @@ export class MerchantUsersService {
 
   async getAndValidateStoreByStoreIds(
     storeIds: string[],
+    merchantId: string,
     user?: any,
   ): Promise<StoreDocument[]> {
     const query = this.storeRepository
@@ -622,7 +635,10 @@ export class MerchantUsersService {
         'merchant_store_merchant.group',
         'merchant_store_merchant_group',
       )
-      .where('merchant_store.id IN (:...ids)', { ids: storeIds });
+      .where('merchant_store.id IN (:...ids)', { ids: storeIds })
+      .andWhere('merchant_store.merchant_id = :merchant_id', {
+        merchant_id: merchantId,
+      });
 
     if (user && user.level == 'group') {
       query.andWhere('merchant_store_merchant.group_id = :group_id', {
@@ -664,23 +680,31 @@ export class MerchantUsersService {
         ),
       );
     }
-    for (const key in stores) {
-      if (!storeIds.includes(stores[key].id)) {
+    storeIds.forEach((store_id) => {
+      if (!_.find(stores, { id: store_id })) {
+        Logger.error(
+          ' store_id = ' +
+            store_id +
+            ' , tidak di temukan atau tidak dimiliki oleh merchant_id atau tidak dimiliki oleh user',
+        );
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
             {
-              value: stores[key].id,
+              value: store_id,
               property: 'store_id',
               constraint: [
-                this.messageService.get('merchant.updatestore.id_notfound'),
+                this.messageService.get(
+                  'merchant_user.general.store_not_owned_merchant_nor_user',
+                ),
               ],
             },
             'Bad Request',
           ),
         );
       }
-    }
+    });
+
     return stores;
   }
   //------------------------------------------------------------------------------

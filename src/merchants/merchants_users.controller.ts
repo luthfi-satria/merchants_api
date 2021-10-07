@@ -27,7 +27,6 @@ import { MerchantUsersUpdatePasswordValidation } from './validation/merchants_us
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
 import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
-import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
 
 @Controller('api/v1/merchants/merchants')
 export class MerchantUsersController {
@@ -70,14 +69,6 @@ export class MerchantUsersController {
     args: Partial<MerchantUsersValidation>,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
-    // user level group hanya bisa mengubah status
-    if (req.user.leve == 'group') {
-      for (const key in args) {
-        if (key != 'status') {
-          delete args[key];
-        }
-      }
-    }
     args.id = merchantUserId;
     const resultUpdate = await this.merchantUsersService.updateMerchantUsers(
       args,

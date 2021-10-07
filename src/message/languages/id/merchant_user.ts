@@ -12,5 +12,10 @@ export default {
       code: 'FORBIDDEN',
       message: 'User hanya boleh mengubah data milik group nya saja.',
     },
+    store_not_owned_merchant_nor_user: {
+      code: 'STORE_NOT_OWNED',
+      message:
+        'Store tidak di miliki oleh merchant atau tidak di miliki oleh user. ',
+    },
   },
 };
