@@ -45,5 +45,5 @@ export class MerchantUsersValidation {
 
   @IsNotEmpty()
   @IsArray()
-  stores: string[];
+  store_ids: string[];
 }
