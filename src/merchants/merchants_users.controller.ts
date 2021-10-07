@@ -84,6 +84,7 @@ export class MerchantUsersController {
 
   @Put('users/:uid/password')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateMerchantUsersPassword(
@@ -107,6 +108,7 @@ export class MerchantUsersController {
 
   @Put('users/:uid/phone')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateMerchantUsersPhone(
@@ -128,6 +130,7 @@ export class MerchantUsersController {
 
   @Put('users/:uid/email')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateMerchantUsersEmail(
@@ -149,6 +152,7 @@ export class MerchantUsersController {
 
   @Delete('users/:user_id')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async deleteMerchantUsers(
