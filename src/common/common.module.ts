@@ -5,6 +5,10 @@ import { CityService } from './services/admins/city.service';
 import { RoleService } from './services/admins/role.service';
 import { CommonStorageService } from './storage/storage.service';
 import { NotificationService } from './notification/notification.service';
+import { CommonStoresService } from './own/stores.service';
+import { StoresModule } from 'src/stores/stores.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { StoreDocument } from 'src/database/entities/store.entity';
 
 @Global()
 @Module({
@@ -30,6 +34,7 @@ import { NotificationService } from './notification/notification.service';
       },
     }),
     HttpModule,
+    TypeOrmModule.forFeature([StoreDocument]),
   ],
   providers: [
     CommonStorageService,
@@ -37,12 +42,14 @@ import { NotificationService } from './notification/notification.service';
     CityService,
     RoleService,
     NotificationService,
+    CommonStoresService,
   ],
   exports: [
     CommonStorageService,
     CityService,
     RoleService,
     NotificationService,
+    CommonStoresService,
   ],
 })
 export class CommonModule {}
