@@ -79,11 +79,10 @@ export class GroupUsersController {
       args.group_id,
     );
 
-    if (req.user.user_type != 'admin') {
-      delete args.status;
-    }
-
-    const result = await this.groupUsersService.updateGroupUsers(args);
+    const result = await this.groupUsersService.updateGroupUsers(
+      args,
+      req.user,
+    );
     return this.responseService.success(
       true,
       this.messageService.get('merchant.general.success'),
@@ -112,10 +111,12 @@ export class GroupUsersController {
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listGroupUsers(
+    @Req() req: any,
     @Query() listGroupUserDTO: ListGroupUserDTO,
   ): Promise<RSuccessMessage> {
     const listGroupUsers = await this.groupUsersService.listGroupUsers(
       listGroupUserDTO,
+      req.user,
     );
     return this.responseService.success(
       true,
@@ -133,15 +134,10 @@ export class GroupUsersController {
     @Req() req: any,
     @Param('user_id') user_id: string,
   ): Promise<RSuccessMessage> {
-    let detailGroupUser = null;
-    if (req.user.user_type == 'admin') {
-      detailGroupUser = await this.groupUsersService.detailGroupUser(user_id);
-    } else {
-      detailGroupUser = await this.groupUsersService.detailGroupUser(
-        user_id,
-        req.user.group_id,
-      );
-    }
+    const detailGroupUser = await this.groupUsersService.detailGroupUser(
+      user_id,
+      req.user,
+    );
     return this.responseService.success(
       true,
       this.messageService.get('merchant.general.success'),
@@ -162,6 +158,7 @@ export class GroupUsersController {
     const result = await this.groupUsersService.updatePhoneGroupUsers(
       groupUserId,
       args,
+      req.user,
     );
     return this.responseService.success(
       true,
@@ -183,6 +180,7 @@ export class GroupUsersController {
     const result = await this.groupUsersService.updateEmailGroupUsers(
       groupUserId,
       args,
+      req.user,
     );
     return this.responseService.success(
       true,
@@ -201,6 +199,7 @@ export class GroupUsersController {
   ): Promise<any> {
     const result = await this.groupUsersService.updatePasswordGroupUsers(
       groupUserId,
+      req.user,
     );
     return this.responseService.success(
       true,

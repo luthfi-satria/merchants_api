@@ -18,7 +18,14 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
+import {
+  Brackets,
+  FindOperator,
+  Not,
+  Repository,
+  SelectQueryBuilder,
+  UpdateResult,
+} from 'typeorm';
 import { MerchantGroupUsersValidation } from './validation/groups_users.validation';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
@@ -39,6 +46,7 @@ import { UserType } from 'src/auth/guard/interface/user.interface';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { UpdatePhoneGroupUsersValidation } from './validation/update_phone_group_users.validation';
 import { UpdateEmailGroupUsersValidation } from './validation/update_email_group_users.validation';
+import { User } from 'src/utils/general.decorator';
 
 @Injectable()
 export class GroupUsersService {
@@ -202,11 +210,9 @@ export class GroupUsersService {
 
   async updateGroupUsers(
     args: Partial<MerchantGroupUsersValidation>,
+    user: any,
   ): Promise<MerchantUsersDocument> {
-    const getUsersExist = await this.getAndValidateGroupUserById(
-      args.id,
-      args.group_id,
-    );
+    const getUsersExist = await this.getAndValidateGroupUserById(args.id, user);
     Object.assign(getUsersExist, args);
 
     if (args.phone) {
@@ -259,11 +265,7 @@ export class GroupUsersService {
   }
 
   async deleteGroupUsers(user_id: string, user: any): Promise<UpdateResult> {
-    if (user.user_type == UserType.Admin) {
-      await this.getAndValidateGroupUserById(user_id);
-    } else {
-      await this.getAndValidateGroupUserById(user_id, user.group_id);
-    }
+    await this.getAndValidateGroupUserById(user_id, user);
     try {
       return await this.merchantUsersRepository.softDelete({
         id: user_id,
@@ -284,17 +286,29 @@ export class GroupUsersService {
     }
   }
 
-  async listGroupUsers(args: Partial<ListGroupUserDTO>): Promise<ListResponse> {
+  async listGroupUsers(
+    args: Partial<ListGroupUserDTO>,
+    user: any,
+  ): Promise<ListResponse> {
     const search = args.search || '';
     const currentPage = Number(args.page) || 1;
     const perPage = Number(args.limit) || 10;
 
     const query = this.merchantUsersRepository
       .createQueryBuilder('mu')
-      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in merchant
       .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
       .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
-      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+      .leftJoinAndSelect(
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
+      )
+      // get data group in stores (many-to-many)
+      .leftJoinAndSelect('mu.stores', 'user_stores')
       .where(
         new Brackets((qb) => {
           qb.where('mu.name ilike :mname', {
@@ -309,6 +323,9 @@ export class GroupUsersService {
         }),
       )
       .andWhere('mu.group_id is not null');
+    if (user && user.level == 'group') {
+      query.andWhere('mu.group_id = :group_id', { group_id: user.group_id });
+    }
 
     if (args.group_id) {
       query.andWhere('mu.group_id = :group_id', { group_id: args.group_id });
@@ -377,7 +394,7 @@ export class GroupUsersService {
 
   async detailGroupUser(
     user_id: string,
-    group_id?: string,
+    user: any,
   ): Promise<MerchantUsersDocument> {
     let user_group = null;
     try {
@@ -389,8 +406,8 @@ export class GroupUsersService {
         .leftJoinAndSelect('mu.group', 'merchant_group')
         .where('mu.id = :user_id', { user_id })
         .andWhere('mu.group_id is not null');
-      if (group_id) {
-        query.andWhere('mu.group_id = :group_id', { group_id });
+      if (user && user.level == 'group') {
+        query.andWhere('mu.group_id = :group_id', { group_id: user.group_id });
       }
 
       user_group = await query.getOne();
@@ -429,19 +446,20 @@ export class GroupUsersService {
   async updatePhoneGroupUsers(
     userId: string,
     args: UpdatePhoneGroupUsersValidation,
+    user: any,
   ) {
-    const user = await this.getAndValidateGroupUserById(userId);
+    const merchantUser = await this.getAndValidateGroupUserById(userId, user);
 
     await this.getAndValidateGroupUserByPhone(args.phone, userId);
-    user.phone = args.phone;
+    merchantUser.phone = args.phone;
 
     try {
-      const result = await this.merchantUsersRepository.save(user);
+      const result = await this.merchantUsersRepository.save(merchantUser);
       formatingAllOutputTime(result);
       removeAllFieldPassword(result);
 
       this.notificationService.sendSms(
-        user.phone,
+        merchantUser.phone,
         'Nomor Anda telah digunakan sebagai login baru',
       );
 
@@ -465,19 +483,20 @@ export class GroupUsersService {
   async updateEmailGroupUsers(
     userId: string,
     args: UpdateEmailGroupUsersValidation,
+    user: any,
   ) {
-    const user = await this.getAndValidateGroupUserById(userId);
+    const merchantUser = await this.getAndValidateGroupUserById(userId, user);
 
     await this.getAndValidateGroupUserByEmail(args.email, userId);
-    user.email = args.email;
+    merchantUser.email = args.email;
 
     try {
-      const result = await this.merchantUsersRepository.save(user);
+      const result = await this.merchantUsersRepository.save(merchantUser);
       formatingAllOutputTime(result);
       removeAllFieldPassword(result);
 
       this.notificationService.sendEmail(
-        user.email,
+        merchantUser.email,
         'Email Anda telah aktif',
         'Alamat email Anda telah digunakan sebagai login baru',
       );
@@ -499,20 +518,20 @@ export class GroupUsersService {
     }
   }
 
-  async updatePasswordGroupUsers(userId: string) {
-    const user = await this.getAndValidateGroupUserById(userId);
+  async updatePasswordGroupUsers(userId: string, user: any) {
+    const merchantUser = await this.getAndValidateGroupUserById(userId, user);
 
     const token = randomUUID();
-    user.token_reset_password = token;
+    merchantUser.token_reset_password = token;
 
     try {
-      const result = await this.merchantUsersRepository.save(user);
+      const result = await this.merchantUsersRepository.save(merchantUser);
       formatingAllOutputTime(result);
       removeAllFieldPassword(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(user.phone, urlVerification);
+      this.notificationService.sendSms(merchantUser.phone, urlVerification);
 
       return result;
     } catch (err) {
@@ -599,23 +618,28 @@ export class GroupUsersService {
 
   async getAndValidateGroupUserById(
     id: string,
-    group_id?: string,
+    user: any,
   ): Promise<MerchantUsersDocument> {
-    const where: { id: string; group_id?: string } = { id };
-    if (group_id) {
-      where.group_id = group_id;
-    }
-
     const query = this.merchantUsersRepository
       .createQueryBuilder('mu')
-      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in merchant
       .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
       .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
-      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+      .leftJoinAndSelect(
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
+      )
+      // get data group in stores (many-to-many)
+      .leftJoinAndSelect('mu.stores', 'user_stores')
       .where('mu.id = :id', { id })
       .andWhere('mu.group_id is not null');
-    if (group_id) {
-      query.andWhere('mu.group_id = :group_id', { group_id });
+    if (user && user.level == 'group') {
+      query.andWhere('mu.group_id = :group_id', { group_id: user.group_id });
+      query.andWhere("mu.status != 'WAITING_FOR_APPROVAL'");
     }
     const user_group = await query.getOne();
     if (!user_group) {
