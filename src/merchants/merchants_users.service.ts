@@ -336,15 +336,12 @@ export class MerchantUsersService {
           queryBracket.where('mu.group_id = :group_id', {
             group_id: user.group_id,
           });
-          queryBracket.orWhere('merchant_merchant.group_id =  = :group_id', {
+          queryBracket.orWhere('merchant_merchant.group_id = :group_id', {
             group_id: user.group_id,
           });
-          queryBracket.orWhere(
-            'merchant_store_merchant.group_id =  = :group_id',
-            {
-              group_id: user.group_id,
-            },
-          );
+          queryBracket.orWhere('merchant_store_merchant.group_id = :group_id', {
+            group_id: user.group_id,
+          });
         }),
       );
     }
@@ -637,15 +634,12 @@ export class MerchantUsersService {
           queryBracket.where('mu.group_id = :group_id', {
             group_id: user.group_id,
           });
-          queryBracket.orWhere('merchant_merchant.group_id =  = :group_id', {
+          queryBracket.orWhere('merchant_merchant.group_id = :group_id', {
             group_id: user.group_id,
           });
-          queryBracket.orWhere(
-            'merchant_store_merchant.group_id =  = :group_id',
-            {
-              group_id: user.group_id,
-            },
-          );
+          queryBracket.orWhere('merchant_store_merchant.group_id = :group_id', {
+            group_id: user.group_id,
+          });
         }),
       );
     }
@@ -701,15 +695,12 @@ export class MerchantUsersService {
           queryBracket.where('mu.group_id = :group_id', {
             group_id: user.group_id,
           });
-          queryBracket.orWhere('merchant_merchant.group_id =  = :group_id', {
+          queryBracket.orWhere('merchant_merchant.group_id = :group_id', {
             group_id: user.group_id,
           });
-          queryBracket.orWhere(
-            'merchant_store_merchant.group_id =  = :group_id',
-            {
-              group_id: user.group_id,
-            },
-          );
+          queryBracket.orWhere('merchant_store_merchant.group_id = :group_id', {
+            group_id: user.group_id,
+          });
         }),
       );
     } else if (user && user.level == 'store') {
