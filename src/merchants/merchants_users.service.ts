@@ -301,7 +301,7 @@ export class MerchantUsersService {
         'merchant_store_merchant.group',
         'merchant_store_merchant_group',
       )
-      // get data group in stores
+      // get data group in stores (many-to-many)
       .leftJoinAndSelect('mu.stores', 'user_stores')
       .where('mu.merchant_id is not null')
       .andWhere(
@@ -595,6 +595,8 @@ export class MerchantUsersService {
         'merchant_store_merchant.group',
         'merchant_store_merchant_group',
       )
+      // get data group in stores (many-to-many)
+      .leftJoinAndSelect('mu.stores', 'user_stores')
       .where('mu.id = :user_id', { user_id })
       .andWhere('mu.merchant_id is not null');
 
