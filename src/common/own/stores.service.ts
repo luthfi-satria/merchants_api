@@ -26,8 +26,8 @@ export class CommonStoresService {
 
   async getAndValidateStoreByStoreIds(
     storeIds: string[],
-    merchantId: string,
     user?: any,
+    merchantId?: string,
   ): Promise<StoreDocument[]> {
     const query = this.storeRepository
       .createQueryBuilder('merchant_store')
@@ -36,10 +36,12 @@ export class CommonStoresService {
         'merchant_store_merchant.group',
         'merchant_store_merchant_group',
       )
-      .where('merchant_store.id IN (:...ids)', { ids: storeIds })
-      .andWhere('merchant_store.merchant_id = :merchant_id', {
+      .where('merchant_store.id IN (:...ids)', { ids: storeIds });
+    if (merchantId) {
+      query.andWhere('merchant_store.merchant_id = :merchant_id', {
         merchant_id: merchantId,
       });
+    }
 
     if (user && user.level == 'merchant') {
       query.andWhere('merchant_store.merchant_id = :merchant_id', {

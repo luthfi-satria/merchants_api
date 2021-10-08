@@ -75,8 +75,8 @@ export class MerchantUsersService {
     if (args.store_ids) {
       stores = await this.commonStoresService.getAndValidateStoreByStoreIds(
         args.store_ids,
-        args.merchant_id,
         user,
+        args.merchant_id,
       );
     }
     await this.getAndValidateMerchantUserByEmail(args.email);
@@ -140,8 +140,8 @@ export class MerchantUsersService {
       usersExist.stores =
         await this.commonStoresService.getAndValidateStoreByStoreIds(
           args.store_ids,
-          usersExist.merchant_id,
           user,
+          usersExist.merchant_id,
         );
     }
 
