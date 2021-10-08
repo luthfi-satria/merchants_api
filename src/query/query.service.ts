@@ -315,7 +315,7 @@ export class QueryService {
         'Query List Stores',
       );
 
-      const qlistStore = await this.storeRepository
+      const query1 = this.storeRepository
         .createQueryBuilder('merchant_store')
         .addSelect(
           '(6371 * ACOS(COS(RADIANS(' +
@@ -328,22 +328,22 @@ export class QueryService {
           'distance_in_km',
         )
         // --- JOIN TABLES ---
-        .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
-        .leftJoinAndSelect(
+        .innerJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
+        .innerJoinAndSelect(
           'merchant_store.operational_hours',
           'operational_hours',
           'operational_hours.merchant_store_id = merchant_store.id',
         )
-        .leftJoinAndSelect(
+        .innerJoinAndSelect(
           'operational_hours.shifts',
           'operational_shifts',
           'operational_shifts.store_operational_id = operational_hours.id',
         )
-        .leftJoinAndSelect(
+        .innerJoinAndSelect(
           'merchant_store.store_categories',
           'merchant_store_categories',
         )
-        .leftJoinAndSelect(
+        .innerJoinAndSelect(
           'merchant_store_categories.languages',
           'merchant_store_categories_languages',
         )
@@ -399,24 +399,23 @@ export class QueryService {
         )
         .orderBy('distance_in_km', 'ASC')
         .skip((currentPage - 1) * perPage)
-        .take(perPage)
-        .getManyAndCount()
-        .catch((e) => {
-          Logger.error(e.message, '', 'QueryListStore');
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: '',
-                property: '',
-                constraint: [
-                  this.messageService.get('merchant.liststore.not_found'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        });
+        .take(perPage);
+      const qlistStore = await query1.getManyAndCount().catch((e) => {
+        Logger.error(e.message, '', 'QueryListStore');
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: '',
+              property: '',
+              constraint: [
+                this.messageService.get('merchant.liststore.not_found'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
 
       const [storeItems, totalItems] = qlistStore;
 
