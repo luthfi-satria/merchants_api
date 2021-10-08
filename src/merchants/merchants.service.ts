@@ -37,6 +37,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantUsersService } from './merchants_users.service';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
+import { RoleService } from 'src/common/services/admins/role.service';
 @Injectable()
 export class MerchantsService {
   constructor(
@@ -52,6 +53,7 @@ export class MerchantsService {
     private readonly commonService: CommonService,
     private readonly groupsService: GroupsService,
     private readonly lobService: LobService,
+    private readonly roleService: RoleService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -239,6 +241,7 @@ export class MerchantsService {
         throw new Error('failed insert to merchant_group');
       }
 
+      const roles = await this.roleService.getRoleByPlatforms(['HERMES_BRAND']);
       const createMerchantUser: Partial<MerchantUsersDocument> = {
         merchant_id: create.id,
         name: createMerchant.pic_name,
@@ -246,6 +249,7 @@ export class MerchantsService {
         email: createMerchant.pic_email,
         password: createMerchant.pic_password,
         nip: createMerchant.pic_nip,
+        role_id: roles[0].id,
       };
 
       switch (merchantDTO.status) {
