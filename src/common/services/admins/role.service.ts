@@ -89,4 +89,45 @@ export class RoleService {
       throw new BadRequestException(error.response.data);
     }
   }
+
+  async getRoleByPlatforms(platforms: string[]): Promise<RoleDTO[]> {
+    if (!platforms) {
+      return null;
+    }
+    const headerRequest = {
+      'Content-Type': 'application/json',
+    };
+    try {
+      const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/roles/batchs-by-platforms`;
+      const post_request = this.httpService
+        .post(url, platforms, { headers: headerRequest })
+        .pipe(
+          map((axiosResponse: AxiosResponse) => {
+            return axiosResponse.data;
+          }),
+          catchError((err) => {
+            this.logger.error(err);
+            throw err;
+          }),
+        );
+      const response_role: RoleResponseDTO = await lastValueFrom(post_request);
+      if (!response_role) {
+        const error_message: RMessage = {
+          value: platforms.join(),
+          property: 'profiles',
+          constraint: [this.messageService.get('common.role.not_found')],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            error_message,
+            'Bad Request',
+          ),
+        );
+      }
+      return response_role.data;
+    } catch (error) {
+      throw new BadRequestException(error.response.data);
+    }
+  }
 }
