@@ -43,7 +43,11 @@ export class CommonStoresService {
       });
     }
 
-    if (user && user.level == 'merchant') {
+    if (user && user.level == 'store') {
+      query.andWhere('merchant_store.id = :store_id', {
+        store_id: user.store_id,
+      });
+    } else if (user && user.level == 'merchant') {
       query.andWhere('merchant_store.merchant_id = :merchant_id', {
         merchant_id: user.merchant_id,
       });
@@ -51,20 +55,6 @@ export class CommonStoresService {
       query.andWhere('merchant_store_merchant.group_id = :group_id', {
         group_id: user.group_id,
       });
-    } else if (user && user.level == 'store') {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: user.level,
-            property: 'user_level',
-            constraint: [
-              this.messageService.get('merchant_user.general.forbidden'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
     }
 
     const stores = await query.getMany();
