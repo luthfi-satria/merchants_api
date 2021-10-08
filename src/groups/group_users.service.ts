@@ -12,20 +12,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
-import { ListResponse, RMessage } from 'src/response/response.interface';
+import {
+  ListResponse,
+  RMessage,
+  RSuccessMessage,
+} from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import {
-  Brackets,
-  FindOperator,
-  Not,
-  Repository,
-  SelectQueryBuilder,
-  UpdateResult,
-} from 'typeorm';
+import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
 import { MerchantGroupUsersValidation } from './validation/groups_users.validation';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
@@ -46,7 +43,6 @@ import { UserType } from 'src/auth/guard/interface/user.interface';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { UpdatePhoneGroupUsersValidation } from './validation/update_phone_group_users.validation';
 import { UpdateEmailGroupUsersValidation } from './validation/update_email_group_users.validation';
-import { User } from 'src/utils/general.decorator';
 
 @Injectable()
 export class GroupUsersService {
@@ -159,7 +155,7 @@ export class GroupUsersService {
 
   async createGroupUsers(
     args: MerchantGroupUsersValidation,
-  ): Promise<MerchantUsersDocument> {
+  ): Promise<Record<string, any>> {
     const group = await this.groupService.getAndValidateGroupByGroupId(
       args.group_id,
     );
@@ -182,14 +178,24 @@ export class GroupUsersService {
     if (args.status && args.status == MerchantUsersStatus.Rejected)
       createGroupUser.rejected_at = new Date();
 
+    const token = randomUUID();
+    createGroupUser.token_reset_password = token;
+
     try {
-      const resultCreate = await this.merchantUsersRepository.save(
-        createGroupUser,
-      );
+      const resultCreate: Record<string, any> =
+        await this.merchantUsersRepository.save(createGroupUser);
 
       removeAllFieldPassword(resultCreate);
       formatingAllOutputTime(resultCreate);
       resultCreate.role_name = role.name;
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${token}`;
+      if (process.env.NODE_ENV == 'test') {
+        resultCreate.token_reset_password = token;
+        resultCreate.url = urlVerification;
+      }
+
+      this.notificationService.sendSms(args.phone, urlVerification);
 
       return resultCreate;
     } catch (err) {
@@ -686,6 +692,121 @@ export class GroupUsersService {
       ),
     );
   }
+
+  async resendEmailUser(user_id: string): Promise<RSuccessMessage> {
+    const userAccount = await this.merchantUsersRepository.findOne(user_id);
+    if (!userAccount) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    userAccount.email_verified_at = null;
+    const token = randomUUID();
+    userAccount.token_reset_password = token;
+
+    try {
+      const result: Record<string, any> =
+        await this.merchantUsersRepository.save(userAccount);
+      removeAllFieldPassword(result);
+      formatingAllOutputTime(result);
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      if (process.env.NODE_ENV == 'test') {
+        result.token_reset_password = token;
+        result.url = urlVerification;
+      }
+      this.notificationService.sendEmail(
+        userAccount.email,
+        'Verifikasi Ulang Email',
+        urlVerification,
+      );
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async resendPhoneUser(user_id: string): Promise<RSuccessMessage> {
+    const userAccount = await this.merchantUsersRepository.findOne(user_id);
+    if (!userAccount) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    userAccount.phone_verified_at = null;
+    const token = randomUUID();
+    userAccount.token_reset_password = token;
+
+    try {
+      const result: Record<string, any> =
+        await this.merchantUsersRepository.save(userAccount);
+      removeAllFieldPassword(result);
+      formatingAllOutputTime(result);
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${token}`;
+      if (process.env.NODE_ENV == 'test') {
+        result.token_reset_password = token;
+        result.url = urlVerification;
+      }
+      this.notificationService.sendSms(userAccount.phone, urlVerification);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
   //------------------------------------------------------------------------------
 
   async getHttp(
