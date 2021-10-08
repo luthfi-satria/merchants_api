@@ -30,6 +30,7 @@ import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
 import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
+import { UserType } from 'src/auth/guard/user-type.decorator';
 
 @Controller('api/v1/merchants/stores')
 export class StoreUsersController {
@@ -246,5 +247,19 @@ export class StoreUsersController {
       this.messageService.get('merchant.general.success'),
       store_user,
     );
+  }
+
+  @Post('users/:uid/email/resend')
+  @UserType('admin', 'merchant')
+  @AuthJwtGuard()
+  async resendEmailUser(@Param('uid') user_id: string) {
+    return this.storeUsersService.resendEmailUser(user_id);
+  }
+
+  @Post('users/:uid/phone/resend')
+  @UserType('admin', 'merchant')
+  @AuthJwtGuard()
+  async resendPhoneUser(@Param('uid') user_id: string) {
+    return this.storeUsersService.resendPhoneUser(user_id);
   }
 }

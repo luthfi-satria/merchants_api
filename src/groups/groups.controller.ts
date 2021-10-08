@@ -39,6 +39,7 @@ import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { ListGroupDTO } from './validation/list-group.validation';
 import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
+import { NotificationService } from 'src/common/notification/notification.service';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -48,6 +49,7 @@ export class GroupsController {
     private readonly storage: CommonStorageService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   @Post('groups')
@@ -117,8 +119,10 @@ export class GroupsController {
         await this.groupsService.createMerchantGroupProfile(createGroupDTO);
       const result: Record<string, any> = { ...create_result };
       for (let i = 0; i < create_result.users.length; i++) {
-        const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${create_result.users[i].token_reset_password}`;
+        const url = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${create_result.users[i].token_reset_password}`;
         result.users[i].url_reset_password = url;
+
+        this.notificationService.sendSms(create_result.users[i].phone, url);
       }
       return this.responseService.success(
         true,

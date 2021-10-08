@@ -177,11 +177,14 @@ export class StoreUsersService {
     createMerchantUser.token_reset_password = token;
 
     try {
-      const result = await this.merchantUsersRepository.save(
-        createMerchantUser,
-      );
+      const result: Record<string, any> =
+        await this.merchantUsersRepository.save(createMerchantUser);
 
-      const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${token}`;
+
+      if (process.env.NODE_ENV == 'test') {
+        result.url = urlVerification;
+      }
 
       this.notificationService.sendSms(
         createMerchantUser.phone,
@@ -855,6 +858,121 @@ export class StoreUsersService {
       Logger.error(error);
     }
   }
+
+  async resendEmailUser(user_id: string): Promise<RSuccessMessage> {
+    const userAccount = await this.merchantUsersRepository.findOne(user_id);
+    if (!userAccount) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    userAccount.email_verified_at = null;
+    const token = randomUUID();
+    userAccount.token_reset_password = token;
+
+    try {
+      const result: Record<string, any> =
+        await this.merchantUsersRepository.save(userAccount);
+      removeAllFieldPassword(result);
+      formatingAllOutputTime(result);
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      if (process.env.NODE_ENV == 'test') {
+        result.token_reset_password = token;
+        result.url = urlVerification;
+      }
+      this.notificationService.sendEmail(
+        userAccount.email,
+        'Verifikasi Ulang Email',
+        urlVerification,
+      );
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async resendPhoneUser(user_id: string): Promise<RSuccessMessage> {
+    const userAccount = await this.merchantUsersRepository.findOne(user_id);
+    if (!userAccount) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    userAccount.phone_verified_at = null;
+    const token = randomUUID();
+    userAccount.token_reset_password = token;
+
+    try {
+      const result: Record<string, any> =
+        await this.merchantUsersRepository.save(userAccount);
+      removeAllFieldPassword(result);
+      formatingAllOutputTime(result);
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${token}`;
+      if (process.env.NODE_ENV == 'test') {
+        result.token_reset_password = token;
+        result.url = urlVerification;
+      }
+      this.notificationService.sendSms(userAccount.phone, urlVerification);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
   //------------------------------------------------------------------------------
 
   async getHttp(

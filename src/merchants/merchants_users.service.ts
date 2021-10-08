@@ -11,7 +11,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
-import { ListResponse, RMessage } from 'src/response/response.interface';
+import {
+  ListResponse,
+  RMessage,
+  RSuccessMessage,
+} from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
   formatingAllOutputTime,
@@ -62,7 +66,7 @@ export class MerchantUsersService {
   async createMerchantUsers(
     args: Partial<MerchantUsersValidation>,
     user: any,
-  ): Promise<Partial<MerchantUsersDocument> & MerchantUsersDocument> {
+  ): Promise<Record<string, any>> {
     const merchant = await this.merchantService.getAndValidateMerchantById(
       args.merchant_id,
     );
@@ -88,14 +92,26 @@ export class MerchantUsersService {
       merchant,
     };
     Object.assign(createMerchantUser, args);
+    createMerchantUser.password = passwordHash;
     createMerchantUser.stores = stores;
+    const token = randomUUID();
+    createMerchantUser.token_reset_password = token;
+
     try {
-      const createMerchant = await this.merchantUsersRepository.save(
-        createMerchantUser,
-      );
+      const createMerchant: Record<string, any> =
+        await this.merchantUsersRepository.save(createMerchantUser);
 
       formatingAllOutputTime(createMerchant);
       removeAllFieldPassword(createMerchant);
+
+      const url = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${token}`;
+
+      if (process.env.NODE_ENV == 'test') {
+        createMerchant.url = url;
+        createMerchant.token_reset_password = token;
+      }
+
+      this.notificationService.sendSms(createMerchant.phone, url);
 
       return createMerchant;
     } catch (err) {
@@ -514,11 +530,13 @@ export class MerchantUsersService {
     const result: Record<string, any> = await this.merchantUsersRepository.save(
       args,
     );
+    const url = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${result.token_reset_password}`;
 
     if (process.env.NODE_ENV == 'test') {
-      const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${result.token_reset_password}`;
-      result.url_reset_password = url;
+      result.url = url;
     }
+    this.notificationService.sendSms(args.phone, url);
+
     return result;
   }
 
@@ -659,6 +677,120 @@ export class MerchantUsersService {
       );
     }
     return merechant_user;
+  }
+
+  async resendEmailUser(user_id: string): Promise<RSuccessMessage> {
+    const userAccount = await this.merchantUsersRepository.findOne(user_id);
+    if (!userAccount) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    userAccount.email_verified_at = null;
+    const token = randomUUID();
+    userAccount.token_reset_password = token;
+
+    try {
+      const result: Record<string, any> =
+        await this.merchantUsersRepository.save(userAccount);
+      removeAllFieldPassword(result);
+      formatingAllOutputTime(result);
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      if (process.env.NODE_ENV == 'test') {
+        result.token_reset_password = token;
+        result.url = urlVerification;
+      }
+      this.notificationService.sendEmail(
+        userAccount.email,
+        'Verifikasi Ulang Email',
+        urlVerification,
+      );
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async resendPhoneUser(user_id: string): Promise<RSuccessMessage> {
+    const userAccount = await this.merchantUsersRepository.findOne(user_id);
+    if (!userAccount) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    userAccount.phone_verified_at = null;
+    const token = randomUUID();
+    userAccount.token_reset_password = token;
+
+    try {
+      const result: Record<string, any> =
+        await this.merchantUsersRepository.save(userAccount);
+      removeAllFieldPassword(result);
+      formatingAllOutputTime(result);
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${token}`;
+      if (process.env.NODE_ENV == 'test') {
+        result.token_reset_password = token;
+        result.url = urlVerification;
+      }
+      this.notificationService.sendSms(userAccount.phone, urlVerification);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   //------------------------------------------------------------------------------

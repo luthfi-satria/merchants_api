@@ -18,6 +18,7 @@ import {
   UpdateEmailDto,
   UpdatePhoneDto,
   VerifikasiUbahEmailDto,
+  VerifikasiUbahPhoneDto,
 } from './validation/profile.dto';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { randomUUID } from 'crypto';
@@ -26,6 +27,8 @@ import {
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { NotificationService } from 'src/common/notification/notification.service';
+import { HashService } from 'src/hash/hash.service';
+import { Hash } from 'src/hash/hash.decorator';
 
 @Injectable()
 export class ProfileService {
@@ -36,6 +39,7 @@ export class ProfileService {
     @Message() private readonly messageService: MessageService,
     private httpService: HttpService,
     private readonly notificationService: NotificationService,
+    @Hash() private readonly hashService: HashService,
   ) {}
 
   async findOneMerchantByEmail(email: string): Promise<MerchantUsersDocument> {
@@ -135,7 +139,7 @@ export class ProfileService {
       removeAllFieldPassword(result);
       formatingAllOutputTime(result);
 
-      const urlVerification = `${process.env.BASEURL_HERMES}/profile/change-email?t=${token}`;
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -237,6 +241,93 @@ export class ProfileService {
           value: '',
           property: err.column,
           constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  async verifikasiUbahTelepon(
+    args: Partial<VerifikasiUbahPhoneDto>,
+  ): Promise<any> {
+    const cekToken = await this.merchantRepository
+      .findOne({
+        token_reset_password: args.token,
+      })
+      .catch(() => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: args.token,
+              property: 'token',
+              constraint: [
+                this.messageService.get('merchant.general.dataNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+    if (!cekToken) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: args.token,
+            property: 'token',
+            constraint: [
+              this.messageService.get('merchant.general.dataNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    if (cekToken.token_reset_password == null) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: args.token,
+            property: 'token',
+            constraint: [
+              this.messageService.get('merchant.general.dataNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    const salt: string = await this.hashService.randomSalt();
+    const passwordHash = await this.hashService.hashPassword(
+      args.password,
+      salt,
+    );
+    cekToken.password = passwordHash;
+    cekToken.token_reset_password = null;
+    cekToken.phone_verified_at = new Date();
+
+    return this.merchantRepository
+      .save(cekToken)
+      .then(() => {
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.general.success'),
+        );
+      })
+      .catch((err2) => {
+        const errors: RMessage = {
+          value: '',
+          property: err2.column,
+          constraint: [err2.message],
         };
         throw new BadRequestException(
           this.responseService.error(

@@ -207,4 +207,18 @@ export class GroupUsersController {
       result,
     );
   }
+
+  @Post('users/:uid/email/resend')
+  @UserTypeAndLevel('admin.*', 'merchant.group')
+  @AuthJwtGuard()
+  async resendEmailUser(@Param('uid') user_id: string) {
+    return this.groupUsersService.resendEmailUser(user_id);
+  }
+
+  @Post('users/:uid/phone/resend')
+  @UserTypeAndLevel('admin.*', 'merchant.group')
+  @AuthJwtGuard()
+  async resendPhoneUser(@Param('uid') user_id: string) {
+    return this.groupUsersService.resendPhoneUser(user_id);
+  }
 }

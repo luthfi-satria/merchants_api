@@ -69,6 +69,14 @@ export class VerifikasiUbahEmailDto {
   token: string;
 }
 
+export class VerifikasiUbahPhoneDto {
+  @IsNotEmpty()
+  token: string;
+
+  @IsNotEmpty()
+  password: string;
+}
+
 export class ResponseMerchantDto {
   id: string;
 

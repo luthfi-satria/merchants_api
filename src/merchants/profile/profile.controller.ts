@@ -20,6 +20,7 @@ import {
   UpdateEmailDto,
   UpdatePhoneDto,
   VerifikasiUbahEmailDto,
+  VerifikasiUbahPhoneDto,
 } from './validation/profile.dto';
 import { RMessage } from 'src/response/response.interface';
 import { catchError, map } from 'rxjs';
@@ -93,9 +94,14 @@ export class ProfileController {
     return this.profileService.ubahEmail(data, req.user);
   }
 
-  @Post('verifications/verify')
+  @Post('verifications/email')
   async verifikasiUbahEmail(@Body() data: VerifikasiUbahEmailDto) {
     return this.profileService.verifikasiUbahEmail(data);
+  }
+
+  @Post('verifications/phone')
+  async phoneVerification(@Body() data: VerifikasiUbahPhoneDto) {
+    return this.profileService.verifikasiUbahTelepon(data);
   }
 
   @Post('profile/verify-email-validation')
