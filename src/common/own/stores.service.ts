@@ -42,30 +42,13 @@ export class CommonStoresService {
       });
 
     if (user && user.level == 'merchant') {
-      query.andWhere(
-        new Brackets((queryBracket) => {
-          queryBracket.where('mu.merchant_id = :merchant_id', {
-            merchant_id: user.merchant_id,
-          });
-          queryBracket.orWhere('merchant_store.merchant_id = :merchant_id', {
-            merchant_id: user.merchant_id,
-          });
-        }),
-      );
+      query.andWhere('merchant_store.merchant_id = :merchant_id', {
+        merchant_id: user.merchant_id,
+      });
     } else if (user && user.level == 'group') {
-      query.andWhere(
-        new Brackets((queryBracket) => {
-          queryBracket.where('mu.group_id = :group_id', {
-            group_id: user.group_id,
-          });
-          queryBracket.orWhere('merchant_merchant.group_id = :group_id', {
-            group_id: user.group_id,
-          });
-          queryBracket.orWhere('merchant_store_merchant.group_id = :group_id', {
-            group_id: user.group_id,
-          });
-        }),
-      );
+      query.andWhere('merchant_store_merchant.group_id = :group_id', {
+        group_id: user.group_id,
+      });
     } else if (user && user.level == 'store') {
       throw new BadRequestException(
         this.responseService.error(
