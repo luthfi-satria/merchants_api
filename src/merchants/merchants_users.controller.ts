@@ -221,4 +221,18 @@ export class MerchantUsersController {
       user,
     );
   }
+
+  @Post('users/:uid/email/resend')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @AuthJwtGuard()
+  async resendEmailUser(@Param('uid') user_id: string) {
+    return this.merchantUsersService.resendEmailUser(user_id);
+  }
+
+  @Post('users/:uid/phone/resend')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @AuthJwtGuard()
+  async resendPhoneUser(@Param('uid') user_id: string) {
+    return this.merchantUsersService.resendPhoneUser(user_id);
+  }
 }
