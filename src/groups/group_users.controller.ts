@@ -62,6 +62,7 @@ export class GroupUsersController {
 
   @Put('users/:user_id')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateGroupUsers(
@@ -74,10 +75,10 @@ export class GroupUsersController {
     args.group_id = groupId;
     args.id = groupUserId;
 
-    await this.groupUsersService.isCanModifDataValidation(
-      req.user,
-      args.group_id,
-    );
+    // await this.groupUsersService.isCanModifDataValidation(
+    //   req.user,
+    //   args.group_id,
+    // );
 
     const result = await this.groupUsersService.updateGroupUsers(
       args,
@@ -92,6 +93,7 @@ export class GroupUsersController {
 
   @Delete('users/:user_id')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async deleteGroupUsers(
@@ -147,6 +149,7 @@ export class GroupUsersController {
 
   @Put('users/:user_id/phone')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updatePhoneGroupUsers(
@@ -169,6 +172,7 @@ export class GroupUsersController {
 
   @Put('users/:user_id/email')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updateEmailGroupUsers(
@@ -191,6 +195,7 @@ export class GroupUsersController {
 
   @Put('users/:user_id/password')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updatePasswordGroupUsers(
