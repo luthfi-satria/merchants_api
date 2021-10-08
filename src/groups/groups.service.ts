@@ -27,6 +27,7 @@ import { GroupUsersService } from './group_users.service';
 import { GroupUser } from './interface/group_users.interface';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { ListGroupDTO } from './validation/list-group.validation';
+import { RoleService } from 'src/common/services/admins/role.service';
 
 @Injectable()
 export class GroupsService {
@@ -41,6 +42,7 @@ export class GroupsService {
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
     @Hash() private readonly hashService: HashService,
+    private readonly roleService: RoleService,
   ) {}
 
   async findMerchantById(id: string): Promise<GroupDocument> {
@@ -90,6 +92,8 @@ export class GroupsService {
         throw new Error('failed insert to merchant_group');
       }
 
+      const roles = await this.roleService.getRoleByPlatforms(['HERMES_CORPORATE']);
+
       const array_email = [];
       create.users = [];
       array_email.push(createGroupDTO.director_email);
@@ -100,6 +104,7 @@ export class GroupsService {
         email: createGroupDTO.director_email,
         password: createGroupDTO.director_password,
         nip: createGroupDTO.director_nip,
+        role_id: roles[0].id,
       };
       const director = await this.groupUserService.createUserPassword(
         create_director,
@@ -114,6 +119,7 @@ export class GroupsService {
           email: createGroupDTO.pic_operational_email,
           password: createGroupDTO.pic_operational_password,
           nip: createGroupDTO.pic_operational_nip,
+          role_id: roles[0].id,
         };
         const pic_operational =
           await this.groupUserService.createUserPassword(
@@ -130,6 +136,7 @@ export class GroupsService {
           email: createGroupDTO.pic_finance_email,
           password: createGroupDTO.pic_finance_password,
           nip: createGroupDTO.pic_finance_nip,
+          role_id: roles[0].id,
         };
         const pic_finance =
           await this.groupUserService.createUserPassword(create_pic_finance);

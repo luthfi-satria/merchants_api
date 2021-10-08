@@ -12,4 +12,6 @@ export interface GroupUser {
   token_reset_password: string;
 
   nip: string;
+
+  role_id: string;
 }
