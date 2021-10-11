@@ -328,22 +328,22 @@ export class QueryService {
           'distance_in_km',
         )
         // --- JOIN TABLES ---
-        .innerJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
-        .innerJoinAndSelect(
+        .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
+        .leftJoinAndSelect(
           'merchant_store.operational_hours',
           'operational_hours',
           'operational_hours.merchant_store_id = merchant_store.id',
         )
-        .innerJoinAndSelect(
+        .leftJoinAndSelect(
           'operational_hours.shifts',
           'operational_shifts',
           'operational_shifts.store_operational_id = operational_hours.id',
         )
-        .innerJoinAndSelect(
+        .leftJoinAndSelect(
           'merchant_store.store_categories',
           'merchant_store_categories',
         )
-        .innerJoinAndSelect(
+        .leftJoinAndSelect(
           'merchant_store_categories.languages',
           'merchant_store_categories_languages',
         )
