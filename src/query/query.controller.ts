@@ -15,7 +15,10 @@ import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { StoresService } from 'src/stores/stores.service';
 import { QueryService } from './query.service';
-import { QueryListStoreDto, QueryStoreDetailDto } from './validation/query-public.dto';
+import {
+  QueryListStoreDto,
+  QueryStoreDetailDto,
+} from './validation/query-public.dto';
 
 @Controller('api/v1/merchants')
 export class QueryController {
