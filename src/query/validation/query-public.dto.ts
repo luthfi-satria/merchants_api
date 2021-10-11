@@ -9,10 +9,7 @@ import {
   IsUUID,
 } from 'class-validator';
 
-export class QueryListStoreDto {
-  search: string;
-  lang: string;
-
+export class LocationDto {
   @IsLongitude()
   @IsNotEmpty()
   location_longitude: string;
@@ -20,6 +17,15 @@ export class QueryListStoreDto {
   @IsLatitude()
   @IsNotEmpty()
   location_latitude: string;
+}
+
+export class QueryStoreDetailDto extends LocationDto {
+  lang: string;
+}
+
+export class QueryListStoreDto extends LocationDto {
+  search: string;
+  lang: string;
 
   @IsNumber()
   @IsOptional()
