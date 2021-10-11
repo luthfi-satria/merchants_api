@@ -381,6 +381,7 @@ export class QueryService {
               qb.where(
                 `operational_hours.day_of_week = :weekOfDay
                   AND merchant_store.is_store_open = :is_open
+                  AND operational_hours.merchant_store_id is NOTNULL
                 ${
                   // jika params 'is24hrs' false / tidak di define query list store include store yg buka 24jam
                   is24hrs == false
