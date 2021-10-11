@@ -6,7 +6,6 @@ import { RoleService } from './services/admins/role.service';
 import { CommonStorageService } from './storage/storage.service';
 import { NotificationService } from './notification/notification.service';
 import { CommonStoresService } from './own/stores.service';
-import { StoresModule } from 'src/stores/stores.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 
