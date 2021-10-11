@@ -15,7 +15,10 @@ import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { StoresService } from 'src/stores/stores.service';
 import { QueryService } from './query.service';
-import { QueryListStoreDto } from './validation/query-public.dto';
+import {
+  QueryListStoreDto,
+  QueryStoreDetailDto,
+} from './validation/query-public.dto';
 
 @Controller('api/v1/merchants')
 export class QueryController {
@@ -47,6 +50,22 @@ export class QueryController {
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
     return await this.queryService.getListQueryStore(data);
+  }
+
+  @Get('query/stores/:id')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @ResponseStatusCode()
+  async getDetailedStore(
+    @Param('id') id: string,
+    @Query(new ValidationPipe({ transform: true })) query: QueryStoreDetailDto,
+  ) {
+    const result = await this.queryService.getDetailedQueryStore(id, query);
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.liststore.success'),
+      result,
+    );
   }
 
   @Get('query/stores/categories')

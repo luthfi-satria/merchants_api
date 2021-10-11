@@ -28,7 +28,10 @@ import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
-import { QueryListStoreDto } from './validation/query-public.dto';
+import {
+  QueryListStoreDto,
+  QueryStoreDetailDto,
+} from './validation/query-public.dto';
 import _ from 'lodash';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
@@ -267,6 +270,123 @@ export class QueryService {
       this.messageService.get('merchant.liststore.success'),
       list_result,
     );
+  }
+
+  async getDetailedQueryStore(
+    id: string,
+    query: QueryStoreDetailDto,
+  ): Promise<StoreDocument> {
+    try {
+      const { location_latitude, location_longitude, lang } = query;
+
+      const currTime = DateTimeUtils.DateTimeToUTC(new Date());
+      const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
+      const language = lang || 'id';
+
+      return await this.storeRepository
+        .createQueryBuilder('merchant_store')
+        .addSelect(
+          '(6371 * ACOS(COS(RADIANS(' +
+            location_latitude +
+            ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
+            location_longitude +
+            ')) + SIN(RADIANS(' +
+            location_latitude +
+            ')) * SIN(RADIANS(merchant_store.location_latitude))))',
+          'distance_in_km',
+        )
+        // --- JOIN TABLES ---
+        .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
+        .leftJoinAndSelect(
+          'merchant_store.operational_hours',
+          'operational_hours',
+          'operational_hours.merchant_store_id = merchant_store.id',
+        )
+        .leftJoinAndSelect(
+          'operational_hours.shifts',
+          'operational_shifts',
+          'operational_shifts.store_operational_id = operational_hours.id',
+        )
+        .leftJoinAndSelect(
+          'merchant_store.store_categories',
+          'merchant_store_categories',
+        )
+        .leftJoinAndSelect(
+          'merchant_store_categories.languages',
+          'merchant_store_categories_languages',
+        )
+        .where('merchant_store.id = :id', { id: id })
+        .getOne()
+        .then(async (row) => {
+          // Formatting store detail result,
+          const distance_in_km = getDistanceInKilometers(
+            parseFloat(location_latitude),
+            parseFloat(location_longitude),
+            row.location_latitude,
+            row.location_longitude,
+          );
+
+          // // Get relation of operational store & operational shift,
+          const opt_hours = await this.storeOperationalService
+            .getAllStoreScheduleByStoreId(row.id)
+            .then((res) => {
+              return res.map((e) => {
+                const dayOfWeekToWord = DateTimeUtils.convertToDayOfWeek(
+                  Number(e.day_of_week),
+                );
+                const x = new StoreOperationalHoursDocument({ ...e });
+                delete x.day_of_week;
+                return {
+                  ...x,
+                  day_of_week: dayOfWeekToWord,
+                };
+              });
+            });
+
+          // Parse Store Categories with localization category language name
+          const store_categories = row.store_categories.map((item) => {
+            const ctg_language = item.languages.find(
+              (e) => e.lang === language,
+            );
+
+            const x = new StoreCategoriesDocument({ ...item });
+            delete x.languages;
+            return { ...x, name: ctg_language.name };
+          });
+
+          // filter logic store operational status
+          const store_operational_status = this.getStoreOperationalStatus(
+            row.is_store_open,
+            currTime,
+            weekOfDay,
+            row.operational_hours,
+          );
+
+          // Get Merchant Profile
+          const merchant = await this.merchantRepository
+            .findOne(row.merchant_id)
+            .then((result) => {
+              delete result.pic_password;
+              delete result.approved_at;
+              delete result.created_at;
+              delete result.updated_at;
+              delete result.deleted_at;
+              return result;
+            });
+
+          return {
+            ...row,
+            operational_hours: opt_hours,
+            store_categories,
+            merchant,
+            store_operational_status,
+            distance_in_km,
+          };
+        });
+    } catch (e) {
+      Logger.error('ERROR', '', `Query Detailed Store`);
+      throw e;
+    }
   }
 
   async getListQueryStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
