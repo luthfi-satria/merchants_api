@@ -84,7 +84,7 @@ export class StoreDocument {
 
   @Column({
     type: 'boolean',
-    default: true,
+    default: false,
   })
   is_store_open: boolean;
 

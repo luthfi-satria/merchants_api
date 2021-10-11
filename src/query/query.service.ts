@@ -448,22 +448,22 @@ export class QueryService {
           'distance_in_km',
         )
         // --- JOIN TABLES ---
-        .innerJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
-        .innerJoinAndSelect(
+        .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
+        .leftJoinAndSelect(
           'merchant_store.operational_hours',
           'operational_hours',
           'operational_hours.merchant_store_id = merchant_store.id',
         )
-        .innerJoinAndSelect(
+        .leftJoinAndSelect(
           'operational_hours.shifts',
           'operational_shifts',
           'operational_shifts.store_operational_id = operational_hours.id',
         )
-        .innerJoinAndSelect(
+        .leftJoinAndSelect(
           'merchant_store.store_categories',
           'merchant_store_categories',
         )
-        .innerJoinAndSelect(
+        .leftJoinAndSelect(
           'merchant_store_categories.languages',
           'merchant_store_categories_languages',
         )
@@ -501,10 +501,11 @@ export class QueryService {
               qb.where(
                 `operational_hours.day_of_week = :weekOfDay
                   AND merchant_store.is_store_open = :is_open
+                  AND operational_hours.merchant_store_id IS NOT NULL
                 ${
-                  // jika params 'is24hrs' false / tidak di define query list store include store yg buka 24jam
+                  // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
                   is24hrs == false
-                    ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR merchant_store.is_open_24h = :all24h)`
+                    ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
                     : ''
                 }`,
                 {
