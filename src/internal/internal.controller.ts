@@ -13,7 +13,7 @@ export class InternalController {
   @Get('merchants/stores/:id')
   @ResponseStatusCode()
   async getStoresId(@Param('id') id: string): Promise<any> {
-    return await this.internalService.findStorebyId(id);
+    return this.internalService.findStorebyId(id);
   }
 
   @Post('merchants/stores/average-price')
@@ -22,7 +22,7 @@ export class InternalController {
     @Body()
     args: Record<string, any>[],
   ): Promise<any> {
-    return await this.internalService.updateStoreAveragePrice(args);
+    return this.internalService.updateStoreAveragePrice(args);
   }
 
   @Get('merchants/profile/:id/check-active-role')

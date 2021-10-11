@@ -94,6 +94,13 @@ export class ProfileController {
     return this.profileService.ubahEmail(data, req.user);
   }
 
+  @Post('profile/verify-email/resend')
+  @UserType('merchant')
+  @AuthJwtGuard()
+  async resendEmailUser(@Req() req: any) {
+    return this.profileService.resendEmailUser(req.user.id);
+  }
+
   @Post('verifications/email')
   async verifikasiUbahEmail(@Body() data: VerifikasiUbahEmailDto) {
     return this.profileService.verifikasiUbahEmail(data);
