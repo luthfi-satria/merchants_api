@@ -94,6 +94,7 @@ export class MerchantsController {
 
   @Put('merchants/:id')
   @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
