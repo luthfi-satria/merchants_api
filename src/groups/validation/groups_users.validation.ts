@@ -1,4 +1,5 @@
 import {
+  IsDefined,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -20,7 +21,7 @@ export class MerchantGroupUsersValidation {
   @IsNotEmpty()
   name: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   nip: string;
 
   @IsNotEmpty()
