@@ -23,7 +23,7 @@ import {
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime, getDistanceInKilometers } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, OrderByCondition, Repository } from 'typeorm';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
@@ -36,6 +36,7 @@ import _ from 'lodash';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { PriceRangeService } from 'src/price_range/price_range.service';
 
 @Injectable()
 export class QueryService {
@@ -46,7 +47,7 @@ export class QueryService {
     private readonly storeCategoryRepository: Repository<StoreCategoriesDocument>,
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
-    private readonly addonService: AddonsService,
+    private readonly priceRangeService: PriceRangeService,
     private readonly storeOperationalService: StoreOperationalService,
     private httpService: HttpService,
     private readonly merchantService: MerchantsService,
@@ -54,6 +55,41 @@ export class QueryService {
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
   ) {}
+
+  private async getFilterPricesRange(
+    price_filter_ids: string[],
+  ): Promise<[boolean, number[], number[]]> {
+    if (!price_filter_ids) return [false, [], []];
+
+    const [priceLow, priceHigh] = await this.priceRangeService
+      .findPricesByIds(price_filter_ids)
+      .then((item) => {
+        const low = item.map((i) => i.price_low);
+        const high = item.map((i) => i.price_high);
+
+        return [low, high];
+      });
+    return [true, priceLow, priceHigh];
+  }
+
+  private applySortFilter(order: string, sort: string): OrderByCondition {
+    // Default always sort by distance_in_km
+    let OrderQuery: OrderByCondition = {
+      distance_in_km: 'ASC',
+    };
+    if (!order || !sort) return OrderQuery;
+
+    switch (sort) {
+      case 'price':
+        Object.assign(OrderQuery, {
+          'merchant_store.average_price': order || 'ASC',
+        });
+        break;
+      default:
+    }
+    console.log(OrderQuery);
+    return OrderQuery;
+  }
 
   async listGroupStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
     let search = data.search || '';
@@ -398,7 +434,16 @@ export class QueryService {
       const perPage = Number(data.limit) || 10;
       const store_category_id: string = data.store_category_id || null;
 
-      // ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
+      // Apply dynamic Sort & order by
+      const orderBy = data.order || null;
+      const sort = data.sort || null;
+      const OrderFilter = this.applySortFilter(orderBy, sort);
+
+      // Apply Price Range query filter
+      const [is_filter_price, priceLow, priceHigh] =
+        await this.getFilterPricesRange(data.price_range_id);
+
+      // Apply Delivery Status filter
       let delivery_only;
       if (data.pickup) {
         delivery_only =
@@ -415,13 +460,21 @@ export class QueryService {
           enumDeliveryType.delivery_only,
         ];
       }
+
+      // Apply store is open 24-hours filter
       const is24hrs = data?.is_24hrs ? true : false;
       const open_24_hour = data.is_24hrs;
+
+      // Apply Include store closed filter
       const include_closed_stores = data.include_closed_stores || false;
 
       const currTime = DateTimeUtils.DateTimeToUTC(new Date());
       const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
       const lang = data.lang || 'id';
+
+      // Apply 'new_this_week' query filter
+      const newThisWeek = data.new_this_week || false;
+      const lastWeek = DateTimeUtils.getNewThisWeekDate(new Date());
 
       Logger.debug(
         `filter params:
@@ -431,6 +484,11 @@ export class QueryService {
         open_24_hour: ${open_24_hour}
         include_closed_stores: ${include_closed_stores}
         delivery_only: ${delivery_only}
+        is_filter_price: ${is_filter_price}
+        prices_list_low: ${priceLow}
+        prices_list_high: ${priceHigh}
+        new_This_week_date: ${lastWeek}
+        order Query: ${OrderFilter}
       `,
         'Query List Stores',
       );
@@ -479,7 +537,23 @@ export class QueryService {
               store_category_id
                 ? `AND merchant_store_categories.id = :stocat`
                 : ''
-            }`,
+            }
+            ${
+              is_filter_price
+                ? `AND merchant_store.average_price >= ANY(:priceLow) `
+                : ''
+            }
+            ${
+              is_filter_price && !priceHigh.includes(0)
+                ? `AND merchant_store.average_price <= ANY(:priceHigh)`
+                : ''
+            }
+            ${
+              newThisWeek
+                ? `AND merchant_store.approved_at >= :newThisWeekDate`
+                : ''
+            }
+            `,
           {
             active: enumStoreStatus.active,
             open_24_hour: open_24_hour,
@@ -488,6 +562,9 @@ export class QueryService {
             radius: radius,
             lat: lat,
             long: long,
+            priceLow: priceLow,
+            priceHigh: priceHigh,
+            newThisWeekDate: lastWeek,
           },
         )
         .andWhere(
@@ -518,7 +595,7 @@ export class QueryService {
             }
           }),
         )
-        .orderBy('distance_in_km', 'ASC')
+        .orderBy(OrderFilter)
         .skip((currentPage - 1) * perPage)
         .take(perPage);
       const qlistStore = await query1.getManyAndCount().catch((e) => {

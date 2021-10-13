@@ -58,6 +58,15 @@ export class PriceRangeService {
       });
   }
 
+  async findPricesByIds(
+    ids: string[],
+    sort?: 'ASC',
+  ): Promise<PriceRangeDocument[]> {
+    return this.priceRangeRepository.findByIds(ids, {
+      order: { sequence: sort },
+    });
+  }
+
   async updatePriceRange(
     args: Partial<PriceRangeValidation>,
   ): Promise<RSuccessMessage> {
