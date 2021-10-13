@@ -90,6 +90,47 @@ export class RoleService {
     }
   }
 
+  async getRoleAndValidatePlatformByRoleId(
+    role_id: string,
+    platform: string,
+  ): Promise<RoleDTO> {
+    try {
+      const roles = await this.getRole([role_id]);
+      if (!roles || roles.length == 0) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: role_id,
+              property: 'role_id',
+              constraint: [this.messageService.get('common.role.not_found')],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      if (roles[0].platform != platform) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: role_id,
+              property: 'role_id',
+              constraint: [
+                this.messageService.get('common.role.rolePlatformNotMatch'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      return roles[0];
+    } catch (error) {
+      this.logger.log(error, 'Catch Error');
+      throw error;
+    }
+  }
+
   async getRoleByPlatforms(platforms: string[]): Promise<RoleDTO[]> {
     if (!platforms) {
       return null;

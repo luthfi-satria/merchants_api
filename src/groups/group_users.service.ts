@@ -161,8 +161,12 @@ export class GroupUsersService {
     );
     await this.getAndValidateGroupUserByPhone(args.phone);
     await this.getAndValidateGroupUserByEmail(args.email);
-    const role = await this.roleService.getAndValodateRoleByRoleId(
+    // const role = await this.roleService.getAndValodateRoleByRoleId(
+    //   args.role_id,
+    // );
+    const role = await this.roleService.getRoleAndValidatePlatformByRoleId(
       args.role_id,
+      'HERMES_CORPORATE',
     );
 
     const salt: string = await this.hashService.randomSalt();
@@ -229,7 +233,11 @@ export class GroupUsersService {
     }
     let role = null;
     if (args.role_id) {
-      role = await this.roleService.getAndValodateRoleByRoleId(args.role_id);
+      // role = await this.roleService.getAndValodateRoleByRoleId(args.role_id);
+      role = await this.roleService.getRoleAndValidatePlatformByRoleId(
+        args.role_id,
+        'HERMES_CORPORATE',
+      );
     }
 
     if (typeof args.password != 'undefined' && args.password != '') {

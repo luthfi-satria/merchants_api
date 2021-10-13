@@ -16,14 +16,16 @@ import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { MerchantUsersService } from './merchants_users.service';
-import { MerchantUsersValidation } from './validation/merchants_users.validation';
+import {
+  CreateMerchantUsersValidation,
+  UpdateMerchantUsersValidation,
+} from './validation/merchants_users.validation';
 import { HttpService } from '@nestjs/axios';
 import { Message } from 'src/message/message.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
 import { RSuccessMessage } from 'src/response/response.interface';
-import { MerchantUsersUpdatePasswordValidation } from './validation/merchants_users_update_password.validation';
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
 import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
@@ -45,7 +47,7 @@ export class MerchantUsersController {
   async createMerchantUsers(
     @Req() req: any,
     @Body()
-    merchantUserValidation: MerchantUsersValidation,
+    merchantUserValidation: CreateMerchantUsersValidation,
   ): Promise<RSuccessMessage> {
     const result = await this.merchantUsersService.createMerchantUsers(
       merchantUserValidation,
@@ -66,13 +68,14 @@ export class MerchantUsersController {
   async updateMerchantUsers(
     @Req() req: any,
     @Body()
-    args: Partial<MerchantUsersValidation>,
+    args: UpdateMerchantUsersValidation,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
-    args.id = merchantUserId;
+    // args.id = merchantUserId;
     const resultUpdate = await this.merchantUsersService.updateMerchantUsers(
       args,
       req.user,
+      merchantUserId,
     );
 
     return this.responseService.success(
@@ -90,13 +93,14 @@ export class MerchantUsersController {
   async updateMerchantUsersPassword(
     @Req() req: any,
     @Body()
-    param: MerchantUsersUpdatePasswordValidation,
+    param: UpdateMerchantUsersValidation,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
-    param.id = merchantUserId;
+    // param.id = merchantUserId;
     const resultUpdate = await this.merchantUsersService.updateMerchantUsers(
       param,
       req.user,
+      merchantUserId,
     );
 
     return this.responseService.success(

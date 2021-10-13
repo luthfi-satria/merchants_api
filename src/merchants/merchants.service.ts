@@ -618,8 +618,9 @@ export class MerchantsService {
       '/api/v1/internal/menus-sales-channels';
     const scdata = {
       merchant_id: data.id,
-      name: 'EFOOD',
+      name: 'eFOOD',
       platform: 'ONLINE',
+      status: 'ACTIVE',
     };
     const headers: Record<string, any> = {
       'Content-Type': 'application/json',

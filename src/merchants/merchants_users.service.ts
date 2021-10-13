@@ -27,7 +27,10 @@ import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
-import { MerchantUsersValidation } from './validation/merchants_users.validation';
+import {
+  CreateMerchantUsersValidation,
+  UpdateMerchantUsersValidation,
+} from './validation/merchants_users.validation';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { randomUUID } from 'crypto';
 import { RoleService } from 'src/common/services/admins/role.service';
@@ -38,6 +41,7 @@ import { NotificationService } from 'src/common/notification/notification.servic
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
 import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
 import { CommonStoresService } from 'src/common/own/stores.service';
+import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
 
 @Injectable()
 export class MerchantUsersService {
@@ -64,7 +68,7 @@ export class MerchantUsersService {
   }
 
   async createMerchantUsers(
-    args: Partial<MerchantUsersValidation>,
+    args: CreateMerchantUsersValidation,
     user: any,
   ): Promise<Record<string, any>> {
     const merchant = await this.merchantService.getAndValidateMerchantById(
@@ -79,8 +83,13 @@ export class MerchantUsersService {
         args.merchant_id,
       );
     }
-    await this.getAndValidateMerchantUserByEmail(args.email);
     await this.getAndValidateMerchantUserByPhone(args.phone);
+    await this.getAndValidateMerchantUserByEmail(args.email);
+
+    const role = await this.roleService.getRoleAndValidatePlatformByRoleId(
+      args.role_id,
+      'HERMES_BRAND',
+    );
 
     const salt: string = await this.hashService.randomSalt();
     const passwordHash = await this.hashService.hashPassword(
@@ -88,7 +97,6 @@ export class MerchantUsersService {
       salt,
     );
     const createMerchantUser: Partial<MerchantUsersDocument> = {
-      password: passwordHash,
       merchant,
     };
     Object.assign(createMerchantUser, args);
@@ -101,6 +109,7 @@ export class MerchantUsersService {
       const createMerchant: Record<string, any> =
         await this.merchantUsersRepository.save(createMerchantUser);
 
+      createMerchant.role_name = role.name;
       formatingAllOutputTime(createMerchant);
       removeAllFieldPassword(createMerchant);
 
@@ -130,10 +139,11 @@ export class MerchantUsersService {
   }
 
   async updateMerchantUsers(
-    args: Partial<MerchantUsersValidation>,
+    args: UpdateMerchantUsersValidation,
     user: any,
+    id: string,
   ): Promise<MerchantUsersDocument> {
-    const usersExist = await this.getAndValidateMerchantUserById(args.id, user);
+    const usersExist = await this.getAndValidateMerchantUserById(id, user);
     Object.assign(usersExist, args);
 
     if (args.store_ids) {
@@ -145,12 +155,21 @@ export class MerchantUsersService {
         );
     }
 
-    if (args.email) {
-      await this.getAndValidateMerchantUserByEmail(args.email, args.id);
+    if (args.phone) {
+      await this.getAndValidateMerchantUserByPhone(args.phone, id);
     }
 
-    if (args.phone) {
-      await this.getAndValidateMerchantUserByPhone(args.phone, args.id);
+    if (args.email) {
+      await this.getAndValidateMerchantUserByEmail(args.email, id);
+    }
+
+    let role: RoleDTO;
+    if (args.role_id) {
+      usersExist.role_id = args.role_id;
+      role = await this.roleService.getRoleAndValidatePlatformByRoleId(
+        args.role_id,
+        'HERMES_BRAND',
+      );
     }
 
     if (args.password) {
@@ -161,10 +180,17 @@ export class MerchantUsersService {
       );
       usersExist.password = passwordHash;
     }
+    usersExist.name = args.name ? args.name : usersExist.name;
+    usersExist.nip = args.nip ? args.nip : usersExist.nip;
+    usersExist.status = args.status ? args.status : usersExist.status;
 
     try {
       const resultUpdate = await this.merchantUsersRepository.save(usersExist);
       removeAllFieldPassword(resultUpdate);
+      if (args.role_id) {
+        resultUpdate.role_name = role.name;
+      }
+
       return resultUpdate;
     } catch (err) {
       console.error('catch error: ', err);

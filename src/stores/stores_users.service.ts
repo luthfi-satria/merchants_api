@@ -41,6 +41,7 @@ import { randomUUID } from 'crypto';
 import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
 import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
 import { StoresService } from './stores.service';
+import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
 
 @Injectable()
 export class StoreUsersService {
@@ -64,24 +65,6 @@ export class StoreUsersService {
   async createStoreUsers(
     args: MerchantStoreUsersValidation,
   ): Promise<RSuccessMessage> {
-    const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/roles/${args.role_id}`;
-    const role = await this.commonService.getHttp(url);
-    if (!role || (role && !role.data)) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.role_id,
-            property: 'role_id',
-            constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
-
     const cekStoreId = await this.storeRepository
       .findOne({
         id: args.store_id,
@@ -121,21 +104,6 @@ export class StoreUsersService {
         where: { email: args.email },
       });
 
-    if (cekemail) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: args.email,
-            property: 'email',
-            constraint: [
-              this.messageService.get('merchant.general.emailExist'),
-            ],
-          },
-          'Bad Request',
-        ),
-      );
-    }
     const cekphone: MerchantUsersDocument =
       await this.merchantUsersRepository.findOne({
         where: { phone: args.phone },
@@ -156,6 +124,28 @@ export class StoreUsersService {
         ),
       );
     }
+
+    if (cekemail) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: args.email,
+            property: 'email',
+            constraint: [
+              this.messageService.get('merchant.general.emailExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    const role = await this.roleService.getRoleAndValidatePlatformByRoleId(
+      args.role_id,
+      'HERMES_STORE',
+    );
+
     const salt: string = await this.hashService.randomSalt();
     const passwordHash = await this.hashService.hashPassword(
       args.password,
@@ -194,6 +184,7 @@ export class StoreUsersService {
       dbOutputTime(result);
       dbOutputTime(result.store);
       delete result.password;
+      result.role_name = role.name;
 
       return this.responseService.success(
         true,
@@ -341,25 +332,6 @@ export class StoreUsersService {
     args: UpdateMerchantStoreUsersValidation,
     user?: any,
   ): Promise<MerchantUsersDocument> {
-    if (args.role_id) {
-      const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/roles/${args.role_id}`;
-      const role = await this.commonService.getHttp(url);
-      if (!role || (role && !role.data)) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.role_id,
-              property: 'role_id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-    }
     const gUsersExist = await this.getAndValidateStoreUserById(args.id, user);
     if (gUsersExist.store_id != args.store_id) {
       gUsersExist.store = await this.storeService.getAndValidateStoreByStoreId(
@@ -371,6 +343,14 @@ export class StoreUsersService {
     }
     if (args.email) {
       await this.getAndValidateStoreUserByEmail(args.email, args.id);
+    }
+
+    let role: RoleDTO;
+    if (args.role_id) {
+      role = await this.roleService.getRoleAndValidatePlatformByRoleId(
+        args.role_id,
+        'HERMES_STORE',
+      );
     }
     Object.assign(gUsersExist, args);
     if (args.password) {
@@ -387,6 +367,7 @@ export class StoreUsersService {
       .then(async (result) => {
         formatingAllOutputTime(result);
         removeAllFieldPassword(result);
+        result.role_name = role.name;
 
         return result;
       })
