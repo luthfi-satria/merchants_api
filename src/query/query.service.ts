@@ -8,7 +8,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
-import { AddonsService } from 'src/addons/addons.service';
 import {
   enumDeliveryType,
   enumStoreStatus,
