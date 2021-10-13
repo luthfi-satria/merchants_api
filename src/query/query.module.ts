@@ -19,6 +19,7 @@ import { LobService } from 'src/lob/lob.service';
 import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantUsersService } from 'src/merchants/merchants_users.service';
+import { PriceRangeModule } from 'src/price_range/price_range.module';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoresService } from 'src/stores/stores.service';
 import { QueryController } from './query.controller';
@@ -41,6 +42,7 @@ import { QueryService } from './query.service';
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
     }),
+    PriceRangeModule,
     HttpModule,
   ],
   controllers: [QueryController],
