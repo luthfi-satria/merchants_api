@@ -106,4 +106,8 @@ export class DateTimeUtils {
   static getDiffFromUTCOffset(gmt_offset: number): number {
     return gmt_offset >= 0 ? 0 - gmt_offset : gmt_offset * -1;
   }
+
+  static getNewThisWeekDate(currentDate: Date) {
+    return moment(currentDate).subtract(1, 'week').startOf('day');
+  }
 }

@@ -70,7 +70,7 @@ export class QueryListStoreDto extends LocationDto {
   order: string;
 
   @IsBoolean()
-  @IsOptional()s
+  @IsOptional()
   @Transform(({ value }) => JSON.parse(value))
   new_this_week: boolean;
 }

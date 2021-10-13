@@ -22,7 +22,6 @@ import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 import { PriceRangeModule } from 'src/price_range/price_range.module';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoresService } from 'src/stores/stores.service';
-import { QueryUtilService } from './query-utils.service';
 import { QueryController } from './query.controller';
 import { QueryService } from './query.service';
 
@@ -49,7 +48,6 @@ import { QueryService } from './query.service';
   controllers: [QueryController],
   providers: [
     QueryService,
-    QueryUtilService,
     StoresService,
     StoreOperationalService,
     MerchantsService,

@@ -74,7 +74,7 @@ export class QueryService {
 
   private applySortFilter(order: string, sort: string): OrderByCondition {
     // Default always sort by distance_in_km
-    let OrderQuery: OrderByCondition = {
+    const OrderQuery: OrderByCondition = {
       distance_in_km: 'ASC',
     };
     if (!order || !sort) return OrderQuery;
@@ -87,7 +87,6 @@ export class QueryService {
         break;
       default:
     }
-    console.log(OrderQuery);
     return OrderQuery;
   }
 
