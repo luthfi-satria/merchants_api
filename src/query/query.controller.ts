@@ -52,7 +52,7 @@ export class QueryController {
     return await this.queryService.getListQueryStore(data);
   }
 
-  @Get('query/stores/:id')
+  @Get('query/stores/detail/:id')
   @UseInterceptors(ClassSerializerInterceptor)
   @ResponseStatusCode()
   async getDetailedStore(
