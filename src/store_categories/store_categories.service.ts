@@ -47,6 +47,9 @@ export class StoreCategoriesService {
       console.error(e);
       throw new InternalServerErrorException(e.message);
     }
+    if (data.sequence != null && typeof data.sequence != 'undefined') {
+      createStocat.sequence = data.sequence;
+    }
     if (typeof data.active != 'undefined') {
       if (data.active == 'true') createStocat.active = true;
       if (data.active == 'false') createStocat.active = false;
@@ -205,6 +208,9 @@ export class StoreCategoriesService {
     if (typeof data.active != 'undefined') {
       if (data.active == 'true') stoCatExist.active = true;
       if (data.active == 'false') stoCatExist.active = false;
+    }
+    if (data.sequence != null && typeof data.sequence != 'undefined') {
+      stoCatExist.sequence = +data.sequence;
     }
 
     return await this.storeCategoriesRepository
