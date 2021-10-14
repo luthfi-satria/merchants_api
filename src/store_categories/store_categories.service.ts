@@ -305,7 +305,7 @@ export class StoreCategoriesService {
     const qCount = this.storeCategoriesRepository
       .createQueryBuilder('sc')
       .andWhere('sc.active = true')
-      .orderBy('sc.created_at')
+      .orderBy('sc.sequence')
       .offset((currentPage - 1) * perPage)
       .limit(perPage)
       .getManyAndCount();
@@ -325,6 +325,7 @@ export class StoreCategoriesService {
             'merchant_store_categories_languages',
           )
           .where('sc.id IN(:...lid)', { lid: listStocat })
+          .orderBy('sc.sequence')
           .getMany();
       })
       .then((result) => {

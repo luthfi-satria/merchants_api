@@ -82,7 +82,6 @@ export class StoreCategoriesController {
     }
     data.image = '/upload_store_categories/' + file.filename;
 
-    console.log(data);
     return await this.storeCategoriesService.createStoreCategories(data);
     // return await this.validatePermission('create', token, data);
   }
