@@ -528,20 +528,14 @@ export class MerchantsService {
             .where('merchant_merchant.name ilike :mname', {
               mname: '%' + search + '%',
             })
-            .orWhere('merchant_merchant.address ilike :addr', {
-              addr: '%' + search + '%',
-            })
-            .orWhere('merchant_merchant.pic_name ilike :oname', {
-              oname: '%' + search + '%',
-            })
-            .orWhere('merchant_merchant.pic_email ilike :omail', {
-              omail: '%' + search + '%',
-            })
             .orWhere('merchant_merchant.pic_phone ilike :ophone', {
               ophone: '%' + search + '%',
             })
-            .orWhere('merchant_merchant.pic_nip ilike :onik', {
-              onik: '%' + search + '%',
+            .orWhere('mc_group.name ilike :gname', {
+              gname: '%' + search + '%',
+            })
+            .orWhere('mc_group.category::text ilike :gcat', {
+              gcat: '%' + search + '%',
             });
         }),
       );
