@@ -267,9 +267,10 @@ export class MerchantsService {
           break;
       }
 
-      const result = await this.merchantUserService.createMerchantUsersFromMerchant(
-        createMerchantUser,
-      );
+      const result =
+        await this.merchantUserService.createMerchantUsersFromMerchant(
+          createMerchantUser,
+        );
       deleteCredParam(result);
       create.user = result;
       deleteCredParam(create);
@@ -303,11 +304,10 @@ export class MerchantsService {
   async updateMerchantMerchantProfile(
     data: UpdateMerchantDTO,
   ): Promise<RSuccessMessage> {
-    const existMerchant: MerchantDocument = await this.merchantRepository.findOne(
-      {
+    const existMerchant: MerchantDocument =
+      await this.merchantRepository.findOne({
         where: { id: data.id },
-      },
-    );
+      });
     if (!existMerchant) {
       const errors: RMessage = {
         value: data.id,
