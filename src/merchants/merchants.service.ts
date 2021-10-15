@@ -267,10 +267,9 @@ export class MerchantsService {
           break;
       }
 
-      const result =
-        await this.merchantUserService.createMerchantUsersFromMerchant(
-          createMerchantUser,
-        );
+      const result = await this.merchantUserService.createMerchantUsersFromMerchant(
+        createMerchantUser,
+      );
       deleteCredParam(result);
       create.user = result;
       deleteCredParam(create);
@@ -304,10 +303,11 @@ export class MerchantsService {
   async updateMerchantMerchantProfile(
     data: UpdateMerchantDTO,
   ): Promise<RSuccessMessage> {
-    const existMerchant: MerchantDocument =
-      await this.merchantRepository.findOne({
+    const existMerchant: MerchantDocument = await this.merchantRepository.findOne(
+      {
         where: { id: data.id },
-      });
+      },
+    );
     if (!existMerchant) {
       const errors: RMessage = {
         value: data.id,
@@ -528,20 +528,14 @@ export class MerchantsService {
             .where('merchant_merchant.name ilike :mname', {
               mname: '%' + search + '%',
             })
-            .orWhere('merchant_merchant.address ilike :addr', {
-              addr: '%' + search + '%',
-            })
-            .orWhere('merchant_merchant.pic_name ilike :oname', {
-              oname: '%' + search + '%',
-            })
-            .orWhere('merchant_merchant.pic_email ilike :omail', {
-              omail: '%' + search + '%',
-            })
             .orWhere('merchant_merchant.pic_phone ilike :ophone', {
               ophone: '%' + search + '%',
             })
-            .orWhere('merchant_merchant.pic_nip ilike :onik', {
-              onik: '%' + search + '%',
+            .orWhere('mc_group.name ilike :gname', {
+              gname: '%' + search + '%',
+            })
+            .orWhere('mc_group.category::text ilike :gcat', {
+              gcat: '%' + search + '%',
             });
         }),
       );
