@@ -74,25 +74,28 @@ export class GroupsService {
       createGroupDTO.director_password,
       salt,
     );
-    createGroupDTO.pic_operational_password =
-      await this.hashService.hashPassword(
-        createGroupDTO.pic_operational_password,
-        salt,
-      );
+    createGroupDTO.pic_operational_password = await this.hashService.hashPassword(
+      createGroupDTO.pic_operational_password,
+      salt,
+    );
     createGroupDTO.pic_finance_password = await this.hashService.hashPassword(
       createGroupDTO.pic_finance_password,
       salt,
     );
     const create_group = this.groupRepository.create(createGroupDTO);
-    if (createGroupDTO.status == 'ACTIVE') create_group.approved_at = new Date();
-    if (createGroupDTO.status == 'REJECTED') create_group.rejected_at = new Date();
+    if (createGroupDTO.status == 'ACTIVE')
+      create_group.approved_at = new Date();
+    if (createGroupDTO.status == 'REJECTED')
+      create_group.rejected_at = new Date();
     try {
       const create = await this.groupRepository.save(create_group);
       if (!create) {
         throw new Error('failed insert to merchant_group');
       }
 
-      const roles = await this.roleService.getRoleByPlatforms(['HERMES_CORPORATE']);
+      const roles = await this.roleService.getRoleByPlatforms([
+        'HERMES_CORPORATE',
+      ]);
 
       const array_email = [];
       create.users = [];
@@ -121,10 +124,9 @@ export class GroupsService {
           nip: createGroupDTO.pic_operational_nip,
           role_id: roles[0].id,
         };
-        const pic_operational =
-          await this.groupUserService.createUserPassword(
-            create_pic_operational,
-          );
+        const pic_operational = await this.groupUserService.createUserPassword(
+          create_pic_operational,
+        );
         create.users.push(pic_operational);
       }
       if (!array_email.includes(createGroupDTO.pic_finance_email)) {
@@ -138,8 +140,9 @@ export class GroupsService {
           nip: createGroupDTO.pic_finance_nip,
           role_id: roles[0].id,
         };
-        const pic_finance =
-          await this.groupUserService.createUserPassword(create_pic_finance);
+        const pic_finance = await this.groupUserService.createUserPassword(
+          create_pic_finance,
+        );
         create.users.push(pic_finance);
       }
       return create;
@@ -188,11 +191,10 @@ export class GroupsService {
       email: updateGroupDTO.pic_operational_email,
       nip: updateGroupDTO.pic_operational_nip,
     };
-    const pic_operational =
-      await this.groupUserService.updateUserByEmailGroupId(
-        update_pic_operational,
-        group.pic_operational_email,
-      );
+    const pic_operational = await this.groupUserService.updateUserByEmailGroupId(
+      update_pic_operational,
+      group.pic_operational_email,
+    );
     group.users.push(pic_operational);
 
     const update_pic_finance: Partial<GroupUser> = {
@@ -261,11 +263,14 @@ export class GroupsService {
       });
   }
 
-  async viewGroupDetail(id: string, user: Record<string, any>): Promise<RSuccessMessage> {
+  async viewGroupDetail(
+    id: string,
+    user: Record<string, any>,
+  ): Promise<RSuccessMessage> {
     try {
       const gid = user.user_type == 'admin' ? id : user.group_id;
       const result = await this.groupRepository.findOne(gid);
-    return this.responseService.success(
+      return this.responseService.success(
         true,
         this.messageService.get('merchant.listgroup.success'),
         result,
@@ -302,17 +307,11 @@ export class GroupsService {
       query.where(
         new Brackets((qb) => {
           qb.where('name ilike :name', { name: '%' + search + '%' });
-          qb.orWhere('director_name ilike :oname', {
-            oname: '%' + search + '%',
-          });
-          qb.orWhere('director_email ilike :email', {
-            email: '%' + search + '%',
+          qb.orWhere('category::text ilike :cat', {
+            cat: '%' + search + '%',
           });
           qb.orWhere('phone ilike :ghp', {
             ghp: '%' + search + '%',
-          });
-          qb.orWhere('address ilike :adg', {
-            adg: '%' + search + '%',
           });
         }),
       );
@@ -346,7 +345,8 @@ export class GroupsService {
 
     const count = await query.getCount();
     const list = await query.getMany();
-    list.forEach(element => {
+
+    list.forEach((element) => {
       return deleteCredParam(element);
     });
     return {
@@ -359,10 +359,9 @@ export class GroupsService {
 
   async getAndValidateGroupByGroupId(group_id: string): Promise<GroupDocument> {
     try {
-      const group = await this.groupRepository
-        .findOne({
-          id: group_id,
-        });
+      const group = await this.groupRepository.findOne({
+        id: group_id,
+      });
       if (!group) {
         throw new BadRequestException(
           this.responseService.error(
