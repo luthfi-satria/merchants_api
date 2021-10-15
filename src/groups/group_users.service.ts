@@ -331,8 +331,14 @@ export class GroupUsersService {
             .orWhere('mu.phone ilike :sphone', {
               sphone: '%' + search + '%',
             })
-            .orWhere('mu.email like :semail', {
-              semail: '%' + search + '%',
+            // .orWhere('mu.role_name ilike :rname', {
+            //   rname: '%' + search + '%',
+            // })
+            .orWhere('merchant_group.name like :gname', {
+              gname: '%' + search + '%',
+            })
+            .orWhere('mu.nip like :mnip', {
+              mnip: '%' + search + '%',
             });
         }),
       )
