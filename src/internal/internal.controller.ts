@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Logger, Param, Post } from '@nestjs/common';
+import { CommonStoresService } from 'src/common/own/stores.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
+import { StoreBatchDTO } from './dto/store_batch.dto';
 import { InternalService } from './internal.service';
 
 @Controller('api/v1/internal')
@@ -8,7 +10,20 @@ export class InternalController {
   constructor(
     private readonly internalService: InternalService,
     private readonly responseService: ResponseService,
+    private readonly commonStoreService: CommonStoresService,
   ) {}
+
+  @Post('/merchants/stores/batchs')
+  @ResponseStatusCode()
+  async getBatchStores(
+    @Body()
+    storeBatchDTO: StoreBatchDTO,
+  ): Promise<any> {
+    return this.commonStoreService.getAndValidateStoreByStoreIds(
+      storeBatchDTO.store_ids,
+      storeBatchDTO.user,
+    );
+  }
 
   @Get('merchants/stores/:id')
   @ResponseStatusCode()
