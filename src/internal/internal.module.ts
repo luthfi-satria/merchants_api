@@ -7,6 +7,8 @@ import { GroupDocument } from 'src/database/entities/group.entity';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
+import { SearchHistoryStoreDocument } from 'src/database/entities/search_history_store.entity';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
@@ -35,6 +37,8 @@ import { InternalService } from './internal.service';
       StoreCategoriesDocument,
       GroupDocument,
       LobDocument,
+      SearchHistoryStoreDocument,
+      SearchHistoryKeywordDocument,
     ]),
     HttpModule,
   ],

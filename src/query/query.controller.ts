@@ -19,6 +19,7 @@ import {
   QueryListStoreDto,
   QueryStoreDetailDto,
 } from './validation/query-public.dto';
+import { QuerySearchValidation } from './validation/query_search.validation';
 
 @Controller('api/v1/merchants')
 export class QueryController {
@@ -72,5 +73,13 @@ export class QueryController {
   @ResponseStatusCode()
   async getStoreCategories(@Query() data: string[]): Promise<any> {
     return await this.queryService.listStoreCategories(data);
+  }
+
+  @Get('query/search')
+  @ResponseStatusCode()
+  async searchStoreMenu(@Query() query: QuerySearchValidation) {
+    console.log(query);
+
+    return this.queryService.searchStoreMenu(query);
   }
 }
