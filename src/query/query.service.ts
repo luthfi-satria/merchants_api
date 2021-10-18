@@ -36,6 +36,7 @@ import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import {
+  QuerySearchHistoryStoresValidation,
   QuerySearchHistoryValidation,
   QuerySearchValidation,
 } from './validation/query_search.validation';
@@ -888,6 +889,9 @@ export class QueryService {
           },
           skip: (currentPage - 1) * perPage,
           take: perPage,
+          order: {
+            created_at: 'DESC',
+          },
         });
 
       const list_result: ListResponse = {
@@ -909,12 +913,27 @@ export class QueryService {
   }
 
   async searchHistoriesStores(
-    data: QuerySearchHistoryValidation,
+    data: QuerySearchHistoryStoresValidation,
     user: any,
   ): Promise<RSuccessMessage> {
     try {
       const currentPage = data.page || 1;
       const perPage = Number(data.limit) || 10;
+
+      const lat = data.location_latitude;
+      const long = data.location_longitude;
+      const delivery_only = null;
+      const store_category_id = null;
+      const search = null;
+      const radius = 25;
+
+      const is24hrs = true;
+      const open_24_hour = true;
+      const include_closed_stores = true;
+
+      const currTime = DateTimeUtils.DateTimeToUTC(new Date());
+      const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
+      const lang = 'id';
 
       const [items, count] = await this.searchHistoryStoreDocument.findAndCount(
         {
@@ -924,14 +943,241 @@ export class QueryService {
           skip: (currentPage - 1) * perPage,
           take: perPage,
           relations: ['store'],
+          order: {
+            created_at: 'DESC',
+          },
         },
       );
 
+      const query = await this.searchHistoryStoreDocument
+        .createQueryBuilder('qb')
+        .select('DISTINCT qb.store_id', 'store_id')
+        .addSelect('MAX(qb.created_at)', 'created_at')
+        .groupBy('qb.store_id')
+        .orderBy('created_at', 'DESC')
+        .addOrderBy('qb.store_id')
+        .skip((currentPage - 1) * perPage)
+        .take(perPage)
+        .getRawMany();
+
+      const ids = query.map((item) => item.store_id);
+
+      const query2 = this.storeRepository
+        .createQueryBuilder('merchant_store')
+        .where('merchant_store.id IN (:...arr_id)', {
+          arr_id: [
+            '10ed7282-aacb-4127-822c-684fafd99b9a',
+            '10ed7282-aacb-4127-822c-684fafd99b91',
+          ],
+        })
+
+        .addSelect(
+          '(6371 * ACOS(COS(RADIANS(' +
+            lat +
+            ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
+            long +
+            ')) + SIN(RADIANS(' +
+            lat +
+            ')) * SIN(RADIANS(merchant_store.location_latitude))))',
+          'distance_in_km',
+        )
+        // --- JOIN TABLES ---
+        .leftJoinAndSelect(
+          'catalogs_menu',
+          'catalogs_menus',
+          'catalogs_menus.merchant_id = merchant_store.merchant_id',
+        )
+        .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
+        .leftJoinAndSelect(
+          'merchant_store.operational_hours',
+          'operational_hours',
+          'operational_hours.merchant_store_id = merchant_store.id',
+        )
+        .leftJoinAndSelect(
+          'operational_hours.shifts',
+          'operational_shifts',
+          'operational_shifts.store_operational_id = operational_hours.id',
+        )
+        .leftJoinAndSelect(
+          'merchant_store.store_categories',
+          'merchant_store_categories',
+        )
+        .leftJoinAndSelect(
+          'merchant_store_categories.languages',
+          'merchant_store_categories_languages',
+        )
+        // --- Filter Conditions ---
+        // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
+
+        .andWhere(
+          `merchant_store.status = :active
+            AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
+            ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
+            ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
+            ${
+              store_category_id
+                ? `AND merchant_store_categories.id = :stocat`
+                : ''
+            }`,
+          {
+            active: enumStoreStatus.active,
+            open_24_hour: open_24_hour,
+            delivery_only: delivery_only,
+            stocat: store_category_id,
+            radius: radius,
+            lat: lat,
+            long: long,
+          },
+        )
+        .andWhere(
+          new Brackets((qb) => {
+            if (include_closed_stores) {
+              // Tampilkan semua stores, tanpa memperhatikan jadwal operasional store
+              qb.where(`operational_hours.day_of_week = :weekOfDay`, {
+                weekOfDay: weekOfDay,
+              });
+            } else {
+              qb.where(
+                `operational_hours.day_of_week = :weekOfDay
+                  AND merchant_store.is_store_open = :is_open
+                  AND operational_hours.merchant_store_id IS NOT NULL
+                ${
+                  // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
+                  is24hrs
+                    ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
+                    : ''
+                }`,
+                {
+                  is_open: true,
+                  weekOfDay: weekOfDay,
+                  currTime: currTime,
+                  all24h: true, //niel true for query all stores
+                },
+              );
+            }
+          }),
+        );
+
+      if (search) {
+        query2.andWhere(
+          new Brackets((qb) => {
+            qb.where('merchant_store.name ilike :sname', {
+              sname: '%' + search.toLowerCase() + '%',
+            }).orWhere('catalogs_menus.name ilike :sname', {
+              sname: '%' + search.toLowerCase() + '%',
+            });
+          }),
+        );
+      }
+
+      query2
+        .orderBy('distance_in_km', 'ASC')
+        .skip((currentPage - 1) * perPage)
+        .take(perPage);
+      const qlistStore = await query2.getManyAndCount().catch((e) => {
+        Logger.error(e.message, '', 'QueryListStore');
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: '',
+              property: '',
+              constraint: [
+                this.messageService.get('merchant.liststore.not_found'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+
+      // .getRawMany();
+
+      const [storeItems, totalItems] = qlistStore;
+
+      const formattedStoredItems = await Promise.all(
+        storeItems.map(async (row: any) => {
+          // Add 'distance_in_km' attribute
+          const distance_in_km = getDistanceInKilometers(
+            parseFloat(lat),
+            parseFloat(long),
+            row.location_latitude,
+            row.location_longitude,
+          );
+
+          // Get relation of operational store & operational shift,
+          const opt_hours = await this.storeOperationalService
+            .getAllStoreScheduleByStoreId(row.id)
+            .then((res) => {
+              return res.map((e) => {
+                const dayOfWeekToWord = DateTimeUtils.convertToDayOfWeek(
+                  Number(e.day_of_week),
+                );
+                const x = new StoreOperationalHoursDocument({ ...e });
+                delete x.day_of_week;
+                return {
+                  ...x,
+                  day_of_week: dayOfWeekToWord,
+                };
+              });
+            });
+
+          // Parse Store Categories with localization category language name
+          const store_categories = row.store_categories.map((item) => {
+            const ctg_language = item.languages.find((e) => e.lang === lang);
+
+            const x = new StoreCategoriesDocument({ ...item });
+            delete x.languages;
+            return { ...x, name: ctg_language.name };
+          });
+
+          // filter logic store operational status
+          const store_operational_status = this.getStoreOperationalStatus(
+            row.is_store_open,
+            currTime,
+            weekOfDay,
+            row.operational_hours,
+          );
+
+          // Get Merchant Profile
+          const merchant = await this.merchantRepository
+            .findOne(row.merchant_id)
+            .then((result) => {
+              delete result.pic_password;
+              delete result.approved_at;
+              delete result.created_at;
+              delete result.updated_at;
+              delete result.deleted_at;
+              return result;
+            });
+
+          // Get Menus
+          const menus = row.catalogs_menus;
+
+          return {
+            ...row,
+            distance_in_km: distance_in_km,
+            store_operational_status,
+            operational_hours: opt_hours,
+            store_categories: store_categories,
+            menus: menus,
+            merchant,
+          };
+        }),
+      );
+
+      // const list_result: ListResponse = {
+      //   total_item: count,
+      //   limit: Number(perPage),
+      //   current_page: Number(currentPage),
+      //   items: items,
+      // };
+
       const list_result: ListResponse = {
-        total_item: count,
+        total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
-        items: items,
+        items: formattedStoredItems,
       };
 
       return this.responseService.success(

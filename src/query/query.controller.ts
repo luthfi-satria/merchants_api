@@ -21,6 +21,7 @@ import {
   QueryStoreDetailDto,
 } from './validation/query-public.dto';
 import {
+  QuerySearchHistoryStoresValidation,
   QuerySearchHistoryValidation,
   QuerySearchValidation,
 } from './validation/query_search.validation';
@@ -109,7 +110,7 @@ export class QueryController {
   @AuthJwtGuard()
   async searchHistoriesStores(
     @Req() req: any,
-    @Query() query: QuerySearchHistoryValidation,
+    @Query() query: QuerySearchHistoryStoresValidation,
   ) {
     return this.queryService.searchHistoriesStores(query, req.user);
   }

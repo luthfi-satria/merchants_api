@@ -44,3 +44,11 @@ export class QuerySearchHistoryValidation {
   @Type(() => Number)
   page: number;
 }
+
+export class QuerySearchHistoryStoresValidation extends QuerySearchHistoryValidation {
+  @IsLongitude()
+  location_longitude: string;
+
+  @IsLatitude()
+  location_latitude: string;
+}
