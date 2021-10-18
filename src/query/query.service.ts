@@ -35,8 +35,14 @@ import _ from 'lodash';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
-import { QuerySearchValidation } from './validation/query_search.validation';
+import {
+  QuerySearchHistoryValidation,
+  QuerySearchValidation,
+} from './validation/query_search.validation';
 import { PriceRangeService } from 'src/price_range/price_range.service';
+import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
+import { SearchHistoryStoreDocument } from 'src/database/entities/search_history_store.entity';
+// import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
 
 @Injectable()
 export class QueryService {
@@ -51,6 +57,10 @@ export class QueryService {
     private readonly storeOperationalService: StoreOperationalService,
     private httpService: HttpService,
     private readonly merchantService: MerchantsService,
+    @InjectRepository(SearchHistoryKeywordDocument)
+    private readonly searchHistoryKeywordDocument: Repository<SearchHistoryKeywordDocument>,
+    @InjectRepository(SearchHistoryStoreDocument)
+    private readonly searchHistoryStoreDocument: Repository<SearchHistoryStoreDocument>,
     @Hash() private readonly hashService: HashService,
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
@@ -813,7 +823,10 @@ export class QueryService {
       });
   }
 
-  async searchStoreMenu(data: QuerySearchValidation): Promise<RSuccessMessage> {
+  async searchStoreMenu(
+    data: QuerySearchValidation,
+    user: any,
+  ): Promise<RSuccessMessage> {
     try {
       const distance = 25;
       const store_category_id = null;
@@ -829,6 +842,136 @@ export class QueryService {
         include_closed_stores,
       };
       const list_result = await this.fetchStore(fetchData);
+
+      if (user && data.search !== '' && data.search) {
+        const historyKeyword: Partial<SearchHistoryKeywordDocument> = {
+          customer_id: user.id,
+          keyword: data.search,
+          lang: data.lang,
+        };
+        await this.searchHistoryKeywordDocument.save(historyKeyword);
+
+        if (list_result.total_item) {
+          const historyStore: Partial<SearchHistoryStoreDocument> = {
+            store_id: list_result.items[0]?.id,
+            customer_id: user.id,
+            lang: data.lang,
+          };
+
+          await this.searchHistoryStoreDocument.save(historyStore);
+        }
+      }
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.liststore.success'),
+        list_result,
+      );
+    } catch (e) {
+      Logger.error(e.message, '', 'QUERY LIST STORE');
+      throw e;
+    }
+  }
+
+  async searchHistoriesKeywords(
+    data: QuerySearchHistoryValidation,
+    user: any,
+  ): Promise<RSuccessMessage> {
+    try {
+      const currentPage = data.page || 1;
+      const perPage = Number(data.limit) || 10;
+
+      const [items, count] =
+        await this.searchHistoryKeywordDocument.findAndCount({
+          where: {
+            customer_id: user.id,
+          },
+          skip: (currentPage - 1) * perPage,
+          take: perPage,
+        });
+
+      const list_result: ListResponse = {
+        total_item: count,
+        limit: Number(perPage),
+        current_page: Number(currentPage),
+        items: items,
+      };
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.liststore.success'),
+        list_result,
+      );
+    } catch (e) {
+      Logger.error(e.message, '', 'QUERY LIST STORE');
+      throw e;
+    }
+  }
+
+  async searchHistoriesStores(
+    data: QuerySearchHistoryValidation,
+    user: any,
+  ): Promise<RSuccessMessage> {
+    try {
+      const currentPage = data.page || 1;
+      const perPage = Number(data.limit) || 10;
+
+      const [items, count] = await this.searchHistoryStoreDocument.findAndCount(
+        {
+          where: {
+            customer_id: user.id,
+          },
+          skip: (currentPage - 1) * perPage,
+          take: perPage,
+          relations: ['store'],
+        },
+      );
+
+      const list_result: ListResponse = {
+        total_item: count,
+        limit: Number(perPage),
+        current_page: Number(currentPage),
+        items: items,
+      };
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.liststore.success'),
+        list_result,
+      );
+    } catch (e) {
+      Logger.error(e.message, '', 'QUERY LIST STORE');
+      throw e;
+    }
+  }
+
+  async searchPopulars(
+    data: QuerySearchHistoryValidation,
+  ): Promise<RSuccessMessage> {
+    try {
+      const currentPage = data.page || 1;
+      const perPage = Number(data.limit) || 10;
+
+      let raw = await this.searchHistoryKeywordDocument
+        .createQueryBuilder('qb')
+        .select('qb.keyword', 'keyword')
+        .addSelect('COUNT(*)', 'count')
+        .groupBy('qb.keyword')
+        .orderBy('qb.count', 'DESC')
+        .getRawMany();
+
+      const items = raw.map((item) => {
+        return {
+          keyword: item.keyword,
+        };
+      });
+
+      const list_result: ListResponse = {
+        total_item: raw.length,
+        limit: Number(perPage),
+        current_page: Number(currentPage),
+        items: items,
+      };
 
       return this.responseService.success(
         true,
@@ -1114,6 +1257,8 @@ export class QueryService {
 
   async fetchStore(data: any): Promise<any> {
     try {
+      const search =
+        data.search === '' ? null : data.search ? data.search : null;
       const radius = data.distance || 25;
       const lat = data.location_latitude;
       const long = data.location_longitude;
@@ -1171,6 +1316,11 @@ export class QueryService {
           'distance_in_km',
         )
         // --- JOIN TABLES ---
+        .leftJoinAndSelect(
+          'catalogs_menu',
+          'catalogs_menus',
+          'catalogs_menus.merchant_id = merchant_store.merchant_id',
+        )
         .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
         .leftJoinAndSelect(
           'merchant_store.operational_hours',
@@ -1240,7 +1390,21 @@ export class QueryService {
               );
             }
           }),
-        )
+        );
+
+      if (search) {
+        query1.andWhere(
+          new Brackets((qb) => {
+            qb.where('merchant_store.name ilike :sname', {
+              sname: '%' + search.toLowerCase() + '%',
+            }).orWhere('catalogs_menus.name ilike :sname', {
+              sname: '%' + search.toLowerCase() + '%',
+            });
+          }),
+        );
+      }
+
+      query1
         .orderBy('distance_in_km', 'ASC')
         .skip((currentPage - 1) * perPage)
         .take(perPage);
@@ -1265,7 +1429,7 @@ export class QueryService {
 
       // -- Formating output OR add external attribute to  output--
       const formattedStoredItems = await Promise.all(
-        storeItems.map(async (row) => {
+        storeItems.map(async (row: any) => {
           // Add 'distance_in_km' attribute
           const distance_in_km = getDistanceInKilometers(
             parseFloat(lat),
@@ -1320,12 +1484,16 @@ export class QueryService {
               return result;
             });
 
+          // Get Menus
+          const menus = row.catalogs_menus;
+
           return {
             ...row,
             distance_in_km: distance_in_km,
             store_operational_status,
             operational_hours: opt_hours,
             store_categories: store_categories,
+            menus: menus,
             merchant,
           };
         }),

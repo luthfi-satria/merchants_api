@@ -32,3 +32,15 @@ export class QuerySearchValidation {
   @IsLatitude()
   location_latitude: string;
 }
+
+export class QuerySearchHistoryValidation {
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  limit: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  page: number;
+}

@@ -5,6 +5,7 @@ import {
   Header,
   Param,
   Query,
+  Req,
   Res,
   UseInterceptors,
   ValidationPipe,
@@ -19,7 +20,12 @@ import {
   QueryListStoreDto,
   QueryStoreDetailDto,
 } from './validation/query-public.dto';
-import { QuerySearchValidation } from './validation/query_search.validation';
+import {
+  QuerySearchHistoryValidation,
+  QuerySearchValidation,
+} from './validation/query_search.validation';
+import { AuthJwtGuard } from 'src/auth/auth.decorators';
+import { UserType } from 'src/auth/guard/user-type.decorator';
 
 @Controller('api/v1/merchants')
 export class QueryController {
@@ -77,9 +83,43 @@ export class QueryController {
 
   @Get('query/search')
   @ResponseStatusCode()
-  async searchStoreMenu(@Query() query: QuerySearchValidation) {
-    console.log(query);
+  @UserType('customer')
+  @AuthJwtGuard()
+  async searchStoreMenu(
+    @Req() req: any,
+    @Query() query: QuerySearchValidation,
+  ) {
+    return this.queryService.searchStoreMenu(query, req.user);
+  }
 
-    return this.queryService.searchStoreMenu(query);
+  @Get('query/search/histories/keywords')
+  @ResponseStatusCode()
+  @UserType('customer')
+  @AuthJwtGuard()
+  async searchHistoriesKeywords(
+    @Req() req: any,
+    @Query() query: QuerySearchHistoryValidation,
+  ) {
+    return this.queryService.searchHistoriesKeywords(query, req.user);
+  }
+
+  @Get('query/search/histories/stores')
+  @ResponseStatusCode()
+  @UserType('customer')
+  @AuthJwtGuard()
+  async searchHistoriesStores(
+    @Req() req: any,
+    @Query() query: QuerySearchHistoryValidation,
+  ) {
+    return this.queryService.searchHistoriesStores(query, req.user);
+  }
+
+  @Get('query/search/populars')
+  @ResponseStatusCode()
+  async searchPopulars(
+    @Req() req: any,
+    @Query() query: QuerySearchHistoryValidation,
+  ) {
+    return this.queryService.searchPopulars(query);
   }
 }
