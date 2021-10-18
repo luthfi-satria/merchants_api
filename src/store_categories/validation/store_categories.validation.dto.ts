@@ -31,6 +31,9 @@ export class StoreCategoriesValidation {
   @IsOptional()
   search: string;
 
+  @IsNotEmpty()
+  sequence: number;
+
   @IsOptional()
   @IsNumber({}, { message: 'Data limit bukan angka' })
   limit: number;

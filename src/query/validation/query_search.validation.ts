@@ -27,10 +27,8 @@ export class QuerySearchValidation {
   page: number;
 
   @IsLongitude()
-  @IsOptional()
   location_longitude: string;
 
   @IsLatitude()
-  @IsOptional()
   location_latitude: string;
 }

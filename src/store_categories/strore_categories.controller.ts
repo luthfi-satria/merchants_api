@@ -81,6 +81,7 @@ export class StoreCategoriesController {
       );
     }
     data.image = '/upload_store_categories/' + file.filename;
+
     return await this.storeCategoriesService.createStoreCategories(data);
     // return await this.validatePermission('create', token, data);
   }

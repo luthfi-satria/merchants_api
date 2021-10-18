@@ -60,4 +60,17 @@ export class QueryListStoreDto extends LocationDto {
   @IsOptional()
   @Transform(({ value }) => JSON.parse(value))
   include_closed_stores: boolean;
+
+  price_range_id: string[];
+
+  @IsOptional()
+  sort: string;
+
+  @IsOptional()
+  order: string;
+
+  @IsBoolean()
+  @IsOptional()
+  @Transform(({ value }) => JSON.parse(value))
+  new_this_week: boolean;
 }

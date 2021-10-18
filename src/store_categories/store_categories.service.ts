@@ -47,6 +47,9 @@ export class StoreCategoriesService {
       console.error(e);
       throw new InternalServerErrorException(e.message);
     }
+    if (data.sequence != null && typeof data.sequence != 'undefined') {
+      createStocat.sequence = data.sequence;
+    }
     if (typeof data.active != 'undefined') {
       if (data.active == 'true') createStocat.active = true;
       if (data.active == 'false') createStocat.active = false;
@@ -206,6 +209,9 @@ export class StoreCategoriesService {
       if (data.active == 'true') stoCatExist.active = true;
       if (data.active == 'false') stoCatExist.active = false;
     }
+    if (data.sequence != null && typeof data.sequence != 'undefined') {
+      stoCatExist.sequence = +data.sequence;
+    }
 
     return await this.storeCategoriesRepository
       .save(stoCatExist)
@@ -299,7 +305,7 @@ export class StoreCategoriesService {
     const qCount = this.storeCategoriesRepository
       .createQueryBuilder('sc')
       .andWhere('sc.active = true')
-      .orderBy('sc.created_at')
+      .orderBy('sc.sequence')
       .offset((currentPage - 1) * perPage)
       .limit(perPage)
       .getManyAndCount();
@@ -319,6 +325,7 @@ export class StoreCategoriesService {
             'merchant_store_categories_languages',
           )
           .where('sc.id IN(:...lid)', { lid: listStocat })
+          .orderBy('sc.sequence')
           .getMany();
       })
       .then((result) => {

@@ -482,11 +482,11 @@ export class StoresService {
           qb.orWhere('ms.phone ilike :sname', {
             sname: '%' + search.toLowerCase() + '%',
           });
-          qb.orWhere('ms.email ilike :smail', {
-            smail: '%' + search.toLowerCase() + '%',
+          qb.orWhere('merchant.name ilike :bname', {
+            bname: '%' + search.toLowerCase() + '%',
           });
-          qb.orWhere('ms.address ilike :astrore', {
-            astrore: '%' + search.toLowerCase() + '%',
+          qb.orWhere('group.name ilike :gname', {
+            gname: '%' + search.toLowerCase() + '%',
           });
         }),
       );

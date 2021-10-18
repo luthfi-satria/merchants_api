@@ -8,5 +8,6 @@ import { PriceRangeService } from './price_range.service';
   imports: [TypeOrmModule.forFeature([PriceRangeDocument])],
   controllers: [PriceRangeController],
   providers: [PriceRangeService],
+  exports: [PriceRangeService],
 })
 export class PriceRangeModule {}
