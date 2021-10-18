@@ -354,8 +354,14 @@ export class MerchantUsersService {
             .orWhere('mu.phone ilike :sphone', {
               sphone: '%' + search + '%',
             })
-            .orWhere('mu.email like :semail', {
-              semail: '%' + search + '%',
+            .orWhere('mu.nip like :mnip', {
+              mnip: '%' + search + '%',
+            })
+            .orWhere('merchant_group.name like :gname', {
+              gname: '%' + search + '%',
+            })
+            .orWhere('merchant_merchant.name like :mmname', {
+              mmname: '%' + search + '%',
             });
         }),
       );
