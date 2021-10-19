@@ -73,4 +73,9 @@ export class QueryListStoreDto extends LocationDto {
   @IsOptional()
   @Transform(({ value }) => JSON.parse(value))
   new_this_week: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  @Transform(({ value }) => JSON.parse(value))
+  budget_meal: boolean;
 }
