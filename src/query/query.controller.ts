@@ -127,4 +127,10 @@ export class QueryController {
   ) {
     return this.queryService.searchPopulars(query);
   }
+
+  @Get('query/price-range')
+  @ResponseStatusCode()
+  async getPriceRange() {
+    return this.queryService.getPriceRange();
+  }
 }

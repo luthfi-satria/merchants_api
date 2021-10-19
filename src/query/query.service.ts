@@ -1822,4 +1822,8 @@ export class QueryService {
       throw e;
     }
   }
+
+  async getPriceRange(): Promise<RSuccessMessage> {
+    return this.priceRangeService.listPriceRange({ limit: '999' });
+  }
 }
