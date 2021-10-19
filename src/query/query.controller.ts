@@ -101,7 +101,9 @@ export class QueryController {
     @Req() req: any,
     @Query() query: QuerySearchHistoryValidation,
   ) {
-    return this.queryService.searchHistoriesKeywords(query, req.user);
+    if (req.user) {
+      return this.queryService.searchHistoriesKeywords(query);
+    }
   }
 
   @Get('query/search/histories/stores')
@@ -112,7 +114,9 @@ export class QueryController {
     @Req() req: any,
     @Query() query: QuerySearchHistoryStoresValidation,
   ) {
-    return this.queryService.searchHistoriesStores(query, req.user);
+    if (req.user) {
+      return this.queryService.searchHistoriesStores(query);
+    }
   }
 
   @Get('query/search/populars')

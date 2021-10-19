@@ -878,7 +878,6 @@ export class QueryService {
 
   async searchHistoriesKeywords(
     data: QuerySearchHistoryValidation,
-    user: any,
   ): Promise<RSuccessMessage> {
     try {
       const currentPage = data.page || 1;
@@ -900,7 +899,7 @@ export class QueryService {
         .getRawOne();
 
       const items = await query.getRawMany();
-      const count = counter?.count ? counter.count : 0;
+      const count = counter?.count ? +counter.count : 0;
 
       const list_result: ListResponse = {
         total_item: count,
@@ -922,7 +921,6 @@ export class QueryService {
 
   async searchHistoriesStores(
     data: QuerySearchHistoryStoresValidation,
-    user: any,
   ): Promise<RSuccessMessage> {
     try {
       const currentPage = data.page || 1;
@@ -1182,12 +1180,14 @@ export class QueryService {
       const currentPage = data.page || 1;
       const perPage = Number(data.limit) || 10;
 
-      let raw = await this.searchHistoryKeywordDocument
+      const raw = await this.searchHistoryKeywordDocument
         .createQueryBuilder('qb')
         .select('qb.keyword', 'keyword')
         .addSelect('COUNT(*)', 'count')
         .groupBy('qb.keyword')
         .orderBy('qb.count', 'DESC')
+        .skip((currentPage - 1) * perPage)
+        .take(perPage)
         .getRawMany();
 
       const items = raw.map((item) => {
@@ -1196,8 +1196,13 @@ export class QueryService {
         };
       });
 
+      const counter = await this.searchHistoryKeywordDocument
+        .createQueryBuilder('count')
+        .select('COUNT(DISTINCT count.keyword)', 'count')
+        .getRawOne();
+
       const list_result: ListResponse = {
-        total_item: raw.length,
+        total_item: counter?.count ? +counter.count : 0,
         limit: Number(perPage),
         current_page: Number(currentPage),
         items: items,
@@ -1728,9 +1733,6 @@ export class QueryService {
               delete result.deleted_at;
               return result;
             });
-
-          // Get Menus
-          const menus = row.catalogs_menus;
 
           const menu_item = await this.catalogsService.getMenuByStoreId(row.id);
 

@@ -3,7 +3,6 @@ import {
   IsOptional,
   IsLongitude,
   IsLatitude,
-  IsNumberString,
   IsString,
   IsNumber,
 } from 'class-validator';
