@@ -41,6 +41,11 @@ export class ListStoreDTO {
   group_id: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.sales_channel_id !== '')
+  @IsUUID('all', { message: 'Sales Channel ID yang diisi bukan format UUID' })
+  sales_channel_id: string;
+
+  @IsOptional()
   @IsArray()
   @IsIn(Object.values(GroupStatus), { each: true })
   statuses: GroupStatus[];

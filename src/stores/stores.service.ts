@@ -28,6 +28,7 @@ import { CityService } from 'src/common/services/admins/city.service';
 import { ListStoreDTO } from './validation/list-store.validation';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
+import { CommonService } from 'src/common/common.service';
 
 @Injectable()
 export class StoresService {
@@ -45,6 +46,7 @@ export class StoresService {
     @InjectRepository(StoreCategoriesDocument)
     private readonly storeCategoriesRepository: Repository<StoreCategoriesDocument>,
     private readonly cityService: CityService,
+    private readonly commonService: CommonService,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -463,6 +465,16 @@ export class StoresService {
     data: ListStoreDTO,
     user: Record<string, string>,
   ): Promise<Record<string, any>> {
+    let pricingTemplates = null;
+    const store_ids = [];
+    if (data.sales_channel_id) {
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/pricing-template/${data.sales_channel_id}`;
+      pricingTemplates = await this.commonService.getHttp(url);
+      pricingTemplates.forEach((element) => {
+        store_ids.push(element.store_id);
+      });
+    }
+    console.log('store ids ', store_ids);
     const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
@@ -520,22 +532,29 @@ export class StoresService {
       store.andWhere('ms.id = :mid', {
         mid: user.store_id,
       });
-    } else if (user.level == 'merchant') {
-      store.andWhere('merchant.id = :mid', {
-        mid: user.merchant_id,
-      });
-    } else if (user.level == 'group') {
-      store.andWhere('group.id = :group_id', {
-        group_id: user.group_id,
-      });
-    }
+    } else {
+      if (data.sales_channel_id) {
+        store.andWhere('ms.id in (:...mid)', {
+          mid: store_ids,
+        });
+      }
 
-    if (user.user_type == 'admin' && data.group_id) {
-      store.andWhere('group.id = :gid', {
-        gid: data.group_id,
-      });
-    }
+      if (user.level == 'merchant') {
+        store.andWhere('merchant.id = :mid', {
+          mid: user.merchant_id,
+        });
+      } else if (user.level == 'group') {
+        store.andWhere('group.id = :group_id', {
+          group_id: user.group_id,
+        });
+      }
 
+      if (user.user_type == 'admin' && data.group_id) {
+        store.andWhere('group.id = :gid', {
+          gid: data.group_id,
+        });
+      }
+    }
     store
       .orderBy('ms.created_at', 'ASC')
       .offset((Number(currentPage) - 1) * perPage)

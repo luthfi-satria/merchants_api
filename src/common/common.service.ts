@@ -36,14 +36,13 @@ export class CommonService {
         return axiosResponse.data;
       }),
       catchError((err) => {
-        throw err;
+        throw err.response.data;
       }),
     );
     try {
       return await lastValueFrom(post_response);
     } catch (error) {
-      console.log(error);
-      throw error;
+      return null;
     }
   }
 }
