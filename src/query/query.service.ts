@@ -13,7 +13,6 @@ import {
   enumStoreStatus,
   StoreDocument,
 } from 'src/database/entities/store.entity';
-import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
 import {
   ListResponse,
@@ -23,8 +22,6 @@ import {
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime, getDistanceInKilometers } from 'src/utils/general-utils';
 import { Brackets, OrderByCondition, Repository } from 'typeorm';
-import { HashService } from 'src/hash/hash.service';
-import { Hash } from 'src/hash/hash.decorator';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import {
@@ -61,12 +58,10 @@ export class QueryService {
     private readonly settingService: SettingsService,
     private readonly catalogsService: CatalogsService,
     private httpService: HttpService,
-    private readonly merchantService: MerchantsService,
     @InjectRepository(SearchHistoryKeywordDocument)
     private readonly searchHistoryKeywordDocument: Repository<SearchHistoryKeywordDocument>,
     @InjectRepository(SearchHistoryStoreDocument)
     private readonly searchHistoryStoreDocument: Repository<SearchHistoryStoreDocument>,
-    @Hash() private readonly hashService: HashService,
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
   ) {}
