@@ -43,6 +43,7 @@ import {
 import { PriceRangeService } from 'src/price_range/price_range.service';
 import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
 import { SearchHistoryStoreDocument } from 'src/database/entities/search_history_store.entity';
+import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 // import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
 
 @Injectable()
@@ -56,6 +57,7 @@ export class QueryService {
     private readonly responseService: ResponseService,
     private readonly priceRangeService: PriceRangeService,
     private readonly storeOperationalService: StoreOperationalService,
+    private readonly catalogsService: CatalogsService,
     private httpService: HttpService,
     private readonly merchantService: MerchantsService,
     @InjectRepository(SearchHistoryKeywordDocument)
@@ -833,7 +835,7 @@ export class QueryService {
       const store_category_id = null;
       const pickup = true;
       const is_24hrs = true;
-      const include_closed_stores = false;
+      const include_closed_stores = true;
       const fetchData: any = {
         ...data,
         distance,
@@ -882,17 +884,23 @@ export class QueryService {
       const currentPage = data.page || 1;
       const perPage = Number(data.limit) || 10;
 
-      const [items, count] =
-        await this.searchHistoryKeywordDocument.findAndCount({
-          where: {
-            customer_id: user.id,
-          },
-          skip: (currentPage - 1) * perPage,
-          take: perPage,
-          order: {
-            created_at: 'DESC',
-          },
-        });
+      const query = this.searchHistoryKeywordDocument
+        .createQueryBuilder('qb')
+        .select('DISTINCT qb.keyword', 'keyword')
+        .addSelect('MAX(qb.created_at)', 'created_at')
+        .groupBy('qb.keyword')
+        .orderBy('created_at', 'DESC')
+        .addOrderBy('qb.keyword')
+        .skip((currentPage - 1) * perPage)
+        .take(perPage);
+
+      const counter = await this.searchHistoryKeywordDocument
+        .createQueryBuilder('count')
+        .select('COUNT(DISTINCT count.keyword)', 'count')
+        .getRawOne();
+
+      const items = await query.getRawMany();
+      const count = counter?.count ? counter.count : 0;
 
       const list_result: ListResponse = {
         total_item: count,
@@ -935,20 +943,6 @@ export class QueryService {
       const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
       const lang = 'id';
 
-      const [items, count] = await this.searchHistoryStoreDocument.findAndCount(
-        {
-          where: {
-            customer_id: user.id,
-          },
-          skip: (currentPage - 1) * perPage,
-          take: perPage,
-          relations: ['store'],
-          order: {
-            created_at: 'DESC',
-          },
-        },
-      );
-
       const query = await this.searchHistoryStoreDocument
         .createQueryBuilder('qb')
         .select('DISTINCT qb.store_id', 'store_id')
@@ -965,10 +959,7 @@ export class QueryService {
       const query2 = this.storeRepository
         .createQueryBuilder('merchant_store')
         .where('merchant_store.id IN (:...arr_id)', {
-          arr_id: [
-            '10ed7282-aacb-4127-822c-684fafd99b9a',
-            '10ed7282-aacb-4127-822c-684fafd99b91',
-          ],
+          arr_id: ids,
         })
 
         .addSelect(
@@ -1165,13 +1156,6 @@ export class QueryService {
           };
         }),
       );
-
-      // const list_result: ListResponse = {
-      //   total_item: count,
-      //   limit: Number(perPage),
-      //   current_page: Number(currentPage),
-      //   items: items,
-      // };
 
       const list_result: ListResponse = {
         total_item: totalItems,
@@ -1563,10 +1547,21 @@ export class QueryService {
         )
         // --- JOIN TABLES ---
         .leftJoinAndSelect(
-          'catalogs_menu',
-          'catalogs_menus',
-          'catalogs_menus.merchant_id = merchant_store.merchant_id',
+          'catalogs_menu_store_availability',
+          'catalogs_menu_store_availability',
+          'catalogs_menu_store_availability.store_id = merchant_store.id',
         )
+        .leftJoinAndSelect(
+          'catalogs_menu_price',
+          'catalogs_menu_price',
+          'catalogs_menu_price.id = catalogs_menu_store_availability.menu_price_id',
+        )
+        .leftJoinAndSelect(
+          'catalogs_menu',
+          'catalogs_menu',
+          'catalogs_menu.id = catalogs_menu_price.menu_id',
+        )
+        .addSelect('catalogs_menu.id', 'menu_ids')
         .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
         .leftJoinAndSelect(
           'merchant_store.operational_hours',
@@ -1643,7 +1638,7 @@ export class QueryService {
           new Brackets((qb) => {
             qb.where('merchant_store.name ilike :sname', {
               sname: '%' + search.toLowerCase() + '%',
-            }).orWhere('catalogs_menus.name ilike :sname', {
+            }).orWhere('catalogs_menu.name ilike :sname', {
               sname: '%' + search.toLowerCase() + '%',
             });
           }),
@@ -1670,6 +1665,10 @@ export class QueryService {
           ),
         );
       });
+
+      // const raw = await query1.getRawMany();
+
+      // console.log(raw);
 
       const [storeItems, totalItems] = qlistStore;
 
@@ -1733,13 +1732,21 @@ export class QueryService {
           // Get Menus
           const menus = row.catalogs_menus;
 
+          const menu_item = await this.catalogsService.getMenuByStoreId(row.id);
+
+          console.log('#MARK');
+
+          console.log(menu_item.data.items);
+
+          // console.log(row);
+
           return {
             ...row,
             distance_in_km: distance_in_km,
             store_operational_status,
             operational_hours: opt_hours,
             store_categories: store_categories,
-            menus: menus,
+            menus: menu_item.data.items,
             merchant,
           };
         }),

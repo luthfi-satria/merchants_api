@@ -8,6 +8,7 @@ import { NotificationService } from './notification/notification.service';
 import { CommonStoresService } from './own/stores.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
+import { CatalogsService } from './catalogs/catalogs.service';
 
 @Global()
 @Module({
@@ -42,6 +43,7 @@ import { StoreDocument } from 'src/database/entities/store.entity';
     RoleService,
     NotificationService,
     CommonStoresService,
+    CatalogsService,
   ],
   exports: [
     CommonStorageService,
@@ -49,6 +51,7 @@ import { StoreDocument } from 'src/database/entities/store.entity';
     RoleService,
     NotificationService,
     CommonStoresService,
+    CatalogsService,
   ],
 })
 export class CommonModule {}

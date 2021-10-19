@@ -2,6 +2,7 @@ import { HttpModule, Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddonsService } from 'src/addons/addons.service';
+import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import { CommonService } from 'src/common/common.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
@@ -64,6 +65,7 @@ import { QueryService } from './query.service';
     GroupsService,
     LobService,
     GroupUsersService,
+    CatalogsService,
   ],
 })
 export class QueryModule {}
