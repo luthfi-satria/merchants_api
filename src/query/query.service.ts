@@ -13,7 +13,6 @@ import {
   enumStoreStatus,
   StoreDocument,
 } from 'src/database/entities/store.entity';
-import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
 import {
   ListResponse,
@@ -23,8 +22,6 @@ import {
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime, getDistanceInKilometers } from 'src/utils/general-utils';
 import { Brackets, OrderByCondition, Repository } from 'typeorm';
-import { HashService } from 'src/hash/hash.service';
-import { Hash } from 'src/hash/hash.decorator';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import {
@@ -44,6 +41,7 @@ import { PriceRangeService } from 'src/price_range/price_range.service';
 import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
 import { SearchHistoryStoreDocument } from 'src/database/entities/search_history_store.entity';
 import { CatalogsService } from 'src/common/catalogs/catalogs.service';
+import { SettingsService } from 'src/settings/settings.service';
 // import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
 
 @Injectable()
@@ -57,14 +55,13 @@ export class QueryService {
     private readonly responseService: ResponseService,
     private readonly priceRangeService: PriceRangeService,
     private readonly storeOperationalService: StoreOperationalService,
+    private readonly settingService: SettingsService,
     private readonly catalogsService: CatalogsService,
     private httpService: HttpService,
-    private readonly merchantService: MerchantsService,
     @InjectRepository(SearchHistoryKeywordDocument)
     private readonly searchHistoryKeywordDocument: Repository<SearchHistoryKeywordDocument>,
     @InjectRepository(SearchHistoryStoreDocument)
     private readonly searchHistoryStoreDocument: Repository<SearchHistoryStoreDocument>,
-    @Hash() private readonly hashService: HashService,
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
   ) {}
@@ -101,6 +98,21 @@ export class QueryService {
       default:
     }
     return OrderQuery;
+  }
+
+  private async getBudgetMealMaxValue(
+    isBudgetMeal = false,
+  ): Promise<[boolean, number]> {
+    if (!isBudgetMeal) return [false, 0];
+    const budgetMaxValue = await this.settingService.findByName(
+      'budget_meal_max',
+    );
+
+    if (!budgetMaxValue) {
+      Logger.warn(`WARNING setting 'budget_meal_max' is not defined!`);
+      throw new Error(`WARNING setting 'budget_meal_max' is not defined!`);
+    }
+    return [true, parseInt(budgetMaxValue.value, 10)];
   }
 
   async listGroupStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
@@ -489,6 +501,11 @@ export class QueryService {
       const newThisWeek = data.new_this_week || false;
       const lastWeek = DateTimeUtils.getNewThisWeekDate(new Date());
 
+      // Apply Budget Meal
+      const [isBudgetEnable, budgetMaxValue] = await this.getBudgetMealMaxValue(
+        data.budget_meal,
+      );
+
       Logger.debug(
         `filter params:
         current time: ${currTime} UTC+0
@@ -566,6 +583,11 @@ export class QueryService {
                 ? `AND merchant_store.approved_at >= :newThisWeekDate`
                 : ''
             }
+            ${
+              isBudgetEnable
+                ? `AND merchant_store.average_price <= :budgetMaxValue`
+                : ''
+            }
             `,
           {
             active: enumStoreStatus.active,
@@ -578,6 +600,7 @@ export class QueryService {
             priceLow: priceLow,
             priceHigh: priceHigh,
             newThisWeekDate: lastWeek,
+            budgetMaxValue: budgetMaxValue,
           },
         )
         .andWhere(
