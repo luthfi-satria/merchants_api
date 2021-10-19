@@ -928,11 +928,32 @@ export class QueryService {
 
       const lat = data.location_latitude;
       const long = data.location_longitude;
-      const delivery_only = null;
       const store_category_id = null;
       const search = null;
       const radius = 25;
 
+      // data.pickup = false;
+      // if (data.pickup) {
+      //   delivery_only =
+      //     data.pickup == true
+      //       ? [
+      //           enumDeliveryType.delivery_and_pickup,
+      //           enumDeliveryType.pickup_only,
+      //         ]
+      //       : [enumDeliveryType.delivery_only];
+      // } else {
+      //   delivery_only = [
+      //     enumDeliveryType.delivery_and_pickup,
+      //     enumDeliveryType.pickup_only,
+      //     enumDeliveryType.delivery_only,
+      //   ];
+      // }
+
+      const delivery_only = [
+        enumDeliveryType.delivery_and_pickup,
+        enumDeliveryType.pickup_only,
+        enumDeliveryType.delivery_only,
+      ];
       const is24hrs = true;
       const open_24_hour = true;
       const include_closed_stores = true;
@@ -953,6 +974,18 @@ export class QueryService {
         .getRawMany();
 
       const ids = query.map((item) => item.store_id);
+
+      Logger.debug(
+        `filter params:
+        current time: ${currTime} UTC+0
+        week of day: ${weekOfDay}
+        is24hour: ${is24hrs}
+        open_24_hour: ${open_24_hour}
+        include_closed_stores: ${include_closed_stores}
+        delivery_only: ${delivery_only}
+      `,
+        'Query List Stores',
+      );
 
       const query2 = this.storeRepository
         .createQueryBuilder('merchant_store')
@@ -999,8 +1032,7 @@ export class QueryService {
         // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
 
         .andWhere(
-          `merchant_store.status = :active
-            AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
+          `(6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
             ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
             ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
             ${
@@ -1017,35 +1049,35 @@ export class QueryService {
             lat: lat,
             long: long,
           },
-        )
-        .andWhere(
-          new Brackets((qb) => {
-            if (include_closed_stores) {
-              // Tampilkan semua stores, tanpa memperhatikan jadwal operasional store
-              qb.where(`operational_hours.day_of_week = :weekOfDay`, {
-                weekOfDay: weekOfDay,
-              });
-            } else {
-              qb.where(
-                `operational_hours.day_of_week = :weekOfDay
-                  AND merchant_store.is_store_open = :is_open
-                  AND operational_hours.merchant_store_id IS NOT NULL
-                ${
-                  // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
-                  is24hrs
-                    ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
-                    : ''
-                }`,
-                {
-                  is_open: true,
-                  weekOfDay: weekOfDay,
-                  currTime: currTime,
-                  all24h: true, //niel true for query all stores
-                },
-              );
-            }
-          }),
         );
+      // .andWhere(
+      //   new Brackets((qb) => {
+      //     if (include_closed_stores) {
+      //       // Tampilkan semua stores, tanpa memperhatikan jadwal operasional store
+      //       qb.where(`operational_hours.day_of_week = :weekOfDay`, {
+      //         weekOfDay: weekOfDay,
+      //       });
+      //     } else {
+      //       qb.where(
+      //         `operational_hours.day_of_week = :weekOfDay
+      //           AND merchant_store.is_store_open = :is_open
+      //           AND operational_hours.merchant_store_id IS NOT NULL
+      //         ${
+      //           // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
+      //           is24hrs
+      //             ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
+      //             : ''
+      //         }`,
+      //         {
+      //           is_open: true,
+      //           weekOfDay: weekOfDay,
+      //           currTime: currTime,
+      //           all24h: true, //niel true for query all stores
+      //         },
+      //       );
+      //     }
+      //   }),
+      // );
 
       if (search) {
         query2.andWhere(
