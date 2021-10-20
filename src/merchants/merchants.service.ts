@@ -89,6 +89,12 @@ export class MerchantsService {
     });
   }
 
+  async findMerchantsByGroup(group_id: string): Promise<MerchantDocument[]> {
+    return this.merchantRepository.find({
+      where: { group_id: group_id },
+    });
+  }
+
   async createMerchantMerchantProfile(
     data: CreateMerchantDTO,
     user: Record<string, any>,

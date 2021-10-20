@@ -29,6 +29,7 @@ import { ListStoreDTO } from './validation/list-store.validation';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 import { CommonService } from 'src/common/common.service';
+import { GroupsService } from 'src/groups/groups.service';
 
 @Injectable()
 export class StoresService {
@@ -47,6 +48,7 @@ export class StoresService {
     private readonly storeCategoriesRepository: Repository<StoreCategoriesDocument>,
     private readonly cityService: CityService,
     private readonly commonService: CommonService,
+    private readonly groupService: GroupsService,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -465,16 +467,6 @@ export class StoresService {
     data: ListStoreDTO,
     user: Record<string, string>,
   ): Promise<Record<string, any>> {
-    let pricingTemplates = null;
-    const store_ids = [];
-    if (data.sales_channel_id) {
-      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/pricing-template/${data.sales_channel_id}`;
-      pricingTemplates = await this.commonService.getHttp(url);
-      pricingTemplates.forEach((element) => {
-        store_ids.push(element.store_id);
-      });
-    }
-    console.log('store ids ', store_ids);
     const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
@@ -533,12 +525,6 @@ export class StoresService {
         mid: user.store_id,
       });
     } else {
-      if (data.sales_channel_id) {
-        store.andWhere('ms.id in (:...mid)', {
-          mid: store_ids,
-        });
-      }
-
       if (user.level == 'merchant') {
         store.andWhere('merchant.id = :mid', {
           mid: user.merchant_id,
@@ -555,14 +541,71 @@ export class StoresService {
         });
       }
     }
+
+    if (data.sales_channel_id) {
+      const store_ids: string[] = [];
+      const pricingTemplateData = {
+        store_ids: [],
+        merchant_ids: [],
+        level: 'merchant',
+      };
+
+      if (user.level == 'store') {
+        pricingTemplateData.level = 'store';
+        pricingTemplateData.store_ids.push(user.store_id);
+      } else if (user.level == 'merchant') {
+        pricingTemplateData.merchant_ids.push(user.merchant_id);
+      } else if (user.level == 'group') {
+        if (data.merchant_id) {
+          pricingTemplateData.merchant_ids.push(data.merchant_id);
+        } else {
+          const merchants = await this.merchantService.findMerchantsByGroup(
+            user.group_id,
+          );
+          merchants.forEach((merchant) => {
+            pricingTemplateData.merchant_ids.push(merchant.id);
+          });
+        }
+      } else {
+        if (data.merchant_id) {
+          pricingTemplateData.merchant_ids.push(data.merchant_id);
+        } else if (data.group_id) {
+          const merchants = await this.merchantService.findMerchantsByGroup(
+            data.group_id,
+          );
+          merchants.forEach((merchant) => {
+            pricingTemplateData.merchant_ids.push(merchant.id);
+          });
+        } else {
+          pricingTemplateData.level = 'admin';
+        }
+      }
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/pricing-template/${data.sales_channel_id}`;
+      const pricingTemplates: any = await this.commonService.postHttp(
+        url,
+        pricingTemplateData,
+      );
+
+      if (pricingTemplates.length > 0) {
+        for (const pricingTemplate of pricingTemplates) {
+          store_ids.push(pricingTemplate.store_id);
+        }
+        store.andWhereInIds(store_ids);
+      }
+    }
+
     store
       .orderBy('ms.created_at', 'ASC')
       .offset((Number(currentPage) - 1) * perPage)
       .limit(perPage);
 
     try {
-      const totalItems = await store.getCount();
-      const list = await store.getMany();
+      const totalItems = await store.getCount().catch((err) => {
+        console.error('err ', err);
+      });
+      const list: any = await store.getMany().catch((err2) => {
+        console.error('err2 ', err2);
+      });
       list.forEach(async (element) => {
         deleteCredParam(element);
         deleteCredParam(element.merchant);
