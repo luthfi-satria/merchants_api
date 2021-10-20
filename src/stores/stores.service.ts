@@ -591,6 +591,8 @@ export class StoresService {
           store_ids.push(pricingTemplate.store_id);
         }
         store.andWhereInIds(store_ids);
+      } else {
+        store.andWhereInIds(store_ids);
       }
     }
 
