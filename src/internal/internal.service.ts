@@ -7,6 +7,8 @@ import { ResponseService } from 'src/response/response.service';
 import { IsNull, Not, Repository } from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
+import { StoresService } from 'src/stores/stores.service';
+import { CommonService } from 'src/common/common.service';
 
 @Injectable()
 export class InternalService {
@@ -20,6 +22,8 @@ export class InternalService {
     @InjectRepository(MerchantUsersDocument)
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
+    private readonly storeService: StoresService,
+    private readonly commonService: CommonService,
   ) {}
 
   async findStorebyId(id: string): Promise<StoreDocument> {
@@ -117,5 +121,21 @@ export class InternalService {
       success: true,
       message: 'SUCCESS',
     };
+  }
+
+  async updatePopulateExistingPricingTemplate(): Promise<RSuccessMessage> {
+    const findStores = await this.storeService.findMerchantStores();
+    const stores = {
+      stores: findStores,
+    };
+
+    console.log('stores ', stores);
+
+    if (stores) {
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/populate_existing_pricing_template`;
+      const results: any = await this.commonService.postHttp(url, stores);
+
+      return results;
+    }
   }
 }
