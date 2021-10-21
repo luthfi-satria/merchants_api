@@ -449,8 +449,13 @@ export class QueryService {
     }
   }
 
-  async getListQueryStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
+  async getListQueryStore(
+    data: QueryListStoreDto,
+    options: any = {},
+  ): Promise<RSuccessMessage> {
     try {
+      console.log(options);
+
       const currentPage = data.page || 1;
       const perPage = Number(data.limit) || 10;
 
@@ -869,6 +874,30 @@ export class QueryService {
       };
       const list_result = await this.fetchStore(fetchData);
       const lang = data.lang ? data.lang : 'id';
+      const price_range_id = null;
+      const sort = 'distance';
+      const order = 'asc';
+      const new_this_week = false;
+      const budget_meal = null;
+
+      const args: QueryListStoreDto = {
+        ...data,
+        distance,
+        store_category_id,
+        pickup,
+        is_24hrs,
+        include_closed_stores,
+        price_range_id,
+        sort,
+        order,
+        new_this_week,
+        budget_meal,
+      };
+      const listStores = await this.getListQueryStore(args);
+
+      if (listStores.data) {
+        console.log(listStores.data);
+      }
 
       if (user && data.search !== '' && data.search) {
         const historyKeyword: Partial<SearchHistoryKeywordDocument> = {
@@ -878,7 +907,7 @@ export class QueryService {
         };
         await this.searchHistoryKeywordDocument.save(historyKeyword);
 
-        if (list_result.total_item) {
+        if (listStores.data?.total_item) {
           const historyStore: Partial<SearchHistoryStoreDocument> = {
             store_id: list_result.items[0]?.id,
             customer_id: user.id,
