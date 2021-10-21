@@ -5,10 +5,12 @@ import {
   IsLatitude,
   IsString,
   IsNumber,
+  IsNotEmpty,
 } from 'class-validator';
 
 export class QuerySearchValidation {
   @IsString()
+  @IsNotEmpty()
   search: string;
 
   @IsString()

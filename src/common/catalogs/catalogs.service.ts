@@ -25,17 +25,22 @@ export class CatalogsService {
 
   logger = new Logger();
 
-  async getMenuByStoreId(id: string): Promise<any> {
+  async getMenuByStoreId(id: string, opt: any = {}): Promise<any> {
     try {
-      const resp = await firstValueFrom(
+      const options: any = {};
+      if (opt.search) {
+        options.search = opt.search;
+      }
+      return await firstValueFrom(
         this.httpService
           .get(
             `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/menu/${id}`,
+            {
+              params: options,
+            },
           )
           .pipe(map((resp) => resp.data)),
       );
-
-      return resp;
     } catch (e) {
       this.logger.error(
         `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/menu/${id}`,
