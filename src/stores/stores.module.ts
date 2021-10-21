@@ -16,6 +16,7 @@ import { StoreOperationalShiftDocument } from 'src/database/entities/store_opera
 import { GroupsService } from 'src/groups/groups.service';
 import { GroupUsersService } from 'src/groups/group_users.service';
 import { HashService } from 'src/hash/hash.service';
+import { InternalService } from 'src/internal/internal.service';
 import { LobService } from 'src/lob/lob.service';
 import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
@@ -69,6 +70,7 @@ import { StoresController } from './strores.controller';
     GroupsService,
     LobService,
     GroupUsersService,
+    InternalService,
   ],
   exports: [StoresService, StoreOperationalService],
 })

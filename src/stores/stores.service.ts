@@ -92,6 +92,16 @@ export class StoresService {
     });
   }
 
+  async findMerchantStores(): Promise<Partial<StoreDocument>[]> {
+    return this.storeRepository
+      .createQueryBuilder('s')
+      .select(['s.id as store_id', 's.merchant_id as merchant_id'])
+      .getRawMany()
+      .then((results) => {
+        return results;
+      });
+  }
+
   async getMerchantStoreDetailById(id: string): Promise<StoreDocument> {
     return this.storeRepository.findOne(id, {
       relations: ['operational_hours', 'service_addons'],
@@ -230,6 +240,13 @@ export class StoresService {
       .catch((e) => {
         throw e;
       });
+
+    const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/populate/pricing-template`;
+    const requestData = {
+      merchant_id: create_merchant_store_validation.merchant_id,
+      store_id: create_store.id,
+    };
+    await this.commonService.postHttp(url, requestData);
 
     return Object.assign(create_store, { operational_hours });
   }
