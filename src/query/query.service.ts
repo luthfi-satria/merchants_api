@@ -868,12 +868,13 @@ export class QueryService {
         include_closed_stores,
       };
       const list_result = await this.fetchStore(fetchData);
+      const lang = data.lang ? data.lang : 'id';
 
       if (user && data.search !== '' && data.search) {
         const historyKeyword: Partial<SearchHistoryKeywordDocument> = {
           customer_id: user.id,
           keyword: data.search,
-          lang: data.lang,
+          lang: lang,
         };
         await this.searchHistoryKeywordDocument.save(historyKeyword);
 
@@ -881,7 +882,7 @@ export class QueryService {
           const historyStore: Partial<SearchHistoryStoreDocument> = {
             store_id: list_result.items[0]?.id,
             customer_id: user.id,
-            lang: data.lang,
+            lang: lang,
           };
 
           await this.searchHistoryStoreDocument.save(historyStore);
@@ -1556,6 +1557,7 @@ export class QueryService {
       const perPage = Number(data.limit) || 10;
       const store_category_id: string = data.store_category_id || null;
       data.pickup = false;
+      data.lang = data.lang ? data.lang : 'id';
 
       // ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
       let delivery_only;
@@ -1694,19 +1696,60 @@ export class QueryService {
       // );
 
       if (search) {
-        query1.andWhere(
-          new Brackets((qb) => {
-            qb.where('merchant_store.name ilike :sname', {
-              sname: '%' + search.toLowerCase() + '%',
-            }).orWhere('catalogs_menu.name ilike :sname', {
-              sname: '%' + search.toLowerCase() + '%',
-            });
-          }),
-        );
+        query1
+          .andWhere(
+            new Brackets((qb) => {
+              qb.where('merchant_store.name ilike :sname', {
+                sname: '%' + search + '%',
+              }).orWhere('catalogs_menu.name ilike :sname', {
+                sname: '%' + search + '%',
+              });
+            }),
+          )
+
+          .addSelect(
+            `CASE
+              WHEN "merchant_store"."name" ILIKE '${
+                '%' + search.toLowerCase() + '%'
+              }' 
+              AND catalogs_menu.name  ILIKE '${
+                '%' + search.toLowerCase() + '%'
+              }' THEN '1'
+              WHEN "merchant_store"."name" ILIKE '${
+                '%' + search.toLowerCase() + '%'
+              }' THEN '2'
+              WHEN catalogs_menu.name ILIKE '${
+                '%' + search.toLowerCase() + '%'
+              }' THEN '3'
+              ELSE '4'
+          END`,
+            'priority',
+          );
+
+        // .addSelect(
+        //   `CASE
+        //     WHEN "merchant_store"."name" ILIKE '${
+        //       '%' + search.toLowerCase() + '%'
+        //     }' THEN '1'
+        //     ELSE '4'
+        // END`,
+        //   'priority',
+        // );
+
+        // .addSelect(
+        //   `CASE
+        //   WHEN catalogs_menu.name  ILIKE '${
+        //     '%' + search.toLowerCase() + '%'
+        //   }' THEN '3'
+        //     ELSE '4'
+        // END`,
+        //   'priority',
+        // );
       }
 
       query1
-        .orderBy('distance_in_km', 'ASC')
+        .orderBy('priority', 'ASC')
+        .addOrderBy('distance_in_km', 'ASC')
         .skip((currentPage - 1) * perPage)
         .take(perPage);
       const qlistStore = await query1.getManyAndCount().catch((e) => {
@@ -1725,10 +1768,6 @@ export class QueryService {
           ),
         );
       });
-
-      // const raw = await query1.getRawMany();
-
-      // console.log(raw);
 
       const [storeItems, totalItems] = qlistStore;
 
@@ -1790,12 +1829,6 @@ export class QueryService {
             });
 
           const menu_item = await this.catalogsService.getMenuByStoreId(row.id);
-
-          console.log('#MARK');
-
-          console.log(menu_item.data.items);
-
-          // console.log(row);
 
           return {
             ...row,
