@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 
 export class QuerySearchValidation {
-  @IsOptional()
+  @IsString()
   search: string;
 
   @IsString()
