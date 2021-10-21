@@ -51,6 +51,7 @@ import { ListStoreDTO } from './validation/list-store.validation';
 import { ResponseExcludeParam } from 'src/response/response_exclude_param.decorator';
 import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
+import { InternalService } from 'src/internal/internal.service';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -60,6 +61,7 @@ export class StoresController {
     private readonly storage: CommonStorageService,
     @Response() private readonly responseService: ResponseService,
     @Message() private readonly messageService: MessageService,
+    private readonly internalService: InternalService,
   ) {}
 
   @Post('stores')
@@ -355,5 +357,11 @@ export class StoresController {
     } catch (e) {
       throw e;
     }
+  }
+
+  @Post('stores/populate/existing-pricing-template')
+  @ResponseStatusCode()
+  async populateExistingPricingTemplate() {
+    return this.internalService.updatePopulateExistingPricingTemplate();
   }
 }
