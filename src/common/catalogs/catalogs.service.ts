@@ -27,23 +27,24 @@ export class CatalogsService {
 
   async getMenuByStoreId(id: string, opt: any = {}): Promise<any> {
     try {
-      const options: any = {};
+      const urlInternal = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/menu/${id}`;
+      // const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/catalogs/query/menus/${id}`;
+      const options: any = {
+        limit: 100,
+      };
       if (opt.search) {
         options.search = opt.search;
       }
       return await firstValueFrom(
         this.httpService
-          .get(
-            `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/menu/${id}`,
-            {
-              params: options,
-            },
-          )
+          .get(urlInternal, {
+            params: options,
+          })
           .pipe(map((resp) => resp.data)),
       );
     } catch (e) {
       this.logger.error(
-        `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/menu/${id}`,
+        `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/catalogs/query/menus/${id}`,
       );
       if (e.response) {
         throw new HttpException(

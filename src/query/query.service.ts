@@ -636,6 +636,14 @@ export class QueryService {
         )
         .orderBy(OrderFilter);
 
+      if (options.fetch_using_ids) {
+        if (options.fetch_using_ids.length) {
+          query1.andWhere('merchant_store.id IN (:...arr_id)', {
+            arr_id: options.fetch_using_ids,
+          });
+        }
+      }
+
       if (!options.fetch_all) {
         query1.skip((currentPage - 1) * perPage).take(perPage);
       }
@@ -860,29 +868,31 @@ export class QueryService {
     user: any,
   ): Promise<RSuccessMessage> {
     try {
-      const distance = 25;
-      const store_category_id = null;
-      const pickup = true;
-      const is_24hrs = true;
-      const include_closed_stores = true;
       const lang = data.lang ? data.lang : 'id';
-      const price_range_id = null;
-      const sort = 'distance';
-      const order = 'asc';
-      const new_this_week = false;
-      const budget_meal = null;
+      const lat = data.location_latitude;
+      const long = data.location_longitude;
+      const search =
+        data.search === '' ? null : data.search ? data.search : null;
+
       const page = data.page || 1;
       const limit = data.limit || 10;
+      const distance = 25;
+      const store_category_id = null;
+      const order = null;
+      const sort = null;
+      const price_range_id = undefined;
+      const pickup = false;
+      const is_24hrs = false;
+
+      const include_closed_stores = true;
+      const new_this_week = false;
+      const budget_meal = null;
 
       const options = {
         fetch_all: true,
       };
 
-      const search =
-        data.search === '' ? null : data.search ? data.search : null;
-
       const args: QueryListStoreDto = {
-        ...data,
         distance,
         store_category_id,
         pickup,
@@ -895,26 +905,33 @@ export class QueryService {
         budget_meal,
         lang,
         search: null,
+        limit,
+        page,
+        location_latitude: lat,
+        location_longitude: long,
       };
+
       const listStores = await this.getListQueryStore(args, options);
       let stores_with_menus: any[] = [];
 
       if (listStores.data) {
         stores_with_menus = await Promise.all(
           listStores.data.items.map(async (store: any): Promise<number> => {
-            const filter = new RegExp(`\\b${search}\\b`, 'i');
+            const filter = new RegExp(`${search}`, 'i');
             const menu_item = await this.catalogsService.getMenuByStoreId(
               store.id,
             );
+
             store.menus = [];
             store.priority = 4;
             if (filter.test(store.name)) {
               store.priority = 2;
             }
+
             menu_item.data.items.category.forEach((cat: any) => {
-              cat.menus.foreach((menu: any) => {
+              cat.menus.forEach((menu: any) => {
                 if (filter.test(menu.name)) {
-                  if (store.priority === 2) {
+                  if (store.priority === 2 || store.priority === 1) {
                     store.priority = 1;
                   } else {
                     store.priority = 3;
@@ -944,7 +961,7 @@ export class QueryService {
 
       listStores.data.items = stores_with_menus.slice(
         (page - 1) * limit,
-        (page - 1) * limit + limit - 1,
+        (page - 1) * limit + limit,
       );
 
       if (user && listStores.data.items.length) {
@@ -1024,44 +1041,50 @@ export class QueryService {
     data: QuerySearchHistoryStoresValidation,
   ): Promise<RSuccessMessage> {
     try {
-      const currentPage = data.page || 1;
-      const perPage = Number(data.limit) || 10;
-
+      const lang = 'id';
       const lat = data.location_latitude;
       const long = data.location_longitude;
-      const store_category_id = null;
       const search = null;
-      const radius = 25;
 
-      // data.pickup = false;
-      // if (data.pickup) {
-      //   delivery_only =
-      //     data.pickup == true
-      //       ? [
-      //           enumDeliveryType.delivery_and_pickup,
-      //           enumDeliveryType.pickup_only,
-      //         ]
-      //       : [enumDeliveryType.delivery_only];
-      // } else {
-      //   delivery_only = [
-      //     enumDeliveryType.delivery_and_pickup,
-      //     enumDeliveryType.pickup_only,
-      //     enumDeliveryType.delivery_only,
-      //   ];
-      // }
+      const page = data.page || 1;
+      const limit = data.limit || 10;
+      const distance = 25;
+      const store_category_id = null;
+      const order = null;
+      const sort = null;
+      const price_range_id = undefined;
+      const pickup = false;
+      const is_24hrs = false;
 
-      const delivery_only = [
-        enumDeliveryType.delivery_and_pickup,
-        enumDeliveryType.pickup_only,
-        enumDeliveryType.delivery_only,
-      ];
-      const is24hrs = true;
-      const open_24_hour = true;
       const include_closed_stores = true;
+      const new_this_week = false;
+      const budget_meal = null;
 
-      const currTime = DateTimeUtils.DateTimeToUTC(new Date());
-      const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
-      const lang = 'id';
+      const options = {
+        fetch_using_ids: [],
+      };
+
+      const args: QueryListStoreDto = {
+        distance,
+        store_category_id,
+        pickup,
+        is_24hrs,
+        include_closed_stores,
+        price_range_id,
+        sort,
+        order,
+        new_this_week,
+        budget_meal,
+        lang,
+        search: null,
+        limit,
+        page,
+        location_latitude: lat,
+        location_longitude: long,
+      };
+
+      const currentPage = data.page || 1;
+      const perPage = Number(data.limit) || 10;
 
       const query = await this.searchHistoryStoreDocument
         .createQueryBuilder('qb')
@@ -1074,225 +1097,25 @@ export class QueryService {
         .take(perPage)
         .getRawMany();
 
-      const ids = query.map((item) => item.store_id);
+      options.fetch_using_ids = query.map((item) => item.store_id);
 
-      Logger.debug(
-        `filter params:
-        current time: ${currTime} UTC+0
-        week of day: ${weekOfDay}
-        is24hour: ${is24hrs}
-        open_24_hour: ${open_24_hour}
-        include_closed_stores: ${include_closed_stores}
-        delivery_only: ${delivery_only}
-      `,
-        'Query List Stores',
-      );
+      const listStores = await this.getListQueryStore(args, options);
 
-      const query2 = this.storeRepository
-        .createQueryBuilder('merchant_store')
-        .where('merchant_store.id IN (:...arr_id)', {
-          arr_id: ids,
-        })
+      const storesSortedByDate: any[] = [];
 
-        .addSelect(
-          '(6371 * ACOS(COS(RADIANS(' +
-            lat +
-            ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
-            long +
-            ')) + SIN(RADIANS(' +
-            lat +
-            ')) * SIN(RADIANS(merchant_store.location_latitude))))',
-          'distance_in_km',
-        )
-        // --- JOIN TABLES ---
-        .leftJoinAndSelect(
-          'catalogs_menu',
-          'catalogs_menus',
-          'catalogs_menus.merchant_id = merchant_store.merchant_id',
-        )
-        .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
-        .leftJoinAndSelect(
-          'merchant_store.operational_hours',
-          'operational_hours',
-          'operational_hours.merchant_store_id = merchant_store.id',
-        )
-        .leftJoinAndSelect(
-          'operational_hours.shifts',
-          'operational_shifts',
-          'operational_shifts.store_operational_id = operational_hours.id',
-        )
-        .leftJoinAndSelect(
-          'merchant_store.store_categories',
-          'merchant_store_categories',
-        )
-        .leftJoinAndSelect(
-          'merchant_store_categories.languages',
-          'merchant_store_categories_languages',
-        )
-        // --- Filter Conditions ---
-        // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
-
-        .andWhere(
-          `(6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
-            ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
-            ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
-            ${
-              store_category_id
-                ? `AND merchant_store_categories.id = :stocat`
-                : ''
-            }`,
-          {
-            active: enumStoreStatus.active,
-            open_24_hour: open_24_hour,
-            delivery_only: delivery_only,
-            stocat: store_category_id,
-            radius: radius,
-            lat: lat,
-            long: long,
-          },
-        );
-      // .andWhere(
-      //   new Brackets((qb) => {
-      //     if (include_closed_stores) {
-      //       // Tampilkan semua stores, tanpa memperhatikan jadwal operasional store
-      //       qb.where(`operational_hours.day_of_week = :weekOfDay`, {
-      //         weekOfDay: weekOfDay,
-      //       });
-      //     } else {
-      //       qb.where(
-      //         `operational_hours.day_of_week = :weekOfDay
-      //           AND merchant_store.is_store_open = :is_open
-      //           AND operational_hours.merchant_store_id IS NOT NULL
-      //         ${
-      //           // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
-      //           is24hrs
-      //             ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
-      //             : ''
-      //         }`,
-      //         {
-      //           is_open: true,
-      //           weekOfDay: weekOfDay,
-      //           currTime: currTime,
-      //           all24h: true, //niel true for query all stores
-      //         },
-      //       );
-      //     }
-      //   }),
-      // );
-
-      if (search) {
-        query2.andWhere(
-          new Brackets((qb) => {
-            qb.where('merchant_store.name ilike :sname', {
-              sname: '%' + search.toLowerCase() + '%',
-            }).orWhere('catalogs_menus.name ilike :sname', {
-              sname: '%' + search.toLowerCase() + '%',
-            });
-          }),
-        );
-      }
-
-      query2
-        .orderBy('distance_in_km', 'ASC')
-        .skip((currentPage - 1) * perPage)
-        .take(perPage);
-      const qlistStore = await query2.getManyAndCount().catch((e) => {
-        Logger.error(e.message, '', 'QueryListStore');
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: '',
-              constraint: [
-                this.messageService.get('merchant.liststore.not_found'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
+      options.fetch_using_ids.forEach((data) => {
+        listStores.data.items.forEach((item) => {
+          if (item.id == data) {
+            storesSortedByDate.push(item);
+          }
+        });
       });
 
-      // .getRawMany();
-
-      const [storeItems, totalItems] = qlistStore;
-
-      const formattedStoredItems = await Promise.all(
-        storeItems.map(async (row: any) => {
-          // Add 'distance_in_km' attribute
-          const distance_in_km = getDistanceInKilometers(
-            parseFloat(lat),
-            parseFloat(long),
-            row.location_latitude,
-            row.location_longitude,
-          );
-
-          // Get relation of operational store & operational shift,
-          const opt_hours = await this.storeOperationalService
-            .getAllStoreScheduleByStoreId(row.id)
-            .then((res) => {
-              return res.map((e) => {
-                const dayOfWeekToWord = DateTimeUtils.convertToDayOfWeek(
-                  Number(e.day_of_week),
-                );
-                const x = new StoreOperationalHoursDocument({ ...e });
-                delete x.day_of_week;
-                return {
-                  ...x,
-                  day_of_week: dayOfWeekToWord,
-                };
-              });
-            });
-
-          // Parse Store Categories with localization category language name
-          const store_categories = row.store_categories.map((item) => {
-            const ctg_language = item.languages.find((e) => e.lang === lang);
-
-            const x = new StoreCategoriesDocument({ ...item });
-            delete x.languages;
-            return { ...x, name: ctg_language.name };
-          });
-
-          // filter logic store operational status
-          const store_operational_status = this.getStoreOperationalStatus(
-            row.is_store_open,
-            currTime,
-            weekOfDay,
-            row.operational_hours,
-          );
-
-          // Get Merchant Profile
-          const merchant = await this.merchantRepository
-            .findOne(row.merchant_id)
-            .then((result) => {
-              delete result.pic_password;
-              delete result.approved_at;
-              delete result.created_at;
-              delete result.updated_at;
-              delete result.deleted_at;
-              return result;
-            });
-
-          // Get Menus
-          const menus = row.catalogs_menus;
-
-          return {
-            ...row,
-            distance_in_km: distance_in_km,
-            store_operational_status,
-            operational_hours: opt_hours,
-            store_categories: store_categories,
-            menus: menus,
-            merchant,
-          };
-        }),
-      );
-
       const list_result: ListResponse = {
-        total_item: totalItems,
+        total_item: options.fetch_using_ids.length,
         limit: Number(perPage),
         current_page: Number(currentPage),
-        items: formattedStoredItems,
+        items: storesSortedByDate,
       };
 
       return this.responseService.success(
@@ -1621,316 +1444,6 @@ export class QueryService {
       }
     });
     return listManipulate;
-  }
-
-  async fetchStore(data: any): Promise<any> {
-    try {
-      const search =
-        data.search === '' ? null : data.search ? data.search : null;
-      const radius = data.distance || 25;
-      const lat = data.location_latitude;
-      const long = data.location_longitude;
-      const currentPage = data.page || 1;
-      const perPage = Number(data.limit) || 10;
-      const store_category_id: string = data.store_category_id || null;
-      data.pickup = false;
-      data.lang = data.lang ? data.lang : 'id';
-
-      // ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
-      let delivery_only;
-      if (data.pickup) {
-        delivery_only =
-          data.pickup == true
-            ? [
-                enumDeliveryType.delivery_and_pickup,
-                enumDeliveryType.pickup_only,
-              ]
-            : [enumDeliveryType.delivery_only];
-      } else {
-        delivery_only = [
-          enumDeliveryType.delivery_and_pickup,
-          enumDeliveryType.pickup_only,
-          enumDeliveryType.delivery_only,
-        ];
-      }
-      const is24hrs = data?.is_24hrs ? true : false;
-      const open_24_hour = data.is_24hrs ? true : false;
-      const include_closed_stores = data.include_closed_stores || true;
-
-      const currTime = DateTimeUtils.DateTimeToUTC(new Date());
-      const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
-      const lang = data.lang || 'id';
-
-      Logger.debug(
-        `filter params:
-        current time: ${currTime} UTC+0
-        week of day: ${weekOfDay}
-        is24hour: ${is24hrs}
-        open_24_hour: ${open_24_hour}
-        include_closed_stores: ${include_closed_stores}
-        delivery_only: ${delivery_only}
-      `,
-        'Query List Stores',
-      );
-
-      const query1 = this.storeRepository
-        .createQueryBuilder('merchant_store')
-        .addSelect(
-          '(6371 * ACOS(COS(RADIANS(' +
-            lat +
-            ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
-            long +
-            ')) + SIN(RADIANS(' +
-            lat +
-            ')) * SIN(RADIANS(merchant_store.location_latitude))))',
-          'distance_in_km',
-        )
-        // --- JOIN TABLES ---
-        .leftJoinAndSelect(
-          'catalogs_menu_store_availability',
-          'catalogs_menu_store_availability',
-          'catalogs_menu_store_availability.store_id = merchant_store.id',
-        )
-        .leftJoinAndSelect(
-          'catalogs_menu_price',
-          'catalogs_menu_price',
-          'catalogs_menu_price.id = catalogs_menu_store_availability.menu_price_id',
-        )
-        .leftJoinAndSelect(
-          'catalogs_menu',
-          'catalogs_menu',
-          'catalogs_menu.id = catalogs_menu_price.menu_id',
-        )
-        .addSelect('catalogs_menu.id', 'menu_ids')
-        .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
-        .leftJoinAndSelect(
-          'merchant_store.operational_hours',
-          'operational_hours',
-          'operational_hours.merchant_store_id = merchant_store.id',
-        )
-        .leftJoinAndSelect(
-          'operational_hours.shifts',
-          'operational_shifts',
-          'operational_shifts.store_operational_id = operational_hours.id',
-        )
-        .leftJoinAndSelect(
-          'merchant_store.store_categories',
-          'merchant_store_categories',
-        )
-        .leftJoinAndSelect(
-          'merchant_store_categories.languages',
-          'merchant_store_categories_languages',
-        )
-        // --- Filter Conditions ---
-        // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
-
-        .where(
-          `(6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
-            ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
-            ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
-            ${
-              store_category_id
-                ? `AND merchant_store_categories.id = :stocat`
-                : ''
-            }`,
-          {
-            active: enumStoreStatus.active,
-            open_24_hour: open_24_hour,
-            delivery_only: delivery_only,
-            stocat: store_category_id,
-            radius: radius,
-            lat: lat,
-            long: long,
-          },
-        );
-      // .andWhere(
-      //   new Brackets((qb) => {
-      //     if (include_closed_stores) {
-      //       // Tampilkan semua stores, tanpa memperhatikan jadwal operasional store
-      //       qb.where(`operational_hours.day_of_week = :weekOfDay`, {
-      //         weekOfDay: weekOfDay,
-      //       });
-      //     } else {
-      //       qb.where(
-      //         `operational_hours.day_of_week = :weekOfDay
-      //           AND merchant_store.is_store_open = :is_open
-      //           AND operational_hours.merchant_store_id IS NOT NULL
-      //         ${
-      //           // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
-      //           is24hrs == false
-      //             ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
-      //             : ''
-      //         }`,
-      //         {
-      //           is_open: true,
-      //           weekOfDay: weekOfDay,
-      //           currTime: currTime,
-      //           all24h: true, //niel true for query all stores
-      //         },
-      //       );
-      //     }
-      //   }),
-      // );
-
-      if (search) {
-        query1
-          .andWhere(
-            new Brackets((qb) => {
-              qb.where('merchant_store.name ilike :sname', {
-                sname: '%' + search + '%',
-              }).orWhere('catalogs_menu.name ilike :sname', {
-                sname: '%' + search + '%',
-              });
-            }),
-          )
-
-          .addSelect(
-            `CASE
-              WHEN "merchant_store"."name" ILIKE '${
-                '%' + search.toLowerCase() + '%'
-              }' 
-              AND catalogs_menu.name  ILIKE '${
-                '%' + search.toLowerCase() + '%'
-              }' THEN '1'
-              WHEN "merchant_store"."name" ILIKE '${
-                '%' + search.toLowerCase() + '%'
-              }' THEN '2'
-              WHEN catalogs_menu.name ILIKE '${
-                '%' + search.toLowerCase() + '%'
-              }' THEN '3'
-              ELSE '4'
-          END`,
-            'priority',
-          );
-
-        // .addSelect(
-        //   `CASE
-        //     WHEN "merchant_store"."name" ILIKE '${
-        //       '%' + search.toLowerCase() + '%'
-        //     }' THEN '1'
-        //     ELSE '4'
-        // END`,
-        //   'priority',
-        // );
-
-        // .addSelect(
-        //   `CASE
-        //   WHEN catalogs_menu.name  ILIKE '${
-        //     '%' + search.toLowerCase() + '%'
-        //   }' THEN '3'
-        //     ELSE '4'
-        // END`,
-        //   'priority',
-        // );
-      }
-
-      query1
-        .orderBy('priority', 'ASC')
-        .addOrderBy('distance_in_km', 'ASC')
-        .skip((currentPage - 1) * perPage)
-        .take(perPage);
-      const qlistStore = await query1.getManyAndCount().catch((e) => {
-        Logger.error(e.message, '', 'QueryListStore');
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: '',
-              constraint: [
-                this.messageService.get('merchant.liststore.not_found'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
-
-      const [storeItems, totalItems] = qlistStore;
-
-      // -- Formating output OR add external attribute to  output--
-      const formattedStoredItems = await Promise.all(
-        storeItems.map(async (row: any) => {
-          // Add 'distance_in_km' attribute
-          const distance_in_km = getDistanceInKilometers(
-            parseFloat(lat),
-            parseFloat(long),
-            row.location_latitude,
-            row.location_longitude,
-          );
-
-          // Get relation of operational store & operational shift,
-          const opt_hours = await this.storeOperationalService
-            .getAllStoreScheduleByStoreId(row.id)
-            .then((res) => {
-              return res.map((e) => {
-                const dayOfWeekToWord = DateTimeUtils.convertToDayOfWeek(
-                  Number(e.day_of_week),
-                );
-                const x = new StoreOperationalHoursDocument({ ...e });
-                delete x.day_of_week;
-                return {
-                  ...x,
-                  day_of_week: dayOfWeekToWord,
-                };
-              });
-            });
-
-          // Parse Store Categories with localization category language name
-          const store_categories = row.store_categories.map((item) => {
-            const ctg_language = item.languages.find((e) => e.lang === lang);
-
-            const x = new StoreCategoriesDocument({ ...item });
-            delete x.languages;
-            return { ...x, name: ctg_language.name };
-          });
-
-          // filter logic store operational status
-          const store_operational_status = this.getStoreOperationalStatus(
-            row.is_store_open,
-            currTime,
-            weekOfDay,
-            row.operational_hours,
-          );
-
-          // Get Merchant Profile
-          const merchant = await this.merchantRepository
-            .findOne(row.merchant_id)
-            .then((result) => {
-              delete result.pic_password;
-              delete result.approved_at;
-              delete result.created_at;
-              delete result.updated_at;
-              delete result.deleted_at;
-              return result;
-            });
-
-          const menu_item = await this.catalogsService.getMenuByStoreId(row.id);
-
-          return {
-            ...row,
-            distance_in_km: distance_in_km,
-            store_operational_status,
-            operational_hours: opt_hours,
-            store_categories: store_categories,
-            menus: menu_item.data.items,
-            merchant,
-          };
-        }),
-      );
-
-      const list_result: ListResponse = {
-        total_item: totalItems,
-        limit: Number(perPage),
-        current_page: Number(currentPage),
-        items: formattedStoredItems,
-      };
-
-      return list_result;
-    } catch (e) {
-      Logger.error(e.message, '', 'QUERY LIST STORE');
-      throw e;
-    }
   }
 
   async getPriceRange(): Promise<RSuccessMessage> {
