@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBooleanString,
   IsIn,
   IsNumberString,
   IsOptional,
@@ -49,4 +50,8 @@ export class ListStoreDTO {
   @IsArray()
   @IsIn(Object.values(GroupStatus), { each: true })
   statuses: GroupStatus[];
+
+  @IsOptional()
+  @IsBooleanString()
+  with_price_category: boolean;
 }

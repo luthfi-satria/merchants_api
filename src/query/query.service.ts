@@ -449,7 +449,10 @@ export class QueryService {
     }
   }
 
-  async getListQueryStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
+  async getListQueryStore(
+    data: QueryListStoreDto,
+    options: any = {},
+  ): Promise<RSuccessMessage> {
     try {
       const currentPage = data.page || 1;
       const perPage = Number(data.limit) || 10;
@@ -631,9 +634,12 @@ export class QueryService {
             }
           }),
         )
-        .orderBy(OrderFilter)
-        .skip((currentPage - 1) * perPage)
-        .take(perPage);
+        .orderBy(OrderFilter);
+
+      if (!options.fetch_all) {
+        query1.skip((currentPage - 1) * perPage).take(perPage);
+      }
+
       const qlistStore = await query1.getManyAndCount().catch((e) => {
         Logger.error(e.message, '', 'QueryListStore');
         throw new BadRequestException(
@@ -859,29 +865,101 @@ export class QueryService {
       const pickup = true;
       const is_24hrs = true;
       const include_closed_stores = true;
-      const fetchData: any = {
+      const lang = data.lang ? data.lang : 'id';
+      const price_range_id = null;
+      const sort = 'distance';
+      const order = 'asc';
+      const new_this_week = false;
+      const budget_meal = null;
+      const page = data.page || 1;
+      const limit = data.limit || 10;
+
+      const options = {
+        fetch_all: true,
+      };
+
+      const search =
+        data.search === '' ? null : data.search ? data.search : null;
+
+      const args: QueryListStoreDto = {
         ...data,
         distance,
         store_category_id,
         pickup,
         is_24hrs,
         include_closed_stores,
+        price_range_id,
+        sort,
+        order,
+        new_this_week,
+        budget_meal,
+        lang,
+        search: null,
       };
-      const list_result = await this.fetchStore(fetchData);
+      const listStores = await this.getListQueryStore(args, options);
+      let stores_with_menus: any[] = [];
 
-      if (user && data.search !== '' && data.search) {
+      if (listStores.data) {
+        stores_with_menus = await Promise.all(
+          listStores.data.items.map(async (store: any): Promise<number> => {
+            const filter = new RegExp(`\\b${search}\\b`, 'i');
+            const menu_item = await this.catalogsService.getMenuByStoreId(
+              store.id,
+            );
+            store.menus = [];
+            store.priority = 4;
+            if (filter.test(store.name)) {
+              store.priority = 2;
+            }
+            menu_item.data.items.category.forEach((cat: any) => {
+              cat.menus.foreach((menu: any) => {
+                if (filter.test(menu.name)) {
+                  if (store.priority === 2) {
+                    store.priority = 1;
+                  } else {
+                    store.priority = 3;
+                  }
+                  store.menus.push(menu);
+                }
+              });
+            });
+
+            return store;
+          }),
+        );
+      }
+
+      stores_with_menus = stores_with_menus.filter(
+        (item) => item.priority !== 4,
+      );
+
+      stores_with_menus.sort(
+        (a, b) =>
+          a.priority * 100 +
+          a.distance_in_km -
+          (b.priority * 100 + b.distance_in_km),
+      );
+
+      listStores.data.total_item = stores_with_menus.length;
+
+      listStores.data.items = stores_with_menus.slice(
+        (page - 1) * limit,
+        (page - 1) * limit + limit - 1,
+      );
+
+      if (user && listStores.data.items.length) {
         const historyKeyword: Partial<SearchHistoryKeywordDocument> = {
           customer_id: user.id,
           keyword: data.search,
-          lang: data.lang,
+          lang: lang,
         };
         await this.searchHistoryKeywordDocument.save(historyKeyword);
 
-        if (list_result.total_item) {
+        if (listStores.data?.total_item) {
           const historyStore: Partial<SearchHistoryStoreDocument> = {
-            store_id: list_result.items[0]?.id,
+            store_id: stores_with_menus[0].id,
             customer_id: user.id,
-            lang: data.lang,
+            lang: lang,
           };
 
           await this.searchHistoryStoreDocument.save(historyStore);
@@ -891,7 +969,7 @@ export class QueryService {
       return this.responseService.success(
         true,
         this.messageService.get('merchant.liststore.success'),
-        list_result,
+        listStores,
       );
     } catch (e) {
       Logger.error(e.message, '', 'QUERY LIST STORE');
@@ -1556,6 +1634,7 @@ export class QueryService {
       const perPage = Number(data.limit) || 10;
       const store_category_id: string = data.store_category_id || null;
       data.pickup = false;
+      data.lang = data.lang ? data.lang : 'id';
 
       // ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
       let delivery_only;
@@ -1694,19 +1773,60 @@ export class QueryService {
       // );
 
       if (search) {
-        query1.andWhere(
-          new Brackets((qb) => {
-            qb.where('merchant_store.name ilike :sname', {
-              sname: '%' + search.toLowerCase() + '%',
-            }).orWhere('catalogs_menu.name ilike :sname', {
-              sname: '%' + search.toLowerCase() + '%',
-            });
-          }),
-        );
+        query1
+          .andWhere(
+            new Brackets((qb) => {
+              qb.where('merchant_store.name ilike :sname', {
+                sname: '%' + search + '%',
+              }).orWhere('catalogs_menu.name ilike :sname', {
+                sname: '%' + search + '%',
+              });
+            }),
+          )
+
+          .addSelect(
+            `CASE
+              WHEN "merchant_store"."name" ILIKE '${
+                '%' + search.toLowerCase() + '%'
+              }' 
+              AND catalogs_menu.name  ILIKE '${
+                '%' + search.toLowerCase() + '%'
+              }' THEN '1'
+              WHEN "merchant_store"."name" ILIKE '${
+                '%' + search.toLowerCase() + '%'
+              }' THEN '2'
+              WHEN catalogs_menu.name ILIKE '${
+                '%' + search.toLowerCase() + '%'
+              }' THEN '3'
+              ELSE '4'
+          END`,
+            'priority',
+          );
+
+        // .addSelect(
+        //   `CASE
+        //     WHEN "merchant_store"."name" ILIKE '${
+        //       '%' + search.toLowerCase() + '%'
+        //     }' THEN '1'
+        //     ELSE '4'
+        // END`,
+        //   'priority',
+        // );
+
+        // .addSelect(
+        //   `CASE
+        //   WHEN catalogs_menu.name  ILIKE '${
+        //     '%' + search.toLowerCase() + '%'
+        //   }' THEN '3'
+        //     ELSE '4'
+        // END`,
+        //   'priority',
+        // );
       }
 
       query1
-        .orderBy('distance_in_km', 'ASC')
+        .orderBy('priority', 'ASC')
+        .addOrderBy('distance_in_km', 'ASC')
         .skip((currentPage - 1) * perPage)
         .take(perPage);
       const qlistStore = await query1.getManyAndCount().catch((e) => {
@@ -1725,10 +1845,6 @@ export class QueryService {
           ),
         );
       });
-
-      // const raw = await query1.getRawMany();
-
-      // console.log(raw);
 
       const [storeItems, totalItems] = qlistStore;
 
@@ -1790,12 +1906,6 @@ export class QueryService {
             });
 
           const menu_item = await this.catalogsService.getMenuByStoreId(row.id);
-
-          console.log('#MARK');
-
-          console.log(menu_item.data.items);
-
-          // console.log(row);
 
           return {
             ...row,

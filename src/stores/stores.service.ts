@@ -30,6 +30,8 @@ import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 import { CommonService } from 'src/common/common.service';
 import { GroupsService } from 'src/groups/groups.service';
+import { CatalogsService } from 'src/common/catalogs/catalogs.service';
+import _ from 'lodash';
 
 @Injectable()
 export class StoresService {
@@ -49,6 +51,7 @@ export class StoresService {
     private readonly cityService: CityService,
     private readonly commonService: CommonService,
     private readonly groupService: GroupsService,
+    private readonly commonCatalogService: CatalogsService,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -647,12 +650,33 @@ export class StoresService {
         return row;
       });
 
-      return {
+      const response = {
         total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
         items: list,
       };
+
+      if (!data.with_price_category) {
+        return response;
+      }
+
+      const merchantIds: string[] = [];
+      list.forEach((element) => {
+        merchantIds.push(element.merchant_id);
+      });
+      const priceCategory =
+        await this.commonCatalogService.getPriceCategoryByMerchantIds(
+          merchantIds,
+        );
+      for (const key in list) {
+        list[key].price_category = _.find(priceCategory, {
+          merchant_id: list[key].merchant_id,
+        });
+      }
+
+      response.items = list;
+      return response;
     } catch (error) {
       console.log(
         '===========================Start Database error=================================\n',
