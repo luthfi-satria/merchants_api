@@ -1076,7 +1076,7 @@ export class QueryService {
         new_this_week,
         budget_meal,
         lang,
-        search: null,
+        search,
         limit,
         page,
         location_latitude: lat,
