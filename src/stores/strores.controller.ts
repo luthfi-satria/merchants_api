@@ -358,10 +358,4 @@ export class StoresController {
       throw e;
     }
   }
-
-  @Post('stores/populate/existing-pricing-template')
-  @ResponseStatusCode()
-  async populateExistingPricingTemplate() {
-    return this.internalService.updatePopulateExistingPricingTemplate();
-  }
 }

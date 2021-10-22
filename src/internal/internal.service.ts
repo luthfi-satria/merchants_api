@@ -129,8 +129,6 @@ export class InternalService {
       stores: findStores,
     };
 
-    console.log('stores ', stores);
-
     if (stores) {
       const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/populate_existing_pricing_template`;
       const results: any = await this.commonService.postHttp(url, stores);

@@ -194,6 +194,14 @@ export class StoresService {
       );
     }
 
+    let flagCreatePricingTemplate = false;
+    const countStore = await this.storeRepository.count({
+      where: { merchant_id: create_merchant_store_validation.merchant_id },
+    });
+    if (countStore == 0) {
+      flagCreatePricingTemplate = true;
+    }
+
     if (
       user.user_type != 'admin' ||
       (user.user_type == 'admin' && merchant.status != 'DRAFT')
@@ -241,12 +249,14 @@ export class StoresService {
         throw e;
       });
 
-    const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/populate/pricing-template`;
-    const requestData = {
-      merchant_id: create_merchant_store_validation.merchant_id,
-      store_id: create_store.id,
-    };
-    await this.commonService.postHttp(url, requestData);
+    if (flagCreatePricingTemplate) {
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/populate/pricing-template`;
+      const requestData = {
+        merchant_id: create_merchant_store_validation.merchant_id,
+        store_id: create_store.id,
+      };
+      await this.commonService.postHttp(url, requestData);
+    }
 
     return Object.assign(create_store, { operational_hours });
   }
