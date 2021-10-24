@@ -434,6 +434,12 @@ export class QueryService {
               return result;
             });
 
+          // Get Price Symbol
+          const priceRange = await this.priceRangeService.getPriceRangeByPrice(
+            row.average_price,
+          );
+          const price_symbol = priceRange ? priceRange.symbol : null;
+
           return {
             ...row,
             operational_hours: opt_hours,
@@ -441,6 +447,7 @@ export class QueryService {
             merchant,
             store_operational_status,
             distance_in_km,
+            price_symbol,
           };
         });
     } catch (e) {
@@ -724,6 +731,12 @@ export class QueryService {
               return result;
             });
 
+          // Get Price Symbol
+          const priceRange = await this.priceRangeService.getPriceRangeByPrice(
+            row.average_price,
+          );
+          const price_symbol = priceRange ? priceRange.symbol : null;
+
           return {
             ...row,
             distance_in_km: distance_in_km,
@@ -731,6 +744,7 @@ export class QueryService {
             operational_hours: opt_hours,
             store_categories: store_categories,
             merchant,
+            price_symbol,
           };
         }),
       );
