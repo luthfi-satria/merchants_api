@@ -46,6 +46,10 @@ export class QueryListStoreDto extends LocationDto {
   @IsOptional()
   store_category_id: string;
 
+  @IsUUID()
+  @IsOptional()
+  merchant_id: string;
+
   @IsBoolean()
   @IsOptional()
   @Transform(({ value }) => JSON.parse(value))

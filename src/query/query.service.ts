@@ -468,6 +468,7 @@ export class QueryService {
       const lat = data.location_latitude;
       const long = data.location_longitude;
       const store_category_id: string = data.store_category_id || null;
+      const merchant_id: string = data.merchant_id || null;
 
       // Apply dynamic Sort & order by
       const orderBy = data.order || null;
@@ -524,6 +525,7 @@ export class QueryService {
         open_24_hour: ${open_24_hour}
         include_closed_stores: ${include_closed_stores}
         delivery_only: ${delivery_only}
+        merchant_id: ${merchant_id}
         is_filter_price: ${is_filter_price}
         prices_list_low: ${priceLow}
         prices_list_high: ${priceHigh}
@@ -579,6 +581,9 @@ export class QueryService {
                 : ''
             }
             ${
+              merchant_id ? `AND merchant_store.merchant_id = :merchant_id` : ''
+            }
+            ${
               is_filter_price
                 ? `AND merchant_store.average_price >= ANY(:priceLow) `
                 : ''
@@ -604,6 +609,7 @@ export class QueryService {
             open_24_hour: open_24_hour,
             delivery_only: delivery_only,
             stocat: store_category_id,
+            merchant_id: merchant_id,
             radius: radius,
             lat: lat,
             long: long,
@@ -892,6 +898,7 @@ export class QueryService {
       const limit = data.limit || 10;
       const distance = 25;
       const store_category_id = null;
+      const merchant_id = null;
       const order = null;
       const sort = null;
       const price_range_id = undefined;
@@ -909,6 +916,7 @@ export class QueryService {
       const args: QueryListStoreDto = {
         distance,
         store_category_id,
+        merchant_id,
         pickup,
         is_24hrs,
         include_closed_stores,
@@ -1064,6 +1072,7 @@ export class QueryService {
       const limit = data.limit || 10;
       const distance = 25;
       const store_category_id = null;
+      const merchant_id = null;
       const order = null;
       const sort = null;
       const price_range_id = undefined;
@@ -1081,6 +1090,7 @@ export class QueryService {
       const args: QueryListStoreDto = {
         distance,
         store_category_id,
+        merchant_id,
         pickup,
         is_24hrs,
         include_closed_stores,
