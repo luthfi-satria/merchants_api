@@ -66,9 +66,15 @@ export class InternalService {
 
   async findMerchantbyId(id: string): Promise<MerchantDocument> {
     return await this.merchantRepository
-      .findOne({
-        where: { id: id },
-      })
+      .createQueryBuilder('merchant')
+      .leftJoinAndSelect(
+        'merchant.stores',
+        'stores',
+        'stores.status = :sstatus',
+        { sstatus: 'ACTIVE' },
+      )
+      .where('merchant.id = :mid', { mid: id })
+      .getOne()
       .then((result) => {
         if (!result) {
           throw new BadRequestException(

@@ -6,10 +6,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { GroupDocument } from './group.entity';
+import { StoreDocument } from './store.entity';
 
 export enum MerchantStatus {
   Draft = 'DRAFT',
@@ -117,6 +119,9 @@ export class MerchantDocument {
   @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants)
   @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })
   group: GroupDocument;
+
+  @OneToMany(() => StoreDocument, (store) => store.merchant)
+  stores: StoreDocument[];
 
   constructor(init?: Partial<MerchantDocument>) {
     Object.assign(this, init);
