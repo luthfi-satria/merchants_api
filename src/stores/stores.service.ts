@@ -673,7 +673,7 @@ export class StoresService {
         if (idx != -1) {
           if (!list[idx].price_category) {
             delete priceCategory.store_id;
-            list[idx].price_categories = priceCategory;
+            list[idx].price_category = priceCategory;
           }
         }
         // const idy = _.findIndex(list[idx].price_categories, function (ix: any) {
