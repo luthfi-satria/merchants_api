@@ -671,18 +671,18 @@ export class StoresService {
         });
 
         if (idx != -1) {
-          if (!list[idx].price_categories) {
-            list[idx].price_categories = [];
+          if (!list[idx].price_category) {
+            list[idx].price_categories = {};
           }
         }
-        const idy = _.findIndex(list[idx].price_categories, function (ix: any) {
-          return ix.id == priceCategory.id;
-        });
+        // const idy = _.findIndex(list[idx].price_categories, function (ix: any) {
+        //   return ix.id == priceCategory.id;
+        // });
 
-        if (idy == -1) {
-          delete priceCategory.store_id;
-          list[idx].price_categories.push(priceCategory);
-        }
+        // if (idy == -1) {
+        //   delete priceCategory.store_id;
+        //   list[idx].price_categories.push(priceCategory);
+        // }
       }
       // for (const key in list) {
       //   list[key].price_category = _.find(priceCategory, {
