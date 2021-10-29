@@ -12,7 +12,10 @@ import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { Response } from 'src/response/response.decorator';
 import { AxiosResponse } from 'axios';
-import { PriceCategoryDTO } from './dto/price_category.dto';
+import {
+  PriceCategoryDTO,
+  PriceCategoryStoreDTO,
+} from './dto/price_category.dto';
 
 @Injectable()
 export class CatalogsService {
@@ -88,6 +91,49 @@ export class CatalogsService {
     } catch (e) {
       this.logger.error(
         `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/price-category`,
+      );
+      if (e.response) {
+        throw new HttpException(
+          e.response.data.message,
+          e.response.data.statusCode,
+        );
+      } else {
+        throw new InternalServerErrorException();
+      }
+    }
+  }
+
+  async getPriceCategoryByStoreIds(
+    storeIds: string[],
+  ): Promise<PriceCategoryStoreDTO[]> {
+    try {
+      if (!storeIds) {
+        return null;
+      }
+      const params = {
+        store_ids: storeIds,
+      };
+      const headerRequest = {
+        'Content-Type': 'application/json',
+      };
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/store/price-category`;
+      const post_request = this.httpService
+        .post(url, params, { headers: headerRequest })
+        .pipe(
+          map((axiosResponse: AxiosResponse) => {
+            return axiosResponse.data;
+          }),
+        );
+      const response: {
+        success: string;
+        message: string;
+        data: PriceCategoryStoreDTO[];
+      } = await lastValueFrom(post_request);
+
+      return response.data;
+    } catch (e) {
+      this.logger.error(
+        `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/store/price-category`,
       );
       if (e.response) {
         throw new HttpException(
