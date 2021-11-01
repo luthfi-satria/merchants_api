@@ -34,7 +34,7 @@ export class InternalController {
   @Get('merchants/:id')
   @ResponseStatusCode()
   async getMerchantId(@Param('id') id: string): Promise<any> {
-    return await this.internalService.findMerchantbyId(id);
+    return this.internalService.findMerchantbyId(id);
   }
 
   @Post('merchants/stores/average-price')

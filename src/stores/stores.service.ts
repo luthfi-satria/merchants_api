@@ -620,10 +620,8 @@ export class StoresService {
         for (const pricingTemplate of pricingTemplates) {
           store_ids.push(pricingTemplate.store_id);
         }
-        store.andWhereInIds(store_ids);
-      } else {
-        store.andWhereInIds(store_ids);
       }
+      store.andWhereInIds(store_ids);
     }
 
     store
@@ -661,19 +659,37 @@ export class StoresService {
         return response;
       }
 
-      const merchantIds: string[] = [];
+      const storeIds: string[] = [];
       list.forEach((element) => {
-        merchantIds.push(element.merchant_id);
+        storeIds.push(element.id);
       });
-      const priceCategory =
-        await this.commonCatalogService.getPriceCategoryByMerchantIds(
-          merchantIds,
-        );
-      for (const key in list) {
-        list[key].price_category = _.find(priceCategory, {
-          merchant_id: list[key].merchant_id,
+      const priceCategories =
+        await this.commonCatalogService.getPriceCategoryByStoreIds(storeIds);
+      for (const priceCategory of priceCategories) {
+        const idx = _.findIndex(list, function (ix: any) {
+          return ix.id == priceCategory.store_id;
         });
+
+        if (idx != -1) {
+          if (!list[idx].price_category) {
+            delete priceCategory.store_id;
+            list[idx].price_category = priceCategory;
+          }
+        }
+        // const idy = _.findIndex(list[idx].price_categories, function (ix: any) {
+        //   return ix.id == priceCategory.id;
+        // });
+
+        // if (idy == -1) {
+        //   delete priceCategory.store_id;
+        //   list[idx].price_categories.push(priceCategory);
+        // }
       }
+      // for (const key in list) {
+      //   list[key].price_category = _.find(priceCategory, {
+      //     store_id: list[key].id,
+      //   });
+      // }
 
       response.items = list;
       return response;
