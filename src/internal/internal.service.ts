@@ -4,11 +4,12 @@ import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { IsNull, Not, Repository } from 'typeorm';
+import { Brackets, IsNull, Not, Repository } from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoresService } from 'src/stores/stores.service';
 import { CommonService } from 'src/common/common.service';
+import { deleteCredParam } from 'src/utils/general-utils';
 
 @Injectable()
 export class InternalService {
@@ -64,15 +65,113 @@ export class InternalService {
       });
   }
 
+  async listStores(data: any): Promise<Record<string, any>> {
+    const search = data.search || '';
+    const status = data.status;
+
+    const store = this.storeRepository
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.merchant', 'merchant')
+      .leftJoinAndSelect('merchant.group', 'group')
+      .where('merchant.id = :mid', {
+        mid: data.merchant_id,
+      });
+
+    if (search) {
+      store.andWhere(
+        new Brackets((qb) => {
+          qb.where('ms.name ilike :mname', {
+            mname: '%' + search.toLowerCase() + '%',
+          });
+          qb.orWhere('ms.phone ilike :sname', {
+            sname: '%' + search.toLowerCase() + '%',
+          });
+          qb.orWhere('merchant.name ilike :bname', {
+            bname: '%' + search.toLowerCase() + '%',
+          });
+          qb.orWhere('group.name ilike :gname', {
+            gname: '%' + search.toLowerCase() + '%',
+          });
+        }),
+      );
+    }
+
+    if (data.status) {
+      store.andWhere('ms.status = :status', {
+        status: status,
+      });
+    }
+
+    if (data.sales_channel_id) {
+      const store_ids: string[] = [];
+      const pricingTemplateData = {
+        store_ids: [],
+        merchant_ids: [],
+        level: 'merchant',
+      };
+
+      if (data.merchant_id) {
+        pricingTemplateData.merchant_ids.push(data.merchant_id);
+      }
+
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/pricing-template/${data.sales_channel_id}`;
+      const pricingTemplates: any = await this.commonService.postHttp(
+        url,
+        pricingTemplateData,
+      );
+
+      if (pricingTemplates.length > 0) {
+        for (const pricingTemplate of pricingTemplates) {
+          store_ids.push(pricingTemplate.store_id);
+        }
+      }
+      store.andWhereInIds(store_ids);
+    }
+
+    try {
+      const totalItems = await store.getCount().catch((err) => {
+        console.error('err ', err);
+      });
+      const list: any = await store.getMany().catch((err2) => {
+        console.error('err2 ', err2);
+      });
+      list.forEach(async (element) => {
+        deleteCredParam(element);
+        deleteCredParam(element.merchant);
+        const row = deleteCredParam(element.merchant.group);
+        if (row.service_addon) {
+          row.service_addon.forEach((sao: any) => {
+            deleteCredParam(sao);
+          });
+        }
+        return row;
+      });
+
+      const response = {
+        total_item: totalItems,
+        items: list,
+      };
+
+      if (!data.with_price_category) {
+        return response;
+      }
+
+      response.items = list;
+      return response;
+    } catch (error) {
+      console.log(
+        '===========================Start Database error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Database error==================================',
+      );
+    }
+  }
+
   async findMerchantbyId(id: string): Promise<MerchantDocument> {
-    return await this.merchantRepository
+    return this.merchantRepository
       .createQueryBuilder('merchant')
-      .leftJoinAndSelect(
-        'merchant.stores',
-        'stores',
-        'stores.status = :sstatus',
-        { sstatus: 'ACTIVE' },
-      )
       .where('merchant.id = :mid', { mid: id })
       .getOne()
       .then((result) => {

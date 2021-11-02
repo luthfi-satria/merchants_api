@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Logger, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CommonStoresService } from 'src/common/own/stores.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
@@ -23,6 +31,12 @@ export class InternalController {
       storeBatchDTO.store_ids,
       storeBatchDTO.user,
     );
+  }
+
+  @Get('merchants/stores')
+  @ResponseStatusCode()
+  async listStores(@Query() data: any): Promise<any> {
+    return this.internalService.listStores(data);
   }
 
   @Get('merchants/stores/:id')
