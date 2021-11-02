@@ -270,7 +270,7 @@ export class MerchantUsersService {
       // biarkan tanpa await karena dilakukan secara asynchronous
       this.notificationService.sendEmail(
         merchantUser.email,
-        'Reset Password',
+        'Merubah Email',
         '',
         `
       <p>Silahkan klik link berikut untuk mereset password Anda,</p>

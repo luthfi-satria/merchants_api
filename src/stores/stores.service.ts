@@ -95,6 +95,14 @@ export class StoresService {
     });
   }
 
+  async findMerchantStoreByCriteria(
+    data: Partial<StoreDocument>,
+  ): Promise<StoreDocument[]> {
+    return this.storeRepository.find({
+      where: data,
+    });
+  }
+
   async findMerchantStores(): Promise<Partial<StoreDocument>[]> {
     return this.storeRepository
       .createQueryBuilder('s')
@@ -676,21 +684,7 @@ export class StoresService {
             list[idx].price_category = priceCategory;
           }
         }
-        // const idy = _.findIndex(list[idx].price_categories, function (ix: any) {
-        //   return ix.id == priceCategory.id;
-        // });
-
-        // if (idy == -1) {
-        //   delete priceCategory.store_id;
-        //   list[idx].price_categories.push(priceCategory);
-        // }
       }
-      // for (const key in list) {
-      //   list[key].price_category = _.find(priceCategory, {
-      //     store_id: list[key].id,
-      //   });
-      // }
-
       response.items = list;
       return response;
     } catch (error) {

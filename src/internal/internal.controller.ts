@@ -4,6 +4,9 @@ import { ResponseStatusCode } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { StoreBatchDTO } from './dto/store_batch.dto';
 import { InternalService } from './internal.service';
+import { Message } from 'src/message/message.decorator';
+import { MessageService } from 'src/message/message.service';
+import { StoreDocument } from 'src/database/entities/store.entity';
 
 @Controller('api/v1/internal')
 export class InternalController {
@@ -11,6 +14,7 @@ export class InternalController {
     private readonly internalService: InternalService,
     private readonly responseService: ResponseService,
     private readonly commonStoreService: CommonStoresService,
+    @Message() private readonly messageService: MessageService,
   ) {}
 
   @Post('/merchants/stores/batchs')
@@ -55,6 +59,24 @@ export class InternalController {
     } catch (e) {
       Logger.error(`ERROR ${e.message} `, '', 'Internal Check Active Role');
       throw e;
+    }
+  }
+
+  @Get('stores/active/:mid')
+  @ResponseStatusCode()
+  async getStoresActiveByMerchantId(
+    @Param('mid') mid: string,
+  ): Promise<Record<string, StoreDocument[]>> {
+    try {
+      const result = await this.internalService.findStoreActivebyMerchantId(
+        mid,
+      );
+      return {
+        stores: result,
+      };
+    } catch (err) {
+      console.error(err);
+      throw err;
     }
   }
 }
