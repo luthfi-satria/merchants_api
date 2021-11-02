@@ -165,12 +165,10 @@ export class GroupsService {
     updateGroupDTO: UpdateGroupDTO,
     id: string,
   ): Promise<GroupDocument> {
-    console.log('request ', updateGroupDTO);
     const group = await this.groupRepository.findOne({
       relations: ['users'],
       where: { id },
     });
-
     // group.users = [];
     // const update_director: Partial<GroupUser> = {
     //   group_id: id,
