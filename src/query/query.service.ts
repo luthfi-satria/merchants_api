@@ -898,28 +898,27 @@ export class QueryService {
       const lang = data.lang ? data.lang : 'id';
       const lat = data.location_latitude;
       const long = data.location_longitude;
-      const search =
-        data.search === '' ? null : data.search ? data.search : null;
-
       const page = data.page || 1;
       const limit = data.limit || 10;
-      const distance = 25;
-      const store_category_id = null;
-      const merchant_id = null;
-      const order = null;
-      const sort = null;
-      const price_range_id = undefined;
-      const pickup = false;
-      const is_24hrs = false;
-
-      const include_closed_stores = true;
-      const include_inactive_stores = true;
-      const new_this_week = false;
-      const budget_meal = null;
+      const distance = data.distance || 25;
+      const store_category_id = data.store_category_id || null;
+      const merchant_id = data.merchant_id || null;
+      const order = data.order || null;
+      const sort = data.sort || null;
+      const price_range_id = data.price_range_id || null; //HANDLE ARRAY!
+      const pickup = data.pickup || false;
+      const is_24hrs = data.is_24hrs || false;
+      const include_closed_stores = data.include_closed_stores || false;
+      const new_this_week = data.new_this_week || false;
+      const budget_meal = data.budget_meal || false;
+      const include_inactive_stores = data.include_inactive_stores || false;
 
       const options = {
         fetch_all: true,
       };
+
+      let search = data.search || null;
+      search = search === '' ? null : search;
 
       const args: QueryListStoreDto = {
         distance,
@@ -1014,11 +1013,7 @@ export class QueryService {
         }
       }
 
-      return this.responseService.success(
-        true,
-        this.messageService.get('merchant.liststore.success'),
-        listStores,
-      );
+      return listStores;
     } catch (e) {
       Logger.error(e.message, '', 'QUERY LIST STORE');
       throw e;
@@ -1084,14 +1079,14 @@ export class QueryService {
       const merchant_id = null;
       const order = null;
       const sort = null;
-      const price_range_id = undefined;
+      const price_range_id = null;
       const pickup = false;
       const is_24hrs = false;
 
       const include_closed_stores = true;
       const include_inactive_stores = true;
       const new_this_week = false;
-      const budget_meal = null;
+      const budget_meal = false;
 
       const options = {
         fetch_using_ids: [],
