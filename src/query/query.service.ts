@@ -789,7 +789,9 @@ export class QueryService {
     );
 
     const respectShiftTime = isCurrentDay.shifts.find((e) =>
-      currTime >= e.open_hour && currTime < e.close_hour ? true : false,
+      currTime >= e.open_hour && currTime < e.close_hour && e.is_open
+        ? true
+        : false,
     );
 
     Logger.debug(
