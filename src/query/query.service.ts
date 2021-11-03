@@ -742,7 +742,6 @@ export class QueryService {
             row.average_price,
           );
           const price_symbol = priceRange ? priceRange.symbol : null;
-          const is_operational = store_operational_status;
 
           return {
             ...row,
@@ -752,7 +751,6 @@ export class QueryService {
             store_categories: store_categories,
             merchant,
             price_symbol,
-            is_operational,
           };
         }),
       );
@@ -895,21 +893,20 @@ export class QueryService {
       const long = data.location_longitude;
       const search =
         data.search === '' ? null : data.search ? data.search : null;
-
       const page = data.page || 1;
       const limit = data.limit || 10;
-      const distance = 25;
-      const store_category_id = null;
-      const merchant_id = null;
-      const order = null;
-      const sort = null;
-      const price_range_id = undefined;
-      const pickup = false;
-      const is_24hrs = false;
-
-      const include_closed_stores = true;
-      const new_this_week = false;
-      const budget_meal = null;
+      const distance = data.distance || 25;
+      const store_category_id = data.store_category_id || null;
+      const merchant_id = data.merchant_id || null;
+      const order = data.order || 'desc';
+      const sort = data.sort || 'price';
+      const price_range_id = undefined; //HANDLE ARRAY!
+      const pickup = data.pickup || true;
+      const is_24hrs = data.is_24hrs || true;
+      const include_closed_stores = data.include_closed_stores || true;
+      const new_this_week = data.new_this_week || true;
+      const budget_meal = data.budget_meal || true;
+      const include_inactive_stores = data.include_inactive_stores || false;
 
       const options = {
         fetch_all: true,
@@ -933,6 +930,7 @@ export class QueryService {
         page,
         location_latitude: lat,
         location_longitude: long,
+        include_inactive_stores,
       };
 
       const listStores = await this.getListQueryStore(args, options);
@@ -1084,6 +1082,7 @@ export class QueryService {
       const include_closed_stores = true;
       const new_this_week = false;
       const budget_meal = null;
+      const include_inactive_stores = false;
 
       const options = {
         fetch_using_ids: [],
@@ -1107,6 +1106,7 @@ export class QueryService {
         page,
         location_latitude: lat,
         location_longitude: long,
+        include_inactive_stores,
       };
 
       const currentPage = data.page || 1;
