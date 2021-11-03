@@ -789,15 +789,15 @@ export class QueryService {
     );
 
     const respectShiftTime = isCurrentDay.shifts.find((e) =>
-      currTime >= e.open_hour && currTime < e.close_hour && e.is_open
-        ? true
-        : false,
+      currTime >= e.open_hour && currTime < e.close_hour ? true : false,
     );
 
     Logger.debug(
       `Get store_operational_status(store open: ${is_store_status} && in_operational_time ${respectShiftTime})`,
     );
-    return is_store_status && respectShiftTime !== null ? true : false;
+    return is_store_status && respectShiftTime !== null && isCurrentDay.is_open
+      ? true
+      : false;
   }
 
   async listStoreCategories(
