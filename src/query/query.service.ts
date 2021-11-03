@@ -469,6 +469,7 @@ export class QueryService {
       const long = data.location_longitude;
       const store_category_id: string = data.store_category_id || null;
       const merchant_id: string = data.merchant_id || null;
+      const include_inactive_stores = data.include_inactive_stores || false;
 
       // Apply dynamic Sort & order by
       const orderBy = data.order || null;
@@ -571,7 +572,11 @@ export class QueryService {
         // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
 
         .where(
-          `merchant_store.status = :active
+          `(merchant_store.status = :active ${
+            include_inactive_stores
+              ? "OR merchant_store.status = 'INACTIVE' "
+              : ''
+          })
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
             ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
             ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
@@ -891,26 +896,27 @@ export class QueryService {
       const lang = data.lang ? data.lang : 'id';
       const lat = data.location_latitude;
       const long = data.location_longitude;
-      const search =
-        data.search === '' ? null : data.search ? data.search : null;
       const page = data.page || 1;
       const limit = data.limit || 10;
       const distance = data.distance || 25;
       const store_category_id = data.store_category_id || null;
       const merchant_id = data.merchant_id || null;
-      const order = data.order || 'desc';
-      const sort = data.sort || 'price';
-      const price_range_id = undefined; //HANDLE ARRAY!
-      const pickup = data.pickup || true;
-      const is_24hrs = data.is_24hrs || true;
-      const include_closed_stores = data.include_closed_stores || true;
-      const new_this_week = data.new_this_week || true;
-      const budget_meal = data.budget_meal || true;
+      const order = data.order || null;
+      const sort = data.sort || null;
+      const price_range_id = data.price_range_id || null; //HANDLE ARRAY!
+      const pickup = data.pickup || false;
+      const is_24hrs = data.is_24hrs || false;
+      const include_closed_stores = data.include_closed_stores || false;
+      const new_this_week = data.new_this_week || false;
+      const budget_meal = data.budget_meal || false;
       const include_inactive_stores = data.include_inactive_stores || false;
 
       const options = {
         fetch_all: true,
       };
+
+      let search = data.search || null;
+      search = search === '' ? null : search;
 
       const args: QueryListStoreDto = {
         distance,
@@ -919,6 +925,7 @@ export class QueryService {
         pickup,
         is_24hrs,
         include_closed_stores,
+        include_inactive_stores,
         price_range_id,
         sort,
         order,
@@ -930,7 +937,6 @@ export class QueryService {
         page,
         location_latitude: lat,
         location_longitude: long,
-        include_inactive_stores,
       };
 
       const listStores = await this.getListQueryStore(args, options);
@@ -1005,11 +1011,7 @@ export class QueryService {
         }
       }
 
-      return this.responseService.success(
-        true,
-        this.messageService.get('merchant.liststore.success'),
-        listStores,
-      );
+      return listStores;
     } catch (e) {
       Logger.error(e.message, '', 'QUERY LIST STORE');
       throw e;
@@ -1075,14 +1077,14 @@ export class QueryService {
       const merchant_id = null;
       const order = null;
       const sort = null;
-      const price_range_id = undefined;
+      const price_range_id = null;
       const pickup = false;
       const is_24hrs = false;
 
       const include_closed_stores = true;
+      const include_inactive_stores = true;
       const new_this_week = false;
-      const budget_meal = null;
-      const include_inactive_stores = false;
+      const budget_meal = false;
 
       const options = {
         fetch_using_ids: [],
@@ -1095,6 +1097,7 @@ export class QueryService {
         pickup,
         is_24hrs,
         include_closed_stores,
+        include_inactive_stores,
         price_range_id,
         sort,
         order,
@@ -1106,7 +1109,6 @@ export class QueryService {
         page,
         location_latitude: lat,
         location_longitude: long,
-        include_inactive_stores,
       };
 
       const currentPage = data.page || 1;

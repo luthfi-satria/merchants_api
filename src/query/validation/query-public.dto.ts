@@ -65,6 +65,11 @@ export class QueryListStoreDto extends LocationDto {
   @Transform(({ value }) => JSON.parse(value))
   include_closed_stores: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  @Transform(({ value }) => JSON.parse(value))
+  include_inactive_stores: boolean;
+
   price_range_id: string[];
 
   @IsOptional()
@@ -82,9 +87,4 @@ export class QueryListStoreDto extends LocationDto {
   @IsOptional()
   @Transform(({ value }) => JSON.parse(value))
   budget_meal: boolean;
-
-  @IsBoolean()
-  @IsOptional()
-  @Transform(({ value }) => JSON.parse(value))
-  include_inactive_stores: boolean;
 }

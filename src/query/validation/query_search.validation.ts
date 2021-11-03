@@ -85,6 +85,9 @@ export class QuerySearchValidation {
   @IsOptional()
   @Transform(({ value }) => JSON.parse(value))
   include_closed_stores: boolean;
+
+  @IsOptional()
+  price_range_id: string[];
 }
 
 export class QuerySearchHistoryValidation {
