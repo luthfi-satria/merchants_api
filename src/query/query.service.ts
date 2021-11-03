@@ -747,7 +747,6 @@ export class QueryService {
             row.average_price,
           );
           const price_symbol = priceRange ? priceRange.symbol : null;
-          const is_operational = store_operational_status;
 
           return {
             ...row,
@@ -757,7 +756,6 @@ export class QueryService {
             store_categories: store_categories,
             merchant,
             price_symbol,
-            is_operational,
           };
         }),
       );
@@ -791,7 +789,9 @@ export class QueryService {
     );
 
     const respectShiftTime = isCurrentDay.shifts.find((e) =>
-      currTime >= e.open_hour && currTime < e.close_hour ? true : false,
+      currTime >= e.open_hour && currTime < e.close_hour && e.is_open
+        ? true
+        : false,
     );
 
     Logger.debug(
