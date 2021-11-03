@@ -742,6 +742,7 @@ export class QueryService {
             row.average_price,
           );
           const price_symbol = priceRange ? priceRange.symbol : null;
+          const is_operational = store_operational_status;
 
           return {
             ...row,
@@ -751,6 +752,7 @@ export class QueryService {
             store_categories: store_categories,
             merchant,
             price_symbol,
+            is_operational,
           };
         }),
       );
