@@ -634,8 +634,8 @@ export class StoresService {
 
     store
       .orderBy('ms.created_at', 'ASC')
-      .offset((Number(currentPage) - 1) * perPage)
-      .limit(perPage);
+      .skip((Number(currentPage) - 1) * perPage)
+      .take(perPage);
 
     try {
       const totalItems = await store.getCount().catch((err) => {
