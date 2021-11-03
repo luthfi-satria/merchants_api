@@ -1,6 +1,9 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { StoreDocument } from 'src/database/entities/store.entity';
+import {
+  enumStoreStatus,
+  StoreDocument,
+} from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
@@ -28,7 +31,7 @@ export class InternalService {
   ) {}
 
   async findStorebyId(id: string): Promise<StoreDocument> {
-    return await this.storeRepository
+    return this.storeRepository
       .findOne({
         where: { id: id },
       })
@@ -171,9 +174,9 @@ export class InternalService {
 
   async findMerchantbyId(id: string): Promise<MerchantDocument> {
     return this.merchantRepository
-      .createQueryBuilder('merchant')
-      .where('merchant.id = :mid', { mid: id })
-      .getOne()
+      .findOne({
+        where: { id: id },
+      })
       .then((result) => {
         if (!result) {
           throw new BadRequestException(
@@ -240,5 +243,31 @@ export class InternalService {
 
       return results;
     }
+  }
+
+  async findStoreActivebyMerchantId(
+    merchant_id: string,
+  ): Promise<StoreDocument[]> {
+    const storeData: Partial<StoreDocument> = {
+      merchant_id: merchant_id,
+      status: enumStoreStatus.active,
+    };
+    return this.storeService
+      .findMerchantStoreByCriteria(storeData)
+      .catch(() => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: merchant_id,
+              property: 'merchant_id',
+              constraint: [
+                this.messageService.get('merchant.general.dataNotfound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
   }
 }
