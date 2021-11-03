@@ -469,6 +469,7 @@ export class QueryService {
       const long = data.location_longitude;
       const store_category_id: string = data.store_category_id || null;
       const merchant_id: string = data.merchant_id || null;
+      const include_inactive_stores = data.include_inactive_stores || false;
 
       // Apply dynamic Sort & order by
       const orderBy = data.order || null;
@@ -571,7 +572,11 @@ export class QueryService {
         // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
 
         .where(
-          `merchant_store.status = :active
+          `(merchant_store.status = :active ${
+            include_inactive_stores
+              ? "OR merchant_store.status = 'INACTIVE' "
+              : ''
+          })
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
             ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
             ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
@@ -908,6 +913,7 @@ export class QueryService {
       const is_24hrs = false;
 
       const include_closed_stores = true;
+      const include_inactive_stores = true;
       const new_this_week = false;
       const budget_meal = null;
 
@@ -922,6 +928,7 @@ export class QueryService {
         pickup,
         is_24hrs,
         include_closed_stores,
+        include_inactive_stores,
         price_range_id,
         sort,
         order,
@@ -1082,6 +1089,7 @@ export class QueryService {
       const is_24hrs = false;
 
       const include_closed_stores = true;
+      const include_inactive_stores = true;
       const new_this_week = false;
       const budget_meal = null;
 
@@ -1096,6 +1104,7 @@ export class QueryService {
         pickup,
         is_24hrs,
         include_closed_stores,
+        include_inactive_stores,
         price_range_id,
         sort,
         order,
