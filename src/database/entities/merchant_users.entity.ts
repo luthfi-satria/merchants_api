@@ -105,7 +105,7 @@ export class MerchantUsersDocument {
     Object.assign(this, init);
   }
 
-  @ManyToMany(() => StoreDocument)
+  @ManyToMany(() => StoreDocument, (stores) => stores.users)
   @JoinTable({
     joinColumn: {
       name: 'merchant_user_id',
