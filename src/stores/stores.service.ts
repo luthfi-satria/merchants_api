@@ -273,6 +273,18 @@ export class StoresService {
   }
 
   // partial update
+  async updateStorePartial(data: Partial<StoreDocument>) {
+    try {
+      return await this.storeRepository.update(data.id, data).catch((e) => {
+        throw e;
+      });
+    } catch (e) {
+      const logger = new Logger();
+      logger.log(e, 'Catch Error :  ');
+      throw e;
+    }
+  }
+
   async updateStoreProfile(data: StoreDocument) {
     try {
       return await this.storeRepository.update(data.id, data).catch((e) => {
