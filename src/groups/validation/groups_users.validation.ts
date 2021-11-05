@@ -6,7 +6,6 @@ import {
   IsOptional,
   IsUUID,
   Length,
-  Max,
   MaxLength,
   ValidateIf,
 } from 'class-validator';
