@@ -23,7 +23,10 @@ import {
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
-import { MerchantGroupUsersValidation } from './validation/groups_users.validation';
+import {
+  MerchantGroupUsersValidation,
+  UpdateMerchantGroupUsersValidation,
+} from './validation/groups_users.validation';
 import { Response } from 'src/response/response.decorator';
 import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
@@ -219,7 +222,7 @@ export class GroupUsersService {
   }
 
   async updateGroupUsers(
-    args: Partial<MerchantGroupUsersValidation>,
+    args: UpdateMerchantGroupUsersValidation,
     user: any,
   ): Promise<MerchantUsersDocument> {
     const getUsersExist = await this.getAndValidateGroupUserById(args.id, user);
