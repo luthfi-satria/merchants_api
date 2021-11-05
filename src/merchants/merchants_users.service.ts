@@ -258,6 +258,7 @@ export class MerchantUsersService {
       args.id,
       user,
     );
+    await this.getAndValidateMerchantUserByEmail(args.email, args.id);
     Object.assign(merchantUser, args);
 
     const token = randomUUID();
