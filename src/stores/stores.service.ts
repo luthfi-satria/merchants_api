@@ -32,6 +32,7 @@ import { CommonService } from 'src/common/common.service';
 import { GroupsService } from 'src/groups/groups.service';
 import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import _ from 'lodash';
+import { query } from 'express';
 
 @Injectable()
 export class StoresService {
@@ -567,6 +568,12 @@ export class StoresService {
     ) {
       store.andWhere('merchant.id = :mid', {
         mid: data.merchant_id,
+      });
+    }
+
+    if (user.user_type != 'admin') {
+      store.innerJoin('ms.users', 'users', 'users.id = :user_id', {
+        user_id: user.id,
       });
     }
 
