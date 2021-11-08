@@ -16,6 +16,7 @@ import { ColumnNumericTransformer } from '../helper/column_numberic_transformer'
 import { AddonDocument } from './addons.entity';
 import { ListBankDocument } from './list_banks';
 import { MerchantDocument } from './merchant.entity';
+import { MerchantUsersDocument } from './merchant_users.entity';
 import { SearchHistoryStoreDocument } from './search_history_store.entity';
 import { StoreCategoriesDocument } from './store-categories.entity';
 import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
@@ -184,4 +185,7 @@ export class StoreDocument {
     (search_history_store) => search_history_store.store,
   )
   search_history_stores: SearchHistoryStoreDocument[];
+
+  @ManyToMany(() => MerchantUsersDocument, (users) => users.stores)
+  users: MerchantUsersDocument[];
 }

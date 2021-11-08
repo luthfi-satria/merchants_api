@@ -273,6 +273,18 @@ export class StoresService {
   }
 
   // partial update
+  async updateStorePartial(data: Partial<StoreDocument>) {
+    try {
+      return await this.storeRepository.update(data.id, data).catch((e) => {
+        throw e;
+      });
+    } catch (e) {
+      const logger = new Logger();
+      logger.log(e, 'Catch Error :  ');
+      throw e;
+    }
+  }
+
   async updateStoreProfile(data: StoreDocument) {
     try {
       return await this.storeRepository.update(data.id, data).catch((e) => {
@@ -558,6 +570,12 @@ export class StoresService {
       });
     }
 
+    if (user.user_type != 'admin') {
+      store.innerJoin('ms.users', 'users', 'users.id = :user_id', {
+        user_id: user.id,
+      });
+    }
+
     if (user.level == 'store') {
       store.andWhere('ms.id = :mid', {
         mid: user.store_id,
@@ -577,6 +595,27 @@ export class StoresService {
         store.andWhere('group.id = :gid', {
           gid: data.group_id,
         });
+      }
+    }
+
+    if (data.platform) {
+      const url = `${
+        process.env.BASEURL_CATALOGS_SERVICE
+      }/api/v1/internal/menu-store/${user.store_id || undefined}/${
+        user.merchant_id || undefined
+      }/${data.platform}`;
+      const platforms: any = await this.commonService
+        .getHttp(url)
+        .catch((e) => {
+          console.log(e);
+        });
+
+      const store_ids = [];
+
+      if (platforms) {
+        for (const platform of platforms) {
+          store_ids.push(platform.store_id);
+        }
       }
     }
 
@@ -629,6 +668,7 @@ export class StoresService {
           store_ids.push(pricingTemplate.store_id);
         }
       }
+
       store.andWhereInIds(store_ids);
     }
 

@@ -550,13 +550,13 @@ export class StoreUsersService {
             .orWhere('mu.nip like :mnip', {
               mnip: '%' + search + '%',
             })
-            .orWhere('merchant_group.name like :gname', {
+            .orWhere('merchant_store_merchant_group.name ilike :gname', {
               gname: '%' + search + '%',
             })
-            .orWhere('merchant_merchant.name like :mmname', {
+            .orWhere('merchant_store_merchant.name ilike :mmname', {
               mmname: '%' + search + '%',
             })
-            .orWhere('merchant_store.name like :msname', {
+            .orWhere('merchant_store.name ilike :msname', {
               msname: '%' + search + '%',
             });
         }),
@@ -607,8 +607,8 @@ export class StoreUsersService {
 
     return query
       .orderBy('mu.name')
-      .offset((currentPage - 1) * perPage)
-      .limit(perPage)
+      .skip((currentPage - 1) * perPage)
+      .take(perPage)
       .getManyAndCount()
       .then(async (result) => {
         totalItems = result[1];
