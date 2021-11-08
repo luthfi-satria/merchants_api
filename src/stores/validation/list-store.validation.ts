@@ -14,6 +14,9 @@ export class ListStoreDTO {
   search: string;
 
   @IsOptional()
+  platform: string;
+
+  @IsOptional()
   @IsNumberString({}, { message: 'Limit yang diisi bukan format number' })
   limit: number;
 

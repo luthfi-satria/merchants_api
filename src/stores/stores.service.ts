@@ -598,6 +598,27 @@ export class StoresService {
       }
     }
 
+    if (data.platform) {
+      const url = `${
+        process.env.BASEURL_CATALOGS_SERVICE
+      }/api/v1/internal/menu-store/${user.store_id || undefined}/${
+        user.merchant_id || undefined
+      }/${data.platform}`;
+      const platforms: any = await this.commonService
+        .getHttp(url)
+        .catch((e) => {
+          console.log(e);
+        });
+
+      const store_ids = [];
+
+      if (platforms) {
+        for (const platform of platforms) {
+          store_ids.push(platform.store_id);
+        }
+      }
+    }
+
     if (data.sales_channel_id) {
       const store_ids: string[] = [];
       const pricingTemplateData = {
@@ -647,6 +668,7 @@ export class StoresService {
           store_ids.push(pricingTemplate.store_id);
         }
       }
+
       store.andWhereInIds(store_ids);
     }
 
