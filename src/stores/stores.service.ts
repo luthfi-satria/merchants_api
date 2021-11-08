@@ -32,7 +32,6 @@ import { CommonService } from 'src/common/common.service';
 import { GroupsService } from 'src/groups/groups.service';
 import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import _ from 'lodash';
-import { query } from 'express';
 
 @Injectable()
 export class StoresService {

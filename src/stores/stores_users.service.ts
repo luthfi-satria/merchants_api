@@ -607,8 +607,8 @@ export class StoreUsersService {
 
     return query
       .orderBy('mu.name')
-      .offset((currentPage - 1) * perPage)
-      .limit(perPage)
+      .skip((currentPage - 1) * perPage)
+      .take(perPage)
       .getManyAndCount()
       .then(async (result) => {
         totalItems = result[1];

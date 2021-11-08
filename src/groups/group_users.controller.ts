@@ -27,7 +27,6 @@ import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
 import { UpdatePhoneGroupUsersValidation } from './validation/update_phone_group_users.validation';
 import { UpdateEmailGroupUsersValidation } from './validation/update_email_group_users.validation';
-import { UpdateMerchantStoreUsersValidation } from 'src/stores/validation/update_store_users.validation';
 
 @Controller('api/v1/merchants/groups')
 export class GroupUsersController {
