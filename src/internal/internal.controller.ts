@@ -37,6 +37,12 @@ export class InternalController {
     );
   }
 
+  @Get('merchants/merchants/batchs')
+  @ResponseStatusCode()
+  async getMerchantsWithGroupBulk(@Query() data: any): Promise<any> {
+    return this.internalService.getMerchantsWithGroupBulk(data.merchant_ids);
+  }
+
   @Get('merchants/stores')
   @ResponseStatusCode()
   async listStores(@Query() data: any): Promise<any> {
