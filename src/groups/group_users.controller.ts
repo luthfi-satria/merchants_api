@@ -14,7 +14,10 @@ import { Response, ResponseStatusCode } from 'src/response/response.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { GroupUsersService } from './group_users.service';
-import { MerchantGroupUsersValidation } from './validation/groups_users.validation';
+import {
+  MerchantGroupUsersValidation,
+  UpdateMerchantGroupUsersValidation,
+} from './validation/groups_users.validation';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { Message } from 'src/message/message.decorator';
@@ -68,7 +71,7 @@ export class GroupUsersController {
   async updateGroupUsers(
     @Req() req: any,
     @Body()
-    args: Partial<MerchantGroupUsersValidation>,
+    args: UpdateMerchantGroupUsersValidation,
     @Param('gid') groupId: string,
     @Param('user_id') groupUserId: string,
   ): Promise<RSuccessMessage> {

@@ -1,9 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { Repository } from 'typeorm';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
+import _ from 'lodash';
+import { StoresService } from './stores.service';
 
 @Injectable()
 export class StoreOperationalService {
@@ -17,6 +19,8 @@ export class StoreOperationalService {
     private readonly storeShiftsRepository: Repository<StoreOperationalShiftDocument>,
     @InjectRepository(StoreDocument)
     private readonly storesRepository: Repository<StoreDocument>,
+    @Inject(forwardRef(() => StoresService))
+    private readonly storesService: StoresService,
   ) {}
 
   public async createStoreOperationalHours(
@@ -178,6 +182,14 @@ export class StoreOperationalService {
       ).catch((e) => {
         throw e;
       });
+
+      const countData = _.countBy(data, { is_open_24h: true });
+      const paramUpdateStore: Partial<StoreDocument> = {
+        id: store_id,
+        is_open_24h: countData.true === 7,
+      };
+      this.storesService.updateStorePartial(paramUpdateStore);
+
       return result;
     } catch (e) {
       Logger.error(e.message, '', 'Update Store Operational');

@@ -273,6 +273,18 @@ export class StoresService {
   }
 
   // partial update
+  async updateStorePartial(data: Partial<StoreDocument>) {
+    try {
+      return await this.storeRepository.update(data.id, data).catch((e) => {
+        throw e;
+      });
+    } catch (e) {
+      const logger = new Logger();
+      logger.log(e, 'Catch Error :  ');
+      throw e;
+    }
+  }
+
   async updateStoreProfile(data: StoreDocument) {
     try {
       return await this.storeRepository.update(data.id, data).catch((e) => {
@@ -555,6 +567,12 @@ export class StoresService {
     ) {
       store.andWhere('merchant.id = :mid', {
         mid: data.merchant_id,
+      });
+    }
+
+    if (user.user_type != 'admin') {
+      store.innerJoin('ms.users', 'users', 'users.id = :user_id', {
+        user_id: user.id,
       });
     }
 

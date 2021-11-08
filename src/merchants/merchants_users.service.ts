@@ -216,6 +216,7 @@ export class MerchantUsersService {
       args.id,
       user,
     );
+    await this.getAndValidateMerchantUserByPhone(args.phone, args.id);
     Object.assign(merchantUser, args);
 
     const token = randomUUID();
@@ -258,6 +259,7 @@ export class MerchantUsersService {
       args.id,
       user,
     );
+    await this.getAndValidateMerchantUserByEmail(args.email, args.id);
     Object.assign(merchantUser, args);
 
     const token = randomUUID();
@@ -270,7 +272,7 @@ export class MerchantUsersService {
       // biarkan tanpa await karena dilakukan secara asynchronous
       this.notificationService.sendEmail(
         merchantUser.email,
-        'Merubah Email',
+        'Perubahan Email',
         '',
         `
       <p>Silahkan klik link berikut untuk mereset password Anda,</p>
