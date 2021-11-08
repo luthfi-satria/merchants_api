@@ -73,7 +73,7 @@ export class MerchantsController {
     }
     this.imageValidationService
       .setFilter('logo', '')
-      .setFilter('profile_store_photo', 'required');
+      .setFilter('profile_store_photo', '');
     if (createMerchantDTO.pb1 == 'true')
       this.imageValidationService.setFilter('npwp_file', 'required');
     await this.imageValidationService.validate(req);
