@@ -215,29 +215,34 @@ export class StoresService {
       flagCreatePricingTemplate = true;
     }
 
+    /**
+     *  - untuk admin bisa membuat dengan semua merchant.status
+     *  - untuk user corporate(group) bisa membuat dengan merchant.status 'ACTIVE' dan 'WAITING APPROVAL'
+     *  - untuk user brand(merchant) bisa membuat dengan merchant.status 'ACTIVE', untuk brand ini pake brand dia sendiri jadi logikanya sudah 'ACTIVE'
+     **/
     if (
-      user.user_type != 'admin' ||
-      (user.user_type == 'admin' && merchant.status != 'DRAFT')
+      // untuk user corporate(group) bisa membuat dengan merchant.status 'ACTIVE' dan 'WAITING APPROVAL'
+      (user.level == 'group' &&
+        ['ACTIVE', 'WAITING_FOR_APPROVAL'].indexOf(merchant.status) < 0) ||
+      // untuk user brand(merchant) bisa membuat dengan merchant.status 'ACTIVE', untuk brand ini pake brand dia sendiri jadi logikanya sudah 'ACTIVE'
+      (user.level == 'merchant' && merchant.status != 'ACTIVE')
     ) {
-      if (merchant.status != 'ACTIVE') {
-        const errors: RMessage = {
-          value: create_merchant_store_validation.merchant_id,
-          property: 'merchant_id',
-          constraint: [
-            this.messageService.get(
-              'merchant.createstore.merchantid_notactive',
-            ),
-          ],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      }
+      const errors: RMessage = {
+        value: create_merchant_store_validation.merchant_id,
+        property: 'merchant_id',
+        constraint: [
+          this.messageService.get('merchant.createstore.merchantid_notactive'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
     }
+
     store_document.store_categories = await this.getCategoriesByIds(
       create_merchant_store_validation.category_ids,
     );
