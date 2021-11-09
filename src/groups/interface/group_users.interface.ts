@@ -1,3 +1,5 @@
+import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
+
 export interface GroupUser {
   name: string;
 
@@ -14,4 +16,6 @@ export interface GroupUser {
   nip: string;
 
   role_id: string;
+
+  status: MerchantUsersStatus;
 }
