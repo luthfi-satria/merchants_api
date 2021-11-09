@@ -67,8 +67,7 @@ export class GroupsService {
   }
 
   async createMerchantGroupProfile(
-    createGroupDTO: CreateGroupDTO,
-    user: any,
+    createGroupDTO: CreateGroupDTO
   ): Promise<GroupDocument> {
     const salt: string = await this.hashService.randomSalt();
     createGroupDTO.director_password = await this.hashService.hashPassword(
