@@ -21,6 +21,7 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoresService } from 'src/stores/stores.service';
+import { UsersService } from 'src/users/users.service';
 import { AuthInternalService } from './auth-internal.service';
 import { InternalController } from './internal.controller';
 import { InternalService } from './internal.service';
@@ -56,6 +57,7 @@ import { InternalService } from './internal.service';
     LobService,
     GroupUsersService,
     AuthInternalService,
+    UsersService,
   ],
   exports: [AuthInternalService],
 })

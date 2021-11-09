@@ -32,6 +32,7 @@ import { CommonService } from 'src/common/common.service';
 import { GroupsService } from 'src/groups/groups.service';
 import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import _ from 'lodash';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class StoresService {
@@ -52,6 +53,7 @@ export class StoresService {
     private readonly commonService: CommonService,
     private readonly groupService: GroupsService,
     private readonly commonCatalogService: CatalogsService,
+    private readonly usersService: UsersService,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -570,10 +572,13 @@ export class StoresService {
       });
     }
 
-    if (user.user_type != 'admin') {
-      store.innerJoin('ms.users', 'users', 'users.id = :user_id', {
-        user_id: user.id,
-      });
+    if (user.level == 'merchant') {
+      const userAndStores = await this.usersService.getUserAndStore(user.id);
+      if (userAndStores.stores.length > 0) {
+        store.innerJoin('ms.users', 'users', 'users.id = :user_id', {
+          user_id: user.id,
+        });
+      }
     }
 
     if (user.level == 'store') {

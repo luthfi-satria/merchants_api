@@ -21,6 +21,8 @@ import { LobService } from 'src/lob/lob.service';
 import { LoginService } from 'src/login/login.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantUsersService } from 'src/merchants/merchants_users.service';
+import { UsersModule } from 'src/users/users.module';
+import { UsersService } from 'src/users/users.service';
 // import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { StoreOperationalController } from './stores-operational.controller';
@@ -48,6 +50,7 @@ import { StoresController } from './strores.controller';
       limits: { fileSize: 2 * 1000 * 1000 },
     }),
     HttpModule,
+    UsersModule,
   ],
   controllers: [
     StoresController,
@@ -71,6 +74,7 @@ import { StoresController } from './strores.controller';
     LobService,
     GroupUsersService,
     InternalService,
+    UsersService,
   ],
   exports: [StoresService, StoreOperationalService],
 })
