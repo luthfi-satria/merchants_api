@@ -12,7 +12,7 @@ import { MerchantUsersDocument } from 'src/database/entities/merchant_users.enti
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoresService } from 'src/stores/stores.service';
 import { CommonService } from 'src/common/common.service';
-import { deleteCredParam } from 'src/utils/general-utils';
+import { deleteCredParam, delExcludeParam } from 'src/utils/general-utils';
 
 @Injectable()
 export class InternalService {
@@ -66,6 +66,35 @@ export class InternalService {
           ),
         );
       });
+  }
+
+  async getMerchantsWithGroupBulk(merchant_ids: string[]): Promise<any> {
+    const query = await this.merchantRepository
+      .createQueryBuilder('merchants')
+      .leftJoinAndSelect('merchants.group', 'group')
+      .where('merchants.id IN(:...ids)', { ids: merchant_ids })
+      .getMany()
+      .catch((err) => {
+        console.error('error', err);
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+
+    return {
+      merchants: query.map((item) =>
+        delExcludeParam({ ...item, group: delExcludeParam(item.group) }),
+      ),
+    };
   }
 
   async listStores(data: any): Promise<Record<string, any>> {

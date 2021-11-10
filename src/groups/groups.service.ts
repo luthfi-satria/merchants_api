@@ -20,7 +20,7 @@ import { MessageService } from 'src/message/message.service';
 import { deleteCredParam } from 'src/utils/general-utils';
 import { HashService } from 'src/hash/hash.service';
 import { Hash } from 'src/hash/hash.decorator';
-import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { MerchantUsersDocument, MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { CreateGroupDTO } from './validation/create_groups.dto';
 import { GroupUsersService } from './group_users.service';
@@ -67,7 +67,7 @@ export class GroupsService {
   }
 
   async createMerchantGroupProfile(
-    createGroupDTO: CreateGroupDTO,
+    createGroupDTO: CreateGroupDTO
   ): Promise<GroupDocument> {
     const salt: string = await this.hashService.randomSalt();
     createGroupDTO.director_password = await this.hashService.hashPassword(
@@ -108,6 +108,7 @@ export class GroupsService {
         password: createGroupDTO.director_password,
         nip: createGroupDTO.director_nip,
         role_id: roles[0].id,
+        status: MerchantUsersStatus.Active,
       };
       const director = await this.groupUserService.createUserPassword(
         create_director,
@@ -123,6 +124,7 @@ export class GroupsService {
           password: createGroupDTO.pic_operational_password,
           nip: createGroupDTO.pic_operational_nip,
           role_id: roles[0].id,
+          status: MerchantUsersStatus.Active,
         };
         const pic_operational = await this.groupUserService.createUserPassword(
           create_pic_operational,
@@ -139,6 +141,7 @@ export class GroupsService {
           password: createGroupDTO.pic_finance_password,
           nip: createGroupDTO.pic_finance_nip,
           role_id: roles[0].id,
+          status: MerchantUsersStatus.Active,
         };
         const pic_finance = await this.groupUserService.createUserPassword(
           create_pic_finance,

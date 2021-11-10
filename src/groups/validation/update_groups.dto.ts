@@ -6,6 +6,7 @@ import {
   IsString,
   Length,
   ValidateIf,
+  IsNotEmpty,
 } from 'class-validator';
 import {
   CategoryGroup,
@@ -15,24 +16,29 @@ import {
 
 export class UpdateGroupDTO {
   @IsOptional()
+  @IsNotEmpty()
   @IsIn(Object.values(CategoryGroup))
   category: CategoryGroup;
 
   @IsOptional()
+  @IsNotEmpty()
   @IsString()
   name: string;
 
   @IsOptional()
+  @IsNotEmpty()
   @IsNumberString()
   @Length(10, 15)
   phone: string;
 
   @IsOptional()
+  @IsNotEmpty()
   @IsString()
   address: string;
 
   @ValidateIf((o) => o.category === CategoryGroup.COMPANY)
   @IsOptional()
+  @IsNotEmpty()
   siup_no: string;
 
   siup_file: string;
@@ -43,12 +49,14 @@ export class UpdateGroupDTO {
 
   @ValidateIf((o) => o.category === CategoryGroup.COMPANY)
   @IsOptional()
+  @IsNotEmpty()
   npwp_no: string;
 
   npwp_file: string;
 
   // Direktur
   @IsOptional()
+  @IsNotEmpty()
   @IsString()
   director_name: string;
 
@@ -57,6 +65,7 @@ export class UpdateGroupDTO {
   director_nip: string;
 
   @IsOptional()
+  @IsNotEmpty()
   @IsString()
   director_phone: string;
 
@@ -65,6 +74,7 @@ export class UpdateGroupDTO {
   director_email: string;
 
   @IsOptional()
+  @IsNotEmpty()
   @IsIn(Object.values(DirectorIdentityType))
   director_identity_type: DirectorIdentityType;
 
@@ -78,6 +88,7 @@ export class UpdateGroupDTO {
 
   //Penanggung Jawab Operasional
   @IsOptional()
+  @IsNotEmpty()
   @IsString()
   pic_operational_name: string;
 
@@ -90,12 +101,14 @@ export class UpdateGroupDTO {
   pic_operational_email: string;
 
   @IsOptional()
+  @IsNotEmpty()
   @IsNumberString()
   @Length(10, 15)
   pic_operational_phone: string;
 
   //Penanggung Jawab Keuangan
   @IsOptional()
+  @IsNotEmpty()
   @IsString()
   pic_finance_name: string;
 
@@ -108,6 +121,7 @@ export class UpdateGroupDTO {
   pic_finance_email: string;
 
   @IsOptional()
+  @IsNotEmpty()
   @IsNumberString()
   @Length(10, 15)
   pic_finance_phone: string;

@@ -26,6 +26,7 @@ import { PriceRangeModule } from 'src/price_range/price_range.module';
 import { SettingModule } from 'src/settings/setting.module';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoresService } from 'src/stores/stores.service';
+import { UsersService } from 'src/users/users.service';
 import { QueryController } from './query.controller';
 import { QueryService } from './query.service';
 
@@ -68,6 +69,7 @@ import { QueryService } from './query.service';
     LobService,
     GroupUsersService,
     CatalogsService,
+    UsersService,
   ],
 })
 export class QueryModule {}

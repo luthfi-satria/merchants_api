@@ -21,6 +21,7 @@ import { StoreCategoriesModule } from './store_categories/store_categories.modul
 import { PriceRangeModule } from './price_range/price_range.module';
 import { BannersModule } from './banners/banners.module';
 import { SettingModule } from './settings/setting.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { SettingModule } from './settings/setting.module';
     PriceRangeModule,
     BannersModule,
     SettingModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
