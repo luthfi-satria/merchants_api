@@ -10,7 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { GroupDocument } from 'src/database/entities/group.entity';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
@@ -69,6 +69,7 @@ export class GroupsService {
   async createMerchantGroupProfile(
     createGroupDTO: CreateGroupDTO
   ): Promise<GroupDocument> {
+    await this.validateGroupUniqueName(createGroupDTO.name);
     const salt: string = await this.hashService.randomSalt();
     createGroupDTO.director_password = await this.hashService.hashPassword(
       createGroupDTO.director_password,
@@ -172,45 +173,6 @@ export class GroupsService {
       relations: ['users'],
       where: { id },
     });
-    // group.users = [];
-    // const update_director: Partial<GroupUser> = {
-    //   group_id: id,
-    //   name: updateGroupDTO.director_name,
-    //   phone: updateGroupDTO.director_phone,
-    //   email: updateGroupDTO.director_email,
-    //   nip: updateGroupDTO.director_nip,
-    // };
-    // const director = await this.groupUserService.updateUserByEmailGroupId(
-    //   update_director,
-    //   group.director_email,
-    // );
-    // group.users.push(director);
-
-    // const update_pic_operational: Partial<GroupUser> = {
-    //   group_id: id,
-    //   name: updateGroupDTO.pic_operational_name,
-    //   phone: updateGroupDTO.pic_operational_phone,
-    //   email: updateGroupDTO.pic_operational_email,
-    //   nip: updateGroupDTO.pic_operational_nip,
-    // };
-    // const pic_operational = await this.groupUserService.updateUserByEmailGroupId(
-    //   update_pic_operational,
-    //   group.pic_operational_email,
-    // );
-    // group.users.push(pic_operational);
-
-    // const update_pic_finance: Partial<GroupUser> = {
-    //   group_id: id,
-    //   name: updateGroupDTO.pic_finance_name,
-    //   phone: updateGroupDTO.pic_finance_phone,
-    //   email: updateGroupDTO.pic_finance_email,
-    //   nip: updateGroupDTO.pic_finance_nip,
-    // };
-    // const pic_finance = await this.groupUserService.updateUserByEmailGroupId(
-    //   update_pic_finance,
-    //   group.pic_finance_email,
-    // );
-    // group.users.push(pic_finance);
     if (updateGroupDTO.status == 'ACTIVE') group.approved_at = new Date();
     if (updateGroupDTO.status == 'REJECTED') group.rejected_at = new Date();
 
@@ -389,6 +351,33 @@ export class GroupsService {
             value: '',
             property: err.column,
             constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async validateGroupUniqueName(name: string, id?: string) {
+    const where: { name: FindOperator<string>; id?: FindOperator<string> } = {
+      name: ILike(name),
+    };
+    if (id) {
+      where.id = Not(id);
+    }
+    const group = await this.groupRepository.findOne({
+      where
+    });
+    if (group) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: name,
+            property: 'name',
+            constraint: [
+              this.messageService.get('merchant.general.nameExist'),
+            ],
           },
           'Bad Request',
         ),

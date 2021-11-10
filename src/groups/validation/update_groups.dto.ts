@@ -66,7 +66,8 @@ export class UpdateGroupDTO {
 
   @IsOptional()
   @IsNotEmpty()
-  @IsString()
+  @IsNumberString()
+  @Length(10, 15)
   director_phone: string;
 
   @IsOptional()
