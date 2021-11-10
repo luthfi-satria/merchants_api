@@ -162,8 +162,8 @@ export class GroupUsersService {
     const group = await this.groupService.getAndValidateGroupByGroupId(
       args.group_id,
     );
-    await this.getAndValidateGroupUserByPhone(args.phone);
-    await this.getAndValidateGroupUserByEmail(args.email);
+    await this.validateGroupUserUniquePhone(args.phone);
+    await this.validateGroupUserUniqueEmail(args.email);
     // const role = await this.roleService.getAndValodateRoleByRoleId(
     //   args.role_id,
     // );
@@ -229,10 +229,10 @@ export class GroupUsersService {
     Object.assign(getUsersExist, args);
 
     if (args.phone) {
-      await this.getAndValidateGroupUserByPhone(args.phone, args.id);
+      await this.validateGroupUserUniquePhone(args.phone, args.id);
     }
     if (args.email) {
-      await this.getAndValidateGroupUserByEmail(args.email, args.id);
+      await this.validateGroupUserUniqueEmail(args.email, args.id);
     }
     let role = null;
     if (args.role_id) {
@@ -473,7 +473,7 @@ export class GroupUsersService {
   ) {
     const merchantUser = await this.getAndValidateGroupUserById(userId, user);
 
-    await this.getAndValidateGroupUserByPhone(args.phone, userId);
+    await this.validateGroupUserUniquePhone(args.phone, userId);
     merchantUser.phone = args.phone;
 
     try {
@@ -510,7 +510,7 @@ export class GroupUsersService {
   ) {
     const merchantUser = await this.getAndValidateGroupUserById(userId, user);
 
-    await this.getAndValidateGroupUserByEmail(args.email, userId);
+    await this.validateGroupUserUniqueEmail(args.email, userId);
     merchantUser.email = args.email;
 
     try {
@@ -574,7 +574,7 @@ export class GroupUsersService {
   }
   //--------------------------------General Function------------------------------------
 
-  async getAndValidateGroupUserByPhone(
+  async validateGroupUserUniquePhone(
     phone: string,
     id?: string,
   ): Promise<MerchantUsersDocument> {
@@ -607,7 +607,7 @@ export class GroupUsersService {
     return cekphone;
   }
 
-  async getAndValidateGroupUserByEmail(
+  async validateGroupUserUniqueEmail(
     email: string,
     id?: string,
   ): Promise<MerchantUsersDocument> {

@@ -70,6 +70,12 @@ export class GroupsService {
     createGroupDTO: CreateGroupDTO
   ): Promise<GroupDocument> {
     await this.validateGroupUniqueName(createGroupDTO.name);
+    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.director_email);
+    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.pic_finance_email);
+    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.pic_operational_email);
+    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.director_phone);
+    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.pic_finance_phone);
+    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.pic_operational_phone);
     const salt: string = await this.hashService.randomSalt();
     createGroupDTO.director_password = await this.hashService.hashPassword(
       createGroupDTO.director_password,

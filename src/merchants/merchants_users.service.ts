@@ -83,8 +83,8 @@ export class MerchantUsersService {
         args.merchant_id,
       );
     }
-    await this.getAndValidateMerchantUserByPhone(args.phone);
-    await this.getAndValidateMerchantUserByEmail(args.email);
+    await this.validateMerchantUserUniquePhone(args.phone);
+    await this.validateMerchantUserUniqueEmail(args.email);
 
     const role = await this.roleService.getRoleAndValidatePlatformByRoleId(
       args.role_id,
@@ -156,11 +156,11 @@ export class MerchantUsersService {
     }
 
     if (args.phone) {
-      await this.getAndValidateMerchantUserByPhone(args.phone, id);
+      await this.validateMerchantUserUniquePhone(args.phone, id);
     }
 
     if (args.email) {
-      await this.getAndValidateMerchantUserByEmail(args.email, id);
+      await this.validateMerchantUserUniqueEmail(args.email, id);
     }
 
     let role: RoleDTO;
@@ -216,7 +216,7 @@ export class MerchantUsersService {
       args.id,
       user,
     );
-    await this.getAndValidateMerchantUserByPhone(args.phone, args.id);
+    await this.validateMerchantUserUniquePhone(args.phone, args.id);
     Object.assign(merchantUser, args);
 
     const token = randomUUID();
@@ -259,7 +259,7 @@ export class MerchantUsersService {
       args.id,
       user,
     );
-    await this.getAndValidateMerchantUserByEmail(args.email, args.id);
+    await this.validateMerchantUserUniqueEmail(args.email, args.id);
     Object.assign(merchantUser, args);
 
     const token = randomUUID();
@@ -582,7 +582,7 @@ export class MerchantUsersService {
     return result;
   }
 
-  async getAndValidateMerchantUserByPhone(
+  async validateMerchantUserUniquePhone(
     phone: string,
     id?: string,
   ): Promise<MerchantUsersDocument> {
@@ -615,7 +615,7 @@ export class MerchantUsersService {
     return cekphone;
   }
 
-  async getAndValidateMerchantUserByEmail(
+  async validateMerchantUserUniqueEmail(
     email: string,
     id?: string,
   ): Promise<MerchantUsersDocument> {
