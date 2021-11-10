@@ -16,7 +16,7 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, ILike, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
@@ -99,6 +99,7 @@ export class MerchantsService {
     data: CreateMerchantDTO,
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
+    await this.validateMerchantUniqueName(data.name);
     const cekphone: MerchantDocument = await this.merchantRepository.findOne({
       where: { pic_phone: data.pic_phone },
     });
@@ -515,8 +516,7 @@ export class MerchantsService {
     data: ListMerchantDTO,
     user: Record<string, any>,
   ): Promise<Record<string, any>> {
-    let search = data.search || '';
-    search = search.toLowerCase();
+    const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
     const statuses = data.statuses || [];
@@ -577,8 +577,8 @@ export class MerchantsService {
     }
     merchant
       .orderBy('merchant_merchant.created_at', 'ASC')
-      .offset((Number(currentPage) - 1) * perPage)
-      .limit(perPage);
+      .skip((Number(currentPage) - 1) * perPage)
+      .take(perPage);
 
     try {
       const totalItems = await merchant.getCount();
@@ -728,5 +728,25 @@ export class MerchantsService {
         ),
       );
     }
+  }
+
+  async validateMerchantUniqueName(name: string): Promise<MerchantDocument> {
+    const cekMerchantName = await this.merchantRepository.findOne({
+      name: ILike(name),
+    });
+    if (cekMerchantName) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: name,
+            property: 'name',
+            constraint: [this.messageService.get('merchant.general.nameExist')],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    return cekMerchantName;
   }
 }
