@@ -608,33 +608,13 @@ export class StoresService {
       }
     }
 
-    if (data.platform) {
-      const url = `${
-        process.env.BASEURL_CATALOGS_SERVICE
-      }/api/v1/internal/menu-store/${user.store_id || undefined}/${
-        user.merchant_id || undefined
-      }/${data.platform}`;
-      const platforms: any = await this.commonService
-        .getHttp(url)
-        .catch((e) => {
-          console.log(e);
-        });
-
-      const store_ids = [];
-
-      if (platforms) {
-        for (const platform of platforms) {
-          store_ids.push(platform.store_id);
-        }
-      }
-    }
-
     if (data.sales_channel_id) {
       const store_ids: string[] = [];
       const pricingTemplateData = {
         store_ids: [],
         merchant_ids: [],
         level: 'merchant',
+        platform: 'ONLINE',
       };
 
       if (user.level == 'store') {
@@ -667,6 +647,8 @@ export class StoresService {
           pricingTemplateData.level = 'admin';
         }
       }
+      if (data.platform) pricingTemplateData.platform = data.platform;
+
       const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/pricing-template/${data.sales_channel_id}`;
       const pricingTemplates: any = await this.commonService.postHttp(
         url,
@@ -680,6 +662,66 @@ export class StoresService {
       }
 
       store.andWhereInIds(store_ids);
+    } else {
+      if (data.platform) {
+        const postData = {
+          store_ids: [],
+          merchant_ids: [],
+          level: 'merchant',
+          platform: 'ONLINE',
+        };
+
+        if (user.level == 'store') {
+          postData.level = 'store';
+          postData.store_ids.push(user.store_id);
+        } else if (user.level == 'merchant') {
+          postData.merchant_ids.push(user.merchant_id);
+        } else if (user.level == 'group') {
+          if (data.merchant_id) {
+            postData.merchant_ids.push(data.merchant_id);
+          } else {
+            const merchants = await this.merchantService.findMerchantsByGroup(
+              user.group_id,
+            );
+            merchants.forEach((merchant) => {
+              postData.merchant_ids.push(merchant.id);
+            });
+          }
+        } else {
+          if (data.merchant_id) {
+            postData.merchant_ids.push(data.merchant_id);
+          } else if (data.group_id) {
+            const merchants = await this.merchantService.findMerchantsByGroup(
+              data.group_id,
+            );
+            merchants.forEach((merchant) => {
+              postData.merchant_ids.push(merchant.id);
+            });
+          } else {
+            postData.level = 'admin';
+          }
+        }
+        postData.platform = data.platform;
+
+        const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/menu-store`;
+        const platforms: any = await this.commonService
+          .postHttp(url, postData)
+          .catch((e) => {
+            console.log(e);
+          });
+
+        const store_ids = [];
+
+        if (platforms) {
+          for (const platform of platforms) {
+            if (store_ids.indexOf(platform.store_id) == -1) {
+              store_ids.push(platform.store_id);
+            }
+          }
+        }
+
+        store.andWhereInIds(store_ids);
+      }
     }
 
     store
@@ -694,6 +736,7 @@ export class StoresService {
       const list: any = await store.getMany().catch((err2) => {
         console.error('err2 ', err2);
       });
+
       list.forEach(async (element) => {
         deleteCredParam(element);
         deleteCredParam(element.merchant);
