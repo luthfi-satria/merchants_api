@@ -16,7 +16,7 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, ILike, Repository } from 'typeorm';
+import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
@@ -100,6 +100,7 @@ export class MerchantsService {
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
     await this.validateMerchantUniqueName(data.name);
+    await this.validateMerchantUniquePhone(data.phone);
     const cekphone: MerchantDocument = await this.merchantRepository.findOne({
       where: { pic_phone: data.pic_phone },
     });
@@ -311,6 +312,8 @@ export class MerchantsService {
   async updateMerchantMerchantProfile(
     data: UpdateMerchantDTO,
   ): Promise<RSuccessMessage> {
+    await this.validateMerchantUniqueName(data.name, data.id);
+    await this.validateMerchantUniquePhone(data.phone, data.id);
     const existMerchant: MerchantDocument =
       await this.merchantRepository.findOne({
         where: { id: data.id },
@@ -730,9 +733,18 @@ export class MerchantsService {
     }
   }
 
-  async validateMerchantUniqueName(name: string): Promise<MerchantDocument> {
-    const cekMerchantName = await this.merchantRepository.findOne({
+  async validateMerchantUniqueName(
+    name: string,
+    id?: string,
+  ): Promise<MerchantDocument> {
+    const where: { name: FindOperator<string>; id?: FindOperator<string> } = {
       name: ILike(name),
+    };
+    if (id) {
+      where.id = Not(id);
+    }
+    const cekMerchantName = await this.merchantRepository.findOne({
+      where,
     });
     if (cekMerchantName) {
       throw new BadRequestException(
@@ -748,5 +760,30 @@ export class MerchantsService {
       );
     }
     return cekMerchantName;
+  }
+
+  async validateMerchantUniquePhone(phone: string, id?: string) {
+    const where: { phone: string; id?: FindOperator<string> } = { phone };
+    if (id) {
+      where.id = Not(id);
+    }
+    const cekMerchantPhone = await this.merchantRepository.findOne({
+      where,
+    });
+    if (cekMerchantPhone) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.get('merchant.general.phoneExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 }

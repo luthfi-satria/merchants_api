@@ -75,7 +75,8 @@ export class UpdateMerchantDTO {
   pic_nip: string;
 
   @IsOptional()
-  @IsString()
+  @IsNumberString()
+  @Length(10, 15)
   pic_phone: string;
 
   @IsOptional()

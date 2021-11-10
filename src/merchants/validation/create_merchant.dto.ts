@@ -75,7 +75,8 @@ export class CreateMerchantDTO {
   pic_nip: string;
 
   @IsNotEmpty({ message: 'Pic Phone harus diisi' })
-  @IsString()
+  @IsNumberString()
+  @Length(10, 15)
   pic_phone: string;
 
   @IsNotEmpty({ message: 'Pic Email harus diisi' })
