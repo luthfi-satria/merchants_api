@@ -175,6 +175,9 @@ export class GroupsService {
     updateGroupDTO: UpdateGroupDTO,
     id: string,
   ): Promise<GroupDocument> {
+    if (updateGroupDTO.name) {
+      await this.validateGroupUniqueName(updateGroupDTO.name, id);
+    }
     const group = await this.groupRepository.findOne({
       relations: ['users'],
       where: { id },
