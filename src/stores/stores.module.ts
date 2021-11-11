@@ -19,6 +19,7 @@ import { HashService } from 'src/hash/hash.service';
 import { InternalService } from 'src/internal/internal.service';
 import { LobService } from 'src/lob/lob.service';
 import { LoginService } from 'src/login/login.service';
+import { MerchantsModule } from 'src/merchants/merchants.module';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 import { UsersModule } from 'src/users/users.module';
@@ -51,6 +52,7 @@ import { StoresController } from './strores.controller';
     }),
     HttpModule,
     UsersModule,
+    MerchantsModule,
   ],
   controllers: [
     StoresController,
@@ -62,7 +64,6 @@ import { StoresController } from './strores.controller';
     StoreOperationalService,
     MerchantsService,
     AddonsService,
-    MerchantsService,
     HashService,
     LoginService,
     ImageValidationService,

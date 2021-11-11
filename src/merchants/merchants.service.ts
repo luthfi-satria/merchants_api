@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  forwardRef,
   HttpStatus,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -38,6 +40,8 @@ import { MerchantUsersService } from './merchants_users.service';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
 import { RoleService } from 'src/common/services/admins/role.service';
+import { StoresService } from 'src/stores/stores.service';
+import { enumStoreStatus } from 'src/database/entities/store.entity';
 @Injectable()
 export class MerchantsService {
   constructor(
@@ -54,6 +58,8 @@ export class MerchantsService {
     private readonly groupsService: GroupsService,
     private readonly lobService: LobService,
     private readonly roleService: RoleService,
+    @Inject(forwardRef(() => StoresService))
+    private readonly storesService: StoresService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -398,10 +404,20 @@ export class MerchantsService {
       existMerchant.pic_nip = data.pic_nip;
     }
     if (data.status) existMerchant.status = data.status;
-    if (existMerchant.status == 'ACTIVE')
+    if (existMerchant.status == 'ACTIVE') {
       existMerchant.approved_at = new Date();
-    if (existMerchant.status == 'REJECTED')
+      this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
+        existMerchant.id,
+        enumStoreStatus.active,
+      );
+    }
+    if (existMerchant.status == 'REJECTED') {
       existMerchant.rejected_at = new Date();
+      this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
+        existMerchant.id,
+        enumStoreStatus.rejected,
+      );
+    }
     if (data.rejection_reason)
       existMerchant.rejection_reason = data.rejection_reason;
 
