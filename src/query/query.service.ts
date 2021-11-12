@@ -471,6 +471,9 @@ export class QueryService {
       const merchant_id: string = data.merchant_id || null;
       const include_inactive_stores = data.include_inactive_stores || false;
 
+      let is_online_platform = true;
+      if (data.platform) is_online_platform = data.platform == 'ONLINE';
+
       // Apply dynamic Sort & order by
       const orderBy = data.order || null;
       const sort = data.sort || null;
@@ -688,75 +691,78 @@ export class QueryService {
       // -- Formating output OR add external attribute to  output--
       const formattedStoredItems = await Promise.all(
         storeItems.map(async (row) => {
-          // Add 'distance_in_km' attribute
-          const distance_in_km = getDistanceInKilometers(
-            parseFloat(lat),
-            parseFloat(long),
-            row.location_latitude,
-            row.location_longitude,
-          );
+          if (row.platform == is_online_platform) {
+            // Add 'distance_in_km' attribute
+            const distance_in_km = getDistanceInKilometers(
+              parseFloat(lat),
+              parseFloat(long),
+              row.location_latitude,
+              row.location_longitude,
+            );
 
-          // Get relation of operational store & operational shift,
-          const opt_hours = await this.storeOperationalService
-            .getAllStoreScheduleByStoreId(row.id)
-            .then((res) => {
-              return res.map((e) => {
-                const dayOfWeekToWord = DateTimeUtils.convertToDayOfWeek(
-                  Number(e.day_of_week),
-                );
-                const x = new StoreOperationalHoursDocument({ ...e });
-                delete x.day_of_week;
-                return {
-                  ...x,
-                  day_of_week: dayOfWeekToWord,
-                };
+            // Get relation of operational store & operational shift,
+            const opt_hours = await this.storeOperationalService
+              .getAllStoreScheduleByStoreId(row.id)
+              .then((res) => {
+                return res.map((e) => {
+                  const dayOfWeekToWord = DateTimeUtils.convertToDayOfWeek(
+                    Number(e.day_of_week),
+                  );
+                  const x = new StoreOperationalHoursDocument({ ...e });
+                  delete x.day_of_week;
+                  return {
+                    ...x,
+                    day_of_week: dayOfWeekToWord,
+                  };
+                });
               });
+
+            // Parse Store Categories with localization category language name
+            const store_categories = row.store_categories.map((item) => {
+              const ctg_language = item.languages.find((e) => e.lang === lang);
+
+              const x = new StoreCategoriesDocument({ ...item });
+              delete x.languages;
+              return { ...x, name: ctg_language.name };
             });
 
-          // Parse Store Categories with localization category language name
-          const store_categories = row.store_categories.map((item) => {
-            const ctg_language = item.languages.find((e) => e.lang === lang);
+            // filter logic store operational status
+            const store_operational_status = this.getStoreOperationalStatus(
+              row.is_store_open,
+              currTime,
+              weekOfDay,
+              row.operational_hours,
+            );
 
-            const x = new StoreCategoriesDocument({ ...item });
-            delete x.languages;
-            return { ...x, name: ctg_language.name };
-          });
+            // Get Merchant Profile
+            const merchant = await this.merchantRepository
+              .findOne(row.merchant_id)
+              .then((result) => {
+                delete result.pic_password;
+                delete result.approved_at;
+                delete result.created_at;
+                delete result.updated_at;
+                delete result.deleted_at;
+                return result;
+              });
 
-          // filter logic store operational status
-          const store_operational_status = this.getStoreOperationalStatus(
-            row.is_store_open,
-            currTime,
-            weekOfDay,
-            row.operational_hours,
-          );
+            // Get Price Symbol
+            const priceRange =
+              await this.priceRangeService.getPriceRangeByPrice(
+                row.average_price,
+              );
+            const price_symbol = priceRange ? priceRange.symbol : null;
 
-          // Get Merchant Profile
-          const merchant = await this.merchantRepository
-            .findOne(row.merchant_id)
-            .then((result) => {
-              delete result.pic_password;
-              delete result.approved_at;
-              delete result.created_at;
-              delete result.updated_at;
-              delete result.deleted_at;
-              return result;
-            });
-
-          // Get Price Symbol
-          const priceRange = await this.priceRangeService.getPriceRangeByPrice(
-            row.average_price,
-          );
-          const price_symbol = priceRange ? priceRange.symbol : null;
-
-          return {
-            ...row,
-            distance_in_km: distance_in_km,
-            store_operational_status,
-            operational_hours: opt_hours,
-            store_categories: store_categories,
-            merchant,
-            price_symbol,
-          };
+            return {
+              ...row,
+              distance_in_km: distance_in_km,
+              store_operational_status,
+              operational_hours: opt_hours,
+              store_categories: store_categories,
+              merchant,
+              price_symbol,
+            };
+          }
         }),
       );
 
@@ -939,6 +945,7 @@ export class QueryService {
         page,
         location_latitude: lat,
         location_longitude: long,
+        platform: 'ONLINE',
       };
 
       const listStores = await this.getListQueryStore(args, options);
@@ -1111,6 +1118,7 @@ export class QueryService {
         page,
         location_latitude: lat,
         location_longitude: long,
+        platform: 'ONLINE',
       };
 
       const currentPage = data.page || 1;

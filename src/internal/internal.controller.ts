@@ -70,6 +70,15 @@ export class InternalController {
     return this.internalService.updateStoreAveragePrice(args);
   }
 
+  @Post('merchants/stores/platform')
+  @ResponseStatusCode()
+  async updatePlatform(
+    @Body()
+    args: Record<string, any>[],
+  ): Promise<any> {
+    return this.internalService.updateStorePlatform(args);
+  }
+
   @Get('merchants/profile/:id/check-active-role')
   @ResponseStatusCode()
   async getMerchantActiveRole(@Param('id') id: string) {

@@ -260,6 +260,21 @@ export class InternalService {
     };
   }
 
+  async updateStorePlatform(
+    args: Record<string, any>[],
+  ): Promise<RSuccessMessage> {
+    for (const raw of args) {
+      await this.storeRepository.update(
+        { id: raw.store_id },
+        { platform: raw.platform },
+      );
+    }
+    return {
+      success: true,
+      message: 'SUCCESS',
+    };
+  }
+
   async updatePopulateExistingPricingTemplate(): Promise<RSuccessMessage> {
     const findStores = await this.storeService.findMerchantStores();
     const stores = {
