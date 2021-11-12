@@ -100,6 +100,9 @@ export class StoreDocument {
   @Column({ default: 0 })
   average_price: number;
 
+  @Column({ default: true })
+  platform: boolean;
+
   @Column({
     default: 'https://dummyimage.com/600x400/968a96/ffffff&text=Photo+Image',
   })
