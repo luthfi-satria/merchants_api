@@ -106,7 +106,10 @@ export default {
       code: 'PHONE_ALREADY_REGISTERED',
       message: 'Nomor telepon sudah digunakan oleh Merchant lain',
     },
-    emailExist: 'Email sudah digunakan oleh Merchant lain.',
+    emailExist: {
+      code: 'EMAIL_ALREADY_REGISTERED',
+      message: 'Email sudah digunakan oleh Merchant lain.',
+    },
     empty_token: 'Kode Token tidak ada.',
     invalid_token: 'Kode Token tidak valid.',
     groupid_notfound: 'ID Group tidak ditemukan.',

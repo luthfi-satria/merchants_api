@@ -24,6 +24,14 @@ import { ResetPasswordController } from './reset-password.controller';
 import { ResetPasswordService } from './reset-password.service';
 import { ProfileModule } from './profile/profile.module';
 import { NotificationService } from 'src/common/notification/notification.service';
+import { StoresService } from 'src/stores/stores.service';
+import { AddonsService } from 'src/addons/addons.service';
+import { StoreOperationalService } from 'src/stores/stores-operational.service';
+import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
+import { UsersService } from 'src/users/users.service';
+import { AddonDocument } from 'src/database/entities/addons.entity';
+import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
+import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 
 @Module({
   imports: [
@@ -34,6 +42,10 @@ import { NotificationService } from 'src/common/notification/notification.servic
       ListBankDocument,
       MerchantUsersDocument,
       StoreDocument,
+      StoreCategoriesDocument,
+      AddonDocument,
+      StoreOperationalHoursDocument,
+      StoreOperationalShiftDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
@@ -60,6 +72,10 @@ import { NotificationService } from 'src/common/notification/notification.servic
     CommonService,
     ResetPasswordService,
     NotificationService,
+    StoresService,
+    AddonsService,
+    StoreOperationalService,
+    UsersService,
   ],
 })
 export class MerchantsModule {}

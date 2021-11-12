@@ -30,6 +30,7 @@ export enum enumDeliveryType {
 export enum enumStoreStatus {
   draf = 'DRAFT',
   waiting_for_approval = 'WAITING_FOR_APPROVAL',
+  waiting_for_brand_approval = 'WAITING_FOR_BRAND_APPROVAL',
   active = 'ACTIVE',
   inactive = 'INACTIVE',
   banned = 'BANNED',

@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  forwardRef,
   HttpService,
   HttpStatus,
+  Inject,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -11,13 +13,16 @@ import { catchError, map, Observable } from 'rxjs';
 import { AddonsService } from 'src/addons/addons.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
-import { StoreDocument } from 'src/database/entities/store.entity';
+import {
+  enumStoreStatus,
+  StoreDocument,
+} from 'src/database/entities/store.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, Repository, UpdateResult } from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreOperationalService } from './stores-operational.service';
 import { UpdateStoreCategoriesValidation } from './validation/update-store-categories.validation';
@@ -45,6 +50,7 @@ export class StoresService {
     private readonly responseService: ResponseService,
     private readonly addonService: AddonsService,
     private httpService: HttpService,
+    @Inject(forwardRef(() => MerchantsService))
     private readonly merchantService: MerchantsService,
     private readonly storeOperationalService: StoreOperationalService,
     @InjectRepository(StoreCategoriesDocument)
@@ -250,6 +256,9 @@ export class StoresService {
       create_merchant_store_validation.service_addons,
     );
 
+    if (merchant.status == 'WAITING_FOR_APPROVAL') {
+      store_document.status = enumStoreStatus.waiting_for_brand_approval;
+    }
     if (store_document.status == 'ACTIVE')
       store_document.approved_at = new Date();
     if (store_document.status == 'REJECTED')
@@ -911,6 +920,22 @@ export class StoresService {
           ),
         );
       });
+  }
+
+  async setAllStatusWithWaitingForBrandApprovalByMerchantId(
+    merchantId: string,
+    status: enumStoreStatus,
+  ): Promise<UpdateResult> {
+    const updateData = await this.storeRepository
+      .createQueryBuilder()
+      .update()
+      .set({ status })
+      .where('merchant_id = :merchant_id', { merchant_id: merchantId })
+      .andWhere('status = :status', {
+        status: enumStoreStatus.waiting_for_brand_approval,
+      })
+      .execute();
+    return updateData;
   }
 
   async getAndValidateStoreByStoreId(storeId: string): Promise<StoreDocument> {

@@ -114,24 +114,20 @@ export class GroupsController {
       createGroupDTO[file.fieldname] = url;
     }
 
-    try {
-      const create_result: GroupDocument =
-        await this.groupsService.createMerchantGroupProfile(createGroupDTO);
-      const result: Record<string, any> = { ...create_result };
-      for (let i = 0; i < create_result.users.length; i++) {
-        const url = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${create_result.users[i].token_reset_password}`;
-        result.users[i].url_reset_password = url;
+    const create_result: GroupDocument =
+      await this.groupsService.createMerchantGroupProfile(createGroupDTO);
+    const result: Record<string, any> = { ...create_result };
+    for (let i = 0; i < create_result.users.length; i++) {
+      const url = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${create_result.users[i].token_reset_password}`;
+      result.users[i].url_reset_password = url;
 
-        this.notificationService.sendSms(create_result.users[i].phone, url);
-      }
-      return this.responseService.success(
-        true,
-        this.messageService.get('merchant.creategroup.success'),
-        result,
-      );
-    } catch (error) {
-      console.error(error);
+      this.notificationService.sendSms(create_result.users[i].phone, url);
     }
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.creategroup.success'),
+      result,
+    );
   }
 
   @Put('groups/:id')

@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  forwardRef,
   HttpStatus,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -16,7 +18,7 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
 import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
@@ -38,6 +40,8 @@ import { MerchantUsersService } from './merchants_users.service';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
 import { RoleService } from 'src/common/services/admins/role.service';
+import { StoresService } from 'src/stores/stores.service';
+import { enumStoreStatus } from 'src/database/entities/store.entity';
 @Injectable()
 export class MerchantsService {
   constructor(
@@ -54,6 +58,8 @@ export class MerchantsService {
     private readonly groupsService: GroupsService,
     private readonly lobService: LobService,
     private readonly roleService: RoleService,
+    @Inject(forwardRef(() => StoresService))
+    private readonly storesService: StoresService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -99,6 +105,8 @@ export class MerchantsService {
     data: CreateMerchantDTO,
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
+    await this.validateMerchantUniqueName(data.name);
+    await this.validateMerchantUniquePhone(data.phone);
     const cekphone: MerchantDocument = await this.merchantRepository.findOne({
       where: { pic_phone: data.pic_phone },
     });
@@ -310,6 +318,8 @@ export class MerchantsService {
   async updateMerchantMerchantProfile(
     data: UpdateMerchantDTO,
   ): Promise<RSuccessMessage> {
+    await this.validateMerchantUniqueName(data.name, data.id);
+    await this.validateMerchantUniquePhone(data.phone, data.id);
     const existMerchant: MerchantDocument =
       await this.merchantRepository.findOne({
         where: { id: data.id },
@@ -394,10 +404,20 @@ export class MerchantsService {
       existMerchant.pic_nip = data.pic_nip;
     }
     if (data.status) existMerchant.status = data.status;
-    if (existMerchant.status == 'ACTIVE')
+    if (existMerchant.status == 'ACTIVE') {
       existMerchant.approved_at = new Date();
-    if (existMerchant.status == 'REJECTED')
+      this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
+        existMerchant.id,
+        enumStoreStatus.active,
+      );
+    }
+    if (existMerchant.status == 'REJECTED') {
       existMerchant.rejected_at = new Date();
+      this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
+        existMerchant.id,
+        enumStoreStatus.rejected,
+      );
+    }
     if (data.rejection_reason)
       existMerchant.rejection_reason = data.rejection_reason;
 
@@ -515,8 +535,7 @@ export class MerchantsService {
     data: ListMerchantDTO,
     user: Record<string, any>,
   ): Promise<Record<string, any>> {
-    let search = data.search || '';
-    search = search.toLowerCase();
+    const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
     const statuses = data.statuses || [];
@@ -577,8 +596,8 @@ export class MerchantsService {
     }
     merchant
       .orderBy('merchant_merchant.created_at', 'ASC')
-      .offset((Number(currentPage) - 1) * perPage)
-      .limit(perPage);
+      .skip((Number(currentPage) - 1) * perPage)
+      .take(perPage);
 
     try {
       const totalItems = await merchant.getCount();
@@ -722,6 +741,60 @@ export class MerchantsService {
             property: 'merchant_id',
             constraint: [
               this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async validateMerchantUniqueName(
+    name: string,
+    id?: string,
+  ): Promise<MerchantDocument> {
+    const where: { name: FindOperator<string>; id?: FindOperator<string> } = {
+      name: ILike(name),
+    };
+    if (id) {
+      where.id = Not(id);
+    }
+    const cekMerchantName = await this.merchantRepository.findOne({
+      where,
+    });
+    if (cekMerchantName) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: name,
+            property: 'name',
+            constraint: [this.messageService.get('merchant.general.nameExist')],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    return cekMerchantName;
+  }
+
+  async validateMerchantUniquePhone(phone: string, id?: string) {
+    const where: { phone: string; id?: FindOperator<string> } = { phone };
+    if (id) {
+      where.id = Not(id);
+    }
+    const cekMerchantPhone = await this.merchantRepository.findOne({
+      where,
+    });
+    if (cekMerchantPhone) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.get('merchant.general.phoneExist'),
             ],
           },
           'Bad Request',
