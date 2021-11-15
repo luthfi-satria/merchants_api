@@ -42,6 +42,9 @@ export class QueryListStoreDto extends LocationDto {
   @Type(() => Number)
   page: number;
 
+  @IsOptional()
+  platform: string;
+
   @IsUUID()
   @IsOptional()
   store_category_id: string;
