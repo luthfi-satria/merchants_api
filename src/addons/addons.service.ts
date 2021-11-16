@@ -105,7 +105,7 @@ export class AddonsService {
           .createQueryBuilder('merchant_addons')
           .select('*')
           .where('lower(name) like :aname', { aname: '%' + search + '%' })
-          .orderBy('created_at', 'DESC')
+          .orderBy('sequence', 'ASC')
           .offset((currentPage - 1) * perPage)
           .limit(perPage)
           .getRawMany();
