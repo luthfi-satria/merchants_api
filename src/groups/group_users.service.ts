@@ -73,6 +73,16 @@ export class GroupUsersService {
     groupUser.token_reset_password = randomUUID();
     const result = await this.merchantUsersRepository.save(groupUser);
     delete result.password;
+
+    const token = groupUser.token_reset_password;
+
+    const urlVerification = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${token}`;
+    if (process.env.NODE_ENV == 'test') {
+      result.token_reset_password = token;
+      // result.url = urlVerification;
+    }
+
+    this.notificationService.sendSms(groupUser.phone, urlVerification);
     return result;
   }
 
@@ -577,6 +587,7 @@ export class GroupUsersService {
   async validateGroupUserUniquePhone(
     phone: string,
     id?: string,
+    property?: string,
   ): Promise<MerchantUsersDocument> {
     const where: { phone: string; id?: FindOperator<string> } = { phone };
     if (id) {
@@ -594,7 +605,7 @@ export class GroupUsersService {
           HttpStatus.BAD_REQUEST,
           {
             value: phone,
-            property: 'phone',
+            property: property ?? 'phone',
             constraint: [
               this.messageService.get('merchant.general.phoneExist'),
             ],
@@ -610,6 +621,7 @@ export class GroupUsersService {
   async validateGroupUserUniqueEmail(
     email: string,
     id?: string,
+    property?: string,
   ): Promise<MerchantUsersDocument> {
     const where: { email: string; id?: FindOperator<string> } = { email };
     if (id) {
@@ -626,7 +638,7 @@ export class GroupUsersService {
           HttpStatus.BAD_REQUEST,
           {
             value: email,
-            property: 'email',
+            property: property ?? 'email',
             constraint: [
               this.messageService.get('merchant.general.emailExist'),
             ],

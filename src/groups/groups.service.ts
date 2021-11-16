@@ -70,12 +70,13 @@ export class GroupsService {
     createGroupDTO: CreateGroupDTO
   ): Promise<GroupDocument> {
     await this.validateGroupUniqueName(createGroupDTO.name);
-    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.director_email);
-    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.pic_finance_email);
-    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.pic_operational_email);
-    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.director_phone);
-    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.pic_finance_phone);
-    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.pic_operational_phone);
+    await this.validateGroupUniquePhone(createGroupDTO.phone);
+    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.director_email, null, 'director_email');
+    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.pic_finance_email, null, 'pic_finance_email');
+    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.pic_operational_email, null, 'pic_operational_email');
+    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.director_phone, null, 'director_phone');
+    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.pic_finance_phone, null, 'pic_finance_phone');
+    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.pic_operational_phone, null, 'pic_operational_phone');
     const salt: string = await this.hashService.randomSalt();
     createGroupDTO.director_password = await this.hashService.hashPassword(
       createGroupDTO.director_password,
@@ -177,6 +178,9 @@ export class GroupsService {
   ): Promise<GroupDocument> {
     if (updateGroupDTO.name) {
       await this.validateGroupUniqueName(updateGroupDTO.name, id);
+    }
+    if (updateGroupDTO.phone) {
+      await this.validateGroupUniquePhone(updateGroupDTO.phone, id);
     }
     const group = await this.groupRepository.findOne({
       relations: ['users'],
@@ -386,6 +390,33 @@ export class GroupsService {
             property: 'name',
             constraint: [
               this.messageService.get('merchant.general.nameExist'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  async validateGroupUniquePhone(phone: string, id?: string) {
+    const where: { phone: FindOperator<string>; id?: FindOperator<string> } = {
+      phone: ILike(phone),
+    };
+    if (id) {
+      where.id = Not(id);
+    }
+    const group = await this.groupRepository.findOne({
+      where
+    });
+    if (group) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: phone,
+            property: 'phone',
+            constraint: [
+              this.messageService.get('merchant.general.phoneExist'),
             ],
           },
           'Bad Request',
