@@ -688,6 +688,8 @@ export class QueryService {
 
       const [storeItems, totalItems] = qlistStore;
 
+      const formattedArr = [];
+
       // -- Formating output OR add external attribute to  output--
       const formattedStoredItems = await Promise.all(
         storeItems.map(async (row) => {
@@ -753,6 +755,16 @@ export class QueryService {
               );
             const price_symbol = priceRange ? priceRange.symbol : null;
 
+            formattedArr.push({
+              ...row,
+              distance_in_km: distance_in_km,
+              store_operational_status,
+              operational_hours: opt_hours,
+              store_categories: store_categories,
+              merchant,
+              price_symbol,
+            });
+
             return {
               ...row,
               distance_in_km: distance_in_km,
@@ -770,7 +782,7 @@ export class QueryService {
         total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
-        items: formattedStoredItems,
+        items: formattedArr,
       };
 
       return this.responseService.success(
