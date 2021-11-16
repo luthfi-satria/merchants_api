@@ -15,6 +15,12 @@ export class AddonDocument {
   @Column()
   name: string;
 
+  @Column({ nullable: true })
+  code: string;
+
+  @Column({ default: 0 })
+  sequence: number;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date | string;
 

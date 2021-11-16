@@ -37,6 +37,8 @@ export class AddonsService {
   ): Promise<AddonDocument> {
     const create_lob: Partial<AddonDocument> = {
       name: data.name,
+      code: data.code,
+      sequence: data.sequence ? data.sequence : 0,
     };
     return this.addonRepository
       .save(create_lob)
@@ -65,6 +67,8 @@ export class AddonsService {
   ): Promise<Record<string, any>> {
     const create_lob: Partial<AddonDocument> = {
       name: data.name,
+      code: data.code,
+      sequence: data.sequence,
     };
 
     return this.addonRepository
