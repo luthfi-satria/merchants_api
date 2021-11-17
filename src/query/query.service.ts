@@ -692,7 +692,7 @@ export class QueryService {
 
       // -- Formating output OR add external attribute to  output--
       const formattedStoredItems = await Promise.all(
-        storeItems.filter(async (row) => {
+        storeItems.map(async (row) => {
           if (row.platform == is_online_platform) {
             // Add 'distance_in_km' attribute
             const distance_in_km = getDistanceInKilometers(
@@ -778,11 +778,19 @@ export class QueryService {
         }),
       );
 
+      const formattedArr = [];
+
+      formattedStoredItems.forEach((element) => {
+        if (element) {
+          formattedArr.push(element);
+        }
+      });
+
       const list_result: ListResponse = {
         total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
-        items: formattedStoredItems,
+        items: formattedArr,
       };
 
       return this.responseService.success(
