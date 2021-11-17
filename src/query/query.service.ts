@@ -688,11 +688,11 @@ export class QueryService {
 
       const [storeItems, totalItems] = qlistStore;
 
-      const formattedArr = [];
+      // const formattedArr = [];
 
       // -- Formating output OR add external attribute to  output--
       const formattedStoredItems = await Promise.all(
-        storeItems.map(async (row) => {
+        storeItems.filter(async (row) => {
           if (row.platform == is_online_platform) {
             // Add 'distance_in_km' attribute
             const distance_in_km = getDistanceInKilometers(
@@ -755,15 +755,15 @@ export class QueryService {
               );
             const price_symbol = priceRange ? priceRange.symbol : null;
 
-            formattedArr.push({
-              ...row,
-              distance_in_km: distance_in_km,
-              store_operational_status,
-              operational_hours: opt_hours,
-              store_categories: store_categories,
-              merchant,
-              price_symbol,
-            });
+            // formattedArr.push({
+            //   ...row,
+            //   distance_in_km: distance_in_km,
+            //   store_operational_status,
+            //   operational_hours: opt_hours,
+            //   store_categories: store_categories,
+            //   merchant,
+            //   price_symbol,
+            // });
 
             return {
               ...row,
@@ -782,7 +782,7 @@ export class QueryService {
         total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
-        items: formattedArr,
+        items: formattedStoredItems,
       };
 
       return this.responseService.success(
