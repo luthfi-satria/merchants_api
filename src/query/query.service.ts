@@ -778,11 +778,19 @@ export class QueryService {
         }),
       );
 
+      const formattedArr = [];
+
+      formattedStoredItems.forEach((element) => {
+        if (element) {
+          formattedArr.push(element);
+        }
+      });
+
       const list_result: ListResponse = {
         total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
-        items: formattedStoredItems,
+        items: formattedArr,
       };
 
       return this.responseService.success(
