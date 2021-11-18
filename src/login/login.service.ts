@@ -398,7 +398,12 @@ export class LoginService {
       const merchant_user = await this.merchantUsersRepository
         .createQueryBuilder('mu')
         .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect(
+          'merchant_store.service_addons',
+          'merchant_store_service_addons',
+        )
         .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
         .leftJoinAndSelect('mu.group', 'merchant_group')
         .where('mu.id = :id', { id })
         .andWhere('mu.role_id is not null')
