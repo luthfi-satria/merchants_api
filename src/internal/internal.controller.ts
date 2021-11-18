@@ -11,6 +11,7 @@ import { CommonStoresService } from 'src/common/own/stores.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { StoreBatchDTO } from './dto/store_batch.dto';
+import { UpdateRatingDTO } from './dto/update_rating.dto';
 import { InternalService } from './internal.service';
 import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
@@ -47,6 +48,16 @@ export class InternalController {
   @ResponseStatusCode()
   async listStores(@Query() data: any): Promise<any> {
     return this.internalService.listStores(data);
+  }
+
+  @Post('merchants/stores/rating/:id')
+  @ResponseStatusCode()
+  async updateRatingStore(
+    @Param('id') id: string,
+    @Body()
+    data: UpdateRatingDTO,
+  ): Promise<any> {
+    return this.internalService.updateRatingStore(id, data);
   }
 
   @Get('merchants/stores/:id')

@@ -504,6 +504,7 @@ export class QueryService {
       // Apply store is open 24-hours filter
       const is24hrs = data?.is_24hrs ? true : false;
       const open_24_hour = data.is_24hrs;
+      const minimum_rating = data.minimum_rating ? data.minimum_rating : 0;
 
       // Apply Include store closed filter
       const include_closed_stores = data.include_closed_stores || false;
@@ -611,6 +612,11 @@ export class QueryService {
                 ? `AND merchant_store.average_price <= :budgetMaxValue`
                 : ''
             }
+            ${
+              minimum_rating
+                ? `AND merchant_store.rating >= :minimum_rating`
+                : ''
+            }
             `,
           {
             active: enumStoreStatus.active,
@@ -625,6 +631,7 @@ export class QueryService {
             priceHigh: priceHigh,
             newThisWeekDate: lastWeek,
             budgetMaxValue: budgetMaxValue,
+            minimum_rating: minimum_rating,
           },
         )
         .andWhere(
@@ -799,6 +806,8 @@ export class QueryService {
         list_result,
       );
     } catch (e) {
+      console.log(e);
+
       Logger.error(e.message, '', 'QUERY LIST STORE');
       throw e;
     }
@@ -938,6 +947,7 @@ export class QueryService {
       const new_this_week = data.new_this_week || false;
       const budget_meal = data.budget_meal || false;
       const include_inactive_stores = data.include_inactive_stores || false;
+      const minimum_rating = data.minimum_rating || 0;
 
       const options = {
         fetch_all: true,
@@ -963,6 +973,7 @@ export class QueryService {
         search: null,
         limit,
         page,
+        minimum_rating,
         location_latitude: lat,
         location_longitude: long,
         platform: 'ONLINE',
@@ -1114,6 +1125,7 @@ export class QueryService {
       const include_inactive_stores = true;
       const new_this_week = false;
       const budget_meal = false;
+      const minimum_rating = 0;
 
       const options = {
         fetch_using_ids: [],
@@ -1136,6 +1148,7 @@ export class QueryService {
         search,
         limit,
         page,
+        minimum_rating,
         location_latitude: lat,
         location_longitude: long,
         platform: 'ONLINE',

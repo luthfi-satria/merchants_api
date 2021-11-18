@@ -78,6 +78,11 @@ export class QueryListStoreDto extends LocationDto {
   @IsOptional()
   sort: string;
 
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  minimum_rating: number;
+
   @IsOptional()
   order: string;
 

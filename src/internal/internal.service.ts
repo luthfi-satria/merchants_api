@@ -30,6 +30,49 @@ export class InternalService {
     private readonly commonService: CommonService,
   ) {}
 
+  async updateRatingStore(id, data) {
+    try {
+      const store = await this.findStorebyId(id);
+
+      if (!store) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: id,
+              property: 'store_id',
+              constraint: ['ID tidak ditemukan.'],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+
+      store.rating =
+        store.numrating && store.rating
+          ? (store.rating * store.numrating + data.rating) /
+            (store.numrating + 1)
+          : data.rating;
+      store.numrating = store.numrating ? store.numrating + 1 : 1;
+
+      await this.storeService.updateStorePartial(store);
+    } catch (err) {
+      console.error('error', err);
+      const errors: RMessage = {
+        value: '',
+        property: '',
+        constraint: [err.message],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
   async findStorebyId(id: string): Promise<StoreDocument> {
     return this.storeRepository
       .findOne({
