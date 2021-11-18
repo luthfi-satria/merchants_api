@@ -32,7 +32,7 @@ export class InternalService {
 
   async updateRatingStore(id, data) {
     try {
-      let store = await this.findStorebyId(id);
+      const store = await this.findStorebyId(id);
 
       if (!store) {
         throw new BadRequestException(
