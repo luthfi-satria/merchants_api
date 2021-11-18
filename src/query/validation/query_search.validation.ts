@@ -40,6 +40,11 @@ export class QuerySearchValidation {
   @Type(() => Number)
   distance: number;
 
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  minimum_rating: number;
+
   @IsUUID()
   @IsOptional()
   store_category_id: string;

@@ -139,6 +139,12 @@ export class StoreDocument {
   @Column({ nullable: true })
   bank_account_no: string;
 
+  @Column('decimal', { nullable: true })
+  rating: number;
+
+  @Column({ nullable: true })
+  numrating: number;
+
   @Column({ nullable: true })
   bank_account_name: string;
 
