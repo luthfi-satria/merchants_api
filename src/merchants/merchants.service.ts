@@ -323,6 +323,7 @@ export class MerchantsService {
     const existMerchant: MerchantDocument =
       await this.merchantRepository.findOne({
         where: { id: data.id },
+        relations: ['users'],
       });
     if (!existMerchant) {
       const errors: RMessage = {
@@ -403,6 +404,23 @@ export class MerchantsService {
     if (data.pic_nip) {
       existMerchant.pic_nip = data.pic_nip;
     }
+
+    await this.merchantUserService.checkExistEmailPhone(
+      data.pic_email,
+      data.pic_phone,
+      existMerchant.users[0].id,
+    );
+
+    if (data.pic_password) {
+      const salt: string = await this.hashService.randomSalt();
+      data.pic_password = await this.hashService.hashPassword(
+        data.pic_password,
+        salt,
+      );
+    }
+
+    const oldStatus = existMerchant.status;
+    const oldPhone = existMerchant.phone;
     if (data.status) existMerchant.status = data.status;
     if (existMerchant.status == 'ACTIVE') {
       existMerchant.approved_at = new Date();
@@ -410,6 +428,15 @@ export class MerchantsService {
         existMerchant.id,
         enumStoreStatus.active,
       );
+      if (oldStatus == MerchantStatus.Draft) {
+        existMerchant.users[0].name = data.pic_name;
+        existMerchant.users[0].email = data.pic_email;
+        existMerchant.users[0].phone = data.pic_phone;
+        if (data.pic_password) {
+          existMerchant.users[0].password = data.pic_password;
+        }
+        existMerchant.users[0].status = MerchantUsersStatus.Active;
+      }
     }
     if (existMerchant.status == 'REJECTED') {
       existMerchant.rejected_at = new Date();
@@ -417,23 +444,30 @@ export class MerchantsService {
         existMerchant.id,
         enumStoreStatus.rejected,
       );
+      if (oldStatus == MerchantStatus.Draft) {
+        existMerchant.users[0].name = data.pic_name;
+        existMerchant.users[0].email = data.pic_email;
+        existMerchant.users[0].phone = data.pic_phone;
+        if (data.pic_password) {
+          existMerchant.users[0].password = data.pic_password;
+        }
+        existMerchant.users[0].status = MerchantUsersStatus.Rejected;
+      }
     }
     if (data.rejection_reason)
       existMerchant.rejection_reason = data.rejection_reason;
 
     try {
-      const update: Record<string, any> = await this.merchantRepository.save(
+      const update: MerchantDocument = await this.merchantRepository.save(
         existMerchant,
       );
       if (!update) {
         throw new Error('failed insert to merchant_group');
       }
 
-      update.user = await this.merchantUserService.findByMerchantId(
-        existMerchant.id,
-      );
-      formatingAllOutputTime(update.user);
-      removeAllFieldPassword(update.user);
+      if (oldStatus == MerchantStatus.Draft && oldPhone != data.pic_phone) {
+        this.merchantUserService.resendPhoneUser(update.users[0].id);
+      }
 
       formatingAllOutputTime(update);
       removeAllFieldPassword(update);
@@ -747,6 +781,26 @@ export class MerchantsService {
         ),
       );
     }
+  }
+
+  async getAndValidateMerchantActiveById(
+    merchantId: string,
+  ): Promise<MerchantDocument> {
+    const merchant = await this.getAndValidateMerchantById(merchantId);
+    if (merchant.status != MerchantStatus.Active) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: merchantId,
+            property: 'merchant_id',
+            constraint: [this.messageService.get('merchant.status.notActive')],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    return merchant;
   }
 
   async validateMerchantUniqueName(

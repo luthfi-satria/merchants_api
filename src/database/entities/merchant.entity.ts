@@ -11,6 +11,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { GroupDocument } from './group.entity';
+import { MerchantUsersDocument } from './merchant_users.entity';
 import { StoreDocument } from './store.entity';
 
 export enum MerchantStatus {
@@ -122,6 +123,11 @@ export class MerchantDocument {
 
   @OneToMany(() => StoreDocument, (store) => store.merchant)
   stores: StoreDocument[];
+
+  @OneToMany(() => MerchantUsersDocument, (users) => users.merchant, {
+    cascade: true,
+  })
+  users: MerchantUsersDocument[];
 
   constructor(init?: Partial<MerchantDocument>) {
     Object.assign(this, init);
