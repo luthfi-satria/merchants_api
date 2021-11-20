@@ -71,9 +71,10 @@ export class MerchantUsersService {
     args: CreateMerchantUsersValidation,
     user: any,
   ): Promise<Record<string, any>> {
-    const merchant = await this.merchantService.getAndValidateMerchantActiveById(
-      args.merchant_id,
-    );
+    const merchant =
+      await this.merchantService.getAndValidateMerchantActiveById(
+        args.merchant_id,
+      );
 
     let stores = null;
     if (args.store_ids) {
