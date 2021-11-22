@@ -25,7 +25,9 @@ export class MerchantGroupUsersValidation {
   @IsOptional()
   nip: string;
 
-  @IsNotEmpty()
+  // @IsNotEmpty()
+  @IsOptional()
+  @ValidateIf((o) => o.email != '')
   @IsEmail()
   email: string;
 

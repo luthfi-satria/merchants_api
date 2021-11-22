@@ -30,7 +30,7 @@ export class MerchantUsersDocument {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ nullable: true })
   email: string;
 
   @Column()
