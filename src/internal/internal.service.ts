@@ -71,6 +71,11 @@ export class InternalService {
         ),
       );
     }
+
+    return {
+      success: true,
+      message: 'SUCCESS',
+    };
   }
 
   async findStorebyId(id: string): Promise<StoreDocument> {
