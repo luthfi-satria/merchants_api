@@ -148,14 +148,20 @@ export class InternalService {
   async listStores(data: any): Promise<Record<string, any>> {
     const search = data.search || '';
     const status = data.status;
+    const ids = data.ids?.length ? data.ids : null;
 
     const store = this.storeRepository
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.merchant', 'merchant')
-      .leftJoinAndSelect('merchant.group', 'group')
-      .where('merchant.id = :mid', {
+      .leftJoinAndSelect('merchant.group', 'group');
+
+    if (!ids)
+      store.where('merchant.id = :mid', {
         mid: data.merchant_id,
       });
+    else if (ids) {
+      store.where('ms.id in (:...ids)', { ids });
+    }
 
     if (search) {
       store.andWhere(

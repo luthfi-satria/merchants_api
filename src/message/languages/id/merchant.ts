@@ -68,6 +68,12 @@ export default {
       message: 'Nomer telepon belum terverifikasi.',
     },
   },
+  status: {
+    notActive: {
+      code: 'STATUS_NOT_ACTIVE',
+      message: 'Status merchant tidak aktif.',
+    },
+  },
   creategroup: {
     success: 'SUCCESS',
     fail: 'Create Group Gagal.',
