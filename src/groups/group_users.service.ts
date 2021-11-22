@@ -172,11 +172,14 @@ export class GroupUsersService {
     const group = await this.groupService.getAndValidateGroupByGroupId(
       args.group_id,
     );
+    args.email = args.email ? args.email : null;
+
+    if (args.email) await this.validateGroupUserUniqueEmail(args.email);
     await this.validateGroupUserUniquePhone(args.phone);
-    await this.validateGroupUserUniqueEmail(args.email);
     // const role = await this.roleService.getAndValodateRoleByRoleId(
     //   args.role_id,
     // );
+
     const role = await this.roleService.getRoleAndValidatePlatformByRoleId(
       args.role_id,
       'HERMES_CORPORATE',
