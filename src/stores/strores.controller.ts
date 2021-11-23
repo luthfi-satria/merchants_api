@@ -20,8 +20,7 @@ import {
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
-import { Response, ResponseStatusCode } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
+import { ResponseStatusCode } from 'src/response/response.decorator';
 import { RMessage } from 'src/response/response.interface';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -59,8 +58,8 @@ export class StoresController {
     private readonly storesService: StoresService,
     private readonly imageValidationService: ImageValidationService,
     private readonly storage: CommonStorageService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
     private readonly internalService: InternalService,
   ) {}
 

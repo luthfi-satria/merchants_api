@@ -1,16 +1,14 @@
 import {
   BadRequestException,
-  HttpService,
   HttpStatus,
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { catchError, lastValueFrom, map } from 'rxjs';
 import { CommonService } from 'src/common/common.service';
-import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
-import { Response } from 'src/response/response.decorator';
 import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { CityResponseDTO } from './dto/city-response.dto';
@@ -20,8 +18,8 @@ import { CityDTO } from './dto/city.dto';
 export class CityService {
   constructor(
     private readonly httpService: HttpService,
-    @Message() private readonly messageService: MessageService,
-    @Response() private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
     private readonly commonService: CommonService,
   ) {}
 

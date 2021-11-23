@@ -11,8 +11,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { GroupsService } from 'src/groups/groups.service';
-import { Response, ResponseStatusCode } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
+import { ResponseStatusCode } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { LoginEmailValidation } from './validation/login.email.validation';
@@ -32,8 +31,8 @@ export class LoginController {
     private readonly groupsService: GroupsService,
     private readonly loginService: LoginService,
     private readonly authInternalService: AuthInternalService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
   ) {}
 
   // @Post('login/email')

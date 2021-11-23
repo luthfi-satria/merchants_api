@@ -1,12 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import languages from './message.constant';
 
 @Injectable()
 export class MessageService {
   private readonly languages: Record<string, any> = languages;
-
-  constructor(private readonly configService: ConfigService) {}
 
   get(key: string): string {
     // Env Variable

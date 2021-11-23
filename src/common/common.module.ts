@@ -1,5 +1,6 @@
 import { DriverType, StorageModule } from '@codebrew/nestjs-storage';
-import { Global, HttpModule, Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { CommonService } from './common.service';
 import { CityService } from './services/admins/city.service';
 import { RoleService } from './services/admins/role.service';
@@ -9,6 +10,8 @@ import { CommonStoresService } from './own/stores.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { CatalogsService } from './catalogs/catalogs.service';
+import { MessageService } from 'src/message/message.service';
+import { ResponseService } from 'src/response/response.service';
 
 @Global()
 @Module({
@@ -40,6 +43,8 @@ import { CatalogsService } from './catalogs/catalogs.service';
     CommonStorageService,
     CommonService,
     CityService,
+    ResponseService,
+    MessageService,
     RoleService,
     NotificationService,
     CommonStoresService,

@@ -26,7 +26,6 @@ import { firstValueFrom, map, catchError, EMPTY } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ResponseService } from 'src/response/response.service';
 import { ListResponse, RMessage } from 'src/response/response.interface';
-import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
 import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
@@ -38,7 +37,7 @@ export class StoreUsersController {
     private readonly storeUsersService: StoreUsersService,
     private readonly httpService: HttpService,
     private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly messageService: MessageService,
   ) {}
 
   @Post('users')

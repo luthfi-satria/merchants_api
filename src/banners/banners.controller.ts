@@ -11,8 +11,6 @@ import {
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { BannersService } from './banners.service';
-import { Response } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { BannersDto } from './dto/banners.dto';
 import { CommonStorageService } from 'src/common/storage/storage.service';
@@ -30,8 +28,8 @@ import { editFileName, imageJpgPngFileFilter } from 'src/utils/general-utils';
 export class BannersController {
   constructor(
     private readonly bannersService: BannersService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
     private readonly storage: CommonStorageService,
   ) {}
 

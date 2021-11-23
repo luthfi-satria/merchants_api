@@ -1,4 +1,5 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddonsService } from 'src/addons/addons.service';
@@ -29,6 +30,8 @@ import { StoresService } from 'src/stores/stores.service';
 import { UsersService } from 'src/users/users.service';
 import { QueryController } from './query.controller';
 import { QueryService } from './query.service';
+import { MessageService } from 'src/message/message.service';
+import { ResponseService } from 'src/response/response.service';
 
 @Module({
   imports: [
@@ -65,6 +68,8 @@ import { QueryService } from './query.service';
     LoginService,
     CommonService,
     MerchantUsersService,
+    MessageService,
+    ResponseService,
     GroupsService,
     LobService,
     GroupUsersService,

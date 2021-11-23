@@ -9,8 +9,6 @@ import {
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { ProfileService } from './profile.service';
-import { Response } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import {
@@ -29,8 +27,8 @@ import { catchError, map } from 'rxjs';
 export class ProfileController {
   constructor(
     private readonly profileService: ProfileService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService, // private httpService: HttpService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService, // private httpService: HttpService,
   ) {}
 
   // @Post('verify-email')

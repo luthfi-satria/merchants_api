@@ -1,16 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { HashService } from 'src/hash/hash.service';
-import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
-import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 
 @Injectable()
 export class ImageValidationService {
   constructor(
     private readonly hashService: HashService,
-    @Message() private readonly messageService: MessageService,
-    @Response() private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
   ) {}
 
   private errors: any[] = [];

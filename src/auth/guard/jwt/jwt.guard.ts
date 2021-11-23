@@ -9,8 +9,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ResponseService } from 'src/response/response.service';
-import { Response } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { RMessage } from 'src/response/response.interface';
 import { Reflector } from '@nestjs/core';
@@ -20,8 +18,8 @@ import { TokenExpiredError } from 'jsonwebtoken';
 @Injectable()
 export class JwtGuard extends AuthGuard('jwt') {
   constructor(
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
     private reflector: Reflector,
   ) {
     super();

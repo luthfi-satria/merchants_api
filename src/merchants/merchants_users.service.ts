@@ -1,12 +1,12 @@
 import {
   BadRequestException,
   forwardRef,
-  HttpService,
   HttpStatus,
   Inject,
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
@@ -22,10 +22,8 @@ import {
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
-import { Response } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
-import { Hash } from 'src/hash/hash.decorator';
+// import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import {
   CreateMerchantUsersValidation,
@@ -51,9 +49,10 @@ export class MerchantUsersService {
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
     private httpService: HttpService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
-    @Hash() private readonly hashService: HashService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
+    // @Hash()
+    private readonly hashService: HashService,
     private readonly roleService: RoleService,
     @Inject(forwardRef(() => MerchantsService))
     private readonly merchantService: MerchantsService,

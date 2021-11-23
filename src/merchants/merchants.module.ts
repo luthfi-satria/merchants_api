@@ -1,4 +1,5 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BanksService } from 'src/banks/banks.service';
@@ -32,6 +33,8 @@ import { UsersService } from 'src/users/users.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
+import { MessageService } from 'src/message/message.service';
+import { ResponseService } from 'src/response/response.service';
 
 @Module({
   imports: [
@@ -72,6 +75,8 @@ import { StoreOperationalHoursDocument } from 'src/database/entities/store_opera
     CommonService,
     ResetPasswordService,
     NotificationService,
+    MessageService,
+    ResponseService,
     StoresService,
     AddonsService,
     StoreOperationalService,

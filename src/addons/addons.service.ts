@@ -1,9 +1,5 @@
-import {
-  BadRequestException,
-  HttpService,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -13,7 +9,6 @@ import { AddonDocument } from 'src/database/entities/addons.entity';
 import { dbOutputTime } from 'src/utils/general-utils';
 import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { Response } from 'src/response/response.decorator';
 
 @Injectable()
 export class AddonsService {
@@ -21,7 +16,7 @@ export class AddonsService {
     @InjectRepository(AddonDocument)
     private readonly addonRepository: Repository<AddonDocument>,
     private httpService: HttpService,
-    @Response() private readonly responseService: ResponseService,
+    private readonly responseService: ResponseService,
   ) {}
 
   async findAddonById(id: string): Promise<AddonDocument> {

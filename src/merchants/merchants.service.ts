@@ -19,12 +19,10 @@ import {
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
-import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
-import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
-import { Hash } from 'src/hash/hash.decorator';
+// import { Hash } from 'src/hash/hash.decorator';
 import {
   MerchantUsersDocument,
   MerchantUsersStatus,
@@ -47,9 +45,10 @@ export class MerchantsService {
   constructor(
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
-    @Hash() private readonly hashService: HashService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
+    // @Hash()
+    private readonly hashService: HashService,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private merchantUserService: MerchantUsersService,

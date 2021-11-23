@@ -18,8 +18,7 @@ import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
 import { catchError, lastValueFrom, map } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
-import { Response, ResponseStatusCode } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
+import { ResponseStatusCode } from 'src/response/response.decorator';
 import { isUUID } from 'class-validator';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
@@ -34,8 +33,8 @@ import { StoreCategoriesService } from './store_categories.service';
 export class StoreCategoriesController {
   constructor(
     private readonly storeCategoriesService: StoreCategoriesService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
     private readonly imageValidationService: ImageValidationService,
   ) {}
 

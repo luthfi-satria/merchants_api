@@ -12,15 +12,14 @@ import { plainToClass } from 'class-transformer';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { RMessage } from 'src/response/response.interface';
-import { Message, Response } from 'src/utils/general.decorator';
 
 export function RequestValidationPipe(schema: {
   new (...args: any[]): any;
 }): Type<PipeTransform> {
   class MixinRequestValidationPipe implements PipeTransform {
     constructor(
-      @Response() private readonly responseService: ResponseService,
-      @Message() private readonly messageService: MessageService,
+      private readonly responseService: ResponseService,
+      private readonly messageService: MessageService,
     ) {}
 
     async transform(

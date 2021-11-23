@@ -1,22 +1,20 @@
 import {
   BadRequestException,
-  HttpService,
   HttpStatus,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { HashService } from 'src/hash/hash.service';
-import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { Repository } from 'typeorm';
-import { Response } from 'src/response/response.decorator';
-import { Hash } from 'src/hash/hash.decorator';
+// import { Hash } from 'src/hash/hash.decorator';
 import { LoginEmailValidation } from './validation/login.email.validation';
 import { OtpEmailValidateValidation } from './validation/otp.email-validate.validation';
 import { CommonService } from 'src/common/common.service';
@@ -49,9 +47,10 @@ export class LoginService {
     private readonly groupRepository: Repository<GroupDocument>,
 
     private httpService: HttpService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
-    @Hash() private readonly hashService: HashService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
+    // @Hash()
+    private readonly hashService: HashService,
     private readonly commonService: CommonService,
   ) {}
 

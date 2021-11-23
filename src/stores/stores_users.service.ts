@@ -1,13 +1,13 @@
 import {
   BadRequestException,
   forwardRef,
-  HttpService,
   HttpStatus,
   Inject,
   Injectable,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
@@ -24,10 +24,8 @@ import {
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository } from 'typeorm';
-import { Response } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
-import { Hash } from 'src/hash/hash.decorator';
+// import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MerchantStoreUsersValidation } from './validation/store_users.validation';
@@ -51,9 +49,10 @@ export class StoreUsersService {
     @InjectRepository(StoreDocument)
     private readonly storeRepository: Repository<StoreDocument>,
     private httpService: HttpService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
-    @Hash() private readonly hashService: HashService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
+    // @Hash()
+    private readonly hashService: HashService,
     private commonService: CommonService,
     private roleService: RoleService,
     private readonly merchantService: MerchantsService,

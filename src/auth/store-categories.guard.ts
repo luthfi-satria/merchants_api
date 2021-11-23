@@ -2,11 +2,11 @@ import { HttpStatus } from '@nestjs/common';
 import {
   CanActivate,
   ExecutionContext,
-  HttpService,
   Injectable,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { map, firstValueFrom, catchError, EMPTY } from 'rxjs';
 import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
