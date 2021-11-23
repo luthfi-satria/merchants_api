@@ -8,7 +8,6 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 // import { HttpArgumentsHost } from '@nestjs/common/interfaces';
-import { Message } from '../message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 
 // This interceptor for restructure response success
@@ -16,7 +15,7 @@ import { MessageService } from 'src/message/message.service';
 export class ResponseInterceptor
   implements NestInterceptor<Promise<any> | string>
 {
-  constructor(@Message() private readonly messageService: MessageService) {}
+  constructor(private readonly messageService: MessageService) {}
 
   async intercept(
     context: ExecutionContext,

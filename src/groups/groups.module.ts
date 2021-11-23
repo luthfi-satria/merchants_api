@@ -1,4 +1,5 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddonsService } from 'src/addons/addons.service';
@@ -26,6 +27,8 @@ import { GroupsController } from './groups.controller';
 import { GroupsService } from './groups.service';
 import { GroupUsersController } from './group_users.controller';
 import { GroupUsersService } from './group_users.service';
+import { MessageService } from 'src/message/message.service';
+import { ResponseService } from 'src/response/response.service';
 
 @Module({
   imports: [
@@ -51,6 +54,8 @@ import { GroupUsersService } from './group_users.service';
     GroupsService,
     MerchantsService,
     HashService,
+    MessageService,
+    ResponseService,
     LoginService,
     ImageValidationService,
     CommonService,

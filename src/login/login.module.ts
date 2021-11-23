@@ -1,4 +1,5 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddonsService } from 'src/addons/addons.service';
 import { CommonService } from 'src/common/common.service';
@@ -21,6 +22,8 @@ import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoresService } from 'src/stores/stores.service';
 import { UsersService } from 'src/users/users.service';
+import { MessageService } from 'src/message/message.service';
+import { ResponseService } from 'src/response/response.service';
 import { LoginController } from './login.controller';
 import { LoginService } from './login.service';
 
@@ -50,6 +53,8 @@ import { LoginService } from './login.service';
     CommonService,
     MerchantUsersService,
     LobService,
+    MessageService,
+    ResponseService,
     StoresService,
     AddonsService,
     StoreOperationalService,

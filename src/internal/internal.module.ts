@@ -1,4 +1,5 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AddonsService } from 'src/addons/addons.service';
 import { CommonService } from 'src/common/common.service';
@@ -25,6 +26,8 @@ import { UsersService } from 'src/users/users.service';
 import { AuthInternalService } from './auth-internal.service';
 import { InternalController } from './internal.controller';
 import { InternalService } from './internal.service';
+import { MessageService } from 'src/message/message.service';
+import { ResponseService } from 'src/response/response.service';
 
 @Module({
   imports: [
@@ -58,6 +61,8 @@ import { InternalService } from './internal.service';
     GroupUsersService,
     AuthInternalService,
     UsersService,
+    MessageService,
+    ResponseService,
   ],
   exports: [AuthInternalService],
 })

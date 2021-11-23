@@ -12,8 +12,7 @@ import {
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
-import { Response, ResponseStatusCode } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
+import { ResponseStatusCode } from 'src/response/response.decorator';
 import { StoresService } from 'src/stores/stores.service';
 import { QueryService } from './query.service';
 import {
@@ -33,8 +32,8 @@ export class QueryController {
   constructor(
     private readonly storesService: StoresService,
     private readonly queryService: QueryService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
   ) {}
 
   @Get('image/:id/:id2')

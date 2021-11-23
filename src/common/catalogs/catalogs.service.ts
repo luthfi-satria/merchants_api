@@ -7,10 +7,8 @@ import {
 } from '@nestjs/common';
 import { firstValueFrom, lastValueFrom, map } from 'rxjs';
 import { CommonService } from '../common.service';
-import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
-import { Response } from 'src/response/response.decorator';
 import { AxiosResponse } from 'axios';
 import {
   PriceCategoryDTO,
@@ -22,8 +20,8 @@ export class CatalogsService {
   constructor(
     private readonly httpService: HttpService,
     private readonly commonService: CommonService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
   ) {}
 
   logger = new Logger();

@@ -1,4 +1,5 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ListBankDocument } from 'src/database/entities/list_banks';
@@ -7,6 +8,8 @@ import { StoresModule } from 'src/stores/stores.module';
 import { BanksStoresController } from './banks-store.controller';
 import { BanksController } from './banks.controller';
 import { BanksService } from './banks.service';
+import { ResponseService } from 'src/response/response.service';
+import { MessageService } from 'src/message/message.service';
 
 @Module({
   imports: [
@@ -16,6 +19,6 @@ import { BanksService } from './banks.service';
     StoresModule,
   ],
   controllers: [BanksController, BanksStoresController],
-  providers: [BanksService],
+  providers: [BanksService, ResponseService, MessageService],
 })
 export class BanksModule {}

@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ListBankDocument } from 'src/database/entities/list_banks';
 import { ListResponse, RMessage } from 'src/response/response.interface';
 import { Repository } from 'typeorm';
-import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 
 @Injectable()
@@ -11,7 +10,7 @@ export class BanksService {
   constructor(
     @InjectRepository(ListBankDocument)
     private readonly bankRepository: Repository<ListBankDocument>,
-    @Response() private readonly responseService: ResponseService,
+    private readonly responseService: ResponseService,
   ) {}
 
   async listBanks(data: Record<string, any>): Promise<Record<string, any>> {

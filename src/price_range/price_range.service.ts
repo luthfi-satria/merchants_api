@@ -5,8 +5,6 @@ import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
 import { Brackets, Repository } from 'typeorm';
-import { Response } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
 import { PriceRangeDocument } from 'src/database/entities/price_range.entity';
 import { PriceRangeValidation } from './validation/price_range.validation';
 import { isNumber } from 'class-validator';
@@ -16,8 +14,8 @@ export class PriceRangeService {
   constructor(
     @InjectRepository(PriceRangeDocument)
     private readonly priceRangeRepository: Repository<PriceRangeDocument>,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
   ) {}
 
   async createPriceRange(

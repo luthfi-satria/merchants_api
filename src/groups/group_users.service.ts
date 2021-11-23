@@ -2,12 +2,12 @@ import {
   BadRequestException,
   ForbiddenException,
   forwardRef,
-  HttpService,
   HttpStatus,
   Inject,
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { catchError, map, Observable } from 'rxjs';
@@ -27,10 +27,8 @@ import {
   MerchantGroupUsersValidation,
   UpdateMerchantGroupUsersValidation,
 } from './validation/groups_users.validation';
-import { Response } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
 import { HashService } from 'src/hash/hash.service';
-import { Hash } from 'src/hash/hash.decorator';
+// import { Hash } from 'src/hash/hash.decorator';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import {
   MerchantUsersDocument,
@@ -55,9 +53,10 @@ export class GroupUsersService {
     @InjectRepository(GroupDocument)
     private readonly groupRepository: Repository<GroupDocument>,
     private httpService: HttpService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
-    @Hash() private readonly hashService: HashService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
+    // @Hash()
+    private readonly hashService: HashService,
     private readonly roleService: RoleService,
     @Inject(forwardRef(() => GroupsService))
     private readonly groupService: GroupsService,

@@ -1,15 +1,13 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
-import { Response } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CommonService } from 'src/common/common.service';
 import { randomUUID } from 'crypto';
 import { RMessage } from 'src/response/response.interface';
 import { HashService } from 'src/hash/hash.service';
-import { Hash } from 'src/hash/hash.decorator';
+// import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { MerchantUsersValidation } from './validation/merchants_users.validation';
 import { NotificationService } from 'src/common/notification/notification.service';
@@ -17,12 +15,13 @@ import { NotificationService } from 'src/common/notification/notification.servic
 @Injectable()
 export class ResetPasswordService {
   constructor(
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUserRepository: Repository<MerchantUsersDocument>,
     private readonly commonService: CommonService,
-    @Hash() private readonly hashService: HashService,
+    // @Hash()
+    private readonly hashService: HashService,
     private readonly notificationService: NotificationService,
   ) {}
 

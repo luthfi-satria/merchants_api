@@ -6,9 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
-import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
-import { Response } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { Repository } from 'typeorm';
 import _ from 'lodash';
@@ -16,8 +14,8 @@ import _ from 'lodash';
 @Injectable()
 export class CommonStoresService {
   constructor(
-    @Message() private readonly messageService: MessageService,
-    @Response() private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
     @InjectRepository(StoreDocument)
     private readonly storeRepository: Repository<StoreDocument>,
   ) {}

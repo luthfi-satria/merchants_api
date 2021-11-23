@@ -7,8 +7,7 @@ import {
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
-import { Response, ResponseStatusCode } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
+import { ResponseStatusCode } from 'src/response/response.decorator';
 import { RMessage } from 'src/response/response.interface';
 import { BanksService } from './banks.service';
 
@@ -16,8 +15,8 @@ import { BanksService } from './banks.service';
 export class BanksController {
   constructor(
     private readonly banksService: BanksService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
   ) {}
 
   @Get('banks')

@@ -3,9 +3,9 @@ import {
   HttpStatus,
   BadRequestException,
   NotFoundException,
-  HttpService,
   Injectable,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, map, catchError, EMPTY } from 'rxjs';
 import { ResponseService } from 'src/response/response.service';
 

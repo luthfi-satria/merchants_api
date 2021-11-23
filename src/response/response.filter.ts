@@ -6,13 +6,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
-import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 
 // Restructure Response Object For Guard Exception
 @Catch()
 export class ResponseFilter implements ExceptionFilter {
-  constructor(@Message() private readonly messageService: MessageService) {}
+  constructor(private readonly messageService: MessageService) {}
 
   catch(exception: any, host: ArgumentsHost): void {
     const ctx: HttpArgumentsHost = host.switchToHttp();

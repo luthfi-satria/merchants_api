@@ -1,11 +1,11 @@
 /* eslint-disable prettier/prettier */
 import {
   BadRequestException,
-  HttpService,
   HttpStatus,
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -14,13 +14,14 @@ import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { Response } from 'src/response/response.decorator';
-import { Message } from 'src/message/message.decorator';
 import { MessageService } from 'src/message/message.service';
 import { deleteCredParam } from 'src/utils/general-utils';
 import { HashService } from 'src/hash/hash.service';
-import { Hash } from 'src/hash/hash.decorator';
-import { MerchantUsersDocument, MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
+// import { Hash } from 'src/hash/hash.decorator';
+import {
+  MerchantUsersDocument,
+  MerchantUsersStatus,
+} from 'src/database/entities/merchant_users.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { CreateGroupDTO } from './validation/create_groups.dto';
 import { GroupUsersService } from './group_users.service';
@@ -39,9 +40,10 @@ export class GroupsService {
     private readonly groupUserService: GroupUsersService,
     private readonly storage: CommonStorageService,
     private httpService: HttpService,
-    @Response() private readonly responseService: ResponseService,
-    @Message() private readonly messageService: MessageService,
-    @Hash() private readonly hashService: HashService,
+    private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
+    // @Hash()
+    private readonly hashService: HashService,
     private readonly roleService: RoleService,
   ) {}
 
@@ -67,25 +69,50 @@ export class GroupsService {
   }
 
   async createMerchantGroupProfile(
-    createGroupDTO: CreateGroupDTO
+    createGroupDTO: CreateGroupDTO,
   ): Promise<GroupDocument> {
     await this.validateGroupUniqueName(createGroupDTO.name);
     await this.validateGroupUniquePhone(createGroupDTO.phone);
-    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.director_email, null, 'director_email');
-    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.pic_finance_email, null, 'pic_finance_email');
-    await this.groupUserService.validateGroupUserUniqueEmail(createGroupDTO.pic_operational_email, null, 'pic_operational_email');
-    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.director_phone, null, 'director_phone');
-    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.pic_finance_phone, null, 'pic_finance_phone');
-    await this.groupUserService.validateGroupUserUniquePhone(createGroupDTO.pic_operational_phone, null, 'pic_operational_phone');
+    await this.groupUserService.validateGroupUserUniqueEmail(
+      createGroupDTO.director_email,
+      null,
+      'director_email',
+    );
+    await this.groupUserService.validateGroupUserUniqueEmail(
+      createGroupDTO.pic_finance_email,
+      null,
+      'pic_finance_email',
+    );
+    await this.groupUserService.validateGroupUserUniqueEmail(
+      createGroupDTO.pic_operational_email,
+      null,
+      'pic_operational_email',
+    );
+    await this.groupUserService.validateGroupUserUniquePhone(
+      createGroupDTO.director_phone,
+      null,
+      'director_phone',
+    );
+    await this.groupUserService.validateGroupUserUniquePhone(
+      createGroupDTO.pic_finance_phone,
+      null,
+      'pic_finance_phone',
+    );
+    await this.groupUserService.validateGroupUserUniquePhone(
+      createGroupDTO.pic_operational_phone,
+      null,
+      'pic_operational_phone',
+    );
     const salt: string = await this.hashService.randomSalt();
     createGroupDTO.director_password = await this.hashService.hashPassword(
       createGroupDTO.director_password,
       salt,
     );
-    createGroupDTO.pic_operational_password = await this.hashService.hashPassword(
-      createGroupDTO.pic_operational_password,
-      salt,
-    );
+    createGroupDTO.pic_operational_password =
+      await this.hashService.hashPassword(
+        createGroupDTO.pic_operational_password,
+        salt,
+      );
     createGroupDTO.pic_finance_password = await this.hashService.hashPassword(
       createGroupDTO.pic_finance_password,
       salt,
@@ -379,7 +406,7 @@ export class GroupsService {
       where.id = Not(id);
     }
     const group = await this.groupRepository.findOne({
-      where
+      where,
     });
     if (group) {
       throw new BadRequestException(
@@ -388,9 +415,7 @@ export class GroupsService {
           {
             value: name,
             property: 'name',
-            constraint: [
-              this.messageService.get('merchant.general.nameExist'),
-            ],
+            constraint: [this.messageService.get('merchant.general.nameExist')],
           },
           'Bad Request',
         ),
@@ -406,7 +431,7 @@ export class GroupsService {
       where.id = Not(id);
     }
     const group = await this.groupRepository.findOne({
-      where
+      where,
     });
     if (group) {
       throw new BadRequestException(
