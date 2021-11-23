@@ -82,15 +82,24 @@ export class QueryController {
     return await this.queryService.listStoreCategories(data);
   }
 
-  @Get('query/search')
+  @Get('query/search-as-customer')
   @ResponseStatusCode()
   @UserType('customer')
   @AuthJwtGuard()
-  async searchStoreMenu(
+  async searchStoreMenuAsCustomer(
     @Req() req: any,
     @Query() query: QuerySearchValidation,
   ) {
     return this.queryService.searchStoreMenu(query, req.user);
+  }
+
+  @Get('query/search')
+  @ResponseStatusCode()
+  async searchStoreMenuAsGuest(
+    @Req() req: any,
+    @Query() query: QuerySearchValidation,
+  ) {
+    return this.queryService.searchStoreMenu(query, null);
   }
 
   @Get('query/search/histories/keywords')
