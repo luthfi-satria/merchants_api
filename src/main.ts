@@ -1,3 +1,5 @@
+import { NatsTransportStrategy } from '@alexy4744/nestjs-nats-jetstream-transporter';
+import { CustomStrategy } from '@nestjs/microservices';
 import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -32,6 +34,29 @@ async function bootstrap() {
       },
     }),
   );
+
+  const microservice = app.connectMicroservice<CustomStrategy>({
+    strategy: new NatsTransportStrategy({
+      connection: {
+        servers: process.env.NATS_SERVERS.split(','),
+      },
+      streams: [
+        {
+          name: 'merchants',
+          subjects: ['merchants.*'],
+        },
+      ],
+      consumer: (opt) => {
+        // durable
+        opt.durable('merchants');
+
+        // queue group
+        opt.queue('merchants');
+      },
+    }),
+  });
+
+  await microservice.listen();
 
   app.listen(process.env.HTTP_PORT || 4002, () => {
     logger.log(`Running on ${process.env.HTTP_PORT || 4002}`);
