@@ -15,6 +15,7 @@ import {
 import { ColumnNumericTransformer } from '../helper/column_numberic_transformer';
 import { AddonDocument } from './addons.entity';
 import { ListBankDocument } from './list_banks';
+import { MenuEfoodDocument } from './menu_efood.entity';
 import { MerchantDocument } from './merchant.entity';
 import { MerchantUsersDocument } from './merchant_users.entity';
 import { SearchHistoryStoreDocument } from './search_history_store.entity';
@@ -201,4 +202,7 @@ export class StoreDocument {
 
   @ManyToMany(() => MerchantUsersDocument, (users) => users.stores)
   users: MerchantUsersDocument[];
+
+  @OneToMany(() => MenuEfoodDocument, (menu) => menu.store)
+  menus: MenuEfoodDocument[];
 }

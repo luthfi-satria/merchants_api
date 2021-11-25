@@ -56,7 +56,7 @@ export class QueryController {
   async getstores(
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
-    return await this.queryService.getListQueryStore(data);
+    return this.queryService.getListQueryStore(data, {}, false);
   }
 
   @Get('query/stores/detail/:id')
@@ -78,7 +78,7 @@ export class QueryController {
   @Get('query/stores/categories')
   @ResponseStatusCode()
   async getStoreCategories(@Query() data: string[]): Promise<any> {
-    return await this.queryService.listStoreCategories(data);
+    return this.queryService.listStoreCategories(data);
   }
 
   @Get('query/search-as-customer')
