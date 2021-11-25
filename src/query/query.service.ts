@@ -95,6 +95,11 @@ export class QueryService {
           'merchant_store.average_price': order || 'ASC',
         });
         break;
+      case 'numorders':
+        Object.assign(OrderQuery, {
+          'merchant_store.numorders': order || 'ASC',
+        });
+        break;
       default:
     }
     return OrderQuery;
