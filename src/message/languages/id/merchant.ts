@@ -3,6 +3,30 @@ export default {
     success: 'SUCCESS',
     empty_token: 'Kode Token tidak ada.',
     invalid_token: 'Kode Token tidak valid.',
+    createSuccess: {
+      code: 'CREATE_DATA_SUCCESS',
+      message: 'Sukses tambah data.',
+    },
+    updateSuccess: {
+      code: 'UPDATE_DATA_SUCCESS',
+      message: 'Sukses ubah data.',
+    },
+    deleteSuccess: {
+      code: 'DELETE_DATA_SUCCESS',
+      message: 'Sukses hapus data.',
+    },
+    createFail: {
+      code: 'CREATE_DATA_FAILED',
+      message: 'Gagal tambah data.',
+    },
+    updateFail: {
+      code: 'UPDATE_DATA_FAILED',
+      message: 'Gagal ubah data.',
+    },
+    deleteFail: {
+      code: 'DELETE_DATA_FAILED',
+      message: 'Gagal hapus data.',
+    },
     dataNotFound: {
       code: 'DATA_NOT_FOUND',
       message: 'Data tidak ditemukan.',

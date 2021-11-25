@@ -3,57 +3,63 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MessageService } from 'src/message/message.service';
 import { ListResponse, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime } from 'src/utils/general-utils';
-import { Brackets, Repository } from 'typeorm';
+import { dbOutputTime, formatingAllOutputTime } from 'src/utils/general-utils';
+import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
 import { PriceRangeDocument } from 'src/database/entities/price_range.entity';
 import { PriceRangeValidation } from './validation/price_range.validation';
-import { isNumber } from 'class-validator';
+import { PriceRangeLanguageDocument } from 'src/database/entities/price_range_language.entity';
 
 @Injectable()
 export class PriceRangeService {
   constructor(
     @InjectRepository(PriceRangeDocument)
     private readonly priceRangeRepository: Repository<PriceRangeDocument>,
+    @InjectRepository(PriceRangeLanguageDocument)
+    private readonly priceRangeLanguageRepository: Repository<PriceRangeLanguageDocument>,
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
   ) {}
 
   async createPriceRange(
-    args: Partial<PriceRangeValidation>,
-  ): Promise<RSuccessMessage> {
-    const validArgs = await this.extendValidationCreate(args);
-    const createPriceRange: Partial<PriceRangeDocument> = {
-      name: validArgs.name,
-      symbol: args.symbol,
-      price_low: validArgs.price_low,
-      price_high: validArgs.price_high,
-      sequence: validArgs.sequence,
-    };
+    args: PriceRangeValidation,
+  ): Promise<PriceRangeDocument> {
+    await this.validateUniqueName(args.name);
+    const languages = await this.validateUniqueLanguageName(args.languages);
+    const createPriceRange = { ...args };
+    createPriceRange.languages = [];
 
-    return await this.priceRangeRepository
-      .save(createPriceRange)
-      .then((result) => {
-        dbOutputTime(result);
+    try {
+      const createResult = await this.priceRangeRepository.save(
+        createPriceRange,
+      );
 
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          result,
-        );
-      })
-      .catch((err) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+      await Promise.all(
+        languages.map(async (langData) => {
+          const createLang: Partial<PriceRangeLanguageDocument> = langData;
+          createLang.price_range_id = createResult.id;
+          const createLangResult = await this.priceRangeLanguageRepository.save(
+            createLang,
+          );
+          createResult.languages.push(createLangResult);
+        }),
+      );
+      formatingAllOutputTime(createResult);
+      return createResult;
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: '',
+            constraint: [
+              this.messageService.get('merchant.general.createFail'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async findPricesByIds(
@@ -67,65 +73,78 @@ export class PriceRangeService {
 
   async updatePriceRange(
     args: Partial<PriceRangeValidation>,
-  ): Promise<RSuccessMessage> {
-    const priceRangeExist = await this.extendValidationId(args);
-    const validArgs = await this.extendValidationUpdate(priceRangeExist, args);
+  ): Promise<PriceRangeDocument> {
+    await this.validateUniqueName(args.name, args.id);
+    const languages = await this.validateUniqueLanguageName(
+      args.languages,
+      args.id,
+    );
+    const priceRange = await this.getAndValidatePriceRangeById(args.id);
+    Object.assign(priceRange, args);
 
-    return await this.priceRangeRepository
-      .save(validArgs)
-      .then(async (result) => {
-        dbOutputTime(result);
-
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          result,
-        );
-      })
-      .catch((err) => {
-        console.error('catch error: ', err);
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: err.column,
-              constraint: [err.message],
-            },
-            'Bad Request',
-          ),
-        );
+    try {
+      await this.priceRangeLanguageRepository.softDelete({
+        price_range_id: priceRange.id,
       });
+      priceRange.languages = [];
+
+      await Promise.all(
+        languages.map(async (langData) => {
+          const createLang: Partial<PriceRangeLanguageDocument> = langData;
+          createLang.price_range_id = priceRange.id;
+          const createLangResult = await this.priceRangeLanguageRepository.save(
+            createLang,
+          );
+          priceRange.languages.push(createLangResult);
+        }),
+      );
+
+      await this.priceRangeRepository.save(priceRange);
+
+      formatingAllOutputTime(priceRange);
+      return priceRange;
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: '',
+            constraint: [
+              this.messageService.get('merchant.general.updateFail'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
-  async deletePriceRange(
-    args: Partial<PriceRangeValidation>,
-  ): Promise<RSuccessMessage> {
-    const priceRangeExist = await this.extendValidationId(args);
+  async deletePriceRange(priceRangeId: string): Promise<PriceRangeDocument> {
+    const priceRangeExist = await this.getAndValidatePriceRangeById(
+      priceRangeId,
+    );
 
-    return this.priceRangeRepository
-      .softDelete({ id: priceRangeExist.id })
-      .then(async () => {
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-        );
-      })
-      .catch(() => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.general.invalidID'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+    try {
+      const deletePriceRange = await this.priceRangeRepository.softRemove(
+        priceRangeExist,
+      );
+      return deletePriceRange;
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: priceRangeId,
+            property: 'id',
+            constraint: [
+              this.messageService.get('merchant.general.deleteFail'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async listPriceRange(
@@ -137,19 +156,20 @@ export class PriceRangeService {
     let totalItems: number;
 
     return await this.priceRangeRepository
-      .createQueryBuilder('')
+      .createQueryBuilder('price_range')
+      .leftJoinAndSelect('price_range.languages', 'languages')
       .where(
         new Brackets((qb) => {
-          qb.where('name ilike :mname', {
+          qb.where('price_range.name ilike :mname', {
             mname: '%' + search + '%',
-          }).orWhere('symbol ilike :ssymbol', {
+          }).orWhere('price_range.symbol ilike :ssymbol', {
             ssymbol: '%' + search + '%',
           });
         }),
       )
-      .orderBy('sequence')
-      .offset((currentPage - 1) * perPage)
-      .limit(perPage)
+      .orderBy('price_range.sequence')
+      .skip((currentPage - 1) * perPage)
+      .take(perPage)
       .getManyAndCount()
       .then(async (result) => {
         totalItems = result[1];
@@ -205,204 +225,91 @@ export class PriceRangeService {
 
   //------------------------------------------------------------------------------
 
-  async extendValidationCreate(
-    args: Partial<PriceRangeValidation>,
-  ): Promise<Partial<PriceRangeValidation>> {
-    if (typeof args.name != 'undefined' && args.name != '') {
-      const cekPriceRange = await this.priceRangeRepository
-        .findOne({
-          where: { name: args.name },
-        })
-        .catch((err) => {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: '',
-                property: err.column,
-                constraint: [err.message],
-              },
-              'Bad Request',
-            ),
-          );
-        });
-      if (cekPriceRange) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.name,
-              property: 'name',
-              constraint: [
-                this.messageService.get('merchant.general.nameExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-    }
+  async validateUniqueLanguageName(
+    languages: PriceRangeLanguageDocument[],
+    priceRangeId?: string,
+  ): Promise<{ lang: string; name: string }[]> {
+    const query = this.priceRangeLanguageRepository.createQueryBuilder(
+      'price_range_language',
+    );
 
-    if (typeof args.price_low != 'undefined' && args.price_low != null) {
-      if (!isNumber(args.price_low)) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: String(args.price_low),
-              property: 'price_low',
-              constraint: [
-                this.messageService.get('merchant.general.invalidValue'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
+    const queryWhere = [];
+    for (let i = 0; i < languages.length; i++) {
+      queryWhere.push(
+        `( price_range_language.lang = '${languages[i].lang}' AND price_range_language.name = '${languages[i].name}' )`,
+      );
     }
-
-    if (typeof args.price_high != 'undefined' && args.price_high != null) {
-      if (!isNumber(args.price_high)) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: String(args.price_low),
-              property: 'price_low',
-              constraint: [
-                this.messageService.get('merchant.general.invalidValue'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-    }
-
-    if (!isNumber(args.sequence)) {
-      args.sequence = null;
-    }
-    return args;
-  }
-
-  async extendValidationUpdate(
-    priceRangeExist: PriceRangeDocument,
-    args: Partial<PriceRangeValidation>,
-  ): Promise<PriceRangeDocument> {
-    if (typeof args.name != 'undefined' && args.name != '') {
-      const cekPriceRange = await this.priceRangeRepository
-        .findOne({
-          where: { name: args.name },
-        })
-        .catch((err) => {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: '',
-                property: err.column,
-                constraint: [err.message],
-              },
-              'Bad Request',
-            ),
-          );
-        });
-      if (cekPriceRange && cekPriceRange.id != args.id) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.name,
-              property: 'name',
-              constraint: [
-                this.messageService.get('merchant.general.nameExist'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      priceRangeExist.name = args.name;
-    }
-
-    if (typeof args.symbol != 'undefined' && args.symbol != null) {
-      priceRangeExist.symbol = args.symbol;
-    }
-    if (typeof args.price_low != 'undefined' && args.price_low != null) {
-      if (!isNumber(args.price_low)) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: String(args.price_low),
-              property: 'price_low',
-              constraint: [
-                this.messageService.get('merchant.general.invalidValue'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      priceRangeExist.price_low = args.price_low;
-    }
-
-    if (typeof args.price_high != 'undefined' && args.price_high != null) {
-      if (!isNumber(args.price_high)) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: String(args.price_low),
-              property: 'price_low',
-              constraint: [
-                this.messageService.get('merchant.general.invalidValue'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      }
-      priceRangeExist.price_high = args.price_high;
-    }
-
-    if (!isNumber(args.sequence)) {
-      delete args.sequence;
-    } else {
-      priceRangeExist.sequence = args.sequence;
-    }
-
-    return priceRangeExist;
-  }
-
-  async extendValidationId(
-    args: Partial<PriceRangeValidation>,
-  ): Promise<PriceRangeDocument> {
-    const priceRangeExist: PriceRangeDocument = await this.priceRangeRepository
-      .findOne({
-        where: { id: args.id },
-      })
-      .catch(() => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: args.id,
-              property: 'id',
-              constraint: [
-                this.messageService.get('merchant.general.idNotFound'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
+    query.where(
+      new Brackets((qb) => {
+        qb.where(queryWhere.join(' OR '));
+      }),
+    );
+    if (priceRangeId) {
+      query.andWhere('price_range_language.price_range_id != :price_range_id', {
+        price_range_id: priceRangeId,
       });
-    if (!priceRangeExist) {
+    }
+
+    const priceRangeLanguage = await query.getOne();
+    if (priceRangeLanguage) {
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
           {
-            value: args.id,
+            value: priceRangeLanguage.name,
+            property: 'name',
+            constraint: [this.messageService.get('merchant.general.nameExist')],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    return languages;
+  }
+
+  async validateUniqueName(
+    name: string,
+    priceRangeId?: string,
+  ): Promise<PriceRangeDocument> {
+    const where: { name: FindOperator<string>; id?: FindOperator<string> } = {
+      name: ILike(name),
+    };
+    if (priceRangeId) {
+      where.id = Not(priceRangeId);
+    }
+    const priceRange = await this.priceRangeRepository.findOne({
+      where,
+    });
+
+    if (priceRange) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: priceRange.name,
+            property: 'name',
+            constraint: [this.messageService.get('merchant.general.nameExist')],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    return priceRange;
+  }
+
+  async getAndValidatePriceRangeById(
+    priceRangeId: string,
+  ): Promise<PriceRangeDocument> {
+    const priceRange = await this.priceRangeRepository.findOne({
+      where: { id: priceRangeId },
+      relations: ['languages'],
+    });
+    if (!priceRange) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: priceRangeId,
             property: 'id',
             constraint: [
               this.messageService.get('merchant.general.idNotFound'),
@@ -412,6 +319,6 @@ export class PriceRangeService {
         ),
       );
     }
-    return priceRangeExist;
+    return priceRange;
   }
 }

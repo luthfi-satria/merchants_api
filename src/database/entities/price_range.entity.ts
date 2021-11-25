@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { PriceRangeLanguageDocument } from './price_range_language.entity';
 
 @Entity({ name: 'merchant_price_range' })
 export class PriceRangeDocument {
@@ -35,4 +37,13 @@ export class PriceRangeDocument {
 
   @DeleteDateColumn({ nullable: true })
   deleted_at: Date;
+
+  @OneToMany(
+    () => PriceRangeLanguageDocument,
+    (languages) => languages.price_range,
+    {
+      cascade: true,
+    },
+  )
+  languages: PriceRangeLanguageDocument[];
 }
