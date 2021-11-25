@@ -145,6 +145,9 @@ export class StoreDocument {
   @Column({ nullable: true })
   numrating: number;
 
+  @Column({ default: 0 })
+  numorders: number;
+
   @Column({ nullable: true })
   bank_account_name: string;
 
