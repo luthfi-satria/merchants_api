@@ -136,7 +136,7 @@ export class PriceRangeService {
     const perPage = Number(args.limit) || 10;
     let totalItems: number;
 
-    return await this.priceRangeRepository
+    return this.priceRangeRepository
       .createQueryBuilder('')
       .where(
         new Brackets((qb) => {
