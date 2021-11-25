@@ -213,6 +213,7 @@ export class PriceRangeService {
     try {
       return this.priceRangeRepository
         .createQueryBuilder('pr')
+        .leftJoinAndSelect('pr.languages', 'languages')
         .where('pr.price_high >= :price AND pr.price_low <= :price', {
           price,
         })
