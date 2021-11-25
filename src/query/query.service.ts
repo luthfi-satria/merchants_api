@@ -453,6 +453,7 @@ export class QueryService {
             store_operational_status,
             distance_in_km,
             price_symbol,
+            price_range: priceRange,
           };
         });
     } catch (e) {
@@ -790,6 +791,7 @@ export class QueryService {
               store_categories: store_categories,
               merchant,
               price_symbol,
+              price_range: priceRange,
             };
           }
         }),
