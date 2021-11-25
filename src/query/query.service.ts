@@ -1018,21 +1018,24 @@ export class QueryService {
             //     }
             //   });
             // });
-
+            const filter_menus = [];
             store.priority = 4;
             if (filter.test(store.name)) {
               store.priority = 2;
             }
 
-            store.menus.forEach((menu: any) => {
+            // store.menus.forEach((menu: any) => {
+            for (const menu of store.menus) {
               if (filter.test(menu.name)) {
                 if (store.priority === 2 || store.priority === 1) {
                   store.priority = 1;
                 } else {
                   store.priority = 3;
                 }
+                filter_menus.push(menu);
               }
-            });
+            }
+            store.menus = filter_menus;
             return store;
           }),
         );
