@@ -468,7 +468,7 @@ export class MerchantsService {
       if (!update) {
         throw new Error('failed insert to merchant_group');
       }
-      this.publishNatsUpdateStore(update, oldStatus);
+      this.publishNatsUpdateMerchant(update, oldStatus);
 
       if (oldStatus == MerchantStatus.Draft && oldPhone != data.pic_phone) {
         this.merchantUserService.resendPhoneUser(update.users[0].id);
@@ -861,7 +861,7 @@ export class MerchantsService {
     }
   }
   //Publish Payload to Nats
-  publishNatsUpdateStore(
+  publishNatsUpdateMerchant(
     payload: MerchantDocument,
     oldStatus: MerchantStatus = MerchantStatus.Active,
   ) {
