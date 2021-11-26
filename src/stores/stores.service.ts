@@ -272,9 +272,7 @@ export class StoresService {
         : false;
 
     const create_store = await this.storeRepository.save(store_document);
-    if (store_document.status == 'ACTIVE') {
-      this.natsService.clientEmit('merchants.store.created', create_store);
-    }
+    this.publishNatsCreateStore(create_store);
     const operational_hours = await this.storeOperationalService
       .createStoreOperationalHours(create_store.id, create_store.gmt_offset)
       .catch((e) => {
@@ -297,9 +295,10 @@ export class StoresService {
   async updateStorePartial(data: Partial<StoreDocument>) {
     try {
       const store = await this.getAndValidateStoreByStoreId(data.id);
+      const oldStatus = store.status;
       Object.assign(store, data);
       const updateStore = await this.storeRepository.save(store);
-      this.publishNatsUpdateStore(updateStore);
+      this.publishNatsUpdateStore(updateStore, oldStatus);
       return updateStore;
     } catch (e) {
       const logger = new Logger();
@@ -311,9 +310,10 @@ export class StoresService {
   async updateStoreProfile(data: StoreDocument) {
     try {
       const store = await this.getAndValidateStoreByStoreId(data.id);
+      const oldStatus = store.status;
       Object.assign(store, data);
       const updateStore = await this.storeRepository.save(store);
-      this.publishNatsUpdateStore(updateStore);
+      this.publishNatsUpdateStore(updateStore, oldStatus);
       return updateStore;
     } catch (e) {
       const logger = new Logger();
@@ -332,6 +332,7 @@ export class StoresService {
         relations: ['service_addons', 'operational_hours'],
       },
     );
+    const oldStatus = store_document.status;
     if (!store_document) {
       const errors: RMessage = {
         value: update_merchant_store_validation.id,
@@ -423,7 +424,7 @@ export class StoresService {
 
     const updateStore = await this.storeRepository.save(store_document);
 
-    this.publishNatsUpdateStore(updateStore);
+    this.publishNatsUpdateStore(updateStore, oldStatus);
     return updateStore;
   }
 
@@ -971,8 +972,26 @@ export class StoresService {
   }
 
   //Publish Payload to Nats
-  publishNatsUpdateStore(payload: StoreDocument) {
-    this.natsService.clientEmit('merchants.store.updated', payload);
+  publishNatsUpdateStore(
+    payload: StoreDocument,
+    oldStatus: enumStoreStatus = enumStoreStatus.active,
+  ) {
+    if (payload.status == enumStoreStatus.inactive) {
+      this.natsService.clientEmit('merchants.store.deleted', payload);
+    } else if (
+      payload.status == enumStoreStatus.active &&
+      oldStatus == enumStoreStatus.inactive
+    ) {
+      this.natsService.clientEmit('merchants.store.created', payload);
+    } else if (payload.status == enumStoreStatus.active) {
+      this.natsService.clientEmit('merchants.store.updated', payload);
+    }
+  }
+
+  publishNatsCreateStore(payload: StoreDocument) {
+    if (payload.status == enumStoreStatus.active) {
+      this.natsService.clientEmit('merchants.store.created', payload);
+    }
   }
   //------------------------------------------------------------------------------
 
