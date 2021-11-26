@@ -272,6 +272,9 @@ export class StoresService {
         : false;
 
     const create_store = await this.storeRepository.save(store_document);
+    if (store_document.status == 'ACTIVE') {
+      this.natsService.clientEmit('merchants.store.created', create_store);
+    }
     const operational_hours = await this.storeOperationalService
       .createStoreOperationalHours(create_store.id, create_store.gmt_offset)
       .catch((e) => {
@@ -444,12 +447,11 @@ export class StoresService {
   }
 
   async deleteMerchantStoreProfile(data: string): Promise<any> {
-    const delete_merchant: Partial<StoreDocument> = {
-      id: data,
-    };
+    const store = await this.getAndValidateStoreByStoreId(data);
     return this.storeRepository
-      .softDelete(delete_merchant)
+      .softDelete(store)
       .then(() => {
+        this.natsService.clientEmit('merchants.store.deleted', store);
         return this.merchantUsersRepository.softDelete({ store_id: data });
       })
       .catch(() => {

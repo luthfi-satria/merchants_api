@@ -1,5 +1,4 @@
 import { NatsClient } from '@alexy4744/nestjs-nats-jetstream-transporter';
-import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
@@ -9,8 +8,6 @@ export class NatsService {
       servers: process.env.NATS_SERVERS.split(','),
     },
   });
-
-  constructor(private readonly httpService: HttpService) {}
 
   logger = new Logger();
 
