@@ -716,7 +716,7 @@ export class StoresService {
         const platforms: any = await this.commonService
           .postHttp(url, postData)
           .catch((e) => {
-            console.log(e);
+            console.error(e);
           });
 
         const store_ids = [];

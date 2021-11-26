@@ -21,6 +21,7 @@ import { PriceRangeModule } from './price_range/price_range.module';
 import { BannersModule } from './banners/banners.module';
 import { SettingModule } from './settings/setting.module';
 import { UsersModule } from './users/users.module';
+import { MenuEfoodModule } from './menu_efood/menu_efood.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { UsersModule } from './users/users.module';
     BannersModule,
     SettingModule,
     UsersModule,
+    MenuEfoodModule,
   ],
   controllers: [AppController],
   providers: [AppService],

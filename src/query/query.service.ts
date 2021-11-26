@@ -453,6 +453,7 @@ export class QueryService {
             store_operational_status,
             distance_in_km,
             price_symbol,
+            price_range: priceRange,
           };
         });
     } catch (e) {
@@ -464,6 +465,7 @@ export class QueryService {
   async getListQueryStore(
     data: QueryListStoreDto,
     options: any = {},
+    joinMenu: boolean,
   ): Promise<RSuccessMessage> {
     try {
       const currentPage = data.page || 1;
@@ -576,10 +578,14 @@ export class QueryService {
         .leftJoinAndSelect(
           'merchant_store_categories.languages',
           'merchant_store_categories_languages',
-        )
-        // --- Filter Conditions ---
-        // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
+        );
+      if (joinMenu) {
+        query1.leftJoinAndSelect('merchant_store.menus', 'menus');
+      }
+      // --- Filter Conditions ---
+      // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
 
+      query1
         .where(
           `(merchant_store.status = :active ${
             include_inactive_stores
@@ -785,6 +791,7 @@ export class QueryService {
               store_categories: store_categories,
               merchant,
               price_symbol,
+              price_range: priceRange,
             };
           }
         }),
@@ -811,7 +818,7 @@ export class QueryService {
         list_result,
       );
     } catch (e) {
-      console.log(e);
+      console.error(e);
 
       Logger.error(e.message, '', 'QUERY LIST STORE');
       throw e;
@@ -854,7 +861,7 @@ export class QueryService {
       listLang.push(lang);
     }
 
-    return await this.storeCategoryRepository
+    return this.storeCategoryRepository
       .createQueryBuilder('sc')
       .where('sc.active = true')
       .orderBy('sc.created_at')
@@ -867,7 +874,7 @@ export class QueryService {
         rescounts[0].forEach((raw) => {
           listStocat.push(raw.id);
         });
-        return await this.storeCategoryRepository
+        return this.storeCategoryRepository
           .createQueryBuilder('sc')
           .leftJoinAndSelect(
             'sc.languages',
@@ -984,36 +991,53 @@ export class QueryService {
         platform: 'ONLINE',
       };
 
-      const listStores = await this.getListQueryStore(args, options);
+      const listStores = await this.getListQueryStore(args, options, true);
       let stores_with_menus: any[] = [];
 
       if (listStores.data) {
         stores_with_menus = await Promise.all(
           listStores.data.items.map(async (store: any): Promise<number> => {
             const filter = new RegExp(`${search}`, 'i');
-            const menu_item = await this.catalogsService.getMenuByStoreId(
-              store.id,
-            );
+            // const menu_item = await this.catalogsService.getMenuByStoreId(
+            // store.id,
+            // );
 
-            store.menus = [];
+            // store.menus = [];
+            // store.priority = 4;
+            // if (filter.test(store.name)) {
+            //   store.priority = 2;
+            // }
+
+            // menu_item.data.items.category.forEach((cat: any) => {
+            //   cat.menus.forEach((menu: any) => {
+            //     if (filter.test(menu.name)) {
+            //       if (store.priority === 2 || store.priority === 1) {
+            //         store.priority = 1;
+            //       } else {
+            //         store.priority = 3;
+            //       }
+            //       store.menus.push(menu);
+            //     }
+            //   });
+            // });
+            const filter_menus = [];
             store.priority = 4;
             if (filter.test(store.name)) {
               store.priority = 2;
             }
 
-            menu_item.data.items.category.forEach((cat: any) => {
-              cat.menus.forEach((menu: any) => {
-                if (filter.test(menu.name)) {
-                  if (store.priority === 2 || store.priority === 1) {
-                    store.priority = 1;
-                  } else {
-                    store.priority = 3;
-                  }
-                  store.menus.push(menu);
+            // store.menus.forEach((menu: any) => {
+            for (const menu of store.menus) {
+              if (filter.test(menu.name)) {
+                if (store.priority === 2 || store.priority === 1) {
+                  store.priority = 1;
+                } else {
+                  store.priority = 3;
                 }
-              });
-            });
-
+                filter_menus.push(menu);
+              }
+            }
+            store.menus = filter_menus;
             return store;
           }),
         );
@@ -1175,7 +1199,7 @@ export class QueryService {
 
       options.fetch_using_ids = query.map((item) => item.store_id);
 
-      const listStores = await this.getListQueryStore(args, options);
+      const listStores = await this.getListQueryStore(args, options, false);
 
       const storesSortedByDate: any[] = [];
 

@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+} from 'class-validator';
+import { PriceRangeLanguageDocument } from 'src/database/entities/price_range_language.entity';
 
 export class PriceRangeValidation {
   @IsOptional()
@@ -29,4 +36,9 @@ export class PriceRangeValidation {
 
   @IsOptional()
   page: string;
+
+  @IsNotEmpty()
+  @IsArray()
+  @ArrayMinSize(1)
+  languages: PriceRangeLanguageDocument[];
 }
