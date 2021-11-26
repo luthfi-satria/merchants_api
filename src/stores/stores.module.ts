@@ -35,6 +35,7 @@ import { StoreUsersService } from './stores_users.service';
 import { StoresController } from './strores.controller';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
+import { NatsService } from 'src/nats/nats.service';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { ResponseService } from 'src/response/response.service';
     GroupUsersService,
     InternalService,
     UsersService,
+    NatsService,
   ],
   exports: [StoresService, StoreOperationalService],
 })

@@ -38,6 +38,7 @@ import { GroupsService } from 'src/groups/groups.service';
 import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import _ from 'lodash';
 import { UsersService } from 'src/users/users.service';
+import { NatsService } from 'src/nats/nats.service';
 
 @Injectable()
 export class StoresService {
@@ -60,6 +61,7 @@ export class StoresService {
     private readonly groupService: GroupsService,
     private readonly commonCatalogService: CatalogsService,
     private readonly usersService: UsersService,
+    private readonly natsService: NatsService,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -291,9 +293,11 @@ export class StoresService {
   // partial update
   async updateStorePartial(data: Partial<StoreDocument>) {
     try {
-      return await this.storeRepository.update(data.id, data).catch((e) => {
-        throw e;
-      });
+      const store = await this.getAndValidateStoreByStoreId(data.id);
+      Object.assign(store, data);
+      const updateStore = await this.storeRepository.save(store);
+      this.publishNatsUpdateStore(updateStore);
+      return updateStore;
     } catch (e) {
       const logger = new Logger();
       logger.log(e, 'Catch Error :  ');
@@ -303,9 +307,11 @@ export class StoresService {
 
   async updateStoreProfile(data: StoreDocument) {
     try {
-      return await this.storeRepository.update(data.id, data).catch((e) => {
-        throw e;
-      });
+      const store = await this.getAndValidateStoreByStoreId(data.id);
+      Object.assign(store, data);
+      const updateStore = await this.storeRepository.save(store);
+      this.publishNatsUpdateStore(updateStore);
+      return updateStore;
     } catch (e) {
       const logger = new Logger();
       logger.log(e, 'Catch Error :  ');
@@ -412,7 +418,10 @@ export class StoresService {
       store_document.rejection_reason =
         update_merchant_store_validation.rejection_reason;
 
-    return this.storeRepository.save(store_document);
+    const updateStore = await this.storeRepository.save(store_document);
+
+    this.publishNatsUpdateStore(updateStore);
+    return updateStore;
   }
 
   async updateBulkStoresBankDetail(
@@ -957,6 +966,11 @@ export class StoresService {
     }
 
     return store;
+  }
+
+  //Publish Payload to Nats
+  publishNatsUpdateStore(payload: StoreDocument) {
+    this.natsService.clientEmit('merchants.store.updated', payload);
   }
   //------------------------------------------------------------------------------
 

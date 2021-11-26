@@ -29,6 +29,7 @@ import { UpdateProfileValidation } from './validation/update-profile.validation'
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
+import { StoresService } from 'src/stores/stores.service';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -52,6 +53,7 @@ export class LoginService {
     // @Hash()
     private readonly hashService: HashService,
     private readonly commonService: CommonService,
+    private readonly storesService: StoresService,
   ) {}
 
   async postHttp(
@@ -963,12 +965,11 @@ export class LoginService {
         deleteCredParam(existUser.merchant);
       } else if (user.level == 'store') {
         if (existUser.email == merchant.email) {
-          await this.storeRepository.update(
-            { id: merchant.id },
-            {
-              name: updateMerchantUser.name,
-            },
-          );
+          const updateStoreData: Partial<StoreDocument> = {
+            id: merchant.id,
+            name: updateMerchantUser.name,
+          };
+          await this.storesService.updateStorePartial(updateStoreData);
           existUser.store.name = updateMerchantUser.name;
         }
         deleteCredParam(existUser.store);

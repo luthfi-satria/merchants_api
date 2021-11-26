@@ -33,6 +33,7 @@ import { StoreOperationalShiftDocument } from 'src/database/entities/store_opera
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { GroupUsersService } from 'src/groups/group_users.service';
 import { LobDocument } from 'src/database/entities/lob.entity';
+import { NatsService } from 'src/nats/nats.service';
 
 @Global()
 @Module({
@@ -92,6 +93,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
     MerchantUsersService,
     LobService,
     GroupUsersService,
+    NatsService,
   ],
   exports: [
     CommonStorageService,

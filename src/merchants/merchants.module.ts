@@ -35,6 +35,7 @@ import { StoreOperationalShiftDocument } from 'src/database/entities/store_opera
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
+import { NatsService } from 'src/nats/nats.service';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { ResponseService } from 'src/response/response.service';
     AddonsService,
     StoreOperationalService,
     UsersService,
+    NatsService,
   ],
 })
 export class MerchantsModule {}

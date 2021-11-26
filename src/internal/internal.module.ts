@@ -28,6 +28,7 @@ import { InternalController } from './internal.controller';
 import { InternalService } from './internal.service';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
+import { NatsService } from 'src/nats/nats.service';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { ResponseService } from 'src/response/response.service';
     UsersService,
     MessageService,
     ResponseService,
+    NatsService,
   ],
   exports: [AuthInternalService],
 })
