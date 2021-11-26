@@ -27,7 +27,7 @@ export class MerchantGroupUsersValidation {
 
   // @IsNotEmpty()
   @IsOptional()
-  @ValidateIf((o) => o.email != '')
+  @ValidateIf((o) => o.email.replace(/\s/g, '') != '')
   @IsEmail()
   email: string;
 
