@@ -47,6 +47,7 @@ async function bootstrap() {
             'merchants.store.*',
             'merchants.merchant.*',
             'merchants.group.*',
+            'orders.order.cancelled_by_store.*',
           ],
         },
       ],
