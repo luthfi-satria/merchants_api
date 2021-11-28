@@ -1,20 +1,20 @@
 import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
-import { MenuEfoodService } from 'src/menu_efood/menu_efood.service';
+import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 
 @Controller('')
 export class NatsController {
   logger = new Logger(NatsController.name);
   constructor(
-    private readonly menuEfoodService: MenuEfoodService,
+    private readonly menuOnlineService: MenuOnlineService,
     private readonly mStoreOperationalService: StoreOperationalService,
   ) {}
 
   @EventPattern('catalogs.storeavailability.created')
   async saveMenuEfood(@Payload() data: any) {
     this.logger.log('catalogs.storeavailability.created');
-    this.menuEfoodService.natsSaveMenuEfood(data);
+    this.menuOnlineService.natsSaveMenuOnline(data);
   }
 
   @EventPattern('catalogs.storeavailability.updated')

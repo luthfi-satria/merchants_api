@@ -1,20 +1,20 @@
-import { MenuEfoodDocument } from '../database/entities/menu_efood.entity';
+import { MenuOnlineDocument } from '../database/entities/menu_online.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { StoresService } from 'src/stores/stores.service';
 
 @Injectable()
-export class MenuEfoodService {
+export class MenuOnlineService {
   constructor(
-    @InjectRepository(MenuEfoodDocument)
-    private readonly menuEfoodRepository: Repository<MenuEfoodDocument>,
+    @InjectRepository(MenuOnlineDocument)
+    private readonly menuOnlineRepository: Repository<MenuOnlineDocument>,
     private readonly storesService: StoresService,
   ) {}
 
-  async natsSaveMenuEfood(data: any) {
+  async natsSaveMenuOnline(data: any) {
     const store = await this.storesService.findMerchantById(data.store_id);
-    const menuEfood: Partial<MenuEfoodDocument> = {
+    const menuOnline: Partial<MenuOnlineDocument> = {
       menu_id: data.menu_price.menu.id,
       name: data.menu_price.menu.name,
       photo: data.menu_price.menu.photo,
@@ -22,6 +22,6 @@ export class MenuEfoodService {
       store: store,
     };
 
-    await this.menuEfoodRepository.save(menuEfood);
+    await this.menuOnlineRepository.save(menuOnline);
   }
 }
