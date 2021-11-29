@@ -252,9 +252,9 @@ export class MerchantsService {
       const create: Record<string, any> = await this.merchantRepository.save(
         createMerchant,
       );
-      if (create.status == 'ACTIVE') {
-        this.natsService.clientEmit('merchants.merchant.created', create);
-      }
+      this.publishNatsCreateMerchant(
+        Object.assign(new MerchantDocument(), create),
+      );
       if (!create) {
         throw new Error('failed insert to merchant_group');
       }
@@ -325,24 +325,7 @@ export class MerchantsService {
     await this.validateMerchantUniqueName(data.name, data.id);
     await this.validateMerchantUniquePhone(data.phone, data.id);
     const existMerchant: MerchantDocument =
-      await this.merchantRepository.findOne({
-        where: { id: data.id },
-        relations: ['users'],
-      });
-    if (!existMerchant) {
-      const errors: RMessage = {
-        value: data.id,
-        property: 'id',
-        constraint: [this.messageService.get('merchant.updatemerchant.unreg')],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
+      await this.getAndValidateMerchantById(data.id);
 
     if (data.pic_phone) {
       const cekphone: MerchantDocument = await this.findMerchantMerchantByPhone(
@@ -500,7 +483,7 @@ export class MerchantsService {
   async deleteMerchantMerchantProfile(data: string): Promise<any> {
     const merchant = await this.getAndValidateMerchantById(data);
     return this.merchantRepository
-      .softDelete(merchant)
+      .softDelete(merchant.id)
       .then(() => {
         this.natsService.clientEmit('merchants.merchant.deleted', merchant);
         return this.merchantUsersRepository.softDelete({ merchant_id: data });
@@ -752,7 +735,8 @@ export class MerchantsService {
   ): Promise<MerchantDocument> {
     try {
       const cekMerchantId = await this.merchantRepository.findOne({
-        id: merchantId,
+        where: { id: merchantId },
+        relations: ['users', 'group', 'stores'],
       });
       if (!cekMerchantId) {
         throw new BadRequestException(
@@ -860,7 +844,15 @@ export class MerchantsService {
       );
     }
   }
+
   //Publish Payload to Nats
+  async publishNatsCreateMerchant(createData: MerchantDocument) {
+    if (createData.status == MerchantStatus.Active) {
+      const merchant = await this.getAndValidateMerchantById(createData.id);
+      this.natsService.clientEmit('merchants.merchant.created', merchant);
+    }
+  }
+
   publishNatsUpdateMerchant(
     payload: MerchantDocument,
     oldStatus: MerchantStatus = MerchantStatus.Active,

@@ -72,6 +72,17 @@ export class StoresService {
     return this.storeRepository
       .findOne({
         where: { id: id },
+        relations: [
+          'merchant',
+          'merchant.group',
+          'store_categories',
+          'service_addons',
+          'bank',
+          'operational_hours',
+          'search_history_stores',
+          'users',
+          'menus',
+        ],
       })
       .catch((err) => {
         const errors: RMessage = {
@@ -326,12 +337,10 @@ export class StoresService {
     update_merchant_store_validation: UpdateMerchantStoreValidation,
     user: Record<string, any>,
   ): Promise<StoreDocument> {
-    const store_document: StoreDocument = await this.storeRepository.findOne(
-      update_merchant_store_validation.id,
-      {
-        relations: ['service_addons', 'operational_hours'],
-      },
-    );
+    const store_document: StoreDocument =
+      await this.getAndValidateStoreByStoreId(
+        update_merchant_store_validation.id,
+      );
     const oldStatus = store_document.status;
     if (!store_document) {
       const errors: RMessage = {
@@ -449,28 +458,27 @@ export class StoresService {
 
   async deleteMerchantStoreProfile(data: string): Promise<any> {
     const store = await this.getAndValidateStoreByStoreId(data);
-    return this.storeRepository
-      .softDelete(store)
-      .then(() => {
-        this.natsService.clientEmit('merchants.store.deleted', store);
-        return this.merchantUsersRepository.softDelete({ store_id: data });
-      })
-      .catch(() => {
-        const errors: RMessage = {
-          value: data,
-          property: 'id',
-          constraint: [
-            this.messageService.get('merchant.deletestore.invalid_id'),
-          ],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      });
+    try {
+      const storeDelete = await this.storeRepository.softDelete(data);
+      this.natsService.clientEmit('merchants.store.deleted', store);
+      this.merchantUsersRepository.softDelete({ store_id: data });
+      return storeDelete;
+    } catch (error) {
+      const errors: RMessage = {
+        value: data,
+        property: 'id',
+        constraint: [
+          this.messageService.get('merchant.deletestore.invalid_id'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async viewStoreDetail(
@@ -988,9 +996,10 @@ export class StoresService {
     }
   }
 
-  publishNatsCreateStore(payload: StoreDocument) {
+  async publishNatsCreateStore(payload: StoreDocument) {
     if (payload.status == enumStoreStatus.active) {
-      this.natsService.clientEmit('merchants.store.created', payload);
+      const store = await this.getAndValidateStoreByStoreId(payload.id);
+      this.natsService.clientEmit('merchants.store.created', store);
     }
   }
   //------------------------------------------------------------------------------

@@ -372,7 +372,8 @@ export class GroupsService {
   async getAndValidateGroupByGroupId(group_id: string): Promise<GroupDocument> {
     try {
       const group = await this.groupRepository.findOne({
-        id: group_id,
+        where: { id: group_id},
+        relations: ['merchants', 'merchants.stores', 'users'],
       });
       if (!group) {
         throw new BadRequestException(
