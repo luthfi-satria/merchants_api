@@ -34,6 +34,7 @@ import { GroupDocument } from 'src/database/entities/group.entity';
 import { GroupUsersService } from 'src/groups/group_users.service';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { NatsService } from 'src/nats/nats.service';
+import { OrdersService } from './orders/orders.service';
 
 @Global()
 @Module({
@@ -94,6 +95,7 @@ import { NatsService } from 'src/nats/nats.service';
     LobService,
     GroupUsersService,
     NatsService,
+    OrdersService,
   ],
   exports: [
     CommonStorageService,
@@ -102,6 +104,7 @@ import { NatsService } from 'src/nats/nats.service';
     NotificationService,
     CommonStoresService,
     CatalogsService,
+    OrdersService,
   ],
   controllers: [NatsController],
 })

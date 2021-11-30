@@ -33,6 +33,7 @@ import { QueryService } from './query.service';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
+import { OrdersService } from 'src/common/orders/orders.service';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { NatsService } from 'src/nats/nats.service';
     CatalogsService,
     UsersService,
     NatsService,
+    OrdersService,
   ],
 })
 export class QueryModule {}
