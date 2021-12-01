@@ -13,6 +13,7 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoresService } from 'src/stores/stores.service';
 import { CommonService } from 'src/common/common.service';
 import { deleteCredParam, delExcludeParam } from 'src/utils/general-utils';
+import { NatsService } from 'src/nats/nats.service';
 
 @Injectable()
 export class InternalService {
@@ -28,6 +29,7 @@ export class InternalService {
     private readonly responseService: ResponseService,
     private readonly storeService: StoresService,
     private readonly commonService: CommonService,
+    private readonly natsService: NatsService,
   ) {}
 
   async updateRatingStore(id, data) {
@@ -303,10 +305,11 @@ export class InternalService {
     args: Record<string, any>[],
   ): Promise<RSuccessMessage> {
     for (const raw of args) {
-      await this.storeRepository.update(
-        { id: raw.store_id },
-        { average_price: raw.average_price },
-      );
+      const updateStoreData: Partial<StoreDocument> = {
+        id: raw.store_id,
+        average_price: raw.average_price,
+      };
+      await this.storeService.updateStorePartial(updateStoreData);
     }
     return {
       success: true,
@@ -318,10 +321,11 @@ export class InternalService {
     args: Record<string, any>[],
   ): Promise<RSuccessMessage> {
     for (const raw of args) {
-      await this.storeRepository.update(
-        { id: raw.store_id },
-        { platform: raw.platform },
-      );
+      const updateStoreData: Partial<StoreDocument> = {
+        id: raw.store_id,
+        platform: raw.platform,
+      };
+      await this.storeService.updateStorePartial(updateStoreData);
     }
     return {
       success: true,

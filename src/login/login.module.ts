@@ -26,6 +26,7 @@ import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { LoginController } from './login.controller';
 import { LoginService } from './login.service';
+import { NatsService } from 'src/nats/nats.service';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { LoginService } from './login.service';
     AddonsService,
     StoreOperationalService,
     UsersService,
+    NatsService,
   ],
 })
 export class LoginModule {}

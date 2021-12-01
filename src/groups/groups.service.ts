@@ -9,7 +9,7 @@ import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { GroupDocument } from 'src/database/entities/group.entity';
+import { GroupDocument, GroupStatus } from 'src/database/entities/group.entity';
 import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
@@ -29,6 +29,7 @@ import { GroupUser } from './interface/group_users.interface';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { ListGroupDTO } from './validation/list-group.validation';
 import { RoleService } from 'src/common/services/admins/role.service';
+import { NatsService } from 'src/nats/nats.service';
 
 @Injectable()
 export class GroupsService {
@@ -45,6 +46,7 @@ export class GroupsService {
     // @Hash()
     private readonly hashService: HashService,
     private readonly roleService: RoleService,
+    private readonly natsService: NatsService,
   ) {}
 
   async findMerchantById(id: string): Promise<GroupDocument> {
@@ -126,6 +128,9 @@ export class GroupsService {
       const create = await this.groupRepository.save(create_group);
       if (!create) {
         throw new Error('failed insert to merchant_group');
+      }
+      if (create.status == 'ACTIVE') {
+        this.natsService.clientEmit('merchants.group.created', create);
       }
 
       const roles = await this.roleService.getRoleByPlatforms([
@@ -213,14 +218,16 @@ export class GroupsService {
       relations: ['users'],
       where: { id },
     });
+    const oldStatus = group.status;
     if (updateGroupDTO.status == 'ACTIVE') group.approved_at = new Date();
     if (updateGroupDTO.status == 'REJECTED') group.rejected_at = new Date();
 
     Object.assign(group, updateGroupDTO);
-    const update_group = this.groupRepository.save(group);
+    const update_group = await this.groupRepository.save(group);
     if (!update_group) {
       throw new Error('Update Failed');
     }
+    this.publishNatsUpdateGroup(update_group, oldStatus);
     return group;
   }
 
@@ -248,6 +255,7 @@ export class GroupsService {
         id: data,
       })
       .then(() => {
+        this.natsService.clientEmit('merchants.group.deleted', cekid);
         return this.merchantUsersRepository.softDelete({ group_id: data });
       })
       .catch(() => {
@@ -364,7 +372,8 @@ export class GroupsService {
   async getAndValidateGroupByGroupId(group_id: string): Promise<GroupDocument> {
     try {
       const group = await this.groupRepository.findOne({
-        id: group_id,
+        where: { id: group_id},
+        relations: ['merchants', 'merchants.stores', 'users'],
       });
       if (!group) {
         throw new BadRequestException(
@@ -450,6 +459,23 @@ export class GroupsService {
     }
   }
 
+//Publish Payload to Nats
+publishNatsUpdateGroup(
+  payload: GroupDocument,
+  oldStatus: GroupStatus = GroupStatus.Active,
+) {
+  if (payload.status == GroupStatus.Inactive) {
+    this.natsService.clientEmit('merchants.group.deleted', payload);
+  } else if (
+    payload.status == GroupStatus.Active &&
+    (oldStatus == GroupStatus.Inactive ||
+      oldStatus == GroupStatus.Draft)
+  ) {
+    this.natsService.clientEmit('merchants.group.created', payload);
+  } else if (payload.status == GroupStatus.Active) {
+    this.natsService.clientEmit('merchants.group.updated', payload);
+  }
+}
   //------------------------------------------------------------------------------
 
   async getHttp(

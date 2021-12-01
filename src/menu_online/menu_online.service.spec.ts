@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { MenuEfoodService } from './menu_efood.service';
-import { MenuEfoodDocument } from 'src/database/entities/menu_efood.entity';
+import { MenuOnlineService } from './menu_online.service';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { StoresService } from 'src/stores/stores.service';
 
-describe('MenuEfoodService', () => {
-  let service: MenuEfoodService;
+describe('MenuOnlineService', () => {
+  let service: MenuOnlineService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        MenuEfoodService,
+        MenuOnlineService,
         {
-          provide: getRepositoryToken(MenuEfoodDocument),
+          provide: getRepositoryToken(MenuOnlineDocument),
           useValue: {},
         },
         {
@@ -22,7 +22,7 @@ describe('MenuEfoodService', () => {
       ],
     }).compile();
 
-    service = module.get<MenuEfoodService>(MenuEfoodService);
+    service = module.get<MenuOnlineService>(MenuOnlineService);
   });
 
   it('should be defined', () => {

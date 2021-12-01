@@ -40,6 +40,7 @@ import { ListMerchantDTO } from './validation/list-merchant.validation';
 import { RoleService } from 'src/common/services/admins/role.service';
 import { StoresService } from 'src/stores/stores.service';
 import { enumStoreStatus } from 'src/database/entities/store.entity';
+import { NatsService } from 'src/nats/nats.service';
 @Injectable()
 export class MerchantsService {
   constructor(
@@ -59,6 +60,7 @@ export class MerchantsService {
     private readonly roleService: RoleService,
     @Inject(forwardRef(() => StoresService))
     private readonly storesService: StoresService,
+    private readonly natsService: NatsService,
   ) {}
 
   async findMerchantById(id: string): Promise<MerchantDocument> {
@@ -250,6 +252,9 @@ export class MerchantsService {
       const create: Record<string, any> = await this.merchantRepository.save(
         createMerchant,
       );
+      this.publishNatsCreateMerchant(
+        Object.assign(new MerchantDocument(), create),
+      );
       if (!create) {
         throw new Error('failed insert to merchant_group');
       }
@@ -320,24 +325,7 @@ export class MerchantsService {
     await this.validateMerchantUniqueName(data.name, data.id);
     await this.validateMerchantUniquePhone(data.phone, data.id);
     const existMerchant: MerchantDocument =
-      await this.merchantRepository.findOne({
-        where: { id: data.id },
-        relations: ['users'],
-      });
-    if (!existMerchant) {
-      const errors: RMessage = {
-        value: data.id,
-        property: 'id',
-        constraint: [this.messageService.get('merchant.updatemerchant.unreg')],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
+      await this.getAndValidateMerchantById(data.id);
 
     if (data.pic_phone) {
       const cekphone: MerchantDocument = await this.findMerchantMerchantByPhone(
@@ -463,6 +451,7 @@ export class MerchantsService {
       if (!update) {
         throw new Error('failed insert to merchant_group');
       }
+      this.publishNatsUpdateMerchant(update, oldStatus);
 
       if (oldStatus == MerchantStatus.Draft && oldPhone != data.pic_phone) {
         this.merchantUserService.resendPhoneUser(update.users[0].id);
@@ -492,12 +481,11 @@ export class MerchantsService {
   }
 
   async deleteMerchantMerchantProfile(data: string): Promise<any> {
-    const delete_merchant: Partial<MerchantDocument> = {
-      id: data,
-    };
+    const merchant = await this.getAndValidateMerchantById(data);
     return this.merchantRepository
-      .softDelete(delete_merchant)
+      .softDelete(merchant.id)
       .then(() => {
+        this.natsService.clientEmit('merchants.merchant.deleted', merchant);
         return this.merchantUsersRepository.softDelete({ merchant_id: data });
       })
       .catch(() => {
@@ -747,7 +735,8 @@ export class MerchantsService {
   ): Promise<MerchantDocument> {
     try {
       const cekMerchantId = await this.merchantRepository.findOne({
-        id: merchantId,
+        where: { id: merchantId },
+        relations: ['users', 'group', 'stores'],
       });
       if (!cekMerchantId) {
         throw new BadRequestException(
@@ -853,6 +842,31 @@ export class MerchantsService {
           'Bad Request',
         ),
       );
+    }
+  }
+
+  //Publish Payload to Nats
+  async publishNatsCreateMerchant(createData: MerchantDocument) {
+    if (createData.status == MerchantStatus.Active) {
+      const merchant = await this.getAndValidateMerchantById(createData.id);
+      this.natsService.clientEmit('merchants.merchant.created', merchant);
+    }
+  }
+
+  publishNatsUpdateMerchant(
+    payload: MerchantDocument,
+    oldStatus: MerchantStatus = MerchantStatus.Active,
+  ) {
+    if (payload.status == MerchantStatus.Inactive) {
+      this.natsService.clientEmit('merchants.merchant.deleted', payload);
+    } else if (
+      payload.status == MerchantStatus.Active &&
+      (oldStatus == MerchantStatus.Inactive ||
+        oldStatus == MerchantStatus.Draft)
+    ) {
+      this.natsService.clientEmit('merchants.merchant.created', payload);
+    } else if (payload.status == MerchantStatus.Active) {
+      this.natsService.clientEmit('merchants.merchant.updated', payload);
     }
   }
 }

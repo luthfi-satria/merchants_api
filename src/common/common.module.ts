@@ -13,8 +13,8 @@ import { CatalogsService } from './catalogs/catalogs.service';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { NatsController } from './nats/nats.controller';
-import { MenuEfoodService } from 'src/menu_efood/menu_efood.service';
-import { MenuEfoodDocument } from 'src/database/entities/menu_efood.entity';
+import { MenuOnlineService } from 'src/menu_online/menu_online.service';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { StoresService } from 'src/stores/stores.service';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { AddonsService } from 'src/addons/addons.service';
@@ -33,6 +33,8 @@ import { StoreOperationalShiftDocument } from 'src/database/entities/store_opera
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { GroupUsersService } from 'src/groups/group_users.service';
 import { LobDocument } from 'src/database/entities/lob.entity';
+import { NatsService } from 'src/nats/nats.service';
+import { OrdersService } from './orders/orders.service';
 
 @Global()
 @Module({
@@ -60,7 +62,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
     HttpModule,
     TypeOrmModule.forFeature([
       StoreDocument,
-      MenuEfoodDocument,
+      MenuOnlineDocument,
       MerchantUsersDocument,
       StoreCategoriesDocument,
       AddonDocument,
@@ -81,7 +83,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
     NotificationService,
     CommonStoresService,
     CatalogsService,
-    MenuEfoodService,
+    MenuOnlineService,
     StoresService,
     AddonsService,
     MerchantsService,
@@ -92,6 +94,8 @@ import { LobDocument } from 'src/database/entities/lob.entity';
     MerchantUsersService,
     LobService,
     GroupUsersService,
+    NatsService,
+    OrdersService,
   ],
   exports: [
     CommonStorageService,
@@ -100,6 +104,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
     NotificationService,
     CommonStoresService,
     CatalogsService,
+    OrdersService,
   ],
   controllers: [NatsController],
 })

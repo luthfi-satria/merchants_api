@@ -1,9 +1,9 @@
-import { MenuEfoodDocument } from 'src/database/entities/menu_efood.entity';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MenuEfoodService } from './menu_efood.service';
-import { MenuEfoodController } from './menu_efood.controller';
+import { MenuOnlineService } from './menu_online.service';
+import { MenuOnlineController } from './menu_online.controller';
 import { StoresService } from 'src/stores/stores.service';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -27,11 +27,12 @@ import { StoreOperationalShiftDocument } from 'src/database/entities/store_opera
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { GroupUsersService } from 'src/groups/group_users.service';
 import { LobDocument } from 'src/database/entities/lob.entity';
+import { NatsService } from 'src/nats/nats.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      MenuEfoodDocument,
+      MenuOnlineDocument,
       StoreDocument,
       MerchantUsersDocument,
       StoreCategoriesDocument,
@@ -45,9 +46,9 @@ import { LobDocument } from 'src/database/entities/lob.entity';
     ConfigModule.forRoot(),
     HttpModule,
   ],
-  controllers: [MenuEfoodController],
+  controllers: [MenuOnlineController],
   providers: [
-    MenuEfoodService,
+    MenuOnlineService,
     StoresService,
     MessageService,
     ResponseService,
@@ -61,6 +62,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
     MerchantUsersService,
     LobService,
     GroupUsersService,
+    NatsService,
   ],
 })
-export class MenuEfoodModule {}
+export class MenuOnlineModule {}

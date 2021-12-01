@@ -42,6 +42,8 @@ import { SearchHistoryKeywordDocument } from 'src/database/entities/search_histo
 import { SearchHistoryStoreDocument } from 'src/database/entities/search_history_store.entity';
 import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import { SettingsService } from 'src/settings/settings.service';
+import { OrdersService } from 'src/common/orders/orders.service';
+import { CountOrdersStoresDTO } from 'src/common/orders/dto/orders.dto';
 // import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
 
 @Injectable()
@@ -64,7 +66,10 @@ export class QueryService {
     private readonly searchHistoryStoreDocument: Repository<SearchHistoryStoreDocument>,
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
+    private readonly ordersService: OrdersService,
   ) {}
+
+  logger = new Logger();
 
   private async getFilterPricesRange(
     price_filter_ids: string[],
@@ -529,6 +534,20 @@ export class QueryService {
         data.budget_meal,
       );
 
+      // Apply favorite store this week filter
+      const favoriteStoreIds = [];
+      let favoriteStore: CountOrdersStoresDTO[] = null;
+      if (data.favorite_this_week) {
+        try {
+          favoriteStore = await this.ordersService.getFavoriteStoreThisWeek();
+          for (let i = 0; i < favoriteStore.length; i++) {
+            favoriteStoreIds.push(favoriteStore[i].store_id);
+          }
+        } catch (error) {
+          this.logger.error(error);
+        }
+      }
+
       Logger.debug(
         `filter params:
         current time: ${currTime} UTC+0
@@ -628,6 +647,11 @@ export class QueryService {
                 ? `AND merchant_store.rating >= :minimum_rating`
                 : ''
             }
+            ${
+              favoriteStoreIds.length > 0
+                ? `AND merchant_store.id in (:...favorite_store_ids)`
+                : ''
+            }
             `,
           {
             active: enumStoreStatus.active,
@@ -643,6 +667,7 @@ export class QueryService {
             newThisWeekDate: lastWeek,
             budgetMaxValue: budgetMaxValue,
             minimum_rating: minimum_rating,
+            favorite_store_ids: favoriteStoreIds,
           },
         )
         .andWhere(
@@ -704,7 +729,18 @@ export class QueryService {
         );
       });
 
-      const [storeItems, totalItems] = qlistStore;
+      let storeItems = qlistStore[0];
+      const totalItems = qlistStore[1];
+      if (favoriteStore) {
+        const storeItemFavoriteSorted: StoreDocument[] = [];
+        for (let i = 0; i < favoriteStore.length; i++) {
+          const store = _.find(storeItems, { id: favoriteStore[i].store_id });
+          if (store) {
+            storeItemFavoriteSorted.push(store);
+          }
+        }
+        storeItems = storeItemFavoriteSorted;
+      }
 
       // const formattedArr = [];
 
@@ -989,6 +1025,7 @@ export class QueryService {
         location_latitude: lat,
         location_longitude: long,
         platform: 'ONLINE',
+        favorite_this_week: null,
       };
 
       const listStores = await this.getListQueryStore(args, options, true);
@@ -1181,6 +1218,7 @@ export class QueryService {
         location_latitude: lat,
         location_longitude: long,
         platform: 'ONLINE',
+        favorite_this_week: null,
       };
 
       const currentPage = data.page || 1;

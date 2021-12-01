@@ -38,6 +38,7 @@ import { GroupsService } from 'src/groups/groups.service';
 import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import _ from 'lodash';
 import { UsersService } from 'src/users/users.service';
+import { NatsService } from 'src/nats/nats.service';
 
 @Injectable()
 export class StoresService {
@@ -60,6 +61,7 @@ export class StoresService {
     private readonly groupService: GroupsService,
     private readonly commonCatalogService: CatalogsService,
     private readonly usersService: UsersService,
+    private readonly natsService: NatsService,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -70,6 +72,17 @@ export class StoresService {
     return this.storeRepository
       .findOne({
         where: { id: id },
+        relations: [
+          'merchant',
+          'merchant.group',
+          'store_categories',
+          'service_addons',
+          'bank',
+          'operational_hours',
+          'search_history_stores',
+          'users',
+          'menus',
+        ],
       })
       .catch((err) => {
         const errors: RMessage = {
@@ -270,6 +283,7 @@ export class StoresService {
         : false;
 
     const create_store = await this.storeRepository.save(store_document);
+    this.publishNatsCreateStore(create_store);
     const operational_hours = await this.storeOperationalService
       .createStoreOperationalHours(create_store.id, create_store.gmt_offset)
       .catch((e) => {
@@ -291,9 +305,12 @@ export class StoresService {
   // partial update
   async updateStorePartial(data: Partial<StoreDocument>) {
     try {
-      return await this.storeRepository.update(data.id, data).catch((e) => {
-        throw e;
-      });
+      const store = await this.getAndValidateStoreByStoreId(data.id);
+      const oldStatus = store.status;
+      Object.assign(store, data);
+      const updateStore = await this.storeRepository.save(store);
+      this.publishNatsUpdateStore(updateStore, oldStatus);
+      return updateStore;
     } catch (e) {
       const logger = new Logger();
       logger.log(e, 'Catch Error :  ');
@@ -303,9 +320,12 @@ export class StoresService {
 
   async updateStoreProfile(data: StoreDocument) {
     try {
-      return await this.storeRepository.update(data.id, data).catch((e) => {
-        throw e;
-      });
+      const store = await this.getAndValidateStoreByStoreId(data.id);
+      const oldStatus = store.status;
+      Object.assign(store, data);
+      const updateStore = await this.storeRepository.save(store);
+      this.publishNatsUpdateStore(updateStore, oldStatus);
+      return updateStore;
     } catch (e) {
       const logger = new Logger();
       logger.log(e, 'Catch Error :  ');
@@ -317,12 +337,11 @@ export class StoresService {
     update_merchant_store_validation: UpdateMerchantStoreValidation,
     user: Record<string, any>,
   ): Promise<StoreDocument> {
-    const store_document: StoreDocument = await this.storeRepository.findOne(
-      update_merchant_store_validation.id,
-      {
-        relations: ['service_addons', 'operational_hours'],
-      },
-    );
+    const store_document: StoreDocument =
+      await this.getAndValidateStoreByStoreId(
+        update_merchant_store_validation.id,
+      );
+    const oldStatus = store_document.status;
     if (!store_document) {
       const errors: RMessage = {
         value: update_merchant_store_validation.id,
@@ -412,7 +431,10 @@ export class StoresService {
       store_document.rejection_reason =
         update_merchant_store_validation.rejection_reason;
 
-    return this.storeRepository.save(store_document);
+    const updateStore = await this.storeRepository.save(store_document);
+
+    this.publishNatsUpdateStore(updateStore, oldStatus);
+    return updateStore;
   }
 
   async updateBulkStoresBankDetail(
@@ -435,30 +457,28 @@ export class StoresService {
   }
 
   async deleteMerchantStoreProfile(data: string): Promise<any> {
-    const delete_merchant: Partial<StoreDocument> = {
-      id: data,
-    };
-    return this.storeRepository
-      .softDelete(delete_merchant)
-      .then(() => {
-        return this.merchantUsersRepository.softDelete({ store_id: data });
-      })
-      .catch(() => {
-        const errors: RMessage = {
-          value: data,
-          property: 'id',
-          constraint: [
-            this.messageService.get('merchant.deletestore.invalid_id'),
-          ],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      });
+    const store = await this.getAndValidateStoreByStoreId(data);
+    try {
+      const storeDelete = await this.storeRepository.softDelete(data);
+      this.natsService.clientEmit('merchants.store.deleted', store);
+      this.merchantUsersRepository.softDelete({ store_id: data });
+      return storeDelete;
+    } catch (error) {
+      const errors: RMessage = {
+        value: data,
+        property: 'id',
+        constraint: [
+          this.messageService.get('merchant.deletestore.invalid_id'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   async viewStoreDetail(
@@ -957,6 +977,30 @@ export class StoresService {
     }
 
     return store;
+  }
+
+  //Publish Payload to Nats
+  publishNatsUpdateStore(
+    payload: StoreDocument,
+    oldStatus: enumStoreStatus = enumStoreStatus.active,
+  ) {
+    if (payload.status == enumStoreStatus.inactive) {
+      this.natsService.clientEmit('merchants.store.deleted', payload);
+    } else if (
+      payload.status == enumStoreStatus.active &&
+      oldStatus == enumStoreStatus.inactive
+    ) {
+      this.natsService.clientEmit('merchants.store.created', payload);
+    } else if (payload.status == enumStoreStatus.active) {
+      this.natsService.clientEmit('merchants.store.updated', payload);
+    }
+  }
+
+  async publishNatsCreateStore(payload: StoreDocument) {
+    if (payload.status == enumStoreStatus.active) {
+      const store = await this.getAndValidateStoreByStoreId(payload.id);
+      this.natsService.clientEmit('merchants.store.created', store);
+    }
   }
   //------------------------------------------------------------------------------
 

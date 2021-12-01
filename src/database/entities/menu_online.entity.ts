@@ -10,8 +10,8 @@ import {
 } from 'typeorm';
 import { StoreDocument } from './store.entity';
 
-@Entity({ name: 'merchant_menus_efood' })
-export class MenuEfoodDocument {
+@Entity({ name: 'merchant_menus_online' })
+export class MenuOnlineDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

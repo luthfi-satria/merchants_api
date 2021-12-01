@@ -335,7 +335,7 @@ export class StoresController {
           // quick parsing and update record
           item.delivery_type = delivery_type;
           const updated = await this.storesService.updateStoreProfile(item);
-          if (updated.affected < 1) {
+          if (!updated) {
             Logger.warn(
               `Failed to update delivery type merchant $${store_id}`,
               'StoreController',
