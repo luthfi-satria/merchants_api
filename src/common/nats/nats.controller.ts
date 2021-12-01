@@ -12,7 +12,7 @@ export class NatsController {
   ) {}
 
   @EventPattern('catalogs.storeavailability.created')
-  async saveMenuEfood(@Payload() data: any) {
+  async saveMenuOnline(@Payload() data: any) {
     this.logger.log('catalogs.storeavailability.created');
     this.menuOnlineService.natsSaveMenuOnline(data);
   }
@@ -49,5 +49,17 @@ export class NatsController {
         this.logger.error(e);
         throw e;
       });
+  }
+
+  @EventPattern('catalogs.menu.updated')
+  async updateMenuOnline(@Payload() data: any) {
+    this.logger.log('catalogs.menu.updated');
+    this.menuOnlineService.natsUpdateMenuOnline(data);
+  }
+
+  @EventPattern('catalogs.menu.deleted')
+  async deleteMenuOnline(@Payload() data: any) {
+    this.logger.log('catalogs.menu.deleted');
+    this.menuOnlineService.natsDeleteMenuOnline(data);
   }
 }

@@ -16,6 +16,9 @@ export class MenuOnlineDocument {
   id: string;
 
   @Column('uuid', { nullable: true })
+  menu_store_id: string;
+
+  @Column('uuid', { nullable: true })
   menu_id: string;
 
   @Column()
