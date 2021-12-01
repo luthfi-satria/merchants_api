@@ -869,4 +869,27 @@ export class MerchantsService {
       this.natsService.clientEmit('merchants.merchant.updated', payload);
     }
   }
+
+  async updatePostSettings(data, id) {
+    try {
+      const result = await this.merchantRepository.findOne(id);
+
+      if (typeof data.is_pos_checkin_enabled !== 'undefined')
+        result.is_pos_checkin_enabled = data.is_pos_checkin_enabled;
+      if (typeof data.is_pos_endofday_enabled !== 'undefined')
+        result.is_pos_endofday_enabled = data.is_pos_endofday_enabled;
+      if (typeof data.is_pos_printer_enabled !== 'undefined')
+        result.is_pos_printer_enabled = data.is_pos_printer_enabled;
+
+      const update = await this.merchantRepository.save(result);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.createmerchant.success'),
+        update,
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }

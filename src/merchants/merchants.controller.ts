@@ -28,7 +28,10 @@ import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { CommonStorageService } from 'src/common/storage/storage.service';
-import { UpdateMerchantDTO } from './validation/update_merchant.dto';
+import {
+  UpdateMerchantDTO,
+  UpdatePostSettingsDTO,
+} from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
 import { ResponseExcludeParam } from 'src/response/response_exclude_param.decorator';
 import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
@@ -128,6 +131,19 @@ export class MerchantsController {
     return this.merchantsService.updateMerchantMerchantProfile(
       updateMerchantDTO,
     );
+  }
+
+  @Put('pos-settings/:id')
+  @UserType('admin')
+  @UserTypeAndLevel('merchant.group')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async updatePosSettings(
+    @Body()
+    updatePostSettingsDTO: UpdatePostSettingsDTO,
+    @Param('id') id: string,
+  ): Promise<any> {
+    return this.merchantsService.updatePostSettings(updatePostSettingsDTO, id);
   }
 
   @Delete('merchants/:id')
