@@ -20,7 +20,7 @@ export class OrdersService {
       const headerRequest = {
         'Content-Type': 'application/json',
       };
-      const url = `${process.env.BASEURL_ORDERS_SERVICE}/api/v1/orders/internal/most-order-store-this-weeks`;
+      const url = `${process.env.BASEURL_ORDERS_SERVICE}/api/v1/orders/internal/most-order-store-this-week`;
       const post_request = this.httpService
         .post(url, null, { headers: headerRequest })
         .pipe(
