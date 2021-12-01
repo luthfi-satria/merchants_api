@@ -76,6 +76,15 @@ export class MerchantDocument {
   @Column({ nullable: true })
   npwp_file: string;
 
+  @Column({ default: false })
+  is_pos_checkin_enabled: boolean;
+
+  @Column({ default: false })
+  is_pos_endofday_enabled: boolean;
+
+  @Column({ default: false })
+  is_pos_printer_enabled: boolean;
+
   @Column({ nullable: true })
   pic_name: string;
 
