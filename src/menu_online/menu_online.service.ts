@@ -12,11 +12,14 @@ export class MenuOnlineService {
     private readonly storesService: StoresService,
   ) {}
 
-  async natsSaveMenuOnline(data: any) {
+  async natsCreateStoreAvailability(data: any) {
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
-      const store = await this.storesService.findMerchantById(data.store_id);
+      const store = await this.storesService.findMerchantStoreById(
+        data.store_id,
+      );
       const menuOnline: Partial<MenuOnlineDocument> = {
         menu_store_id: data.id,
+        menu_price_id: data.menu_price.id,
         menu_id: data.menu_price.menu_menu.id,
         name: data.menu_price.menu_menu.name,
         photo: data.menu_price.menu_menu.photo,
@@ -24,8 +27,35 @@ export class MenuOnlineService {
         store: store,
       };
 
-      await this.menuOnlineRepository.save(menuOnline);
+      this.menuOnlineRepository.save(menuOnline);
     }
+  }
+
+  async natsUpdateStoreAvailability(data: any) {
+    if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
+      const menuOnline = await this.menuOnlineRepository.findOne({
+        menu_store_id: data.id,
+      });
+      const store = await this.storesService.findMerchantStoreById(
+        data.store_id,
+      );
+      if (menuOnline && store) {
+        menuOnline.menu_price_id = data.menu_price.id;
+        menuOnline.menu_id = data.menu_price.menu_menu.id;
+        menuOnline.name = data.menu_price.menu_menu.name;
+        menuOnline.photo = data.menu_price.menu_menu.photo;
+        menuOnline.price = data.menu_price.price;
+        menuOnline.store = store;
+
+        this.menuOnlineRepository.save(menuOnline);
+      }
+    }
+  }
+
+  async natsdeleteStoreAvailability(data: any) {
+    this.menuOnlineRepository.softDelete({
+      menu_store_id: data.id,
+    });
   }
 
   async natsUpdateMenuOnline(data: any) {
@@ -38,11 +68,37 @@ export class MenuOnlineService {
   }
 
   async natsDeleteMenuOnline(data: any) {
-    const menus = await this.menuOnlineRepository.find({ menu_id: data.id });
-    const ids = [];
-    for (const menu of menus) {
-      ids.push(menu.id);
+    this.menuOnlineRepository.softDelete({ menu_id: data.id });
+  }
+
+  async natsUpdateMenuPrice(data: any) {
+    if (data.menu_sales_channel.platform == 'ONLINE') {
+      const menuOnlines = await this.menuOnlineRepository.find({
+        menu_price_id: data.id,
+      });
+
+      if (menuOnlines.length > 0) {
+        for (const menuOnline of menuOnlines) {
+          const store = await this.storesService.findMerchantStoreById(
+            data.store_id,
+          );
+          if (store) {
+            menuOnline.menu_id = data.menu_menu.id;
+            menuOnline.name = data.menu_menu.name;
+            menuOnline.photo = data.menu_menu.photo;
+            menuOnline.price = data.price;
+            menuOnline.store = store;
+
+            this.menuOnlineRepository.save(menuOnline);
+          }
+        }
+      }
     }
-    this.menuOnlineRepository.softDelete(ids);
+  }
+
+  async natsDeleteMenuPrice(data: any) {
+    this.menuOnlineRepository.softDelete({
+      menu_price_id: data.id,
+    });
   }
 }

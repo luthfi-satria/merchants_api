@@ -14,19 +14,19 @@ export class NatsController {
   @EventPattern('catalogs.storeavailability.created')
   async saveMenuOnline(@Payload() data: any) {
     this.logger.log('catalogs.storeavailability.created');
-    this.menuOnlineService.natsSaveMenuOnline(data);
+    this.menuOnlineService.natsCreateStoreAvailability(data);
   }
 
   @EventPattern('catalogs.storeavailability.updated')
   async updateMenuEfood(@Payload() data: any) {
     this.logger.log('catalogs.storeavailability.updated');
-    // this.logger.debug(data);
+    this.menuOnlineService.natsUpdateStoreAvailability(data);
   }
 
   @EventPattern('catalogs.storeavailability.deleted')
   async deleteMenuEfood(@Payload() data: any) {
     this.logger.log('catalogs.storeavailability.deleted');
-    // this.logger.debug(data);
+    this.menuOnlineService.natsdeleteStoreAvailability(data);
   }
 
   @EventPattern('orders.order.cancelled_by_store.busy')
@@ -61,5 +61,17 @@ export class NatsController {
   async deleteMenuOnline(@Payload() data: any) {
     this.logger.log('catalogs.menu.deleted');
     this.menuOnlineService.natsDeleteMenuOnline(data);
+  }
+
+  @EventPattern('catalogs.menuprice.updated')
+  async updateMenuPrice(@Payload() data: any) {
+    this.logger.log('catalogs.menuprice.updated');
+    this.menuOnlineService.natsUpdateMenuPrice(data);
+  }
+
+  @EventPattern('catalogs.menuprice.deleted')
+  async deleteMenuPrice(@Payload() data: any) {
+    this.logger.log('catalogs.menuprice.deleted');
+    this.menuOnlineService.natsDeleteMenuPrice(data);
   }
 }

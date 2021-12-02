@@ -100,6 +100,10 @@ export class StoresService {
       });
   }
 
+  async findMerchantStoreById(id: string): Promise<StoreDocument> {
+    return this.storeRepository.findOne(id);
+  }
+
   async findMerchantStoresByIds(ids: string[]): Promise<StoreDocument[]> {
     return this.storeRepository.findByIds(ids);
   }

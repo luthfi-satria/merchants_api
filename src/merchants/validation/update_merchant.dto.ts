@@ -67,6 +67,15 @@ export class UpdateMerchantDTO {
   npwp_file: string;
 
   @IsOptional()
+  is_pos_checkin_enabled: boolean;
+
+  @IsOptional()
+  is_pos_endofday_enabled: boolean;
+
+  @IsOptional()
+  is_pos_printer_enabled: boolean;
+
+  @IsOptional()
   @IsString()
   pic_name: string;
 
