@@ -104,3 +104,14 @@ export class UpdateMerchantDTO {
   @IsOptional()
   rejection_reason: string;
 }
+
+export class UpdatePostSettingsDTO {
+  @IsOptional()
+  is_pos_checkin_enabled: boolean;
+
+  @IsOptional()
+  is_pos_endofday_enabled: boolean;
+
+  @IsOptional()
+  is_pos_printer_enabled: boolean;
+}
