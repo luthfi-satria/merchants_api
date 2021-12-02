@@ -155,7 +155,8 @@ export class InternalService {
     const store = this.storeRepository
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.merchant', 'merchant')
-      .leftJoinAndSelect('merchant.group', 'group');
+      .leftJoinAndSelect('merchant.group', 'group')
+      .leftJoinAndSelect('ms.service_addons', 'service_addons');
 
     if (!ids)
       store.where('merchant.id = :mid', {
