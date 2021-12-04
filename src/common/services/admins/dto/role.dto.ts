@@ -1,3 +1,5 @@
+import { SpecialRoleDTO } from './special-role.dto';
+
 export class RoleDTO {
   id: string;
   name: string;
@@ -6,4 +8,5 @@ export class RoleDTO {
   created_at: Date;
   updated_at: Date;
   deleted_at: Date;
+  special_role: SpecialRoleDTO;
 }

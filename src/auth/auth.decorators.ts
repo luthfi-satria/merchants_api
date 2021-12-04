@@ -11,7 +11,7 @@ export function AuthJwtGuard(): IApplyDecorator {
   return applyDecorators(UseGuards(JwtGuard));
 }
 
-export const User = createParamDecorator(
+export const GetUser = createParamDecorator(
   (data: string, ctx: ExecutionContext): Record<string, any> => {
     const { user } = ctx.switchToHttp().getRequest();
     return data ? user[data] : user;

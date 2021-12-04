@@ -33,13 +33,19 @@ import { CommonService } from 'src/common/common.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
 import { UpdateMerchantStoreUsersValidation } from './validation/update_store_users.validation';
-import { RoleService } from 'src/common/services/admins/role.service';
+import {
+  RoleService,
+  SpecialRoleCodes,
+} from 'src/common/services/admins/role.service';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { randomUUID } from 'crypto';
 import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
 import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
 import { StoresService } from './stores.service';
 import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
+import { User } from 'src/auth/guard/interface/user.interface';
+import { CommonStoresService } from 'src/common/own/stores.service';
+import { ListMerchantStoreUsersBySpecialRoleCodeValidation } from './validation/list_store_users_by_special_role_code.validation';
 
 @Injectable()
 export class StoreUsersService {
@@ -59,6 +65,7 @@ export class StoreUsersService {
     private readonly notificationService: NotificationService,
     @Inject(forwardRef(() => StoresService))
     private readonly storeService: StoresService,
+    private readonly commonStoreService: CommonStoresService,
   ) {}
 
   async createStoreUsers(
@@ -714,6 +721,47 @@ export class StoreUsersService {
     } catch (error) {
       Logger.error(error);
     }
+  }
+
+  async listStoreUsersBySpecialRoleCode(
+    storeId: string,
+    specialRoleCode: SpecialRoleCodes,
+    query: ListMerchantStoreUsersBySpecialRoleCodeValidation,
+    user: User,
+  ): Promise<MerchantUsersDocument[]> {
+    await this.commonStoreService.getAndValidateStoreByStoreIds(
+      [storeId],
+      user,
+    );
+
+    const specialRole = await this.roleService.getSpecialRoleByCode(
+      specialRoleCode,
+    );
+
+    const role = specialRole.role;
+    role.special_role = specialRole;
+    delete role.special_role.role;
+
+    const param: ListMerchantStoreUsersValidation = {
+      ...query,
+      role_id: role.id,
+      id: null,
+      name: null,
+      nip: null,
+      email: null,
+      phone: null,
+      password: null,
+      store_id: null,
+      merchant_id: null,
+      group_id: null,
+    };
+
+    const listUser = await this.listStoreUsers(param, user);
+    listUser.data.items.map((user) => {
+      user.role = role;
+      return user;
+    });
+    return listUser.data;
   }
 
   async getAndValidateStoreUserById(

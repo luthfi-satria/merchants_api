@@ -13,6 +13,27 @@ import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { RoleResponseDTO } from './dto/role-response.dto';
 import { RoleDTO } from './dto/role.dto';
+import { SpecialRoleDTO } from './dto/special-role.dto';
+import { SpecialRoleResponseDTO } from './dto/special-role-response.dto';
+
+export enum SpecialRoleCodes {
+  brand_manager = 'brand_manager',
+  corporate_director = 'corporate_director',
+  corporate_director_finance_operational = 'corporate_director_finance_operational',
+  corporate_finance = 'corporate_finance',
+  corporate_finance_operational = 'corporate_finance_operational',
+  corporate_operational = 'corporate_operational',
+  store_cashier = 'store_cashier',
+  store_manager = 'store_manager',
+}
+
+export enum SpecialRolesPlatforms {
+  NONE = 'NONE',
+  ZEUS = 'ZEUS',
+  HERMES_CORPORATE = 'HERMES_CORPORATE',
+  HERMES_BRAND = 'HERMES_BRAND',
+  HERMES_STORE = 'HERMES_STORE',
+}
 
 @Injectable()
 export class RoleService {
@@ -165,6 +186,51 @@ export class RoleService {
         );
       }
       return response_role.data;
+    } catch (error) {
+      throw new BadRequestException(error.response.data);
+    }
+  }
+
+  async getSpecialRoleByCode(code: SpecialRoleCodes): Promise<SpecialRoleDTO> {
+    if (!code) {
+      return null;
+    }
+    const headerRequest = {
+      'Content-Type': 'application/json',
+    };
+    try {
+      const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/internal/special-roles/get-by-code/${code}`;
+      const post_request = this.httpService
+        .post(url, null, { headers: headerRequest })
+        .pipe(
+          map((axiosResponse: AxiosResponse) => {
+            return axiosResponse.data;
+          }),
+          catchError((err) => {
+            this.logger.error(err);
+            throw err;
+          }),
+        );
+      const response_special_role: SpecialRoleResponseDTO = await lastValueFrom(
+        post_request,
+      );
+      if (!response_special_role) {
+        const error_message: RMessage = {
+          value: code,
+          property: 'code',
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            error_message,
+            'Bad Request',
+          ),
+        );
+      }
+      return response_special_role.data;
     } catch (error) {
       throw new BadRequestException(error.response.data);
     }

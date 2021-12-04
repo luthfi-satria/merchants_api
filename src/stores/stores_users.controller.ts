@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 
 import { ResponseStatusCode } from 'src/response/response.decorator';
-import { AuthJwtGuard } from 'src/auth/auth.decorators';
+import { AuthJwtGuard, GetUser } from 'src/auth/auth.decorators';
 import { StoreUsersService } from './stores_users.service';
 import { MerchantStoreUsersValidation } from './validation/store_users.validation';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
@@ -30,6 +30,9 @@ import { MessageService } from 'src/message/message.service';
 import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
 import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
 import { UserType } from 'src/auth/guard/user-type.decorator';
+import { User } from 'src/auth/guard/interface/user.interface';
+import { ListMerchantStoreUsersBySpecialRoleCodeValidation } from './validation/list_store_users_by_special_role_code.validation';
+import { SpecialRoleCodes } from 'src/common/services/admins/role.service';
 
 @Controller('api/v1/merchants/stores')
 export class StoreUsersController {
@@ -260,5 +263,63 @@ export class StoreUsersController {
   @AuthJwtGuard()
   async resendPhoneUser(@Param('uid') user_id: string) {
     return this.storeUsersService.resendPhoneUser(user_id);
+  }
+
+  @Get('users/:store_id/cashiers')
+  @UserTypeAndLevel(
+    'admin.*',
+    'merchant.group',
+    'merchant.merchant',
+    'merchant.store',
+  )
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async listStoreUsersCashiers(
+    @GetUser() user: User,
+    @Param('store_id') storeId: string,
+    @Query() query: ListMerchantStoreUsersBySpecialRoleCodeValidation,
+  ): Promise<any> {
+    const listUsersCashiers =
+      await this.storeUsersService.listStoreUsersBySpecialRoleCode(
+        storeId,
+        SpecialRoleCodes.store_cashier,
+        query,
+        user,
+      );
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.liststore.success'),
+      listUsersCashiers,
+    );
+  }
+
+  @Get('users/:store_id/managers')
+  @UserTypeAndLevel(
+    'admin.*',
+    'merchant.group',
+    'merchant.merchant',
+    'merchant.store',
+  )
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async listStoreUsersManagers(
+    @GetUser() user: User,
+    @Param('store_id') storeId: string,
+    @Query() query: ListMerchantStoreUsersBySpecialRoleCodeValidation,
+  ): Promise<any> {
+    const listUsersCashiers =
+      await this.storeUsersService.listStoreUsersBySpecialRoleCode(
+        storeId,
+        SpecialRoleCodes.store_manager,
+        query,
+        user,
+      );
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.liststore.success'),
+      listUsersCashiers,
+    );
   }
 }
