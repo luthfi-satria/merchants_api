@@ -751,7 +751,7 @@ export class StoreUsersService {
       email: null,
       phone: null,
       password: null,
-      store_id: null,
+      store_id: storeId,
       merchant_id: null,
       group_id: null,
     };
