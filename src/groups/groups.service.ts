@@ -139,6 +139,8 @@ export class GroupsService {
           SpecialRoleCodes.corporate_director, 
           SpecialRoleCodes.corporate_finance,
           SpecialRoleCodes.corporate_operational,
+          SpecialRoleCodes.corporate_director_finance_operational,
+          SpecialRoleCodes.corporate_finance_operational,
         ]
       );
 
@@ -155,6 +157,10 @@ export class GroupsService {
         role_id: _.find(specialRoles, { code: SpecialRoleCodes.corporate_director } ).role.id,
         status: MerchantUsersStatus.Active,
       };
+      // role jika pic_operational & pic_finance sama dengan directur
+      if (array_email.includes(createGroupDTO.pic_operational_email)) {
+        create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_director_finance_operational } ).role.id; 
+      }
       const director = await this.groupUserService.createUserPassword(
         create_director,
       );
@@ -171,6 +177,10 @@ export class GroupsService {
           role_id: _.find(specialRoles, { code: SpecialRoleCodes.corporate_operational } ).role.id,
           status: MerchantUsersStatus.Active,
         };
+        // role jika pic_operational & pic_finance sama tetapi berbeda dengan directur
+        if (createGroupDTO.pic_operational_email == createGroupDTO.pic_finance_email) {
+          create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_finance_operational } ).role.id; 
+        }
         const pic_operational = await this.groupUserService.createUserPassword(
           create_pic_operational,
         );
