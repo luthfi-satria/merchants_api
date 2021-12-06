@@ -7,3 +7,11 @@ export class SpecialRoleResponseDTO {
   statusCode: number;
   error: string;
 }
+
+export class SpecialRolesResponseDTO {
+  success: string;
+  message: string;
+  data: SpecialRoleDTO[];
+  statusCode: number;
+  error: string;
+}

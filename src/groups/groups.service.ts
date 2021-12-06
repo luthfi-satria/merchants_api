@@ -28,8 +28,9 @@ import { GroupUsersService } from './group_users.service';
 import { GroupUser } from './interface/group_users.interface';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { ListGroupDTO } from './validation/list-group.validation';
-import { RoleService } from 'src/common/services/admins/role.service';
+import { RoleService, SpecialRoleCodes } from 'src/common/services/admins/role.service';
 import { NatsService } from 'src/nats/nats.service';
+import _ from 'lodash';
 
 @Injectable()
 export class GroupsService {
@@ -133,9 +134,13 @@ export class GroupsService {
         this.natsService.clientEmit('merchants.group.created', create);
       }
 
-      const roles = await this.roleService.getRoleByPlatforms([
-        'HERMES_CORPORATE',
-      ]);
+      const specialRoles = await this.roleService.getSpecialRoleByCodes(
+        [
+          SpecialRoleCodes.corporate_director, 
+          SpecialRoleCodes.corporate_finance,
+          SpecialRoleCodes.corporate_operational,
+        ]
+      );
 
       const array_email = [];
       create.users = [];
@@ -147,7 +152,7 @@ export class GroupsService {
         email: createGroupDTO.director_email,
         password: createGroupDTO.director_password,
         nip: createGroupDTO.director_nip,
-        role_id: roles[0].id,
+        role_id: _.find(specialRoles, { code: SpecialRoleCodes.corporate_director } ).role.id,
         status: MerchantUsersStatus.Active,
       };
       const director = await this.groupUserService.createUserPassword(
@@ -163,7 +168,7 @@ export class GroupsService {
           email: createGroupDTO.pic_operational_email,
           password: createGroupDTO.pic_operational_password,
           nip: createGroupDTO.pic_operational_nip,
-          role_id: roles[0].id,
+          role_id: _.find(specialRoles, { code: SpecialRoleCodes.corporate_operational } ).role.id,
           status: MerchantUsersStatus.Active,
         };
         const pic_operational = await this.groupUserService.createUserPassword(
@@ -180,7 +185,7 @@ export class GroupsService {
           email: createGroupDTO.pic_finance_email,
           password: createGroupDTO.pic_finance_password,
           nip: createGroupDTO.pic_finance_nip,
-          role_id: roles[0].id,
+          role_id: _.find(specialRoles, { code: SpecialRoleCodes.corporate_finance } ).role.id,
           status: MerchantUsersStatus.Active,
         };
         const pic_finance = await this.groupUserService.createUserPassword(

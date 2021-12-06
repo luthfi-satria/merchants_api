@@ -14,7 +14,10 @@ import { ResponseService } from 'src/response/response.service';
 import { RoleResponseDTO } from './dto/role-response.dto';
 import { RoleDTO } from './dto/role.dto';
 import { SpecialRoleDTO } from './dto/special-role.dto';
-import { SpecialRoleResponseDTO } from './dto/special-role-response.dto';
+import {
+  SpecialRoleResponseDTO,
+  SpecialRolesResponseDTO,
+} from './dto/special-role-response.dto';
 
 export enum SpecialRoleCodes {
   brand_manager = 'brand_manager',
@@ -150,17 +153,19 @@ export class RoleService {
     }
   }
 
-  async getRoleByPlatforms(platforms: string[]): Promise<RoleDTO[]> {
-    if (!platforms) {
+  async getSpecialRoleByCodes(
+    codes: SpecialRoleCodes[],
+  ): Promise<SpecialRoleDTO[]> {
+    if (!codes) {
       return null;
     }
     const headerRequest = {
       'Content-Type': 'application/json',
     };
     try {
-      const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/roles/batchs-by-platforms`;
+      const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/internal/special-roles/get-by-codes`;
       const post_request = this.httpService
-        .post(url, platforms, { headers: headerRequest })
+        .post(url, codes, { headers: headerRequest })
         .pipe(
           map((axiosResponse: AxiosResponse) => {
             return axiosResponse.data;
@@ -170,11 +175,13 @@ export class RoleService {
             throw err;
           }),
         );
-      const response_role: RoleResponseDTO = await lastValueFrom(post_request);
+      const response_role: SpecialRolesResponseDTO = await lastValueFrom(
+        post_request,
+      );
       if (!response_role) {
         const error_message: RMessage = {
-          value: platforms.join(),
-          property: 'profiles',
+          value: codes.join(),
+          property: 'codes',
           constraint: [this.messageService.get('common.role.not_found')],
         };
         throw new BadRequestException(

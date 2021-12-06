@@ -37,7 +37,10 @@ import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantUsersService } from './merchants_users.service';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { ListMerchantDTO } from './validation/list-merchant.validation';
-import { RoleService } from 'src/common/services/admins/role.service';
+import {
+  RoleService,
+  SpecialRoleCodes,
+} from 'src/common/services/admins/role.service';
 import { StoresService } from 'src/stores/stores.service';
 import { enumStoreStatus } from 'src/database/entities/store.entity';
 import { NatsService } from 'src/nats/nats.service';
@@ -259,7 +262,9 @@ export class MerchantsService {
         throw new Error('failed insert to merchant_group');
       }
 
-      const roles = await this.roleService.getRoleByPlatforms(['HERMES_BRAND']);
+      const specialRoles = await this.roleService.getSpecialRoleByCode(
+        SpecialRoleCodes.brand_manager,
+      );
       const createMerchantUser: Partial<MerchantUsersDocument> = {
         merchant_id: create.id,
         name: createMerchant.pic_name,
@@ -267,7 +272,7 @@ export class MerchantsService {
         email: createMerchant.pic_email,
         password: createMerchant.pic_password,
         nip: createMerchant.pic_nip,
-        role_id: roles[0].id,
+        role_id: specialRoles.role_id,
       };
 
       switch (merchantDTO.status) {
