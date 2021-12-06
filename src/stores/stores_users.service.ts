@@ -575,14 +575,14 @@ export class StoreUsersService {
     }
 
     if (args.role_id) {
-      query.andWhere('mu.role_id = :sid', {
-        sid: args.role_id,
+      query.andWhere('mu.role_id = :role_id', {
+        role_id: args.role_id,
       });
     }
 
     if (args.store_id) {
-      query.andWhere('mu.store_id = :sid', {
-        sid: args.store_id,
+      query.andWhere('mu.store_id = :store_id', {
+        store_id: args.store_id,
       });
     }
 
