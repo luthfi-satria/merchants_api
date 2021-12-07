@@ -35,43 +35,6 @@ export class LoginController {
     private readonly messageService: MessageService,
   ) {}
 
-  // @Post('login/email')
-  // @ResponseStatusCode()
-  // async loginByEmail(
-  //   @Body()
-  //   data: LoginEmailValidation,
-  // ): Promise<any> {
-  //   return await this.loginService.loginEmailProcess(data);
-  // }
-
-  // @Post('login/phone')
-  // @ResponseStatusCode()
-  // async loginByPhone(
-  //   @Body(RequestValidationPipe(LoginPhoneValidation))
-  //   data: LoginPhoneValidation,
-  // ): Promise<any> {
-  //   data.access_type = 'phone';
-  //   return await this.loginService.loginPhoneProcess(data);
-  // }
-
-  // @Post('login/phone-otp-validation')
-  // @ResponseStatusCode()
-  // async validatePhoneOtpValidation(
-  //   @Body()
-  //   data: OtpValidateValidation,
-  // ): Promise<any> {
-  //   return await this.loginService.loginPhoneOtpValidationProcess(data);
-  // }
-
-  // @Post('login/email-otp-validation')
-  // @ResponseStatusCode()
-  // async validateEmailOtpValidation(
-  //   @Body()
-  //   data: OtpEmailValidateValidation,
-  // ): Promise<any> {
-  //   return await this.loginService.loginEmailOtpValidationProcess(data);
-  // }
-
   @Post('login/refresh-token')
   async refreshToken(@Headers('Authorization') token: string): Promise<any> {
     return this.loginService.refreshToken(token);
@@ -81,7 +44,7 @@ export class LoginController {
   @UserType('merchant')
   @AuthJwtGuard()
   async profile(@Req() req: any) {
-    const profile = await this.loginService.getProfile(req.user.id);
+    const profile = await this.loginService.getProfile(req.user);
     if (!profile) {
       const errors: RMessage = {
         value: '',

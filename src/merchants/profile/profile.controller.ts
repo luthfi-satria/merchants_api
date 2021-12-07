@@ -31,60 +31,6 @@ export class ProfileController {
     private readonly messageService: MessageService, // private httpService: HttpService,
   ) {}
 
-  // @Post('verify-email')
-  // @UserType('merchant')
-  // @AuthJwtGuard()
-  // async updateEmail(@Req() req: any, @Body() data: UpdateEmailDto) {
-  //   const url: string =
-  //     process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-email';
-  //   const defaultJsonHeader: Record<string, any> = {
-  //     'Content-Type': 'application/json',
-  //   };
-  //   const existEmail = await this.profileService.findOneMerchantByEmail(
-  //     data.email,
-  //   );
-  //   if (existEmail) {
-  //     const errors: RMessage = {
-  //       value: data.email,
-  //       property: 'email',
-  //       constraint: [this.messageService.get('merchant.general.emailExist')],
-  //     };
-  //     throw new BadRequestException(
-  //       this.responseService.error(
-  //         HttpStatus.BAD_REQUEST,
-  //         errors,
-  //         'Bad Request',
-  //       ),
-  //     );
-  //   }
-  //   const userData = await this.profileService.findOneById(req.user.id);
-  //   const otpDto = new OtpDto();
-  //   otpDto.email = data.email;
-  //   otpDto.id_otp = userData.id;
-  //   otpDto.user_type = 'merchant';
-  //   return (
-  //     await this.profileService.postHttp(url, otpDto, defaultJsonHeader)
-  //   ).pipe(
-  //     map(async (response) => {
-  //       const rsp: Record<string, any> = response;
-
-  //       if (rsp.statusCode) {
-  //         throw new BadRequestException(
-  //           this.responseService.error(
-  //             HttpStatus.BAD_REQUEST,
-  //             rsp.message[0],
-  //             'Bad Request',
-  //           ),
-  //         );
-  //       }
-  //       return response;
-  //     }),
-  //     catchError((err) => {
-  //       throw err.response.data;
-  //     }),
-  //   );
-  // }
-
   @Post('profile/verify-email')
   @UserType('merchant')
   @AuthJwtGuard()

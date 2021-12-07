@@ -394,23 +394,33 @@ export class LoginService {
     );
   }
 
-  async getProfile(id: string) {
+  async getProfile(user: any) {
     try {
-      const merchant_user = await this.merchantUsersRepository
+      const query = this.merchantUsersRepository
         .createQueryBuilder('mu')
-        .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect('mu.store', 'merchant_store');
+      if (user.level == 'store') {
+        query
+          .leftJoinAndSelect('merchant_store.merchant', 'merchant')
+          .leftJoinAndSelect('merchant.group', 'group');
+      }
+      query
         .leftJoinAndSelect(
           'merchant_store.service_addons',
           'merchant_store_service_addons',
         )
-        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant');
+      if (user.level == 'merchant') {
+        query.leftJoinAndSelect('merchant_merchant.group', 'group');
+      }
+      query
         .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
         .leftJoinAndSelect('mu.group', 'merchant_group')
-        .where('mu.id = :id', { id })
+        .where('mu.id = :id', { id: user.id })
         .andWhere('mu.role_id is not null')
-        .andWhere("mu.status = 'ACTIVE'")
-        .getOne();
+        .andWhere("mu.status = 'ACTIVE'");
 
+      const merchant_user = await query.getOne();
       removeAllFieldPassword(merchant_user);
       formatingAllOutputTime(merchant_user);
 
