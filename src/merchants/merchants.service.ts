@@ -894,7 +894,7 @@ export class MerchantsService {
         update,
       );
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 }
