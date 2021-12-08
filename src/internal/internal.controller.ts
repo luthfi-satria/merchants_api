@@ -101,6 +101,15 @@ export class InternalController {
     }
   }
 
+  @Get('merchant_user/:id/:level')
+  @ResponseStatusCode()
+  async getMerchantUser(
+    @Param('id') id: string,
+    @Param('level') level: string,
+  ): Promise<any> {
+    return this.internalService.findMerchantUser({ id: id, level: level });
+  }
+
   @Get('stores/active/:mid')
   @ResponseStatusCode()
   async getStoresActiveByMerchantId(

@@ -14,6 +14,7 @@ import { StoresService } from 'src/stores/stores.service';
 import { CommonService } from 'src/common/common.service';
 import { deleteCredParam, delExcludeParam } from 'src/utils/general-utils';
 import { NatsService } from 'src/nats/nats.service';
+import { LoginService } from 'src/login/login.service';
 
 @Injectable()
 export class InternalService {
@@ -29,7 +30,7 @@ export class InternalService {
     private readonly responseService: ResponseService,
     private readonly storeService: StoresService,
     private readonly commonService: CommonService,
-    private readonly natsService: NatsService,
+    private readonly loginService: LoginService,
   ) {}
 
   async updateRatingStore(id, data) {
@@ -84,6 +85,7 @@ export class InternalService {
     return this.storeRepository
       .findOne({
         where: { id: id },
+        relations: ['merchant'],
       })
       .then((result) => {
         if (!result) {
@@ -372,5 +374,9 @@ export class InternalService {
           ),
         );
       });
+  }
+
+  async findMerchantUser(user: any): Promise<MerchantUsersDocument> {
+    return this.loginService.getProfile(user);
   }
 }

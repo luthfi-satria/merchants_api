@@ -29,6 +29,7 @@ import { InternalService } from './internal.service';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
+import { LoginService } from 'src/login/login.service';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { NatsService } from 'src/nats/nats.service';
     MessageService,
     ResponseService,
     NatsService,
+    LoginService,
   ],
   exports: [AuthInternalService],
 })
