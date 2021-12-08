@@ -134,8 +134,7 @@ export class MerchantsController {
   }
 
   @Put('pos-settings/:id')
-  @UserType('admin')
-  @UserTypeAndLevel('merchant.group')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async updatePosSettings(
