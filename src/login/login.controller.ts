@@ -14,12 +14,15 @@ import { GroupsService } from 'src/groups/groups.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
-import { LoginEmailValidation } from './validation/login.email.validation';
+import {
+  LoginEmailValidation,
+  VerifyLoginDto,
+} from './validation/login.email.validation';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
 import { LoginService } from './login.service';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
-import { RMessage } from 'src/response/response.interface';
+import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { UbahPasswordValidation } from './validation/ubah-password.validation';
 import { UpdateProfileValidation } from './validation/update-profile.validation';
 import { AuthInternalService } from 'src/internal/auth-internal.service';
@@ -110,7 +113,7 @@ export class LoginController {
     @Body()
     data: UbahPasswordValidation,
   ): Promise<any> {
-    return await this.loginService.ubahPasswordProcess(data, req.user);
+    return this.loginService.ubahPasswordProcess(data, req.user);
   }
 
   @Put('profile')
@@ -122,6 +125,25 @@ export class LoginController {
     @Body()
     data: UpdateProfileValidation,
   ): Promise<any> {
-    return await this.loginService.updateProfile(data, req.user);
+    return this.loginService.updateProfile(data, req.user);
+  }
+
+  @Post('login/verify')
+  @ResponseStatusCode()
+  async verifyLogin(
+    @Body()
+    data: VerifyLoginDto,
+  ): Promise<RSuccessMessage> {
+    try {
+      const result = await this.loginService.verifyLogin(data);
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 }

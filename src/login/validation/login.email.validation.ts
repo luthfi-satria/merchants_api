@@ -11,3 +11,11 @@ export class LoginEmailValidation {
   @IsOptional()
   lang: string;
 }
+
+export class VerifyLoginDto {
+  @IsNotEmpty()
+  user_id: string;
+
+  @IsNotEmpty()
+  password: string;
+}

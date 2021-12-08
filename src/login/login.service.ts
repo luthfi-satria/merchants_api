@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpStatus,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
@@ -15,7 +16,10 @@ import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { Repository } from 'typeorm';
 // import { Hash } from 'src/hash/hash.decorator';
-import { LoginEmailValidation } from './validation/login.email.validation';
+import {
+  LoginEmailValidation,
+  VerifyLoginDto,
+} from './validation/login.email.validation';
 import { OtpEmailValidateValidation } from './validation/otp.email-validate.validation';
 import { CommonService } from 'src/common/common.service';
 import { LoginPhoneValidation } from './validation/login.phone.validation';
@@ -1016,5 +1020,161 @@ export class LoginService {
     } else {
       return resp;
     }
+  }
+
+  async verifyLogin(data: VerifyLoginDto): Promise<MerchantUsersDocument> {
+    const existMerchantUser = await this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      .where('mu.id = :muid', { muid: data.user_id })
+      .andWhere('mu.role_id is not null')
+      .andWhere("mu.status = 'ACTIVE'")
+      .getOne()
+      .catch((err3) => {
+        console.error(err3);
+        throw new NotFoundException(
+          this.responseService.error(
+            HttpStatus.NOT_FOUND,
+            {
+              value: '',
+              property: err3.column,
+              constraint: [err3.message],
+            },
+            'NOT_FOUND',
+          ),
+        );
+      });
+    if (!existMerchantUser) {
+      const errors: RMessage = {
+        value: data.user_id,
+        property: 'user_id',
+        constraint: [this.messageService.get('merchant.general.idNotFound')],
+      };
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          errors,
+          'Unauthorized',
+        ),
+      );
+    }
+
+    const cekPassword = await this.hashService.validatePassword(
+      data.password,
+      existMerchantUser.password,
+    );
+    if (!cekPassword) {
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          {
+            value: '',
+            property: 'password',
+            constraint: [
+              this.messageService.get('merchant.login.invalid_password'),
+            ],
+          },
+          'Unauthorized',
+        ),
+      );
+    }
+
+    if (existMerchantUser.status === 'WAITING_FOR_APPROVAL') {
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          {
+            value: 'WAITING_FOR_APPROVAL',
+            property: 'status',
+            constraint: [
+              this.messageService.get('merchant.login.waiting_approval'),
+            ],
+          },
+          'Unauthorized',
+        ),
+      );
+    }
+    const lang = 'id';
+
+    if (existMerchantUser.email_verified_at == null) {
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          {
+            value: existMerchantUser.email,
+            property: 'email',
+            constraint: [
+              this.messageService.getLang(
+                `${lang}.merchant.general.unverifiedEmail`,
+              ),
+            ],
+          },
+          'Unauthorized',
+        ),
+      );
+    }
+
+    let level = '';
+    if (existMerchantUser.store_id != null) {
+      if (existMerchantUser.store.status != 'ACTIVE') {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: existMerchantUser.store.status,
+              property: 'store_status',
+              constraint: [
+                this.messageService.get('merchant.general.unverificatedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
+      level = 'store';
+    }
+    if (existMerchantUser.merchant_id != null) {
+      if (
+        existMerchantUser.status != 'ACTIVE' ||
+        existMerchantUser.merchant.status != 'ACTIVE'
+      ) {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: existMerchantUser.merchant.status,
+              property: 'merchant_status',
+              constraint: [
+                this.messageService.get('merchant.general.unverificatedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
+      level = 'merchant';
+    }
+    if (existMerchantUser.group_id != null) {
+      if (existMerchantUser.group.status != 'ACTIVE') {
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            {
+              value: existMerchantUser.group.status,
+              property: 'group_status',
+              constraint: [
+                this.messageService.get('merchant.general.unverificatedUser'),
+              ],
+            },
+            'Unauthorized',
+          ),
+        );
+      }
+      level = 'group';
+    }
+
+    return this.getProfile({ id: existMerchantUser.id, level: level });
   }
 }
