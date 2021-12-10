@@ -1054,7 +1054,7 @@ export class LoginService {
       };
       throw new UnauthorizedException(
         this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
+          HttpStatus.BAD_REQUEST,
           errors,
           'Unauthorized',
         ),
@@ -1068,7 +1068,7 @@ export class LoginService {
     if (!cekPassword) {
       throw new UnauthorizedException(
         this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
+          HttpStatus.BAD_REQUEST,
           {
             value: '',
             property: 'password',
@@ -1084,7 +1084,7 @@ export class LoginService {
     if (existMerchantUser.status === 'WAITING_FOR_APPROVAL') {
       throw new UnauthorizedException(
         this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
+          HttpStatus.BAD_REQUEST,
           {
             value: 'WAITING_FOR_APPROVAL',
             property: 'status',
@@ -1101,7 +1101,7 @@ export class LoginService {
     if (existMerchantUser.email_verified_at == null) {
       throw new UnauthorizedException(
         this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
+          HttpStatus.BAD_REQUEST,
           {
             value: existMerchantUser.email,
             property: 'email',
@@ -1121,7 +1121,7 @@ export class LoginService {
       if (existMerchantUser.store.status != 'ACTIVE') {
         throw new UnauthorizedException(
           this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
+            HttpStatus.BAD_REQUEST,
             {
               value: existMerchantUser.store.status,
               property: 'store_status',
@@ -1142,7 +1142,7 @@ export class LoginService {
       ) {
         throw new UnauthorizedException(
           this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
+            HttpStatus.BAD_REQUEST,
             {
               value: existMerchantUser.merchant.status,
               property: 'merchant_status',
@@ -1160,7 +1160,7 @@ export class LoginService {
       if (existMerchantUser.group.status != 'ACTIVE') {
         throw new UnauthorizedException(
           this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
+            HttpStatus.BAD_REQUEST,
             {
               value: existMerchantUser.group.status,
               property: 'group_status',
