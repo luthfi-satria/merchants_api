@@ -15,6 +15,7 @@ import { UpdateRatingDTO } from './dto/update_rating.dto';
 import { InternalService } from './internal.service';
 import { MessageService } from 'src/message/message.service';
 import { StoreDocument } from 'src/database/entities/store.entity';
+import { GetMerchantUsersDto } from './dto/list_merchant_user.dto';
 
 @Controller('api/v1/internal')
 export class InternalController {
@@ -24,6 +25,15 @@ export class InternalController {
     private readonly commonStoreService: CommonStoresService,
     private readonly messageService: MessageService,
   ) {}
+
+  @Get('merchants/merchant-users')
+  @ResponseStatusCode()
+  async getMerchantUsers(@Query() data: GetMerchantUsersDto): Promise<any> {
+    return this.internalService.getMerchantUsers(data).catch((error) => {
+      console.error(error);
+      throw error;
+    });
+  }
 
   @Post('/merchants/stores/batchs')
   @ResponseStatusCode()

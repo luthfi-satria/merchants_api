@@ -13,8 +13,9 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoresService } from 'src/stores/stores.service';
 import { CommonService } from 'src/common/common.service';
 import { deleteCredParam, delExcludeParam } from 'src/utils/general-utils';
-import { NatsService } from 'src/nats/nats.service';
 import { LoginService } from 'src/login/login.service';
+import { GetMerchantUsersDto } from './dto/list_merchant_user.dto';
+import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 
 @Injectable()
 export class InternalService {
@@ -31,6 +32,7 @@ export class InternalService {
     private readonly storeService: StoresService,
     private readonly commonService: CommonService,
     private readonly loginService: LoginService,
+    private readonly merchantService: MerchantUsersService,
   ) {}
 
   async updateRatingStore(id, data) {
@@ -378,5 +380,12 @@ export class InternalService {
 
   async findMerchantUser(user: any): Promise<MerchantUsersDocument> {
     return this.loginService.getProfile(user);
+  }
+
+  async getMerchantUsers(data: GetMerchantUsersDto): Promise<any> {
+    return this.merchantService.getMerchantUsers(data).catch((error) => {
+      console.error(error);
+      throw error;
+    });
   }
 }

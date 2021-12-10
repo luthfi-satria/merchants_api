@@ -33,3 +33,7 @@ export class ListMerchantUsersValidation {
   @IsArray()
   statuses: ListMerchantUserStatuses[];
 }
+
+export class GetMerchantUsers {
+  ids: string[];
+}
