@@ -18,6 +18,7 @@ import {
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import {
+  deleteCredParam,
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
@@ -33,7 +34,10 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { randomUUID } from 'crypto';
 import { RoleService } from 'src/common/services/admins/role.service';
 import _ from 'lodash';
-import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
+import {
+  GetMerchantUsers,
+  ListMerchantUsersValidation,
+} from './validation/list_merchants_users.validation';
 import { MerchantsService } from './merchants.service';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
@@ -824,6 +828,38 @@ export class MerchantUsersService {
           'Bad Request',
         ),
       );
+    }
+  }
+
+  async getMerchantUsers(data: GetMerchantUsers): Promise<any> {
+    try {
+      const merchantUsers = await this.merchantUsersRepository
+        .findByIds(data.ids)
+        .catch((error) => {
+          console.error(error);
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: '',
+                property: '',
+                constraint: [
+                  this.messageService.get('merchant.general.idNotFound'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        });
+
+      return {
+        merchant_users: merchantUsers.map((merchantUser: any) => {
+          return deleteCredParam(merchantUser);
+        }),
+      };
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
   }
 
