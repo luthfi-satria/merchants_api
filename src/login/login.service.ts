@@ -1052,7 +1052,7 @@ export class LoginService {
         property: 'user_id',
         constraint: [this.messageService.get('merchant.general.idNotFound')],
       };
-      throw new UnauthorizedException(
+      throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
           errors,
@@ -1066,7 +1066,7 @@ export class LoginService {
       existMerchantUser.password,
     );
     if (!cekPassword) {
-      throw new UnauthorizedException(
+      throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
           {
@@ -1082,7 +1082,7 @@ export class LoginService {
     }
 
     if (existMerchantUser.status === 'WAITING_FOR_APPROVAL') {
-      throw new UnauthorizedException(
+      throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
           {
@@ -1099,7 +1099,7 @@ export class LoginService {
     const lang = 'id';
 
     if (existMerchantUser.email_verified_at == null) {
-      throw new UnauthorizedException(
+      throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
           {
@@ -1119,7 +1119,7 @@ export class LoginService {
     let level = '';
     if (existMerchantUser.store_id != null) {
       if (existMerchantUser.store.status != 'ACTIVE') {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
             {
@@ -1140,7 +1140,7 @@ export class LoginService {
         existMerchantUser.status != 'ACTIVE' ||
         existMerchantUser.merchant.status != 'ACTIVE'
       ) {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
             {
@@ -1158,7 +1158,7 @@ export class LoginService {
     }
     if (existMerchantUser.group_id != null) {
       if (existMerchantUser.group.status != 'ACTIVE') {
-        throw new UnauthorizedException(
+        throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
             {
