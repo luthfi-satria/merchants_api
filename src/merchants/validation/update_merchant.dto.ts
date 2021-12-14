@@ -105,7 +105,7 @@ export class UpdateMerchantDTO {
   rejection_reason: string;
 }
 
-export class UpdatePostSettingsDTO {
+export class UpdateStoreSettingsDTO {
   @IsOptional()
   is_pos_checkin_enabled: boolean;
 
