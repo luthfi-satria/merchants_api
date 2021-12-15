@@ -85,6 +85,9 @@ export class MerchantDocument {
   @Column({ default: false })
   is_pos_printer_enabled: boolean;
 
+  @Column({ default: false })
+  is_manual_refund_enabled: boolean;
+
   @Column({ nullable: true })
   pic_name: string;
 

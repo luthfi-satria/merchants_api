@@ -76,6 +76,9 @@ export class UpdateMerchantDTO {
   is_pos_printer_enabled: boolean;
 
   @IsOptional()
+  is_manual_refund_enabled: boolean;
+
+  @IsOptional()
   @IsString()
   pic_name: string;
 
@@ -114,4 +117,7 @@ export class UpdateStoreSettingsDTO {
 
   @IsOptional()
   is_pos_printer_enabled: boolean;
+
+  @IsOptional()
+  is_manual_refund_enabled: boolean;
 }

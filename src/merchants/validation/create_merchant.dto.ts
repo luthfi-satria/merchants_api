@@ -75,6 +75,9 @@ export class CreateMerchantDTO {
   @IsOptional()
   is_pos_printer_enabled: boolean;
 
+  @IsOptional()
+  is_manual_refund_enabled: boolean;
+
   @IsNotEmpty({ message: 'Pic Name harus diisi' })
   @IsString()
   pic_name: string;
