@@ -90,7 +90,11 @@ export class InternalService {
     const detailStore = await this.storeRepository
       .findOne({
         where: { id: id },
-        relations: ['merchant'],
+        relations: [
+          'merchant',
+          'operational_hours',
+          'operational_hours.shifts',
+        ],
       })
       .catch((err) => {
         console.error('error', err);
