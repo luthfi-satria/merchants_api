@@ -653,14 +653,14 @@ export class MerchantsService {
   async createCatalogs(data: Record<string, any>) {
     const pcurl =
       process.env.BASEURL_CATALOGS_SERVICE +
-      '/api/v1/internal/menus-prices-categories';
+      '/api/v1/internal/catalogs/menus-prices-categories';
     const pcdata = {
       merchant_id: data.id,
       name: 'Kategori 1',
     };
     const scurl =
       process.env.BASEURL_CATALOGS_SERVICE +
-      '/api/v1/internal/menus-sales-channels';
+      '/api/v1/internal/catalogs/menus-sales-channels';
     const scdata = {
       merchant_id: data.id,
       name: 'eFOOD',

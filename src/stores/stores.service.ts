@@ -295,7 +295,7 @@ export class StoresService {
       });
 
     if (flagCreatePricingTemplate) {
-      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/populate/pricing-template`;
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/populate/pricing-template`;
       const requestData = {
         merchant_id: create_merchant_store_validation.merchant_id,
         store_id: create_store.id,
@@ -682,7 +682,7 @@ export class StoresService {
       }
       if (data.platform) pricingTemplateData.platform = data.platform;
 
-      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/pricing-template/${data.sales_channel_id}`;
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/pricing-template/${data.sales_channel_id}`;
       const pricingTemplates: any = await this.commonService.postHttp(
         url,
         pricingTemplateData,
@@ -736,7 +736,7 @@ export class StoresService {
         }
         postData.platform = data.platform;
 
-        const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/menu-store`;
+        const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu-store`;
         const platforms: any = await this.commonService
           .postHttp(url, postData)
           .catch((e) => {

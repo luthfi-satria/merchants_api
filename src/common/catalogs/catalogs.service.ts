@@ -28,7 +28,7 @@ export class CatalogsService {
 
   async getMenuByStoreId(id: string, opt: any = {}): Promise<any> {
     try {
-      const urlInternal = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/menu/${id}`;
+      const urlInternal = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu/${id}`;
       // const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/catalogs/query/menus/${id}`;
       const options: any = {
         limit: 100,

@@ -225,7 +225,7 @@ export class InternalService {
         pricingTemplateData.merchant_ids.push(data.merchant_id);
       }
 
-      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/pricing-template/${data.sales_channel_id}`;
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/pricing-template/${data.sales_channel_id}`;
       const pricingTemplates: any = await this.commonService.postHttp(
         url,
         pricingTemplateData,
