@@ -205,4 +205,6 @@ export class StoreDocument {
 
   @OneToMany(() => MenuOnlineDocument, (menu) => menu.store)
   menus: MenuOnlineDocument[];
+
+  store_operational_status: boolean;
 }

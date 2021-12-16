@@ -861,12 +861,12 @@ export class QueryService {
     }
   }
 
-  private getStoreOperationalStatus(
+  getStoreOperationalStatus(
     is_store_status: boolean,
     currTime: string,
     currWeekDay: number,
     curShiftHour: StoreOperationalHoursDocument[],
-  ) {
+  ): boolean {
     const isCurrentDay = curShiftHour.find(
       (row) => row.day_of_week == String(currWeekDay),
     );

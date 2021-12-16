@@ -36,6 +36,14 @@ import { StoresController } from './strores.controller';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
+import { QueryService } from 'src/query/query.service';
+import { PriceRangeService } from 'src/price_range/price_range.service';
+import { SettingsService } from 'src/settings/settings.service';
+import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
+import { SearchHistoryStoreDocument } from 'src/database/entities/search_history_store.entity';
+import { PriceRangeDocument } from 'src/database/entities/price_range.entity';
+import { PriceRangeLanguageDocument } from 'src/database/entities/price_range_language.entity';
+import { SettingDocument } from 'src/database/entities/setting.entity';
 
 @Module({
   imports: [
@@ -50,6 +58,11 @@ import { NatsService } from 'src/nats/nats.service';
       StoreCategoriesDocument,
       GroupDocument,
       LobDocument,
+      SearchHistoryKeywordDocument,
+      SearchHistoryStoreDocument,
+      PriceRangeDocument,
+      PriceRangeLanguageDocument,
+      SettingDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
@@ -83,6 +96,9 @@ import { NatsService } from 'src/nats/nats.service';
     InternalService,
     UsersService,
     NatsService,
+    QueryService,
+    PriceRangeService,
+    SettingsService,
   ],
   exports: [StoresService, StoreOperationalService],
 })

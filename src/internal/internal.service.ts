@@ -16,6 +16,8 @@ import { deleteCredParam, delExcludeParam } from 'src/utils/general-utils';
 import { LoginService } from 'src/login/login.service';
 import { GetMerchantUsersDto } from './dto/list_merchant_user.dto';
 import { MerchantUsersService } from 'src/merchants/merchants_users.service';
+import { QueryService } from 'src/query/query.service';
+import { DateTimeUtils } from 'src/utils/date-time-utils';
 
 @Injectable()
 export class InternalService {
@@ -33,6 +35,7 @@ export class InternalService {
     private readonly commonService: CommonService,
     private readonly loginService: LoginService,
     private readonly merchantService: MerchantUsersService,
+    private readonly queryService: QueryService,
   ) {}
 
   async updateRatingStore(id, data) {
@@ -84,26 +87,10 @@ export class InternalService {
   }
 
   async findStorebyId(id: string): Promise<StoreDocument> {
-    return this.storeRepository
+    const detailStore = await this.storeRepository
       .findOne({
         where: { id: id },
         relations: ['merchant'],
-      })
-      .then((result) => {
-        if (!result) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: id,
-                property: 'store_id',
-                constraint: ['ID tidak ditemukan.'],
-              },
-              'Bad Request',
-            ),
-          );
-        }
-        return result;
       })
       .catch((err) => {
         console.error('error', err);
@@ -120,6 +107,33 @@ export class InternalService {
           ),
         );
       });
+    if (!detailStore) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: id,
+            property: 'store_id',
+            constraint: ['ID tidak ditemukan.'],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    const currTime = DateTimeUtils.DateTimeToUTC(new Date());
+    const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
+
+    // filter logic store operational status
+    detailStore.store_operational_status =
+      this.queryService.getStoreOperationalStatus(
+        detailStore.is_store_open,
+        currTime,
+        weekOfDay,
+        detailStore.operational_hours,
+      );
+
+    return detailStore;
   }
 
   async getMerchantsWithGroupBulk(merchant_ids: string[]): Promise<any> {

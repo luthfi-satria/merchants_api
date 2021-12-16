@@ -30,6 +30,12 @@ import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
 import { LoginService } from 'src/login/login.service';
+import { QueryService } from 'src/query/query.service';
+import { PriceRangeService } from 'src/price_range/price_range.service';
+import { SettingsService } from 'src/settings/settings.service';
+import { PriceRangeDocument } from 'src/database/entities/price_range.entity';
+import { PriceRangeLanguageDocument } from 'src/database/entities/price_range_language.entity';
+import { SettingDocument } from 'src/database/entities/setting.entity';
 
 @Module({
   imports: [
@@ -45,6 +51,9 @@ import { LoginService } from 'src/login/login.service';
       LobDocument,
       SearchHistoryStoreDocument,
       SearchHistoryKeywordDocument,
+      PriceRangeDocument,
+      PriceRangeLanguageDocument,
+      SettingDocument,
     ]),
     HttpModule,
   ],
@@ -67,6 +76,9 @@ import { LoginService } from 'src/login/login.service';
     ResponseService,
     NatsService,
     LoginService,
+    QueryService,
+    PriceRangeService,
+    SettingsService,
   ],
   exports: [AuthInternalService],
 })
