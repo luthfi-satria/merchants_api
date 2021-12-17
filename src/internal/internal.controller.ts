@@ -16,6 +16,7 @@ import { InternalService } from './internal.service';
 import { MessageService } from 'src/message/message.service';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { GetMerchantUsersDto } from './dto/list_merchant_user.dto';
+import { MerchantsBatchDTO } from './dto/merchant_batch.dto';
 
 @Controller('api/v1/internal')
 export class InternalController {
@@ -49,7 +50,9 @@ export class InternalController {
 
   @Get('merchants/merchants/batchs')
   @ResponseStatusCode()
-  async getMerchantsWithGroupBulk(@Query() data: any): Promise<any> {
+  async getMerchantsWithGroupBulk(
+    @Query() data: MerchantsBatchDTO,
+  ): Promise<any> {
     return this.internalService.getMerchantsWithGroupBulk(data.merchant_ids);
   }
 
