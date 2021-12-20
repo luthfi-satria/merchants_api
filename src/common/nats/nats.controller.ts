@@ -40,9 +40,9 @@ export class NatsController {
       });
   }
 
-  @EventPattern('orders.order.cancelled_by_store.other')
+  @EventPattern('orders.order.cancelled_by_store.operational')
   async cancelledByStoreOther(@Payload() data: any) {
-    this.logger.log('orders.order.cancelled_by_store.other');
+    this.logger.log('orders.order.cancelled_by_store.operational');
     await this.mStoreOperationalService
       .updateStoreOpenStatus(data.store_id, false)
       .catch((e) => {
