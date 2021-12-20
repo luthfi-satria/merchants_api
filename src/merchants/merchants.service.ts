@@ -889,9 +889,7 @@ export class MerchantsService {
         result.is_manual_refund_enabled = data.is_manual_refund_enabled;
 
       const update = await this.merchantRepository.save(result);
-      if (typeof data.is_pos_endofday_enabled !== 'undefined') {
-        this.publishNatsUpdateStatusEndOfDay(update);
-      }
+      this.publishNatsUpdateStatusEndOfDay(update);
 
       return this.responseService.success(
         true,
