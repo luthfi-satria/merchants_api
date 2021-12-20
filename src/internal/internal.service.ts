@@ -94,6 +94,7 @@ export class InternalService {
           'merchant',
           'operational_hours',
           'operational_hours.shifts',
+          'service_addons',
         ],
       })
       .catch((err) => {
