@@ -47,6 +47,7 @@ async function bootstrap() {
             'merchants.store.*',
             'merchants.merchant.*',
             'merchants.group.*',
+            'merchants.merchant.endofday.*',
           ],
         },
       ],

@@ -889,6 +889,9 @@ export class MerchantsService {
         result.is_manual_refund_enabled = data.is_manual_refund_enabled;
 
       const update = await this.merchantRepository.save(result);
+      if (typeof data.is_pos_endofday_enabled !== 'undefined') {
+        this.publishNatsUpdateStatusEndOfDay(update);
+      }
 
       return this.responseService.success(
         true,
@@ -897,6 +900,20 @@ export class MerchantsService {
       );
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  publishNatsUpdateStatusEndOfDay(payload: MerchantDocument) {
+    if (payload.is_pos_endofday_enabled == true) {
+      this.natsService.clientEmit(
+        'merchants.merchant.endofday.enabled',
+        payload,
+      );
+    } else if (payload.is_pos_endofday_enabled == false) {
+      this.natsService.clientEmit(
+        'merchants.merchant.endofday.disabled',
+        payload,
+      );
     }
   }
 }
