@@ -1,11 +1,22 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 import _ from 'lodash';
 import { StoresService } from './stores.service';
+import { RMessage } from 'src/response/response.interface';
+import { MessageService } from 'src/message/message.service';
+import { ResponseService } from 'src/response/response.service';
+import { CommonStoresService } from 'src/common/own/stores.service';
 
 @Injectable()
 export class StoreOperationalService {
@@ -21,6 +32,9 @@ export class StoreOperationalService {
     private readonly storesRepository: Repository<StoreDocument>,
     @Inject(forwardRef(() => StoresService))
     private readonly storesService: StoresService,
+    private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly commonStoresService: CommonStoresService,
   ) {}
 
   public async createStoreOperationalHours(
@@ -159,6 +173,36 @@ export class StoreOperationalService {
     } catch (e) {
       throw e;
     }
+  }
+
+  public async updateIsStoreOpenStatus(
+    store_id: string,
+    is_open: boolean,
+  ): Promise<UpdateResult> {
+    await this.commonStoresService.getAndValidateStoreByStoreIds([store_id]);
+    const updateStatus = await this.storesRepository
+      .update(store_id, {
+        is_store_open: is_open,
+      })
+      .catch((error) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [
+            this.messageService.get('merchant.general.updateFail'),
+            error.message,
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+
+    return updateStatus;
   }
 
   public async updateStoreOperationalHours(
