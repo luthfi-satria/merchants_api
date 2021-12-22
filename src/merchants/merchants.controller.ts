@@ -12,6 +12,8 @@ import {
   UploadedFiles,
   UseInterceptors,
   Req,
+  ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -46,6 +48,8 @@ export class MerchantsController {
     private readonly messageService: MessageService,
     private readonly storage: CommonStorageService,
   ) {}
+
+  logger = new Logger('MerchantController');
 
   @Post('merchants')
   @UserType('admin')
@@ -96,7 +100,7 @@ export class MerchantsController {
 
   @Put('merchants/:id')
   @UserType('admin')
-  @UserTypeAndLevel('merchant.group')
+  @UserTypeAndLevel('merchant.group', 'merchant.merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   @UseInterceptors(
@@ -118,6 +122,22 @@ export class MerchantsController {
     @Param('id') id: string,
     @UploadedFiles() files: Array<Express.Multer.File>,
   ): Promise<any> {
+    if (req.user.level == 'merchant' && req.user.merchant_id != id) {
+      this.logger.error('This user does not belong to the merchant');
+      const errors: RMessage = {
+        value: id,
+        property: 'merchant_id',
+        constraint: [this.messageService.get('auth.token.forbidden')],
+      };
+      throw new ForbiddenException(
+        this.responseService.error(
+          HttpStatus.FORBIDDEN,
+          errors,
+          'Forbidden Access',
+        ),
+      );
+    }
+
     await this.imageValidationService.validate(req);
     updateMerchantDTO.id = id;
 
