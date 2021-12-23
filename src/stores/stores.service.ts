@@ -77,7 +77,7 @@ export class StoresService {
           'merchant.group',
           'store_categories',
           'service_addons',
-          'bank',
+          // 'bank',
           'operational_hours',
           'search_history_stores',
           'users',
@@ -950,7 +950,7 @@ export class StoresService {
     merchantId: string,
     status: enumStoreStatus,
   ): Promise<UpdateResult> {
-    const updateData = await this.storeRepository
+    return this.storeRepository
       .createQueryBuilder()
       .update()
       .set({ status })
@@ -959,7 +959,6 @@ export class StoresService {
         status: enumStoreStatus.waiting_for_brand_approval,
       })
       .execute();
-    return updateData;
   }
 
   async getAndValidateStoreByStoreId(storeId: string): Promise<StoreDocument> {
