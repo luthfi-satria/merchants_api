@@ -67,7 +67,7 @@ export class QueryService {
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
     private readonly ordersService: OrdersService,
-  ) {}
+  ) { }
 
   logger = new Logger();
 
@@ -158,12 +158,12 @@ export class QueryService {
       .createQueryBuilder('merchant_store')
       .addSelect(
         '(6371 * ACOS(COS(RADIANS(' +
-          lat +
-          ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
-          long +
-          ')) + SIN(RADIANS(' +
-          lat +
-          ')) * SIN(RADIANS(merchant_store.location_latitude))))',
+        lat +
+        ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
+        long +
+        ')) + SIN(RADIANS(' +
+        lat +
+        ')) * SIN(RADIANS(merchant_store.location_latitude))))',
         'distance_in_km',
       )
       .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
@@ -186,8 +186,7 @@ export class QueryService {
         AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
         ${is24hour ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
         ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
-        ${
-          store_category_id ? `AND merchant_store_categories.id = :stocat` : ''
+        ${store_category_id ? `AND merchant_store_categories.id = :stocat` : ''
         }`,
         {
           active: enumStoreStatus.active,
@@ -281,12 +280,12 @@ export class QueryService {
       .createQueryBuilder('merchant_store')
       .addSelect(
         '(6371 * ACOS(COS(RADIANS(' +
-          lat +
-          ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
-          long +
-          ')) + SIN(RADIANS(' +
-          lat +
-          ')) * SIN(RADIANS(merchant_store.location_latitude))))',
+        lat +
+        ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
+        long +
+        ')) + SIN(RADIANS(' +
+        lat +
+        ')) * SIN(RADIANS(merchant_store.location_latitude))))',
         'distance_in_km',
       )
       .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
@@ -356,12 +355,12 @@ export class QueryService {
         .createQueryBuilder('merchant_store')
         .addSelect(
           '(6371 * ACOS(COS(RADIANS(' +
-            location_latitude +
-            ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
-            location_longitude +
-            ')) + SIN(RADIANS(' +
-            location_latitude +
-            ')) * SIN(RADIANS(merchant_store.location_latitude))))',
+          location_latitude +
+          ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
+          location_longitude +
+          ')) + SIN(RADIANS(' +
+          location_latitude +
+          ')) * SIN(RADIANS(merchant_store.location_latitude))))',
           'distance_in_km',
         )
         // --- JOIN TABLES ---
@@ -489,7 +488,6 @@ export class QueryService {
       const orderBy = data.order || null;
       const sort = data.sort || null;
       const OrderFilter = this.applySortFilter(orderBy, sort);
-      Logger.debug(OrderFilter);
 
       // Apply Price Range query filter
       const [is_filter_price, priceLow, priceHigh] =
@@ -501,9 +499,9 @@ export class QueryService {
         delivery_only =
           data.pickup == true
             ? [
-                enumDeliveryType.delivery_and_pickup,
-                enumDeliveryType.pickup_only,
-              ]
+              enumDeliveryType.delivery_and_pickup,
+              enumDeliveryType.pickup_only,
+            ]
             : [enumDeliveryType.delivery_only];
       } else {
         delivery_only = [
@@ -561,7 +559,7 @@ export class QueryService {
         prices_list_low: ${priceLow}
         prices_list_high: ${priceHigh}
         new_This_week_date: ${lastWeek}
-        order Query: ${OrderFilter}
+        order Query: ${JSON.stringify(OrderFilter)}
       `,
         'Query List Stores',
       );
@@ -570,12 +568,12 @@ export class QueryService {
         .createQueryBuilder('merchant_store')
         .addSelect(
           '(6371 * ACOS(COS(RADIANS(' +
-            lat +
-            ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
-            long +
-            ')) + SIN(RADIANS(' +
-            lat +
-            ')) * SIN(RADIANS(merchant_store.location_latitude))))',
+          lat +
+          ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
+          long +
+          ')) + SIN(RADIANS(' +
+          lat +
+          ')) * SIN(RADIANS(merchant_store.location_latitude))))',
           'distance_in_km',
         )
         // --- JOIN TABLES ---
@@ -606,52 +604,43 @@ export class QueryService {
 
       query1
         .where(
-          `(merchant_store.status = :active ${
-            include_inactive_stores
-              ? "OR merchant_store.status = 'INACTIVE' "
-              : ''
+          `(merchant_store.status = :active ${include_inactive_stores
+            ? "OR merchant_store.status = 'INACTIVE' "
+            : ''
           })
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
+            ${favoriteStoreIds.length > 0
+            ? `AND merchant_store.id in (:...favorite_store_ids)`
+            : ''
+          }
             ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
             ${delivery_only ? `AND delivery_type in (:...delivery_only)` : ''}
-            ${
-              store_category_id
-                ? `AND merchant_store_categories.id = :stocat`
-                : ''
-            }
-            ${
-              merchant_id ? `AND merchant_store.merchant_id = :merchant_id` : ''
-            }
-            ${
-              is_filter_price
-                ? `AND merchant_store.average_price >= ANY(:priceLow) `
-                : ''
-            }
-            ${
-              is_filter_price && !priceHigh.includes(0)
-                ? `AND merchant_store.average_price <= ANY(:priceHigh)`
-                : ''
-            }
-            ${
-              newThisWeek
-                ? `AND merchant_store.approved_at >= :newThisWeekDate`
-                : ''
-            }
-            ${
-              isBudgetEnable
-                ? `AND merchant_store.average_price <= :budgetMaxValue`
-                : ''
-            }
-            ${
-              minimum_rating
-                ? `AND merchant_store.rating >= :minimum_rating`
-                : ''
-            }
-            ${
-              favoriteStoreIds.length > 0
-                ? `AND merchant_store.id in (:...favorite_store_ids)`
-                : ''
-            }
+            ${store_category_id
+            ? `AND merchant_store_categories.id = :stocat`
+            : ''
+          }
+            ${merchant_id ? `AND merchant_store.merchant_id = :merchant_id` : ''
+          }
+            ${is_filter_price
+            ? `AND merchant_store.average_price >= ANY(:priceLow) `
+            : ''
+          }
+            ${is_filter_price && !priceHigh.includes(0)
+            ? `AND merchant_store.average_price <= ANY(:priceHigh)`
+            : ''
+          }
+            ${newThisWeek
+            ? `AND merchant_store.approved_at >= :newThisWeekDate`
+            : ''
+          }
+            ${isBudgetEnable
+            ? `AND merchant_store.average_price <= :budgetMaxValue`
+            : ''
+          }
+            ${minimum_rating
+            ? `AND merchant_store.rating >= :minimum_rating`
+            : ''
+          }
             `,
           {
             active: enumStoreStatus.active,
@@ -683,10 +672,10 @@ export class QueryService {
                   AND merchant_store.is_store_open = :is_open
                   AND operational_hours.merchant_store_id IS NOT NULL
                 ${
-                  // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
-                  is24hrs == false
-                    ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
-                    : ''
+                // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
+                is24hrs == false
+                  ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
+                  : ''
                 }`,
                 {
                   is_open: true,
