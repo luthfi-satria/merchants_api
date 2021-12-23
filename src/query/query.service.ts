@@ -89,10 +89,13 @@ export class QueryService {
 
   private applySortFilter(order: string, sort: string): OrderByCondition {
     // Default always sort by distance_in_km
-    const OrderQuery: OrderByCondition = {
-      distance_in_km: 'ASC',
-    };
-    if (!order || !sort) return OrderQuery;
+    const OrderQuery: OrderByCondition = {};
+    if (!order || !sort) {
+      Object.assign(OrderQuery, {
+        distance_in_km: 'ASC',
+      });
+      return OrderQuery;
+    }
 
     switch (sort) {
       case 'price':
@@ -490,6 +493,7 @@ export class QueryService {
       const orderBy = data.order || null;
       const sort = data.sort || null;
       const OrderFilter = this.applySortFilter(orderBy, sort);
+      Logger.debug(OrderFilter);
 
       // Apply Price Range query filter
       const [is_filter_price, priceLow, priceHigh] =
