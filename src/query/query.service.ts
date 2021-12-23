@@ -843,6 +843,18 @@ export class QueryService {
             return -1;
           }
           if (
+            a.average_price < b.average_price &&
+            a.distance_in_km > b.distance_in_km
+          ) {
+            return 1;
+          }
+          if (
+            a.average_price > b.average_price &&
+            a.distance_in_km < b.distance_in_km
+          ) {
+            return -1;
+          }
+          if (
             a.average_price > b.average_price &&
             a.distance_in_km > b.distance_in_km
           ) {
