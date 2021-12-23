@@ -613,7 +613,7 @@ export class QueryService {
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
             ${
               favoriteStoreIds.length > 0
-                ? `AND merchant_store.id in (:...favorite_store_ids)`
+                ? `AND merchant_store.id = ANY(:...favorite_store_ids)`
                 : ''
             }
             ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
