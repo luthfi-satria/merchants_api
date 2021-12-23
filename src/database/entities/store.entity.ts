@@ -14,7 +14,7 @@ import {
 } from 'typeorm';
 import { ColumnNumericTransformer } from '../helper/column_numberic_transformer';
 import { AddonDocument } from './addons.entity';
-import { ListBankDocument } from './list_banks';
+// import { ListBankDocument } from './list_banks';
 import { MenuOnlineDocument } from './menu_online.entity';
 import { MerchantDocument } from './merchant.entity';
 import { MerchantUsersDocument } from './merchant_users.entity';
@@ -130,9 +130,9 @@ export class StoreDocument {
   service_addons: AddonDocument[];
 
   //Data Bank
-  @ManyToOne(() => ListBankDocument, (bank) => bank.id)
-  @JoinColumn({ name: 'bank_id' })
-  bank: ListBankDocument;
+  // @ManyToOne(() => ListBankDocument, (bank) => bank.id)
+  // @JoinColumn({ name: 'bank_id' })
+  // bank: ListBankDocument;
 
   @Column('uuid', { nullable: true })
   bank_id: string;
