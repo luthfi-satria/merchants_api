@@ -613,7 +613,7 @@ export class QueryService {
             AND (6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius
             ${
               favoriteStoreIds.length > 0
-                ? `AND merchant_store.id = ANY(ARRAY[:...favorite_store_ids])`
+                ? `AND merchant_store.id in (:...favorite_store_ids)`
                 : ''
             }
             ${is24hrs ? `AND merchant_store.is_open_24h = :open_24_hour` : ''}
@@ -833,6 +833,34 @@ export class QueryService {
       );
 
       const formattedArr = [];
+
+      if (data.favorite_this_week && sort === 'price') {
+        formattedStoredItems.sort((a, b) => {
+          if (
+            a.average_price < b.average_price &&
+            a.distance_in_km < b.distance_in_km
+          ) {
+            return -1;
+          }
+          if (
+            a.average_price > b.average_price &&
+            a.distance_in_km > b.distance_in_km
+          ) {
+            return 1;
+          }
+          return 0;
+        });
+      } else if (data.favorite_this_week) {
+        formattedStoredItems.sort((a, b) => {
+          if (a.distance_in_km < b.distance_in_km) {
+            return -1;
+          }
+          if (a.distance_in_km > b.distance_in_km) {
+            return 1;
+          }
+          return 0;
+        });
+      }
 
       formattedStoredItems.forEach((element) => {
         if (element) {
