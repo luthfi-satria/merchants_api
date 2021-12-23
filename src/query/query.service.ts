@@ -834,40 +834,24 @@ export class QueryService {
 
       const formattedArr = [];
 
-      if (data.favorite_this_week && sort === 'price') {
-        formattedStoredItems.sort((a, b) => {
-          if (
-            a.average_price < b.average_price &&
-            a.distance_in_km < b.distance_in_km
-          ) {
-            return -1;
-          }
-          if (
-            a.average_price < b.average_price &&
-            a.distance_in_km > b.distance_in_km
-          ) {
-            return 1;
-          }
-          if (
-            a.average_price > b.average_price &&
-            a.distance_in_km < b.distance_in_km
-          ) {
-            return -1;
-          }
-          if (
-            a.average_price > b.average_price &&
-            a.distance_in_km > b.distance_in_km
-          ) {
-            return 1;
-          }
-          return 0;
-        });
-      } else if (data.favorite_this_week) {
+      if (data.favorite_this_week) {
         formattedStoredItems.sort((a, b) => {
           if (a.distance_in_km < b.distance_in_km) {
             return -1;
           }
           if (a.distance_in_km > b.distance_in_km) {
+            return 1;
+          }
+          return 0;
+        });
+      }
+
+      if (data.favorite_this_week && sort === 'price') {
+        formattedStoredItems.sort((a, b) => {
+          if (a.average_price < b.average_price) {
+            return -1;
+          }
+          if (a.average_price > b.average_price) {
             return 1;
           }
           return 0;
