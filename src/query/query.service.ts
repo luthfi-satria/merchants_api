@@ -90,13 +90,6 @@ export class QueryService {
   private applySortFilter(order: string, sort: string): OrderByCondition {
     // Default always sort by distance_in_km
     const OrderQuery: OrderByCondition = {};
-    if (!order || !sort) {
-      Object.assign(OrderQuery, {
-        distance_in_km: 'ASC',
-      });
-      return OrderQuery;
-    }
-
     switch (sort) {
       case 'price':
         Object.assign(OrderQuery, {
@@ -110,6 +103,9 @@ export class QueryService {
         break;
       default:
     }
+    Object.assign(OrderQuery, {
+      distance_in_km: 'ASC',
+    });
     return OrderQuery;
   }
 
