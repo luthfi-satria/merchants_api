@@ -27,6 +27,9 @@ export class CommonStoresService {
     user?: any,
     merchantId?: string,
   ): Promise<StoreDocument[]> {
+    if (storeIds.length == 0) {
+      return [];
+    }
     const query = this.storeRepository
       .createQueryBuilder('merchant_store')
       .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
