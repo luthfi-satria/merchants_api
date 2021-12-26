@@ -1018,4 +1018,112 @@ export class StoresService {
       }),
     );
   }
+
+  async listStoreByLevel(data: Partial<ListStoreDTO>, user: any): Promise<any> {
+    const currentPage = data.page || 1;
+    const perPage = Number(data.limit) || 10;
+
+    const store = this.storeRepository
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
+      .leftJoinAndSelect('ms.merchant', 'merchant')
+      .leftJoinAndSelect('merchant.group', 'group');
+
+    if (
+      (user.user_type == 'admin' || user.level == 'group') &&
+      data.merchant_id
+    ) {
+      store.andWhere('merchant.id = :mid', {
+        mid: data.merchant_id,
+      });
+    }
+
+    if (user.level == 'store') {
+      store.andWhere('ms.id = :mid', {
+        mid: user.store_id,
+      });
+    } else {
+      if (user.level == 'merchant') {
+        store.andWhere('merchant.id = :mid', {
+          mid: user.merchant_id,
+        });
+      } else if (user.level == 'group') {
+        store.andWhere('group.id = :group_id', {
+          group_id: user.group_id,
+        });
+      }
+
+      if (user.user_type == 'admin' && data.group_id) {
+        store.andWhere('group.id = :gid', {
+          gid: data.group_id,
+        });
+      }
+    }
+
+    store
+      .orderBy('ms.created_at', 'ASC')
+      .skip((Number(currentPage) - 1) * perPage)
+      .take(perPage);
+
+    try {
+      const totalItems = await store.getCount().catch((err) => {
+        console.error('err ', err);
+      });
+      const list: any = await store.getMany().catch((err2) => {
+        console.error('err2 ', err2);
+      });
+
+      list.forEach(async (element) => {
+        deleteCredParam(element);
+        deleteCredParam(element.merchant);
+        const row = deleteCredParam(element.merchant.group);
+        if (row.service_addon) {
+          row.service_addon.forEach((sao: any) => {
+            deleteCredParam(sao);
+          });
+        }
+        return row;
+      });
+
+      return {
+        total_item: totalItems,
+        limit: Number(perPage),
+        current_page: Number(currentPage),
+        items: list,
+      };
+    } catch (error) {
+      console.error(
+        '===========================Start Database error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Database error==================================',
+      );
+    }
+  }
+
+  async findStoreLevel(store_id: string): Promise<any> {
+    const store = this.storeRepository
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
+      .leftJoinAndSelect('ms.merchant', 'merchant')
+      .leftJoinAndSelect('merchant.group', 'group')
+      .andWhere('ms.id = :mid', {
+        mid: store_id,
+      });
+
+    try {
+      return await store.getOne().catch((err2) => {
+        console.error('err2 ', err2);
+      });
+    } catch (error) {
+      console.error(
+        '===========================Start Database error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Database error==================================',
+      );
+    }
+  }
 }

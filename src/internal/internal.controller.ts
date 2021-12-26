@@ -17,6 +17,7 @@ import { MessageService } from 'src/message/message.service';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { GetMerchantUsersDto } from './dto/list_merchant_user.dto';
 import { MerchantsBatchDTO } from './dto/merchant_batch.dto';
+import { ListStoreDTO } from 'src/stores/validation/list-store.validation';
 
 @Controller('api/v1/internal')
 export class InternalController {
@@ -76,6 +77,20 @@ export class InternalController {
   @ResponseStatusCode()
   async getStoresId(@Param('id') id: string): Promise<any> {
     return this.internalService.findStorebyId(id);
+  }
+
+  @Get('merchants/stores/level/:id')
+  @ResponseStatusCode()
+  async getStoreWithLevel(@Param('id') store_id: string): Promise<any> {
+    return this.internalService.findStoreLevel(store_id);
+  }
+
+  @Post('merchants/stores/bylevel')
+  @ResponseStatusCode()
+  async listStoresByLevel(@Body() args: any): Promise<any> {
+    const data: Partial<ListStoreDTO> = args.data;
+    const user: any = args.user;
+    return this.internalService.listStoreByLevel(data, user);
   }
 
   @Get('merchants/:id')

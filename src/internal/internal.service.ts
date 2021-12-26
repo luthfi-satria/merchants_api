@@ -18,6 +18,7 @@ import { GetMerchantUsersDto } from './dto/list_merchant_user.dto';
 import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 import { QueryService } from 'src/query/query.service';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
+import { ListStoreDTO } from 'src/stores/validation/list-store.validation';
 
 @Injectable()
 export class InternalService {
@@ -406,5 +407,13 @@ export class InternalService {
       console.error(error);
       throw error;
     });
+  }
+
+  async listStoreByLevel(data: Partial<ListStoreDTO>, user: any): Promise<any> {
+    return this.storeService.listStoreByLevel(data, user);
+  }
+
+  async findStoreLevel(store_id: string): Promise<any> {
+    return this.storeService.findStoreLevel(store_id);
   }
 }
