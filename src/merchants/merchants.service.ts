@@ -396,6 +396,9 @@ export class MerchantsService {
     if (data.pic_nip) {
       existMerchant.pic_nip = data.pic_nip;
     }
+    if (data.pb1_tariff) {
+      existMerchant.pb1_tariff = data.pb1_tariff;
+    }
 
     await this.merchantUserService.checkExistEmailPhone(
       data.pic_email,
