@@ -1,5 +1,6 @@
 import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
+import { InternalService } from 'src/internal/internal.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 
@@ -9,6 +10,7 @@ export class NatsController {
   constructor(
     private readonly menuOnlineService: MenuOnlineService,
     private readonly mStoreOperationalService: StoreOperationalService,
+    private readonly internalService: InternalService,
   ) {}
 
   @EventPattern('catalogs.storeavailability.created')
@@ -73,5 +75,11 @@ export class NatsController {
   async deleteMenuPrice(@Payload() data: any) {
     this.logger.log('catalogs.menuprice.deleted');
     this.menuOnlineService.natsDeleteMenuPrice(data);
+  }
+
+  @EventPattern('catalogs.menu.online.averageprice.updated')
+  async averagePriceUpdated(@Payload() data: any) {
+    this.logger.log('catalogs.menu.online.averageprice.updated');
+    this.internalService.updateStoreAveragePrice(data);
   }
 }
