@@ -1029,33 +1029,47 @@ export class StoresService {
       .leftJoinAndSelect('ms.merchant', 'merchant')
       .leftJoinAndSelect('merchant.group', 'group');
 
-    if (
-      (user.user_type == 'admin' || user.level == 'group') &&
-      data.merchant_id
-    ) {
-      store.andWhere('merchant.id = :mid', {
-        mid: data.merchant_id,
-      });
-    }
-
     if (user.level == 'store') {
       store.andWhere('ms.id = :mid', {
         mid: user.store_id,
       });
-    } else {
-      if (user.level == 'merchant') {
-        store.andWhere('merchant.id = :mid', {
-          mid: user.merchant_id,
-        });
-      } else if (user.level == 'group') {
-        store.andWhere('group.id = :group_id', {
-          group_id: user.group_id,
+    } else if (user.level == 'merchant') {
+      store.andWhere('merchant.id = :mid', {
+        mid: user.merchant_id,
+      });
+      if (data.store_id) {
+        store.andWhere('ms.id = :mid', {
+          mid: data.store_id,
         });
       }
-
-      if (user.user_type == 'admin' && data.group_id) {
-        store.andWhere('group.id = :gid', {
-          gid: data.group_id,
+    } else if (user.level == 'group') {
+      store.andWhere('group.id = :group_id', {
+        group_id: user.group_id,
+      });
+      if (data.store_id) {
+        store.andWhere('ms.id = :mid', {
+          mid: data.store_id,
+        });
+      }
+      if (data.merchant_id) {
+        store.andWhere('merchant.id = :mid', {
+          mid: data.merchant_id,
+        });
+      }
+    } else {
+      if (data.store_id) {
+        store.andWhere('ms.id = :mid', {
+          mid: data.store_id,
+        });
+      }
+      if (data.merchant_id) {
+        store.andWhere('merchant.id = :mid', {
+          mid: data.merchant_id,
+        });
+      }
+      if (data.group_id) {
+        store.andWhere('group.id = :mid', {
+          mid: data.group_id,
         });
       }
     }
