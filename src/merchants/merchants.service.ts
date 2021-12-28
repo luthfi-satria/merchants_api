@@ -877,7 +877,7 @@ export class MerchantsService {
 
   async updatePostSettings(data, id) {
     try {
-      const result = await this.merchantRepository.findOne(id);
+      const result = await this.getAndValidateMerchantById(id);
 
       if (typeof data.is_pos_checkin_enabled !== 'undefined')
         result.is_pos_checkin_enabled = data.is_pos_checkin_enabled;
