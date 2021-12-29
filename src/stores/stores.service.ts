@@ -19,7 +19,11 @@ import {
 } from 'src/database/entities/store.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
-import { RMessage, RSuccessMessage } from 'src/response/response.interface';
+import {
+  ListResponse,
+  RMessage,
+  RSuccessMessage,
+} from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
 import { Brackets, Repository, UpdateResult } from 'typeorm';
@@ -1019,7 +1023,10 @@ export class StoresService {
     );
   }
 
-  async listStoreByLevel(data: Partial<ListStoreDTO>, user: any): Promise<any> {
+  async listStoreByLevel(
+    data: Partial<ListStoreDTO>,
+    user: any,
+  ): Promise<ListResponse> {
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
 
@@ -1080,12 +1087,8 @@ export class StoresService {
       .take(perPage);
 
     try {
-      const totalItems = await store.getCount().catch((err) => {
-        console.error('err ', err);
-      });
-      const list: any = await store.getMany().catch((err2) => {
-        console.error('err2 ', err2);
-      });
+      const totalItems = await store.getCount();
+      const list: any = await store.getMany();
 
       list.forEach(async (element) => {
         deleteCredParam(element);
@@ -1116,7 +1119,7 @@ export class StoresService {
     }
   }
 
-  async findStoreLevel(store_id: string): Promise<any> {
+  async findStoreLevel(store_id: string): Promise<StoreDocument> {
     const store = this.storeRepository
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
@@ -1127,9 +1130,35 @@ export class StoresService {
       });
 
     try {
-      return await store.getOne().catch((err2) => {
-        console.error('err2 ', err2);
-      });
+      return await store.getOne();
+    } catch (error) {
+      console.error(
+        '===========================Start Database error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Database error==================================',
+      );
+    }
+  }
+
+  async findStoresAutomaticRefund(): Promise<StoreDocument[]> {
+    const store = this.storeRepository
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
+      .leftJoinAndSelect(
+        'ms.merchant',
+        'merchant',
+        'merchant.is_manual_refund_enabled = :mre',
+        { mre: false },
+      )
+      .leftJoinAndSelect('merchant.group', 'group')
+      .orderBy('ms.created_at', 'ASC');
+
+    try {
+      const result = await store.getMany();
+      console.log('result ', result);
+      return result;
     } catch (error) {
       console.error(
         '===========================Start Database error=================================\n',

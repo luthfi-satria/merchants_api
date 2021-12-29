@@ -93,6 +93,12 @@ export class InternalController {
     return this.internalService.listStoreByLevel(data, user);
   }
 
+  @Get('merchants/stores/by/automatic_refund')
+  @ResponseStatusCode()
+  async listStoresAutomaticRefund(): Promise<any> {
+    return this.internalService.findStoreAutomaticRefund();
+  }
+
   @Get('merchants/:id')
   @ResponseStatusCode()
   async getMerchantId(@Param('id') id: string): Promise<any> {
