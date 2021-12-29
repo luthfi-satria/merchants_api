@@ -1146,18 +1146,14 @@ export class StoresService {
     const store = this.storeRepository
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
-      .leftJoinAndSelect(
-        'ms.merchant',
-        'merchant',
-        'merchant.is_manual_refund_enabled = :mre',
-        { mre: false },
-      )
+      .leftJoinAndSelect('ms.merchant', 'merchant')
       .leftJoinAndSelect('merchant.group', 'group')
+      .where('ms.bank_id is not null')
+      .andWhere('merchant.is_manual_refund_enabled = :mre', { mre: false })
       .orderBy('ms.created_at', 'ASC');
 
     try {
       const result = await store.getMany();
-      console.log('result ', result);
       return result;
     } catch (error) {
       console.error(
