@@ -36,7 +36,10 @@ import { LobService } from 'src/lob/lob.service';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantUsersService } from './merchants_users.service';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
-import { ListMerchantDTO } from './validation/list-merchant.validation';
+import {
+  ListMerchantDTO,
+  SearchFields,
+} from './validation/list-merchant.validation';
 import {
   RoleService,
   SpecialRoleCodes,
@@ -568,6 +571,7 @@ export class MerchantsService {
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
     const statuses = data.statuses || [];
+    const searchFields = data.search_fields || [];
 
     const merchant = this.merchantRepository
       .createQueryBuilder('merchant_merchant')
@@ -578,19 +582,44 @@ export class MerchantsService {
       )
       .where(
         new Brackets((query) => {
-          query
-            .where('merchant_merchant.name ilike :mname', {
-              mname: '%' + search + '%',
-            })
-            .orWhere('merchant_merchant.pic_phone ilike :ophone', {
-              ophone: '%' + search + '%',
-            })
-            .orWhere('mc_group.name ilike :gname', {
-              gname: '%' + search + '%',
-            })
-            .orWhere('mc_group.category::text ilike :gcat', {
-              gcat: '%' + search + '%',
-            });
+          if (searchFields.length > 0) {
+            for (const searchField of searchFields) {
+              if (searchField == SearchFields.Name) {
+                query.orWhere('merchant_merchant.name ilike :mname', {
+                  mname: '%' + search + '%',
+                });
+              }
+              if (searchField == SearchFields.Phone) {
+                query.orWhere('merchant_merchant.pic_phone ilike :ophone', {
+                  ophone: '%' + search + '%',
+                });
+              }
+              if (searchField == SearchFields.CorporateName) {
+                query.orWhere('mc_group.name ilike :gname', {
+                  gname: '%' + search + '%',
+                });
+              }
+              if (searchField == SearchFields.Type) {
+                query.orWhere('merchant_merchant.type = :tipe', {
+                  tipe: search,
+                });
+              }
+            }
+          } else {
+            query
+              .where('merchant_merchant.name ilike :mname', {
+                mname: '%' + search + '%',
+              })
+              .orWhere('merchant_merchant.pic_phone ilike :ophone', {
+                ophone: '%' + search + '%',
+              })
+              .orWhere('mc_group.name ilike :gname', {
+                gname: '%' + search + '%',
+              })
+              .orWhere('mc_group.category::text ilike :gcat', {
+                gcat: '%' + search + '%',
+              });
+          }
         }),
       );
 
