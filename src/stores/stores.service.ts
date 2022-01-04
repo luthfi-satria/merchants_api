@@ -1034,28 +1034,31 @@ export class StoresService {
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
       .leftJoinAndSelect('ms.merchant', 'merchant')
-      .leftJoinAndSelect('merchant.group', 'group');
+      .leftJoinAndSelect('merchant.group', 'group')
+      .where('ms.status = :sstat', { sstat: 'ACTIVE' })
+      .andWhere('merchant.status = :mstat', { mstat: 'ACTIVE' })
+      .andWhere('group.status = :gstat', { gstat: 'ACTIVE' });
 
     if (user.level == 'store') {
-      store.andWhere('ms.id = :mid', {
-        mid: user.store_id,
+      store.andWhere('ms.id = :stid', {
+        stid: user.store_id,
       });
     } else if (user.level == 'merchant') {
       store.andWhere('merchant.id = :mid', {
         mid: user.merchant_id,
       });
       if (data.store_id) {
-        store.andWhere('ms.id = :mid', {
-          mid: data.store_id,
+        store.andWhere('ms.id = :stid', {
+          stid: data.store_id,
         });
       }
     } else if (user.level == 'group') {
-      store.andWhere('group.id = :group_id', {
-        group_id: user.group_id,
+      store.andWhere('group.id = :gid', {
+        gid: user.group_id,
       });
       if (data.store_id) {
-        store.andWhere('ms.id = :mid', {
-          mid: data.store_id,
+        store.andWhere('ms.id = :stid', {
+          stid: data.store_id,
         });
       }
       if (data.merchant_id) {
@@ -1065,8 +1068,8 @@ export class StoresService {
       }
     } else {
       if (data.store_id) {
-        store.andWhere('ms.id = :mid', {
-          mid: data.store_id,
+        store.andWhere('ms.id = :stid', {
+          stid: data.store_id,
         });
       }
       if (data.merchant_id) {
@@ -1075,8 +1078,8 @@ export class StoresService {
         });
       }
       if (data.group_id) {
-        store.andWhere('group.id = :mid', {
-          mid: data.group_id,
+        store.andWhere('group.id = :gid', {
+          gid: data.group_id,
         });
       }
     }
@@ -1125,6 +1128,9 @@ export class StoresService {
       .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
       .leftJoinAndSelect('ms.merchant', 'merchant')
       .leftJoinAndSelect('merchant.group', 'group')
+      .where('ms.status = :sstat', { sstat: 'ACTIVE' })
+      .andWhere('merchant.status = :mstat', { mstat: 'ACTIVE' })
+      .andWhere('group.status = :gstat', { gstat: 'ACTIVE' })
       .andWhere('ms.id = :mid', {
         mid: store_id,
       });
@@ -1149,6 +1155,9 @@ export class StoresService {
       .leftJoinAndSelect('ms.merchant', 'merchant')
       .leftJoinAndSelect('merchant.group', 'group')
       .where('ms.bank_id is not null')
+      .where('ms.status = :sstat', { sstat: 'ACTIVE' })
+      .andWhere('merchant.status = :mstat', { mstat: 'ACTIVE' })
+      .andWhere('group.status = :gstat', { gstat: 'ACTIVE' })
       .andWhere('merchant.is_manual_refund_enabled = :mre', { mre: false })
       .orderBy('ms.created_at', 'ASC');
 
