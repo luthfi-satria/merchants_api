@@ -1175,7 +1175,7 @@ export class StoresService {
     }
   }
 
-  async updateNumDiscounts(data: any): Promise<any> {
+  async updateNumDiscounts(data: any) {
     const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/discounts/active`;
     const discounts: any = await this.commonService.getHttp(url);
     const listStore = [];
@@ -1196,6 +1196,6 @@ export class StoresService {
         numdiscounts: store.count,
       });
     }
-    return { data: listStore };
+    // return { data: listStore };
   }
 }
