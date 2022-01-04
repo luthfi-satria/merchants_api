@@ -13,7 +13,6 @@ import { ResponseService } from 'src/response/response.service';
 import { StoreBatchDTO } from './dto/store_batch.dto';
 import { UpdateRatingDTO } from './dto/update_rating.dto';
 import { InternalService } from './internal.service';
-import { MessageService } from 'src/message/message.service';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { GetMerchantUsersDto } from './dto/list_merchant_user.dto';
 import { MerchantsBatchDTO } from './dto/merchant_batch.dto';
@@ -25,7 +24,6 @@ export class InternalController {
     private readonly internalService: InternalService,
     private readonly responseService: ResponseService,
     private readonly commonStoreService: CommonStoresService,
-    private readonly messageService: MessageService,
   ) {}
 
   @Get('merchants/merchant-users')

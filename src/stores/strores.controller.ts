@@ -357,4 +357,10 @@ export class StoresController {
       throw e;
     }
   }
+
+  // @Get('stores/discounts/active')
+  // @ResponseStatusCode()
+  // async getActiveDiscounts(): Promise<any> {
+  //   return this.storesService.updateNumDiscounts({});
+  // }
 }

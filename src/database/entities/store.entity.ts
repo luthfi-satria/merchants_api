@@ -194,6 +194,9 @@ export class StoreDocument {
   @Column({ nullable: true })
   rejection_reason: string;
 
+  @Column({ default: 0 })
+  numdiscounts: number;
+
   @OneToMany(
     () => SearchHistoryStoreDocument,
     (search_history_store) => search_history_store.store,
