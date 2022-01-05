@@ -1176,26 +1176,17 @@ export class StoresService {
   }
 
   async updateNumDiscounts(data: any) {
-    const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/discounts/active`;
+    const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/discounts/active/${data.store_id}`;
     const discounts: any = await this.commonService.getHttp(url);
-    const listStore = [];
+    const store = { store_id: data.store_id, count: 0 };
+
     for (const discount of discounts) {
       if (discount.discount_status == 'ACTIVE') {
-        const idx = _.findIndex(listStore, function (ix: any) {
-          return ix.store_id == discount.store_id;
-        });
-        if (idx == -1) {
-          listStore.push({ store_id: discount.store_id, count: 1 });
-        } else {
-          listStore[idx].count += 1;
-        }
+        store.count += 1;
       }
     }
-    for (const store of listStore) {
-      await this.storeRepository.update(store.store_id, {
-        numdiscounts: store.count,
-      });
-    }
-    // return { data: listStore };
+    await this.storeRepository.update(store.store_id, {
+      numdiscounts: store.count,
+    });
   }
 }

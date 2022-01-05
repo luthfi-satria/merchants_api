@@ -6,7 +6,7 @@ import { StoresService } from 'src/stores/stores.service';
 export class NatsController {
   logger = new Logger(NatsController.name);
 
-  constructor(private readonly storesService: StoresService) {} // private readonly balancesService: BalancesService, // private readonly customersService: CustomersService,
+  constructor(private readonly storesService: StoresService) {}
 
   @EventPattern('catalogs.discount.started')
   async orderCancelledByCustomer(@Payload() data: any) {
