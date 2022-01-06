@@ -1,3 +1,4 @@
+import { CommonService } from 'src/common/common.service';
 import {
   BadRequestException,
   HttpStatus,
@@ -67,6 +68,7 @@ export class QueryService {
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
     private readonly ordersService: OrdersService,
+    private readonly commonService: CommonService,
   ) {}
 
   logger = new Logger();
@@ -1086,8 +1088,17 @@ export class QueryService {
               store.priority = 2;
             }
 
+            const params = [];
+
             // store.menus.forEach((menu: any) => {
             for (const menu of store.menus) {
+              menu.discounted_price = null;
+
+              params.push({
+                menu_price_id: menu.menu_price_id,
+                store_id: store.id,
+              });
+
               if (filter.test(menu.name)) {
                 if (store.priority === 2 || store.priority === 1) {
                   store.priority = 1;
@@ -1097,6 +1108,22 @@ export class QueryService {
                 filter_menus.push(menu);
               }
             }
+
+            let result = null;
+            if (params.length > 0) {
+              result = await this.catalogsService.getDiscount(params);
+            }
+
+            if (result) {
+              for (const menu of store.menus) {
+                const discount = result.find(
+                  (o) => o.menu_price_id === menu.menu_price_id,
+                );
+
+                if (discount) menu.discounted_price = discount.discounted_price;
+              }
+            }
+
             store.menus = filter_menus;
             return store;
           }),
