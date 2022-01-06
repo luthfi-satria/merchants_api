@@ -1116,7 +1116,7 @@ export class QueryService {
 
             if (result) {
               for (const menu of store.menus) {
-                let discount = result.find(
+                const discount = result.find(
                   (o) => o.menu_price_id === menu.menu_price_id,
                 );
 
