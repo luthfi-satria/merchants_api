@@ -26,6 +26,29 @@ export class CatalogsService {
 
   logger = new Logger();
 
+  async getDiscount(data) {
+    try {
+      const headerRequest = {
+        'Content-Type': 'application/json',
+      };
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/discount`;
+      const post_request = this.httpService
+        .post(url, data, { headers: headerRequest })
+        .pipe(
+          map((axiosResponse: AxiosResponse) => {
+            return axiosResponse.data;
+          }),
+        );
+      const response = await lastValueFrom(post_request);
+
+      const result = Object.keys(response).map((key) => response[key]);
+
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   async getMenuByStoreId(id: string, opt: any = {}): Promise<any> {
     try {
       const urlInternal = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu/${id}`;
