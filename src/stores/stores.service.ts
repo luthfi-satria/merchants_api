@@ -691,7 +691,6 @@ export class StoresService {
         url,
         pricingTemplateData,
       );
-
       if (pricingTemplates.length > 0) {
         for (const pricingTemplate of pricingTemplates) {
           store_ids.push(pricingTemplate.store_id);

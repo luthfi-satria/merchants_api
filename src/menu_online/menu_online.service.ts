@@ -48,6 +48,8 @@ export class MenuOnlineService {
         menuOnline.store = store;
 
         this.menuOnlineRepository.save(menuOnline);
+      } else if (!menuOnline && store) {
+        this.natsCreateStoreAvailability(data);
       }
     }
   }
