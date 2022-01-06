@@ -57,4 +57,6 @@ export class ListStoreDTO {
   @IsOptional()
   @IsBooleanString()
   with_price_category: boolean;
+
+  store_id: string;
 }

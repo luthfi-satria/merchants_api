@@ -416,4 +416,9 @@ export class InternalService {
   async findStoreLevel(store_id: string): Promise<any> {
     return this.storeService.findStoreLevel(store_id);
   }
+
+  async findStoreAutomaticRefund(): Promise<any> {
+    const result = await this.storeService.findStoresAutomaticRefund();
+    return { data: result };
+  }
 }

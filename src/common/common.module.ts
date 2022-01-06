@@ -35,6 +35,16 @@ import { GroupUsersService } from 'src/groups/group_users.service';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { NatsService } from 'src/nats/nats.service';
 import { OrdersService } from './orders/orders.service';
+import { InternalService } from 'src/internal/internal.service';
+import { LoginService } from 'src/login/login.service';
+import { QueryService } from 'src/query/query.service';
+import { PriceRangeService } from 'src/price_range/price_range.service';
+import { SettingsService } from 'src/settings/settings.service';
+import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
+import { SearchHistoryStoreDocument } from 'src/database/entities/search_history_store.entity';
+import { PriceRangeDocument } from 'src/database/entities/price_range.entity';
+import { PriceRangeLanguageDocument } from 'src/database/entities/price_range_language.entity';
+import { SettingDocument } from 'src/database/entities/setting.entity';
 
 @Global()
 @Module({
@@ -71,6 +81,11 @@ import { OrdersService } from './orders/orders.service';
       StoreOperationalShiftDocument,
       GroupDocument,
       LobDocument,
+      SearchHistoryKeywordDocument,
+      SearchHistoryStoreDocument,
+      PriceRangeDocument,
+      PriceRangeLanguageDocument,
+      SettingDocument,
     ]),
   ],
   providers: [
@@ -96,6 +111,11 @@ import { OrdersService } from './orders/orders.service';
     GroupUsersService,
     NatsService,
     OrdersService,
+    InternalService,
+    LoginService,
+    QueryService,
+    PriceRangeService,
+    SettingsService,
   ],
   exports: [
     CommonStorageService,

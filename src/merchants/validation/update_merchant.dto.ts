@@ -54,7 +54,7 @@ export class UpdateMerchantDTO {
 
   @ValidateIf((o) => o.pb1 === 'true')
   @IsOptional()
-  pb1_tarif: number;
+  pb1_tariff: number;
 
   @ValidateIf((o) => o.pb1 === 'true')
   @IsOptional()

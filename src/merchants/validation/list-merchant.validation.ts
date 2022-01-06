@@ -9,6 +9,12 @@ import {
 import { CategoryGroup } from 'src/database/entities/group.entity';
 import { MerchantStatus } from 'src/database/entities/merchant.entity';
 
+export enum SearchFields {
+  Name = 'name',
+  Phone = 'phone',
+  CorporateName = 'corporate.name',
+  Type = 'type',
+}
 export class ListMerchantDTO {
   @IsOptional()
   search: string;
@@ -40,4 +46,9 @@ export class ListMerchantDTO {
   @IsArray()
   @IsIn(Object.values(MerchantStatus), { each: true })
   statuses: MerchantStatus[];
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(Object.values(SearchFields), { each: true })
+  search_fields: SearchFields[];
 }

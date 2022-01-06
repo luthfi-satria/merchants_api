@@ -19,7 +19,11 @@ import {
 } from 'src/database/entities/store.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
-import { RMessage, RSuccessMessage } from 'src/response/response.interface';
+import {
+  ListResponse,
+  RMessage,
+  RSuccessMessage,
+} from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
 import { Brackets, Repository, UpdateResult } from 'typeorm';
@@ -1019,7 +1023,10 @@ export class StoresService {
     );
   }
 
-  async listStoreByLevel(data: Partial<ListStoreDTO>, user: any): Promise<any> {
+  async listStoreByLevel(
+    data: Partial<ListStoreDTO>,
+    user: any,
+  ): Promise<ListResponse> {
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
 
@@ -1027,33 +1034,50 @@ export class StoresService {
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
       .leftJoinAndSelect('ms.merchant', 'merchant')
-      .leftJoinAndSelect('merchant.group', 'group');
-
-    if (
-      (user.user_type == 'admin' || user.level == 'group') &&
-      data.merchant_id
-    ) {
-      store.andWhere('merchant.id = :mid', {
-        mid: data.merchant_id,
-      });
-    }
+      .leftJoinAndSelect('merchant.group', 'group')
+      .where('ms.status = :sstat', { sstat: 'ACTIVE' })
+      .andWhere('merchant.status = :mstat', { mstat: 'ACTIVE' })
+      .andWhere('group.status = :gstat', { gstat: 'ACTIVE' });
 
     if (user.level == 'store') {
-      store.andWhere('ms.id = :mid', {
-        mid: user.store_id,
+      store.andWhere('ms.id = :stid', {
+        stid: user.store_id,
       });
-    } else {
-      if (user.level == 'merchant') {
-        store.andWhere('merchant.id = :mid', {
-          mid: user.merchant_id,
-        });
-      } else if (user.level == 'group') {
-        store.andWhere('group.id = :group_id', {
-          group_id: user.group_id,
+    } else if (user.level == 'merchant') {
+      store.andWhere('merchant.id = :mid', {
+        mid: user.merchant_id,
+      });
+      if (data.store_id) {
+        store.andWhere('ms.id = :stid', {
+          stid: data.store_id,
         });
       }
-
-      if (user.user_type == 'admin' && data.group_id) {
+    } else if (user.level == 'group') {
+      store.andWhere('group.id = :gid', {
+        gid: user.group_id,
+      });
+      if (data.store_id) {
+        store.andWhere('ms.id = :stid', {
+          stid: data.store_id,
+        });
+      }
+      if (data.merchant_id) {
+        store.andWhere('merchant.id = :mid', {
+          mid: data.merchant_id,
+        });
+      }
+    } else {
+      if (data.store_id) {
+        store.andWhere('ms.id = :stid', {
+          stid: data.store_id,
+        });
+      }
+      if (data.merchant_id) {
+        store.andWhere('merchant.id = :mid', {
+          mid: data.merchant_id,
+        });
+      }
+      if (data.group_id) {
         store.andWhere('group.id = :gid', {
           gid: data.group_id,
         });
@@ -1066,12 +1090,8 @@ export class StoresService {
       .take(perPage);
 
     try {
-      const totalItems = await store.getCount().catch((err) => {
-        console.error('err ', err);
-      });
-      const list: any = await store.getMany().catch((err2) => {
-        console.error('err2 ', err2);
-      });
+      const totalItems = await store.getCount();
+      const list: any = await store.getMany();
 
       list.forEach(async (element) => {
         deleteCredParam(element);
@@ -1102,20 +1122,21 @@ export class StoresService {
     }
   }
 
-  async findStoreLevel(store_id: string): Promise<any> {
+  async findStoreLevel(store_id: string): Promise<StoreDocument> {
     const store = this.storeRepository
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
       .leftJoinAndSelect('ms.merchant', 'merchant')
       .leftJoinAndSelect('merchant.group', 'group')
+      .where('ms.status = :sstat', { sstat: 'ACTIVE' })
+      .andWhere('merchant.status = :mstat', { mstat: 'ACTIVE' })
+      .andWhere('group.status = :gstat', { gstat: 'ACTIVE' })
       .andWhere('ms.id = :mid', {
         mid: store_id,
       });
 
     try {
-      return await store.getOne().catch((err2) => {
-        console.error('err2 ', err2);
-      });
+      return await store.getOne();
     } catch (error) {
       console.error(
         '===========================Start Database error=================================\n',
@@ -1125,5 +1146,47 @@ export class StoresService {
         '\n============================End Database error==================================',
       );
     }
+  }
+
+  async findStoresAutomaticRefund(): Promise<StoreDocument[]> {
+    const store = this.storeRepository
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
+      .leftJoinAndSelect('ms.merchant', 'merchant')
+      .leftJoinAndSelect('merchant.group', 'group')
+      .where('ms.bank_id is not null')
+      .where('ms.status = :sstat', { sstat: 'ACTIVE' })
+      .andWhere('merchant.status = :mstat', { mstat: 'ACTIVE' })
+      .andWhere('group.status = :gstat', { gstat: 'ACTIVE' })
+      .andWhere('merchant.is_manual_refund_enabled = :mre', { mre: false })
+      .orderBy('ms.created_at', 'ASC');
+
+    try {
+      const result = await store.getMany();
+      return result;
+    } catch (error) {
+      console.error(
+        '===========================Start Database error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Database error==================================',
+      );
+    }
+  }
+
+  async updateNumDiscounts(data: any) {
+    const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/discounts/active/${data.store_id}`;
+    const discounts: any = await this.commonService.getHttp(url);
+    const store = { store_id: data.store_id, count: 0 };
+
+    for (const discount of discounts) {
+      if (discount.discount_status == 'ACTIVE') {
+        store.count += 1;
+      }
+    }
+    await this.storeRepository.update(store.store_id, {
+      numdiscounts: store.count,
+    });
   }
 }
