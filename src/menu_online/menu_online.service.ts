@@ -25,7 +25,7 @@ export class MenuOnlineService {
         price: data.menu_price.price,
         store: store,
       };
-      const objMenuOnline = Object.assign({}, menuOnline);
+      const objMenuOnline = this.menuOnlineRepository.create(menuOnline);
       await this.menuOnlineRepository.save(objMenuOnline);
     }
   }
@@ -45,7 +45,7 @@ export class MenuOnlineService {
         menuOnline.photo = data.menu_price.menu_menu.photo;
         menuOnline.price = data.menu_price.price;
 
-        const objMenuOnline = Object.assign({}, menuOnline);
+        const objMenuOnline = this.menuOnlineRepository.create(menuOnline);
         await this.menuOnlineRepository.save(objMenuOnline);
       } else {
         await this.natsCreateStoreAvailability(data);
@@ -64,7 +64,7 @@ export class MenuOnlineService {
     for (const menu of menus) {
       menu.name = data.name ? data.name : menu.name;
       menu.photo = data.photo ? data.photo : menu.photo;
-      const objMenuOnline = Object.assign({}, menu);
+      const objMenuOnline = this.menuOnlineRepository.create(menu);
       this.menuOnlineRepository.save(objMenuOnline);
     }
   }
@@ -89,7 +89,7 @@ export class MenuOnlineService {
             menuOnline.price = data.price;
             menuOnline.store = store;
 
-            const objMenuOnline = Object.assign({}, menuOnline);
+            const objMenuOnline = this.menuOnlineRepository.create(menuOnline);
             this.menuOnlineRepository.save(objMenuOnline);
           }
         }
