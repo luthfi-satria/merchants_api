@@ -14,7 +14,6 @@ export class MenuOnlineService {
 
   async natsCreateStoreAvailability(data: any) {
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
-      const store = await this.storesService.findStoreById(data.store_id);
       const menuOnline: Partial<MenuOnlineDocument> = {
         menu_store_id: data.id,
         menu_price_id: data.menu_price.id,
@@ -22,8 +21,9 @@ export class MenuOnlineService {
         name: data.menu_price.menu_menu.name,
         photo: data.menu_price.menu_menu.photo,
         price: data.menu_price.price,
-        store: store,
+        // store: store,
       };
+      menuOnline.store = await this.storesService.findStoreById(data.store_id);
 
       await this.menuOnlineRepository.save(menuOnline);
     }
