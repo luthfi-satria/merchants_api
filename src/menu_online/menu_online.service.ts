@@ -14,6 +14,8 @@ export class MenuOnlineService {
 
   async natsCreateStoreAvailability(data: any) {
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
+      const store = await this.storesService.findStoreById(data.store_id);
+
       const menuOnline: Partial<MenuOnlineDocument> = {
         menu_store_id: data.id,
         menu_price_id: data.menu_price.id,
@@ -21,11 +23,10 @@ export class MenuOnlineService {
         name: data.menu_price.menu_menu.name,
         photo: data.menu_price.menu_menu.photo,
         price: data.menu_price.price,
-        // store: store,
+        store: store,
       };
-      menuOnline.store = await this.storesService.findStoreById(data.store_id);
-
-      await this.menuOnlineRepository.save(menuOnline);
+      const objMenuOnline = Object.assign({}, menuOnline);
+      await this.menuOnlineRepository.save(objMenuOnline);
     }
   }
 
@@ -43,7 +44,9 @@ export class MenuOnlineService {
         menuOnline.name = data.menu_price.menu_menu.name;
         menuOnline.photo = data.menu_price.menu_menu.photo;
         menuOnline.price = data.menu_price.price;
-        await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
+
+        const objMenuOnline = Object.assign({}, menuOnline);
+        await this.menuOnlineRepository.save(objMenuOnline);
       } else {
         await this.natsCreateStoreAvailability(data);
       }
@@ -61,7 +64,8 @@ export class MenuOnlineService {
     for (const menu of menus) {
       menu.name = data.name ? data.name : menu.name;
       menu.photo = data.photo ? data.photo : menu.photo;
-      this.menuOnlineRepository.save(menu);
+      const objMenuOnline = Object.assign({}, menu);
+      this.menuOnlineRepository.save(objMenuOnline);
     }
   }
 
@@ -85,7 +89,8 @@ export class MenuOnlineService {
             menuOnline.price = data.price;
             menuOnline.store = store;
 
-            this.menuOnlineRepository.save(menuOnline);
+            const objMenuOnline = Object.assign({}, menuOnline);
+            this.menuOnlineRepository.save(objMenuOnline);
           }
         }
       }
