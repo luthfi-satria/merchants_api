@@ -317,7 +317,7 @@ export class StoresController {
       const { delivery_type } = payload;
 
       const result = await this.storesService
-        .findMerchantById(store_id)
+        .findStoreById(store_id)
         .then(async (item) => {
           if (!item) {
             //Not Found exception

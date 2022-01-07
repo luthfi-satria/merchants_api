@@ -72,7 +72,7 @@ export class StoresService {
     return this.storeRepository.create(data);
   }
 
-  async findMerchantById(id: string): Promise<StoreDocument> {
+  async findStoreById(id: string): Promise<StoreDocument> {
     return this.storeRepository
       .findOne({
         where: { id: id },
@@ -965,7 +965,7 @@ export class StoresService {
   }
 
   async getAndValidateStoreByStoreId(storeId: string): Promise<StoreDocument> {
-    const store = await this.findMerchantById(storeId);
+    const store = await this.findStoreById(storeId);
     if (!store) {
       throw new BadRequestException(
         this.responseService.error(

@@ -14,9 +14,7 @@ export class MenuOnlineService {
 
   async natsCreateStoreAvailability(data: any) {
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
-      const store = await this.storesService.findMerchantStoreById(
-        data.store_id,
-      );
+      const store = await this.storesService.findStoreById(data.store_id);
       const menuOnline: Partial<MenuOnlineDocument> = {
         menu_store_id: data.id,
         menu_price_id: data.menu_price.id,
@@ -27,29 +25,27 @@ export class MenuOnlineService {
         store: store,
       };
 
-      this.menuOnlineRepository.save(menuOnline);
+      await this.menuOnlineRepository.save(menuOnline);
     }
   }
 
-  async natsUpdateStoreAvailability(data: any) {
+  async natsUpdateStoreAvailabilityy(data: any) {
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       const menuOnline = await this.menuOnlineRepository.findOne({
         menu_store_id: data.id,
       });
-      const store = await this.storesService.findMerchantStoreById(
-        data.store_id,
-      );
+      const store = await this.storesService.findStoreById(data.store_id);
+
       if (menuOnline && store) {
+        menuOnline.store = store;
         menuOnline.menu_price_id = data.menu_price.id;
         menuOnline.menu_id = data.menu_price.menu_menu.id;
         menuOnline.name = data.menu_price.menu_menu.name;
         menuOnline.photo = data.menu_price.menu_menu.photo;
         menuOnline.price = data.menu_price.price;
-        menuOnline.store = store;
-
-        this.menuOnlineRepository.save(menuOnline);
-      } else if (!menuOnline && store) {
-        this.natsCreateStoreAvailability(data);
+        await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
+      } else {
+        await this.natsCreateStoreAvailability(data);
       }
     }
   }
@@ -81,9 +77,7 @@ export class MenuOnlineService {
 
       if (menuOnlines.length > 0) {
         for (const menuOnline of menuOnlines) {
-          const store = await this.storesService.findMerchantStoreById(
-            data.store_id,
-          );
+          const store = await this.storesService.findStoreById(data.store_id);
           if (store) {
             menuOnline.menu_id = data.menu_menu.id;
             menuOnline.name = data.menu_menu.name;
