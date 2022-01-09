@@ -33,7 +33,7 @@ export class MenuOnlineDocument {
   @Column()
   price: number;
 
-  @ManyToOne(() => StoreDocument, (store) => store.id)
+  @ManyToOne(() => StoreDocument, (store) => store.menus)
   @JoinColumn({ name: 'store_id', referencedColumnName: 'id' })
   store: StoreDocument;
 

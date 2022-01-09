@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { StoresService } from 'src/stores/stores.service';
+import { isDefined } from 'class-validator';
 
 @Injectable()
 export class MenuOnlineService {
@@ -16,6 +17,10 @@ export class MenuOnlineService {
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       const store = await this.storesService.findStoreById(data.store_id);
 
+      for (const key in store) {
+        if (!isDefined(store[key])) delete store[key];
+      }
+
       const menuOnline: Partial<MenuOnlineDocument> = {
         menu_store_id: data.id,
         menu_price_id: data.menu_price.id,
@@ -25,8 +30,8 @@ export class MenuOnlineService {
         price: data.menu_price.price,
         store: store,
       };
-      const objMenuOnline = this.menuOnlineRepository.create(menuOnline);
-      await this.menuOnlineRepository.save(objMenuOnline);
+
+      await this.menuOnlineRepository.save(menuOnline, { listeners: false });
     }
   }
 
@@ -36,6 +41,9 @@ export class MenuOnlineService {
         menu_store_id: data.id,
       });
       const store = await this.storesService.findStoreById(data.store_id);
+      for (const key in store) {
+        if (!isDefined(store[key])) delete store[key];
+      }
 
       if (menuOnline && store) {
         menuOnline.store = store;
@@ -45,8 +53,7 @@ export class MenuOnlineService {
         menuOnline.photo = data.menu_price.menu_menu.photo;
         menuOnline.price = data.menu_price.price;
 
-        const objMenuOnline = this.menuOnlineRepository.create(menuOnline);
-        await this.menuOnlineRepository.save(objMenuOnline);
+        await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
       } else {
         await this.natsCreateStoreAvailability(data);
       }
@@ -64,8 +71,7 @@ export class MenuOnlineService {
     for (const menu of menus) {
       menu.name = data.name ? data.name : menu.name;
       menu.photo = data.photo ? data.photo : menu.photo;
-      const objMenuOnline = this.menuOnlineRepository.create(menu);
-      this.menuOnlineRepository.save(objMenuOnline);
+      this.menuOnlineRepository.save(menu);
     }
   }
 
@@ -83,14 +89,16 @@ export class MenuOnlineService {
         for (const menuOnline of menuOnlines) {
           const store = await this.storesService.findStoreById(data.store_id);
           if (store) {
+            for (const key in store) {
+              if (!isDefined(store[key])) delete store[key];
+            }
             menuOnline.menu_id = data.menu_menu.id;
             menuOnline.name = data.menu_menu.name;
             menuOnline.photo = data.menu_menu.photo;
             menuOnline.price = data.price;
             menuOnline.store = store;
 
-            const objMenuOnline = this.menuOnlineRepository.create(menuOnline);
-            this.menuOnlineRepository.save(objMenuOnline);
+            await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
           }
         }
       }
