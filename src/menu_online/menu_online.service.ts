@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { StoresService } from 'src/stores/stores.service';
-import { listeners } from 'process';
 
 @Injectable()
 export class MenuOnlineService {
@@ -15,19 +14,38 @@ export class MenuOnlineService {
 
   async natsCreateStoreAvailability(data: any) {
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
-      await this.storesService.findMerchantStoreById(data.store_id);
+      const store = await this.storesService.findMerchantStoreById(
+        data.store_id,
+      );
+      const menuOnline = await this.menuOnlineRepository.findOne({
+        where: {
+          store_id: data.store_id,
+          menu_id: data.menu_price.id,
+          menu_price_id: data.menu_price.id,
+        },
+      });
+      if (menuOnline && store) {
+        menuOnline.name = data.menu_price.menu_menu.name;
+        menuOnline.photo = data.menu_price.menu_menu.photo;
+        menuOnline.price = data.menu_price.price;
+        menuOnline.menu_store_id = data.id;
 
-      const menuOnline: Partial<MenuOnlineDocument> = {
-        menu_store_id: data.id,
-        menu_price_id: data.menu_price.id,
-        menu_id: data.menu_price.menu_menu.id,
-        name: data.menu_price.menu_menu.name,
-        photo: data.menu_price.menu_menu.photo,
-        price: data.menu_price.price,
-        store_id: data.store_id,
-      };
+        await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
+      } else {
+        const menuOnlineData: Partial<MenuOnlineDocument> = {
+          menu_store_id: data.id,
+          menu_price_id: data.menu_price.id,
+          menu_id: data.menu_price.menu_menu.id,
+          name: data.menu_price.menu_menu.name,
+          photo: data.menu_price.menu_menu.photo,
+          price: data.menu_price.price,
+          store_id: data.store_id,
+        };
 
-      await this.menuOnlineRepository.save(menuOnline, { listeners: false });
+        await this.menuOnlineRepository.save(menuOnlineData, {
+          listeners: false,
+        });
+      }
     }
   }
 
