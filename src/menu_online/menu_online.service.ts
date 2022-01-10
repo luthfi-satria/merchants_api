@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { StoresService } from 'src/stores/stores.service';
+import { listeners } from 'process';
 
 @Injectable()
 export class MenuOnlineService {
@@ -26,7 +27,7 @@ export class MenuOnlineService {
         store_id: data.store_id,
       };
 
-      await this.menuOnlineRepository.save(menuOnline);
+      await this.menuOnlineRepository.save(menuOnline, { listeners: false });
     }
   }
 
