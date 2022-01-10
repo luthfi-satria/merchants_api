@@ -14,9 +14,7 @@ export class MenuOnlineService {
 
   async natsCreateStoreAvailability(data: any) {
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
-      const store = await this.storesService.findMerchantStoreById(
-        data.store_id,
-      );
+      await this.storesService.findMerchantStoreById(data.store_id);
       const menuOnline = await this.menuOnlineRepository.findOne({
         where: {
           store_id: data.store_id,
@@ -24,7 +22,8 @@ export class MenuOnlineService {
           menu_price_id: data.menu_price.id,
         },
       });
-      if (menuOnline && store) {
+      if (menuOnline) {
+        console.log('menu online exist');
         menuOnline.name = data.menu_price.menu_menu.name;
         menuOnline.photo = data.menu_price.menu_menu.photo;
         menuOnline.price = data.menu_price.price;
@@ -32,6 +31,7 @@ export class MenuOnlineService {
 
         await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
       } else {
+        console.log('menu online not exist');
         const menuOnlineData: Partial<MenuOnlineDocument> = {
           menu_store_id: data.id,
           menu_price_id: data.menu_price.id,
