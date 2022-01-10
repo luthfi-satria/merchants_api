@@ -80,6 +80,7 @@ export class MenuOnlineService {
   }
 
   async natsUpdateMenuPrice(data: any) {
+    console.log('data', data);
     if (data.menu_sales_channel.platform == 'ONLINE') {
       const menuOnlines = await this.menuOnlineRepository.find({
         menu_price_id: data.id,
@@ -87,19 +88,11 @@ export class MenuOnlineService {
 
       if (menuOnlines.length > 0) {
         for (const menuOnline of menuOnlines) {
-          const store = await this.storesService.findStoreById(data.store_id);
-          if (store) {
-            for (const key in store) {
-              if (!isDefined(store[key])) delete store[key];
-            }
-            menuOnline.menu_id = data.menu_menu.id;
-            menuOnline.name = data.menu_menu.name;
-            menuOnline.photo = data.menu_menu.photo;
-            menuOnline.price = data.price;
-            menuOnline.store = store;
-
-            await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
-          }
+          menuOnline.menu_id = data.menu_menu.id;
+          menuOnline.name = data.menu_menu.name;
+          menuOnline.photo = data.menu_menu.photo;
+          menuOnline.price = data.price;
+          await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
         }
       }
     }
