@@ -22,6 +22,7 @@ import { BannersModule } from './banners/banners.module';
 import { SettingModule } from './settings/setting.module';
 import { UsersModule } from './users/users.module';
 import { MenuOnlineModule } from './menu_online/menu_online.module';
+import { SeederModule } from './database/seeders/seeder.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { MenuOnlineModule } from './menu_online/menu_online.module';
     SettingModule,
     UsersModule,
     MenuOnlineModule,
+    SeederModule,
   ],
   controllers: [AppController],
   providers: [AppService],
