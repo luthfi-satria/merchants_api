@@ -366,6 +366,34 @@ export class StoreCategoriesService {
       });
   }
 
+  async viewDetailStoreCategory(
+    store_catgory_id: string,
+  ): Promise<RSuccessMessage> {
+    const result = await this.storeCategoriesRepository.findOne({
+      where: { active: true, id: store_catgory_id },
+      relations: ['languages'],
+    });
+    if (!result) {
+      const errors: RMessage = {
+        value: store_catgory_id,
+        property: 'store_category_id',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
+  }
+
   //------------------------------------------------------------------------------
 
   async getHttp(

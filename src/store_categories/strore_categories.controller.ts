@@ -28,6 +28,7 @@ import { editFileName, imageFileFilter } from 'src/utils/general-utils';
 import { StoreCategoriesValidation } from './validation/store_categories.validation.dto';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { StoreCategoriesService } from './store_categories.service';
+import { RSuccessMessage } from 'src/response/response.interface';
 
 @Controller('api/v1/merchants')
 export class StoreCategoriesController {
@@ -155,6 +156,18 @@ export class StoreCategoriesController {
     @Query() data: Partial<StoreCategoriesValidation>,
   ): Promise<any> {
     return this.storeCategoriesService.listStoreCategories(data);
+  }
+
+  @Get('store/categories/:scid')
+  @UserType('admin', 'merchant')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async viewDetailStoreCategories(
+    @Param('scid') store_category_id: string,
+  ): Promise<RSuccessMessage> {
+    return this.storeCategoriesService.viewDetailStoreCategory(
+      store_category_id,
+    );
   }
 
   //-------------------------------------------------------------------------------------
