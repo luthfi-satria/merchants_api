@@ -25,6 +25,6 @@ export class SettingDocument {
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
 
-  @DeleteDateColumn({ nullable: true })
+  @DeleteDateColumn({ nullable: true, select: false })
   deleted_at: Date;
 }

@@ -43,6 +43,10 @@ export default {
       code: 'IMAGE_NOT_FOUND',
       message: 'File image kosong.',
     },
+    fail: {
+      code: 'FAIL_TRANSACTION',
+      message: 'Transaksi Gagal.',
+    },
     idNotFound: {
       code: 'INVALID_ID',
       message: 'ID tidak ditemukan.',

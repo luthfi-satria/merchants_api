@@ -26,4 +26,12 @@ export class SettingsService {
       throw e;
     }
   }
+
+  async updateSettingByName(id: string, data: any): Promise<SettingDocument> {
+    const setting = await this.settingRepository.findOne({
+      where: { name: id },
+    });
+    setting.value = data[id];
+    return this.settingRepository.save(setting);
+  }
 }
