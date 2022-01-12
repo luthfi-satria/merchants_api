@@ -58,7 +58,7 @@ export class QueryController {
   ): Promise<any> {
     console.log('list store public: ', data);
     const result = await this.queryService.getListQueryStore(data, {}, false);
-    console.log('result: ');
+    console.log('result:');
     console.log(JSON.stringify(result));
     return result;
   }
