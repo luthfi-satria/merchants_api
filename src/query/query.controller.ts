@@ -57,7 +57,9 @@ export class QueryController {
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
     console.log('list store public: ', data);
-    return this.queryService.getListQueryStore(data, {}, false);
+    const result = await this.queryService.getListQueryStore(data, {}, false);
+    console.log('result: ', result);
+    return result;
   }
 
   @Get('query/stores/detail/:id')
