@@ -101,7 +101,7 @@ export class StoreDocument {
   @Column({ default: 0 })
   average_price: number;
 
-  @Column({ default: true })
+  @Column({ default: false })
   platform: boolean;
 
   @Column({

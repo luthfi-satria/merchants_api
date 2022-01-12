@@ -729,9 +729,8 @@ export class QueryService {
           ),
         );
       });
-
       let storeItems = qlistStore[0];
-      const totalItems = qlistStore[1];
+      let totalItems = qlistStore[1];
       if (favoriteStore) {
         const storeItemFavoriteSorted: StoreDocument[] = [];
         for (let i = 0; i < favoriteStore.length; i++) {
@@ -830,10 +829,11 @@ export class QueryService {
               price_symbol,
               price_range: priceRange,
             };
+          } else {
+            totalItems -= 1;
           }
         }),
       );
-
       const formattedArr = [];
 
       if (data.favorite_this_week) {

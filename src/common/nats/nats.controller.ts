@@ -22,7 +22,6 @@ export class NatsController {
   @EventPattern('catalogs.storeavailability.updated')
   async updateMenuEfood(@Payload() data: any) {
     this.logger.log('catalogs.storeavailability.updated');
-    console.log('payload: ', data);
     this.menuOnlineService.natsUpdateStoreAvailabilityy(data);
   }
 
