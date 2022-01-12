@@ -15,6 +15,10 @@ export default {
       code: 'DELETE_DATA_SUCCESS',
       message: 'Sukses hapus data.',
     },
+    generalSuccess: {
+      code: 'SUCCESS',
+      message: 'Sukses.',
+    },
     createFail: {
       code: 'CREATE_DATA_FAILED',
       message: 'Gagal tambah data.',

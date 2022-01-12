@@ -91,6 +91,23 @@ export class PriceRangeController {
       limit: data.limit,
       page: data.page,
     };
-    return await this.priceRangeService.listPriceRange(args);
+    return this.priceRangeService.listPriceRange(args);
+  }
+
+  @Get('price-range/:prid')
+  @UserType('admin')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async viewDetailPriceRange(
+    @Param('prid') princeRangeId: string,
+  ): Promise<RSuccessMessage> {
+    const result = await this.priceRangeService.viewDetailPriceRange(
+      princeRangeId,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.generalSuccess'),
+      result,
+    );
   }
 }

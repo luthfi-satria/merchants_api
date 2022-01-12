@@ -224,6 +224,31 @@ export class PriceRangeService {
     }
   }
 
+  async viewDetailPriceRange(
+    priceRangeId: string,
+  ): Promise<PriceRangeDocument> {
+    const result = await this.priceRangeRepository
+      .findOne(priceRangeId, { relations: ['languages'] })
+      .catch(() => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: priceRangeId,
+              property: 'price_range_id',
+              constraint: [
+                this.messageService.get('merchant.general.dataNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+
+    dbOutputTime(result);
+    return result;
+  }
+
   //------------------------------------------------------------------------------
 
   async validateUniqueLanguageName(
