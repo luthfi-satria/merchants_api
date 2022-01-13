@@ -255,7 +255,12 @@ export class StoreOperationalController {
   }
 
   @Post('set-store-open/:store_id')
-  @UserTypeAndLevel('admin.*', 'merchant.store')
+  @UserTypeAndLevel(
+    'admin.*',
+    'merchant.group',
+    'merchant.merchant',
+    'merchant.store',
+  )
   @UseGuards(RoleStoreGuard)
   async updateStoreOpenStatus(
     @Param('store_id') store_id: string,
