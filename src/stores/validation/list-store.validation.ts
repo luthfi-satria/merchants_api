@@ -9,6 +9,12 @@ import {
 } from 'class-validator';
 import { CategoryGroup, GroupStatus } from 'src/database/entities/group.entity';
 
+export enum SearchFields {
+  Name = 'name',
+  Phone = 'phone',
+  MerchantName = 'merchant.name',
+  MerchantGroupName = 'merchant.group.name',
+}
 export class ListStoreDTO {
   @IsOptional()
   search: string;
@@ -59,4 +65,9 @@ export class ListStoreDTO {
   with_price_category: boolean;
 
   store_id: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(Object.values(SearchFields), { each: true })
+  search_fields: SearchFields[];
 }

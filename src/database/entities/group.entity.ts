@@ -28,7 +28,6 @@ export enum DirectorIdentityType {
   KTP = 'KTP',
   PASSPORT = 'PASSPORT',
 }
-
 @Entity({ name: 'merchant_group' })
 export class GroupDocument {
   @PrimaryGeneratedColumn('uuid')

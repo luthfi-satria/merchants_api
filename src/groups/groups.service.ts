@@ -27,7 +27,7 @@ import { CreateGroupDTO } from './validation/create_groups.dto';
 import { GroupUsersService } from './group_users.service';
 import { GroupUser } from './interface/group_users.interface';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
-import { ListGroupDTO } from './validation/list-group.validation';
+import { ListGroupDTO, SearchFields } from './validation/list-group.validation';
 import { RoleService, SpecialRoleCodes } from 'src/common/services/admins/role.service';
 import { NatsService } from 'src/nats/nats.service';
 import _ from 'lodash';
@@ -136,7 +136,7 @@ export class GroupsService {
 
       const specialRoles = await this.roleService.getSpecialRoleByCodes(
         [
-          SpecialRoleCodes.corporate_director, 
+          SpecialRoleCodes.corporate_director,
           SpecialRoleCodes.corporate_finance,
           SpecialRoleCodes.corporate_operational,
           SpecialRoleCodes.corporate_director_finance_operational,
@@ -159,7 +159,7 @@ export class GroupsService {
       };
       // role jika pic_operational & pic_finance sama dengan directur
       if (array_email.includes(createGroupDTO.pic_operational_email)) {
-        create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_director_finance_operational } ).role.id; 
+        create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_director_finance_operational } ).role.id;
       }
       const director = await this.groupUserService.createUserPassword(
         create_director,
@@ -179,7 +179,7 @@ export class GroupsService {
         };
         // role jika pic_operational & pic_finance sama tetapi berbeda dengan directur
         if (createGroupDTO.pic_operational_email == createGroupDTO.pic_finance_email) {
-          create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_finance_operational } ).role.id; 
+          create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_finance_operational } ).role.id;
         }
         const pic_operational = await this.groupUserService.createUserPassword(
           create_pic_operational,
@@ -327,19 +327,40 @@ export class GroupsService {
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
     const statuses = data.statuses || [];
+    const searchFields = data.search_fields || [];
 
     const query = this.groupRepository.createQueryBuilder();
 
     if (search) {
       query.where(
         new Brackets((qb) => {
-          qb.where('name ilike :name', { name: '%' + search + '%' });
-          qb.orWhere('category::text ilike :cat', {
-            cat: '%' + search + '%',
-          });
-          qb.orWhere('phone ilike :ghp', {
-            ghp: '%' + search + '%',
-          });
+          if (searchFields.length > 0) {
+            for (const searchField of searchFields) {
+              if (searchField == SearchFields.Name) {
+                qb.orWhere('name ilike :mname', {
+                  mname: '%' + search + '%',
+                });
+              }
+              if (searchField == SearchFields.Phone) {
+                qb.orWhere('phone ilike :ophone', {
+                  ophone: '%' + search + '%',
+                });
+              }
+              if (searchField == SearchFields.Category) {
+                qb.orWhere('category::text ilike :category', {
+                  category: '%' + search + '%',
+                });
+              }
+            }
+          } else {
+            qb.where('name ilike :name', { name: '%' + search + '%' });
+            qb.orWhere('category::text ilike :cat', {
+              cat: '%' + search + '%',
+            });
+            qb.orWhere('phone ilike :ghp', {
+              ghp: '%' + search + '%',
+            });
+          }
         }),
       );
     }

@@ -7,6 +7,12 @@ import {
 } from 'class-validator';
 import { CategoryGroup, GroupStatus } from 'src/database/entities/group.entity';
 
+export enum SearchFields {
+  Name = 'name',
+  Phone = 'phone',
+  Category = 'category',
+}
+
 export class ListGroupDTO {
   @IsOptional()
   search: string;
@@ -33,4 +39,9 @@ export class ListGroupDTO {
   @IsArray()
   @IsIn(Object.values(GroupStatus), { each: true })
   statuses: GroupStatus[];
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(Object.values(SearchFields), { each: true })
+  search_fields: SearchFields[];
 }

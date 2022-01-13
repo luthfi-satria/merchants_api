@@ -39,7 +39,7 @@ export class MenuOnlineService {
           name: data.menu_price.menu_menu.name,
           photo: data.menu_price.menu_menu.photo,
           price: data.menu_price.price,
-          store_id: data.store_id,
+          store: data.store_id,
         };
 
         await this.menuOnlineRepository.save(menuOnlineData, {
@@ -59,7 +59,7 @@ export class MenuOnlineService {
       );
 
       if (menuOnline && store) {
-        menuOnline.store_id = data.store_id;
+        menuOnline.store = data.store_id;
         menuOnline.menu_price_id = data.menu_price.id;
         menuOnline.menu_id = data.menu_price.menu_menu.id;
         menuOnline.name = data.menu_price.menu_menu.name;

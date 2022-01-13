@@ -34,7 +34,7 @@ import { StoreCategoriesDocument } from 'src/database/entities/store-categories.
 import { CreateMerchantStoreValidation } from './validation/create-merchant-stores.validation';
 import { UpdateMerchantStoreValidation } from './validation/update-merchant-stores.validation';
 import { CityService } from 'src/common/services/admins/city.service';
-import { ListStoreDTO } from './validation/list-store.validation';
+import { ListStoreDTO, SearchFields } from './validation/list-store.validation';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 import { CommonService } from 'src/common/common.service';
@@ -565,6 +565,7 @@ export class StoresService {
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
     const statuses = data.statuses || [];
+    const searchFields = data.search_fields || [];
 
     const store = this.storeRepository
       .createQueryBuilder('ms')
@@ -574,18 +575,43 @@ export class StoresService {
     if (search) {
       store.andWhere(
         new Brackets((qb) => {
-          qb.where('ms.name ilike :mname', {
-            mname: '%' + search.toLowerCase() + '%',
-          });
-          qb.orWhere('ms.phone ilike :sname', {
-            sname: '%' + search.toLowerCase() + '%',
-          });
-          qb.orWhere('merchant.name ilike :bname', {
-            bname: '%' + search.toLowerCase() + '%',
-          });
-          qb.orWhere('group.name ilike :gname', {
-            gname: '%' + search.toLowerCase() + '%',
-          });
+          if (searchFields.length > 0) {
+            for (const searchField of searchFields) {
+              if (searchField == SearchFields.Name) {
+                qb.orWhere('ms.name ilike :sname', {
+                  sname: '%' + search + '%',
+                });
+              }
+              if (searchField == SearchFields.Phone) {
+                qb.orWhere('ms.phone ilike :ophone', {
+                  ophone: '%' + search + '%',
+                });
+              }
+              if (searchField == SearchFields.MerchantName) {
+                qb.orWhere('merchant.name ilike :mname', {
+                  mname: '%' + search + '%',
+                });
+              }
+              if (searchField == SearchFields.MerchantGroupName) {
+                qb.orWhere('group.name ilike :gname', {
+                  gname: '%' + search + '%',
+                });
+              }
+            }
+          } else {
+            qb.where('ms.name ilike :mname', {
+              mname: '%' + search.toLowerCase() + '%',
+            });
+            qb.orWhere('ms.phone ilike :sname', {
+              sname: '%' + search.toLowerCase() + '%',
+            });
+            qb.orWhere('merchant.name ilike :bname', {
+              bname: '%' + search.toLowerCase() + '%',
+            });
+            qb.orWhere('group.name ilike :gname', {
+              gname: '%' + search.toLowerCase() + '%',
+            });
+          }
         }),
       );
     }
