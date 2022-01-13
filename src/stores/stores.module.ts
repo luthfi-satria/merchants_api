@@ -44,6 +44,8 @@ import { SearchHistoryStoreDocument } from 'src/database/entities/search_history
 import { PriceRangeDocument } from 'src/database/entities/price_range.entity';
 import { PriceRangeLanguageDocument } from 'src/database/entities/price_range_language.entity';
 import { SettingDocument } from 'src/database/entities/setting.entity';
+import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
+import { LanguageDocument } from 'src/database/entities/language.entity';
 
 @Module({
   imports: [
@@ -63,6 +65,7 @@ import { SettingDocument } from 'src/database/entities/setting.entity';
       PriceRangeDocument,
       PriceRangeLanguageDocument,
       SettingDocument,
+      LanguageDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
@@ -99,6 +102,7 @@ import { SettingDocument } from 'src/database/entities/setting.entity';
     QueryService,
     PriceRangeService,
     SettingsService,
+    StoreCategoriesService,
   ],
   exports: [StoresService, StoreOperationalService],
 })

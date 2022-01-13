@@ -45,6 +45,8 @@ import { SearchHistoryStoreDocument } from 'src/database/entities/search_history
 import { PriceRangeDocument } from 'src/database/entities/price_range.entity';
 import { PriceRangeLanguageDocument } from 'src/database/entities/price_range_language.entity';
 import { SettingDocument } from 'src/database/entities/setting.entity';
+import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
+import { LanguageDocument } from 'src/database/entities/language.entity';
 
 @Global()
 @Module({
@@ -86,6 +88,7 @@ import { SettingDocument } from 'src/database/entities/setting.entity';
       PriceRangeDocument,
       PriceRangeLanguageDocument,
       SettingDocument,
+      LanguageDocument,
     ]),
   ],
   providers: [
@@ -116,6 +119,7 @@ import { SettingDocument } from 'src/database/entities/setting.entity';
     QueryService,
     PriceRangeService,
     SettingsService,
+    StoreCategoriesService,
   ],
   exports: [
     CommonStorageService,

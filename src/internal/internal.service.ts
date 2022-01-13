@@ -19,6 +19,8 @@ import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 import { QueryService } from 'src/query/query.service';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { ListStoreDTO } from 'src/stores/validation/list-store.validation';
+import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
+import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 
 @Injectable()
 export class InternalService {
@@ -37,6 +39,7 @@ export class InternalService {
     private readonly loginService: LoginService,
     private readonly merchantService: MerchantUsersService,
     private readonly queryService: QueryService,
+    private readonly storeCategoryService: StoreCategoriesService,
   ) {}
 
   async updateRatingStore(id, data) {
@@ -420,5 +423,11 @@ export class InternalService {
   async findStoreAutomaticRefund(): Promise<any> {
     const result = await this.storeService.findStoresAutomaticRefund();
     return { data: result };
+  }
+
+  async getStoreByCategoryBulk(
+    storeCategoryIds: string[],
+  ): Promise<StoreCategoriesDocument[]> {
+    return this.storeCategoryService.getStoreCategoryByIds(storeCategoryIds);
   }
 }

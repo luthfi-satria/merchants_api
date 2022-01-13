@@ -17,6 +17,9 @@ import { StoreDocument } from 'src/database/entities/store.entity';
 import { GetMerchantUsersDto } from './dto/list_merchant_user.dto';
 import { MerchantsBatchDTO } from './dto/merchant_batch.dto';
 import { ListStoreDTO } from 'src/stores/validation/list-store.validation';
+import { StoreCategoryBatchDTO } from './dto/store_category.dto';
+import { RSuccessMessage } from 'src/response/response.interface';
+import { MessageService } from 'src/message/message.service';
 
 @Controller('api/v1/internal')
 export class InternalController {
@@ -24,6 +27,7 @@ export class InternalController {
     private readonly internalService: InternalService,
     private readonly responseService: ResponseService,
     private readonly commonStoreService: CommonStoresService,
+    private readonly messageService: MessageService,
   ) {}
 
   @Get('merchants/merchant-users')
@@ -158,5 +162,21 @@ export class InternalController {
       console.error(err);
       throw err;
     }
+  }
+
+  @Post('merchants/store/categories/batch')
+  @ResponseStatusCode()
+  async getBatchStoreCategories(
+    @Body()
+    storeCategoryBatchDTO: StoreCategoryBatchDTO,
+  ): Promise<RSuccessMessage> {
+    const result = await this.internalService.getStoreByCategoryBulk(
+      storeCategoryBatchDTO.store_category_ids,
+    );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
   }
 }

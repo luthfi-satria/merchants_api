@@ -16,7 +16,7 @@ import {
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { StoreCategoriesValidation } from './validation/store_categories.validation.dto';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
@@ -392,6 +392,30 @@ export class StoreCategoriesService {
       this.messageService.get('merchant.general.success'),
       result,
     );
+  }
+
+  async getStoreCategoryByIds(
+    storeCatgoryIds: string[],
+  ): Promise<StoreCategoriesDocument[]> {
+    const result = await this.storeCategoriesRepository.find({
+      where: { id: In(storeCatgoryIds) },
+      relations: ['languages'],
+    });
+    if (!result) {
+      const errors: RMessage = {
+        value: storeCatgoryIds.join(','),
+        property: 'store_category_id',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return result;
   }
 
   //------------------------------------------------------------------------------
