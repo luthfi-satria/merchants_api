@@ -69,6 +69,7 @@ export class QueryService {
     private readonly merchantRepository: Repository<MerchantDocument>,
     private readonly ordersService: OrdersService,
     private readonly commonService: CommonService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   logger = new Logger();
@@ -128,7 +129,6 @@ export class QueryService {
 
   async listGroupStore(data: QueryListStoreDto): Promise<RSuccessMessage> {
     let search = data.search || '';
-    const radius = data.distance || 25;
     const lat = data.location_latitude;
     const long = data.location_longitude;
     search = search.toLowerCase();
@@ -136,6 +136,11 @@ export class QueryService {
     const perPage = Number(data.limit) || 10;
     let totalItems = 0;
     const store_category_id: string = data.store_category_id || null;
+
+    const settingRadius = await this.settingService.findByName('store_radius');
+    const defaultRadius = Number(settingRadius.value);
+    const radius = data.distance || defaultRadius;
+    console.log('radius: ', radius);
 
     let delivery_only;
     if (data.pickup) {
@@ -477,12 +482,18 @@ export class QueryService {
       const currentPage = data.page || 1;
       const perPage = Number(data.limit) || 10;
 
-      const radius = data.distance || 25;
       const lat = data.location_latitude;
       const long = data.location_longitude;
       const store_category_id: string = data.store_category_id || null;
       const merchant_id: string = data.merchant_id || null;
       const include_inactive_stores = data.include_inactive_stores || false;
+
+      const settingRadius = await this.settingService.findByName(
+        'store_radius',
+      );
+      const defaultRadius = Number(settingRadius.value);
+      const radius = data.distance || defaultRadius;
+      console.log('radius: ', radius);
 
       let is_online_platform = true;
       if (data.platform) is_online_platform = data.platform == 'ONLINE';
