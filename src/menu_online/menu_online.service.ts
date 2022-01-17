@@ -14,7 +14,7 @@ export class MenuOnlineService {
 
   async natsCreateStoreAvailability(data: any) {
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
-      await this.storesService.findMerchantStoreById(data.store_id);
+      await this.storesService.findStoreById(data.store_id);
       const menuOnline = await this.menuOnlineRepository.findOne({
         where: {
           store_id: data.store_id,
@@ -22,6 +22,7 @@ export class MenuOnlineService {
           menu_price_id: data.menu_price.id,
         },
       });
+      console.log('menuOnline: ', menuOnline);
       if (menuOnline) {
         console.log('menu online exist');
         menuOnline.name = data.menu_price.menu_menu.name;
@@ -39,12 +40,11 @@ export class MenuOnlineService {
           name: data.menu_price.menu_menu.name,
           photo: data.menu_price.menu_menu.photo,
           price: data.menu_price.price,
-          store: data.store_id,
+          store_id: data.store_id,
         };
+        console.log('menuOnlineData: ', menuOnlineData);
 
-        await this.menuOnlineRepository.save(menuOnlineData, {
-          listeners: false,
-        });
+        await this.menuOnlineRepository.save(menuOnlineData);
       }
     }
   }
@@ -54,12 +54,10 @@ export class MenuOnlineService {
       const menuOnline = await this.menuOnlineRepository.findOne({
         menu_store_id: data.id,
       });
-      const store = await this.storesService.findMerchantStoreById(
-        data.store_id,
-      );
+      const store = await this.storesService.findStoreById(data.store_id);
 
       if (menuOnline && store) {
-        menuOnline.store = data.store_id;
+        menuOnline.store_id = data.store_id;
         menuOnline.menu_price_id = data.menu_price.id;
         menuOnline.menu_id = data.menu_price.menu_menu.id;
         menuOnline.name = data.menu_price.menu_menu.name;

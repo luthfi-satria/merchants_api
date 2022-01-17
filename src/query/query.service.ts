@@ -140,7 +140,6 @@ export class QueryService {
     const settingRadius = await this.settingService.findByName('store_radius');
     const defaultRadius = Number(settingRadius.value);
     const radius = data.distance || defaultRadius;
-    console.log('radius: ', radius);
 
     let delivery_only;
     if (data.pickup) {

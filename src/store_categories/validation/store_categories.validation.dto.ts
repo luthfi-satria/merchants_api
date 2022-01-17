@@ -1,11 +1,17 @@
 import {
+  IsArray,
   IsBooleanString,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
 } from 'class-validator';
 import { LanguageDocument } from 'src/database/entities/language.entity';
 
+export enum StoreCategoryStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
 export class StoreCategoriesValidation {
   @IsOptional()
   created_at: string | Date;
@@ -47,4 +53,9 @@ export class StoreCategoriesValidation {
 
   @IsOptional()
   lang: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(Object.values(StoreCategoryStatus), { each: true })
+  statuses: StoreCategoryStatus[];
 }

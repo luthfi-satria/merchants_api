@@ -17,7 +17,10 @@ import {
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
 import { In, Repository } from 'typeorm';
-import { StoreCategoriesValidation } from './validation/store_categories.validation.dto';
+import {
+  StoreCategoriesValidation,
+  StoreCategoryStatus,
+} from './validation/store_categories.validation.dto';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { LanguageDocument } from 'src/database/entities/language.entity';
@@ -299,71 +302,93 @@ export class StoreCategoriesService {
     // search = search.toLowerCase();
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
-    // const active = data.active || true;
-    let totalItems: number;
+    // let totalItems;
+    const actives = [];
 
-    const qCount = this.storeCategoriesRepository
-      .createQueryBuilder('sc')
-      .andWhere('sc.active = true')
+    if (data.active == 'true') actives.push(true);
+    if (data.active == 'false') actives.push(false);
+    if (data.statuses && data.statuses.length > 0) {
+      for (const status of data.statuses) {
+        if (status == StoreCategoryStatus.ACTIVE) actives.push(true);
+        if (status == StoreCategoryStatus.INACTIVE) actives.push(false);
+      }
+    }
+    console.log('actives: ', actives);
+    const qCount = this.storeCategoriesRepository.createQueryBuilder('sc');
+
+    if (actives.length > 0) {
+      qCount.andWhere('sc.active in (:...actives)', {
+        actives: actives,
+      });
+    }
+
+    qCount
+      // .andWhere('sc.active = true')
       .orderBy('sc.sequence')
       .offset((currentPage - 1) * perPage)
-      .limit(perPage)
-      .getManyAndCount();
+      .limit(perPage);
 
-    return qCount
-      .then(async (rescounts) => {
-        const listStocat = [];
-        rescounts[0].forEach((raw) => {
-          listStocat.push(raw.id);
-        });
-        totalItems = rescounts[1];
+    const storeCategories = await qCount.getManyAndCount();
+    console.log('storeCategories: ', storeCategories);
+    const listStocat = [];
+    storeCategories[0].forEach((raw) => {
+      listStocat.push(raw.id);
+    });
+    const totalItems = storeCategories[1];
 
-        return await this.storeCategoriesRepository
-          .createQueryBuilder('sc')
-          .leftJoinAndSelect(
-            'sc.languages',
-            'merchant_store_categories_languages',
-          )
-          .where('sc.id IN(:...lid)', { lid: listStocat })
-          .orderBy('sc.sequence')
-          .getMany();
-      })
-      .then((result) => {
-        result.forEach((raw) => {
-          dbOutputTime(raw);
-        });
+    return (
+      this.storeCategoriesRepository
+        .createQueryBuilder('sc')
+        .leftJoinAndSelect(
+          'sc.languages',
+          'merchant_store_categories_languages',
+        )
+        .where('sc.id IN(:...lid)', { lid: listStocat })
+        .orderBy('sc.sequence')
+        .getMany()
+        // })
+        .then((results) => {
+          for (const result of results) {
+            dbOutputTime(result);
+            if (result.active) {
+              result.status = StoreCategoryStatus.ACTIVE;
+            } else if (!result.active) {
+              result.status = StoreCategoryStatus.INACTIVE;
+            }
+          }
 
-        const listResult: ListResponse = {
-          total_item: totalItems,
-          limit: Number(perPage),
-          current_page: Number(currentPage),
-          items: result,
-        };
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.general.success'),
-          listResult,
-        );
-      })
-      .catch((err) => {
-        const errors: RMessage = {
-          value: '',
-          property: '',
-          constraint: [
-            this.messageService.getjson({
-              code: 'DATA_NOT_FOUND',
-              message: err.message,
-            }),
-          ],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      });
+          const listResult: ListResponse = {
+            total_item: totalItems,
+            limit: Number(perPage),
+            current_page: Number(currentPage),
+            items: results,
+          };
+          return this.responseService.success(
+            true,
+            this.messageService.get('merchant.general.success'),
+            listResult,
+          );
+        })
+        .catch((err) => {
+          const errors: RMessage = {
+            value: '',
+            property: '',
+            constraint: [
+              this.messageService.getjson({
+                code: 'DATA_NOT_FOUND',
+                message: err.message,
+              }),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        })
+    );
   }
 
   async viewDetailStoreCategory(

@@ -1,3 +1,4 @@
+import { StoreCategoryStatus } from 'src/store_categories/validation/store_categories.validation.dto';
 import {
   Column,
   CreateDateColumn,
@@ -33,6 +34,8 @@ export class StoreCategoriesDocument {
 
   @Column({ default: 0 })
   sequence: number;
+
+  status: StoreCategoryStatus;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date | string;
