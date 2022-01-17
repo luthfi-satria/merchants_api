@@ -313,7 +313,6 @@ export class StoreCategoriesService {
         if (status == StoreCategoryStatus.INACTIVE) actives.push(false);
       }
     }
-    console.log('actives: ', actives);
     const qCount = this.storeCategoriesRepository.createQueryBuilder('sc');
 
     if (actives.length > 0) {
@@ -329,7 +328,6 @@ export class StoreCategoriesService {
       .limit(perPage);
 
     const storeCategories = await qCount.getManyAndCount();
-    console.log('storeCategories: ', storeCategories);
     const listStocat = [];
     storeCategories[0].forEach((raw) => {
       listStocat.push(raw.id);

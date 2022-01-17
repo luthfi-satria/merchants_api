@@ -492,7 +492,6 @@ export class QueryService {
       );
       const defaultRadius = Number(settingRadius.value);
       const radius = data.distance || defaultRadius;
-      console.log('radius: ', radius);
 
       let is_online_platform = true;
       if (data.platform) is_online_platform = data.platform == 'ONLINE';

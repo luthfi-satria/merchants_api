@@ -33,11 +33,11 @@ export class MenuOnlineDocument {
   @Column()
   price: number;
 
-  @Column({ nullable: true })
+  @Column()
   store_id: string;
 
   @ManyToOne(() => StoreDocument, (store) => store.menus)
-  @JoinColumn({ name: 'store_id', referencedColumnName: 'id' })
+  @JoinColumn({ name: 'store_id' })
   store: StoreDocument;
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'LOCALTIMESTAMP' })
