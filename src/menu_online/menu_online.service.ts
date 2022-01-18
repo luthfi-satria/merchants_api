@@ -52,11 +52,8 @@ export class MenuOnlineService {
       const menuOnline = await this.menuOnlineRepository.findOne({
         menu_store_id: data.id,
       });
-      const store = await this.storesService.findMerchantStoreById(
-        data.store_id,
-      );
 
-      if (menuOnline && store) {
+      if (menuOnline) {
         menuOnline.store_id = data.store_id;
         menuOnline.menu_price_id = data.menu_price.id;
         menuOnline.menu_id = data.menu_price.menu_menu.id;
