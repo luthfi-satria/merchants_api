@@ -28,6 +28,16 @@ export enum MerchantType {
   Regular = 'REGULAR',
 }
 
+export enum PromoType {
+  SHOPPING_COST = 'SHOPPING_COST',
+  DELIVERY_COST = 'DELIVERY_COST',
+}
+
+export enum DiscountType {
+  PERCENTAGE = 'PERCENTAGE',
+  PRICE = 'PRICE',
+}
+
 @Entity({ name: 'merchant_merchant' })
 export class MerchantDocument {
   @PrimaryGeneratedColumn('uuid')
@@ -140,6 +150,43 @@ export class MerchantDocument {
     cascade: true,
   })
   users: MerchantUsersDocument[];
+
+  @Column({
+    type: 'enum',
+    enum: PromoType,
+    nullable: true,
+  })
+  recommended_promo_type: PromoType;
+
+  @Column({
+    type: 'enum',
+    enum: DiscountType,
+    nullable: true,
+  })
+  recommended_discount_type: DiscountType;
+
+  @Column({ nullable: true })
+  recommended_discount_value: number;
+
+  @Column({
+    type: 'enum',
+    enum: DiscountType,
+    nullable: true,
+  })
+  recommended_shopping_discount_type: DiscountType;
+
+  @Column({ nullable: true })
+  recommended_shopping_discount_value: number;
+
+  @Column({
+    type: 'enum',
+    enum: DiscountType,
+    nullable: true,
+  })
+  recommended_delivery_discount_type: DiscountType;
+
+  @Column({ nullable: true })
+  recommended_delivery_discount_value: number;
 
   constructor(init?: Partial<MerchantDocument>) {
     Object.assign(this, init);

@@ -25,6 +25,7 @@ import { StoreCategoriesDocument } from 'src/database/entities/store-categories.
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { LanguageDocument } from 'src/database/entities/language.entity';
 import _ from 'lodash';
+import { isDefined } from 'class-validator';
 
 @Injectable()
 export class StoreCategoriesService {
@@ -155,11 +156,7 @@ export class StoreCategoriesService {
         ),
       );
     }
-    if (
-      data.image != null &&
-      data.image != '' &&
-      typeof data.image != 'undefined'
-    ) {
+    if (isDefined(data.image)) {
       try {
         const url = await this.storage.store(data.image);
         stoCatExist.image = url;
@@ -185,6 +182,7 @@ export class StoreCategoriesService {
           // updateLang.id = stoCatExist.languages[idx].id;
           stoCatExist.languages[idx].lang = key.substring(5);
           stoCatExist.languages[idx].name = data[key];
+          await this.languageRepository.save(stoCatExist.languages[idx]);
         } else {
           const addStocat = await this.languageRepository
             .save(updateLang)
@@ -216,7 +214,7 @@ export class StoreCategoriesService {
       stoCatExist.sequence = +data.sequence;
     }
 
-    return await this.storeCategoriesRepository
+    return this.storeCategoriesRepository
       .save(stoCatExist)
       .then(async (result) => {
         dbOutputTime(result);
@@ -298,8 +296,7 @@ export class StoreCategoriesService {
   async listStoreCategories(
     data: Partial<StoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
-    // let search = data.search || '';
-    // search = search.toLowerCase();
+    const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
     // let totalItems;
@@ -313,80 +310,87 @@ export class StoreCategoriesService {
         if (status == StoreCategoryStatus.INACTIVE) actives.push(false);
       }
     }
-    const qCount = this.storeCategoriesRepository.createQueryBuilder('sc');
+    const qCount = this.storeCategoriesRepository
+      .createQueryBuilder('sc')
+      .leftJoinAndSelect('sc.languages', 'mscl');
 
     if (actives.length > 0) {
       qCount.andWhere('sc.active in (:...actives)', {
         actives: actives,
       });
     }
+    if (data.search) {
+      qCount.andWhere('mscl.name  ilike :sname', {
+        sname: '%' + search + '%',
+      });
+    }
 
     qCount
       // .andWhere('sc.active = true')
       .orderBy('sc.sequence')
-      .offset((currentPage - 1) * perPage)
-      .limit(perPage);
+      .skip((currentPage - 1) * perPage)
+      .take(perPage);
 
     const storeCategories = await qCount.getManyAndCount();
-    const listStocat = [];
-    storeCategories[0].forEach((raw) => {
-      listStocat.push(raw.id);
-    });
+    // const listStocat = [];
+    // storeCategories[0].forEach((raw) => {
+    //   listStocat.push(raw.id);
+    // });
     const totalItems = storeCategories[1];
 
-    return (
-      this.storeCategoriesRepository
-        .createQueryBuilder('sc')
-        .leftJoinAndSelect(
-          'sc.languages',
-          'merchant_store_categories_languages',
-        )
-        .where('sc.id IN(:...lid)', { lid: listStocat })
-        .orderBy('sc.sequence')
-        .getMany()
-        // })
-        .then((results) => {
-          for (const result of results) {
-            dbOutputTime(result);
-            if (result.active) {
-              result.status = StoreCategoryStatus.ACTIVE;
-            } else if (!result.active) {
-              result.status = StoreCategoryStatus.INACTIVE;
-            }
-          }
+    // return (
+    //   this.storeCategoriesRepository
+    //     .createQueryBuilder('sc')
+    //     .leftJoinAndSelect(
+    //       'sc.languages',
+    //       'merchant_store_categories_languages',
+    //     )
+    //     .where('sc.id IN(:...lid)', { lid: listStocat })
+    //     .orderBy('sc.sequence')
+    //     .getMany()
+    //     // })
+    //     .then((results) => {
+    for (const result of storeCategories[0]) {
+      dbOutputTime(result);
+      if (result.active) {
+        result.status = StoreCategoryStatus.ACTIVE;
+      } else if (!result.active) {
+        result.status = StoreCategoryStatus.INACTIVE;
+      }
+    }
 
-          const listResult: ListResponse = {
-            total_item: totalItems,
-            limit: Number(perPage),
-            current_page: Number(currentPage),
-            items: results,
-          };
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.general.success'),
-            listResult,
-          );
-        })
-        .catch((err) => {
-          const errors: RMessage = {
-            value: '',
-            property: '',
-            constraint: [
-              this.messageService.getjson({
-                code: 'DATA_NOT_FOUND',
-                message: err.message,
-              }),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        })
+    const listResult: ListResponse = {
+      total_item: totalItems,
+      limit: Number(perPage),
+      current_page: Number(currentPage),
+      items: storeCategories[0],
+    };
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      listResult,
     );
+    // })
+    // .catch((err) => {
+    //   const errors: RMessage = {
+    //     value: '',
+    //     property: '',
+    //     constraint: [
+    //       this.messageService.getjson({
+    //         code: 'DATA_NOT_FOUND',
+    //         message: err.message,
+    //       }),
+    //     ],
+    //   };
+    //   throw new BadRequestException(
+    //     this.responseService.error(
+    //       HttpStatus.BAD_REQUEST,
+    //       errors,
+    //       'Bad Request',
+    //     ),
+    //   );
+    // })
+    // );
   }
 
   async viewDetailStoreCategory(
