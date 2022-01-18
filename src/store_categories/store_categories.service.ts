@@ -299,7 +299,6 @@ export class StoreCategoriesService {
     const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
-    // let totalItems;
     const actives = [];
 
     if (data.active == 'true') actives.push(true);
@@ -326,30 +325,13 @@ export class StoreCategoriesService {
     }
 
     qCount
-      // .andWhere('sc.active = true')
       .orderBy('sc.sequence')
       .skip((currentPage - 1) * perPage)
       .take(perPage);
 
     const storeCategories = await qCount.getManyAndCount();
-    // const listStocat = [];
-    // storeCategories[0].forEach((raw) => {
-    //   listStocat.push(raw.id);
-    // });
     const totalItems = storeCategories[1];
 
-    // return (
-    //   this.storeCategoriesRepository
-    //     .createQueryBuilder('sc')
-    //     .leftJoinAndSelect(
-    //       'sc.languages',
-    //       'merchant_store_categories_languages',
-    //     )
-    //     .where('sc.id IN(:...lid)', { lid: listStocat })
-    //     .orderBy('sc.sequence')
-    //     .getMany()
-    //     // })
-    //     .then((results) => {
     for (const result of storeCategories[0]) {
       dbOutputTime(result);
       if (result.active) {
@@ -370,34 +352,13 @@ export class StoreCategoriesService {
       this.messageService.get('merchant.general.success'),
       listResult,
     );
-    // })
-    // .catch((err) => {
-    //   const errors: RMessage = {
-    //     value: '',
-    //     property: '',
-    //     constraint: [
-    //       this.messageService.getjson({
-    //         code: 'DATA_NOT_FOUND',
-    //         message: err.message,
-    //       }),
-    //     ],
-    //   };
-    //   throw new BadRequestException(
-    //     this.responseService.error(
-    //       HttpStatus.BAD_REQUEST,
-    //       errors,
-    //       'Bad Request',
-    //     ),
-    //   );
-    // })
-    // );
   }
 
   async viewDetailStoreCategory(
     store_catgory_id: string,
   ): Promise<RSuccessMessage> {
     const result = await this.storeCategoriesRepository.findOne({
-      where: { active: true, id: store_catgory_id },
+      where: { id: store_catgory_id },
       relations: ['languages'],
     });
     if (!result) {
@@ -413,6 +374,11 @@ export class StoreCategoriesService {
           'Bad Request',
         ),
       );
+    }
+    if (result.active) {
+      result.status = StoreCategoryStatus.ACTIVE;
+    } else if (!result.active) {
+      result.status = StoreCategoryStatus.INACTIVE;
     }
     return this.responseService.success(
       true,
