@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
-import { LobDocument } from 'src/database/entities/lob.entity';
+import { LobDocument, LobStatus } from 'src/database/entities/lob.entity';
 import { dbOutputTime } from 'src/utils/general-utils';
 import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
@@ -38,7 +38,7 @@ export class LobService {
   ): Promise<LobDocument> {
     const create_lob: Partial<LobDocument> = {
       name: data.name,
-      status: data.status ? data.status : null,
+      status: data.status ? data.status : LobStatus.ACTIVE,
     };
     return this.lobRepository
       .save(create_lob)
@@ -68,31 +68,7 @@ export class LobService {
   ): Promise<LobDocument> {
     lob.name = data.name ? data.name : lob.name;
     lob.status = data.status ? data.status : lob.status;
-    return await this.lobRepository.save(lob);
-    // .createQueryBuilder('merchant_lob')
-    // .update(LobDocument)
-    // .set(create_lob)
-    // .where('id= :id', { id: data.id })
-    // .returning('*')
-    // .execute()
-    // .then((response) => {
-    //   dbOutputTime(response.raw[0]);
-    //   return response.raw[0];
-    // })
-    // .catch((err) => {
-    //   const errors: RMessage = {
-    //     value: '',
-    //     property: '',
-    //     constraint: [err.message],
-    //   };
-    //   throw new BadRequestException(
-    //     this.responseService.error(
-    //       HttpStatus.BAD_REQUEST,
-    //       errors,
-    //       'Bad Request',
-    //     ),
-    //   );
-    // });
+    return this.lobRepository.save(lob);
   }
 
   async deleteMerchantLobProfile(id: string): Promise<any> {
