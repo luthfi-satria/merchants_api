@@ -39,93 +39,48 @@ export class LobController {
   async createlob(
     @Body(RequestValidationPipe(MerchantLobValidation))
     data: MerchantLobValidation,
-    @Headers('Authorization') token: string,
   ): Promise<any> {
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-    };
-
-    return (await this.lobService.getHttp(url, headersRequest)).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.createlob.invalid_token'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-
-        const result: LobDocument = await this.lobService.findMerchantByName(
-          data.name,
-        );
-
-        if (result) {
-          const errors: RMessage = {
-            value: data.name,
-            property: 'name',
-            constraint: [
-              this.messageService.get('merchant.createlob.nameExist'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-
-        try {
-          const result_db: LobDocument =
-            await this.lobService.createMerchantLobProfile(data);
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.createlob.success'),
-            result_db,
-          );
-        } catch (err) {
-          const errors: RMessage = {
-            value: err.message,
-            property: 'name',
-            constraint: [this.messageService.get('merchant.createlob.fail')],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
+    const result: LobDocument = await this.lobService.findMerchantByName(
+      data.name,
     );
+
+    if (result) {
+      const errors: RMessage = {
+        value: data.name,
+        property: 'name',
+        constraint: [this.messageService.get('merchant.createlob.nameExist')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    try {
+      const result_db: LobDocument =
+        await this.lobService.createMerchantLobProfile(data);
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.createlob.success'),
+        result_db,
+      );
+    } catch (err) {
+      const errors: RMessage = {
+        value: err.message,
+        property: 'name',
+        constraint: [this.messageService.get('merchant.createlob.fail')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   @Put('lob/:id')
@@ -357,6 +312,19 @@ export class LobController {
       true,
       this.messageService.get('merchant.listlob.success'),
       listgroup,
+    );
+  }
+
+  @Get('lob/:lid')
+  @UserType('admin', 'merchant')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async viewDetailGroups(@Param('lid') lob_id: string): Promise<any> {
+    const result = await this.lobService.viewDetailGroup(lob_id);
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.listlob.success'),
+      result,
     );
   }
 }

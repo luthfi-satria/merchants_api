@@ -9,6 +9,7 @@ import { LobDocument } from 'src/database/entities/lob.entity';
 import { dbOutputTime } from 'src/utils/general-utils';
 import { ListResponse, RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
+import { MessageService } from 'src/message/message.service';
 
 @Injectable()
 export class LobService {
@@ -17,14 +18,15 @@ export class LobService {
     private readonly lobRepository: Repository<LobDocument>,
     private httpService: HttpService,
     private readonly responseService: ResponseService,
+    private readonly messageService: MessageService,
   ) {}
 
   async findMerchantById(id: string): Promise<LobDocument> {
-    return await this.lobRepository.findOne({ id: id });
+    return this.lobRepository.findOne({ id: id });
   }
 
   async findMerchantByName(name: string): Promise<LobDocument> {
-    return await this.lobRepository.findOne({ where: { name: name } });
+    return this.lobRepository.findOne({ where: { name: name } });
   }
 
   async createMerchantLobProfile(
@@ -33,7 +35,7 @@ export class LobService {
     const create_lob: Partial<LobDocument> = {
       name: data.name,
     };
-    return await this.lobRepository
+    return this.lobRepository
       .save(create_lob)
       .then((result) => {
         dbOutputTime(result);
@@ -100,14 +102,14 @@ export class LobService {
     const perPage = data.limit || 10;
     let totalItems: number;
 
-    return await this.lobRepository
+    return this.lobRepository
       .createQueryBuilder('merchant_lob')
       .select('*')
       .where('lower(name) like :aname', { aname: '%' + search + '%' })
       .getCount()
       .then(async (counts) => {
         totalItems = counts;
-        return await this.lobRepository
+        return this.lobRepository
           .createQueryBuilder('merchant_lob')
           .select('*')
           .where('lower(name) like :aname', { aname: '%' + search + '%' })
@@ -134,6 +136,32 @@ export class LobService {
           value: '',
           property: '',
           constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  async viewDetailGroup(lob_id: string): Promise<LobDocument> {
+    return this.lobRepository
+      .findOne(lob_id)
+      .then((result) => {
+        dbOutputTime(result);
+
+        return result;
+      })
+      .catch(() => {
+        const errors: RMessage = {
+          value: lob_id,
+          property: 'lob_id',
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
         };
         throw new BadRequestException(
           this.responseService.error(
