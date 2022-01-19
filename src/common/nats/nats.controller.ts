@@ -2,6 +2,7 @@ import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { InternalService } from 'src/internal/internal.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
+import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
 
 @Controller('')
@@ -11,6 +12,7 @@ export class NatsController {
     private readonly menuOnlineService: MenuOnlineService,
     private readonly mStoreOperationalService: StoreOperationalService,
     private readonly internalService: InternalService,
+    private readonly merchantService: MerchantsService,
   ) {}
 
   @EventPattern('catalogs.storeavailability.created')
@@ -81,5 +83,17 @@ export class NatsController {
   async averagePriceUpdated(@Payload() data: any) {
     this.logger.log('catalogs.menu.online.averageprice.updated');
     this.internalService.updateStoreAveragePrice(data);
+  }
+
+  @EventPattern('loyalties.promo_brand.active')
+  async promoActived(@Payload() data: any) {
+    this.logger.log('loyalties.promo_brand.active');
+    this.merchantService.updatedRecommendationPromo(data);
+  }
+
+  @EventPattern('loyalties.promo_brand.inactive')
+  async promoInactived(@Payload() data: any) {
+    this.logger.log('loyalties.promo_brand.inactive');
+    this.merchantService.updatedRecommendationPromo(data);
   }
 }

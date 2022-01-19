@@ -9,8 +9,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  DiscountType,
   MerchantDocument,
   MerchantStatus,
+  PromoType,
 } from 'src/database/entities/merchant.entity';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import {
@@ -47,6 +49,7 @@ import {
 import { StoresService } from 'src/stores/stores.service';
 import { enumStoreStatus } from 'src/database/entities/store.entity';
 import { NatsService } from 'src/nats/nats.service';
+import { isDefined } from 'class-validator';
 @Injectable()
 export class MerchantsService {
   constructor(
@@ -944,6 +947,52 @@ export class MerchantsService {
         'merchants.merchant.endofday.disabled',
         payload,
       );
+    }
+  }
+
+  async updatedRecommendationPromo(data: any) {
+    const merchant: MerchantDocument = await this.merchantRepository.findOne(
+      data.merchant_id,
+    );
+    if (merchant) {
+      const url = `${process.env.BASEURL_LOYALTIES_SERVICE}/api/v1/internal/loyalties/recommended-promos/${data.merchant_id}`;
+      const result = await this.commonService.getHttp(url);
+
+      if (result && result.status) {
+        const recommendedPromo = result.data;
+        if (isDefined(recommendedPromo.recommended_global_promo)) {
+          merchant.recommended_promo_type =
+            PromoType[recommendedPromo.recommended_global_promo.type];
+          merchant.recommended_discount_type =
+            DiscountType[
+              recommendedPromo.recommended_global_promo.discount_type
+            ];
+          merchant.recommended_discount_value =
+            recommendedPromo.recommended_global_promo.discount_value;
+        }
+        if (isDefined(recommendedPromo.recommended_shopping_discount_promo)) {
+          merchant.recommended_shopping_discount_type =
+            DiscountType[
+              recommendedPromo.recommended_shopping_discount_promo.discount_type
+            ];
+          merchant.recommended_shopping_discount_value =
+            recommendedPromo.recommended_shopping_discount_promo.discount_value;
+        }
+        if (
+          isDefined(
+            recommendedPromo.recommended_delivery_discout_promo.discount_type,
+          )
+        ) {
+          merchant.recommended_delivery_discount_type =
+            DiscountType[
+              recommendedPromo.recommended_delivery_discout_promo.discount_type
+            ];
+          merchant.recommended_delivery_discount_value =
+            recommendedPromo.recommended_delivery_discout_promo.discount_value;
+        }
+
+        this.merchantRepository.save(merchant);
+      }
     }
   }
 }
