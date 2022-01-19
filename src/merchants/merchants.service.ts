@@ -197,9 +197,7 @@ export class MerchantsService {
         );
       }
     }
-    const ceklob: LobDocument = await this.lobService.findMerchantById(
-      data.lob_id,
-    );
+    const ceklob: LobDocument = await this.lobService.findLobById(data.lob_id);
     if (!ceklob) {
       const errors: RMessage = {
         value: data.lob_id,
