@@ -80,7 +80,9 @@ export class ProfileService {
     merchantUser.phone_verified_at = new Date();
     const result = await this.merchantRepository.save(merchantUser);
     if (result) {
-      return this.merchantRepository.findOne(result.id);
+      return this.merchantRepository.findOne(result.id, {
+        relations: ['group'],
+      });
     }
   }
 

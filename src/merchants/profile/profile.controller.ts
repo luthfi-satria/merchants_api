@@ -22,13 +22,15 @@ import {
 } from './validation/profile.dto';
 import { RMessage } from 'src/response/response.interface';
 import { catchError, map } from 'rxjs';
+import { CommonService } from 'src/common/common.service';
 
 @Controller('api/v1/merchants')
 export class ProfileController {
   constructor(
     private readonly profileService: ProfileService,
     private readonly responseService: ResponseService,
-    private readonly messageService: MessageService, // private httpService: HttpService,
+    private readonly messageService: MessageService,
+    private readonly commonService: CommonService,
   ) {}
 
   @Post('profile/verify-email')
@@ -161,27 +163,22 @@ export class ProfileController {
     otpDto.phone = data.phone;
     otpDto.id_otp = userData.id;
     otpDto.user_type = 'merchant';
-    return (
-      await this.profileService.postHttp(url, otpDto, defaultJsonHeader)
-    ).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        return response;
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
+    const response = await this.commonService.postHttp(
+      url,
+      otpDto,
+      defaultJsonHeader,
     );
+    const rsp: Record<string, any> = response;
+    if (rsp.statusCode) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          rsp.message[0],
+          'Bad Request',
+        ),
+      );
+    }
+    return response;
   }
 
   @Post('profile/verify-phone-validation')
@@ -200,7 +197,7 @@ export class ProfileController {
       const errors: RMessage = {
         value: data.phone,
         property: 'phone',
-        constraint: [this.messageService.get('merchant.general.emailExist')],
+        constraint: [this.messageService.get('merchant.general.phoneExist')],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -216,46 +213,46 @@ export class ProfileController {
     otpDto.otp_code = data.otp_code;
     otpDto.id = userData.id;
     otpDto.user_type = 'merchant';
-    return (
-      await this.profileService.postHttp(url, otpDto, defaultJsonHeader)
-    ).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
 
-        if (rsp.success) {
-          data.id = userData.id;
-          const updateResult = await this.profileService.updatePhone(data);
-          const responseMerchantDataDto = new ResponseMerchantDto();
-          responseMerchantDataDto.id = updateResult.id;
-          responseMerchantDataDto.name = updateResult.name;
-          responseMerchantDataDto.email = updateResult.email;
-          responseMerchantDataDto.phone = updateResult.phone;
-          responseMerchantDataDto.group_id = updateResult.group_id;
-          responseMerchantDataDto.merchant_id = updateResult.merchant_id;
-          responseMerchantDataDto.nip = updateResult.nip;
-          responseMerchantDataDto.created_at = updateResult.created_at;
-          responseMerchantDataDto.updated_at = updateResult.updated_at;
-          responseMerchantDataDto.deleted_at = updateResult.deleted_at;
-          responseMerchantDataDto.store = updateResult.store;
-          responseMerchantDataDto.merchant = updateResult.merchant;
-          responseMerchantDataDto.group = updateResult.group;
-          return this.responseService.success(
-            true,
-            this.messageService.get('merchant.general.success'),
-            responseMerchantDataDto,
-          );
-        }
-        return response;
-      }),
-      catchError((err) => {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            err.response.data,
-            'Bad Request',
-          ),
-        );
-      }),
+    const response = await this.commonService.postHttp(
+      url,
+      otpDto,
+      defaultJsonHeader,
     );
+    const rsp: Record<string, any> = response;
+
+    if (rsp.success) {
+      data.id = userData.id;
+      const updateResult = await this.profileService.updatePhone(data);
+      console.log('updateResult: ', updateResult);
+
+      const responseMerchantDataDto = new ResponseMerchantDto();
+      responseMerchantDataDto.id = updateResult.id;
+      responseMerchantDataDto.name = updateResult.name;
+      responseMerchantDataDto.email = updateResult.email;
+      responseMerchantDataDto.phone = updateResult.phone;
+      responseMerchantDataDto.group_id = updateResult.group_id;
+      responseMerchantDataDto.merchant_id = updateResult.merchant_id;
+      responseMerchantDataDto.nip = updateResult.nip;
+      responseMerchantDataDto.created_at = updateResult.created_at;
+      responseMerchantDataDto.updated_at = updateResult.updated_at;
+      responseMerchantDataDto.deleted_at = updateResult.deleted_at;
+      responseMerchantDataDto.store = updateResult.store;
+      responseMerchantDataDto.merchant = updateResult.merchant;
+      responseMerchantDataDto.group = updateResult.group;
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        responseMerchantDataDto,
+      );
+    } else {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          rsp.message[0],
+          'Bad Request',
+        ),
+      );
+    }
   }
 }
