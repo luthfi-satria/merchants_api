@@ -949,14 +949,16 @@ export class MerchantsService {
   }
 
   async updatedRecommendationPromo(data: any) {
+    console.log('data: ', data);
     const merchant: MerchantDocument = await this.merchantRepository.findOne(
       data.merchant_id,
     );
     if (merchant) {
       const url = `${process.env.BASEURL_LOYALTIES_SERVICE}/api/v1/internal/loyalties/recommended-promos/${data.merchant_id}`;
-      const result = await this.commonService.getHttp(url);
+      const result: any = await this.commonService.getHttp(url);
+      console.log('result: ', result);
 
-      if (result && result.status) {
+      if (result && result.success) {
         const recommendedPromo = result.data;
         if (isDefined(recommendedPromo.recommended_global_promo)) {
           merchant.recommended_promo_type =
@@ -976,11 +978,7 @@ export class MerchantsService {
           merchant.recommended_shopping_discount_value =
             recommendedPromo.recommended_shopping_discount_promo.discount_value;
         }
-        if (
-          isDefined(
-            recommendedPromo.recommended_delivery_discout_promo.discount_type,
-          )
-        ) {
+        if (isDefined(recommendedPromo.recommended_delivery_discout_promo)) {
           merchant.recommended_delivery_discount_type =
             DiscountType[
               recommendedPromo.recommended_delivery_discout_promo.discount_type

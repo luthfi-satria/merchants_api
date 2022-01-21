@@ -4,16 +4,30 @@ import { InternalService } from 'src/internal/internal.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoreOperationalService } from 'src/stores/stores-operational.service';
+import { StoresService } from 'src/stores/stores.service';
 
 @Controller('')
-export class NatsController {
-  logger = new Logger(NatsController.name);
+export class CommonNatsController {
+  logger = new Logger(CommonNatsController.name);
   constructor(
     private readonly menuOnlineService: MenuOnlineService,
     private readonly mStoreOperationalService: StoreOperationalService,
     private readonly internalService: InternalService,
     private readonly merchantService: MerchantsService,
+    private readonly storesService: StoresService,
   ) {}
+
+  @EventPattern('loyalties.promo_brand.active')
+  async promoActived(@Payload() data: any) {
+    this.logger.log('loyalties.promo_brand.active');
+    this.merchantService.updatedRecommendationPromo(data);
+  }
+
+  @EventPattern('loyalties.promo_brand.inactive')
+  async promoInactived(@Payload() data: any) {
+    this.logger.log('loyalties.promo_brand.inactive');
+    this.merchantService.updatedRecommendationPromo(data);
+  }
 
   @EventPattern('catalogs.storeavailability.created')
   async saveMenuOnline(@Payload() data: any) {
@@ -85,15 +99,27 @@ export class NatsController {
     this.internalService.updateStoreAveragePrice(data);
   }
 
-  @EventPattern('loyalties.promo_brand.active')
-  async promoActived(@Payload() data: any) {
-    this.logger.log('loyalties.promo_brand.active');
-    this.merchantService.updatedRecommendationPromo(data);
+  @EventPattern('catalogs.discount.started')
+  async orderCancelledByCustomer(@Payload() data: any) {
+    this.logger.log('catalogs.discount.started');
+    this.storesService.updateNumDiscounts(data);
   }
 
-  @EventPattern('loyalties.promo_brand.inactive')
-  async promoInactived(@Payload() data: any) {
-    this.logger.log('loyalties.promo_brand.inactive');
-    this.merchantService.updatedRecommendationPromo(data);
+  @EventPattern('catalogs.discount.stopped')
+  async orderCancelledByStoreStocks(@Payload() data: any) {
+    this.logger.log('catalogs.discount.stopped');
+    this.storesService.updateNumDiscounts(data);
+  }
+
+  @EventPattern('catalogs.discount.cancelled')
+  async orderCancelledByStoreOperational(@Payload() data: any) {
+    this.logger.log('catalogs.discount.cancelled');
+    this.storesService.updateNumDiscounts(data);
+  }
+
+  @EventPattern('catalogs.discount.finished')
+  async orderCancelledByStoreBusy(@Payload() data: any) {
+    this.logger.log('catalogs.discount.finished');
+    this.storesService.updateNumDiscounts(data);
   }
 }

@@ -224,8 +224,6 @@ export class ProfileController {
     if (rsp.success) {
       data.id = userData.id;
       const updateResult = await this.profileService.updatePhone(data);
-      console.log('updateResult: ', updateResult);
-
       const responseMerchantDataDto = new ResponseMerchantDto();
       responseMerchantDataDto.id = updateResult.id;
       responseMerchantDataDto.name = updateResult.name;
