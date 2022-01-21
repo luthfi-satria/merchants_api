@@ -472,6 +472,26 @@ export class QueryService {
     }
   }
 
+  getQueryPromo(promo) {
+    let qry = null;
+    switch (promo) {
+      case 'DISKON_BUAT_KAMU':
+        qry = 'AND merchant.recommended_promo_type is not null';
+        break;
+      case 'PROMO_SPESIAL':
+        qry = 'AND merchant.recommended_shopping_discount_type is not null';
+        break;
+      case 'HEMAT_ONGKIR':
+        qry = 'AND merchant.recommended_delivery_discount_type is not null';
+        break;
+      case 'DISKON_MENU':
+        qry = 'AND merchant_store.numdiscounts > 0';
+        break;
+    }
+
+    return qry;
+  }
+
   async getListQueryStore(
     data: QueryListStoreDto,
     options: any = {},
@@ -486,6 +506,10 @@ export class QueryService {
       const store_category_id: string = data.store_category_id || null;
       const merchant_id: string = data.merchant_id || null;
       const include_inactive_stores = data.include_inactive_stores || false;
+      const promo = data.promo || null;
+      let queryPromo = null;
+
+      if (promo) queryPromo = this.getQueryPromo(promo);
 
       const settingRadius = await this.settingService.findByName(
         'store_radius',
@@ -571,6 +595,7 @@ export class QueryService {
         prices_list_low: ${priceLow}
         prices_list_high: ${priceHigh}
         new_This_week_date: ${lastWeek}
+        promo: ${promo}
         order Query: ${JSON.stringify(OrderFilter)}
       `,
         'Query List Stores',
@@ -595,6 +620,7 @@ export class QueryService {
           'operational_hours',
           'operational_hours.merchant_store_id = merchant_store.id',
         )
+        .leftJoinAndSelect('merchant_store.merchant', 'merchant')
         .leftJoinAndSelect(
           'operational_hours.shifts',
           'operational_shifts',
@@ -662,6 +688,7 @@ export class QueryService {
                 ? `AND merchant_store.rating >= :minimum_rating`
                 : ''
             }
+            ${queryPromo ? queryPromo : ''}
             `,
           {
             active: enumStoreStatus.active,
@@ -1030,6 +1057,7 @@ export class QueryService {
       const budget_meal = data.budget_meal || false;
       const include_inactive_stores = data.include_inactive_stores || false;
       const minimum_rating = data.minimum_rating || 0;
+      const promo = data.promo || null;
 
       const options = {
         fetch_all: true,
@@ -1060,6 +1088,7 @@ export class QueryService {
         location_longitude: long,
         platform: 'ONLINE',
         favorite_this_week: null,
+        promo,
       };
 
       const listStores = await this.getListQueryStore(args, options, true);
@@ -1248,6 +1277,7 @@ export class QueryService {
 
       const include_closed_stores = true;
       const include_inactive_stores = true;
+      const promo = null;
       const new_this_week = false;
       const budget_meal = false;
       const minimum_rating = 0;
@@ -1278,6 +1308,7 @@ export class QueryService {
         location_longitude: long,
         platform: 'ONLINE',
         favorite_this_week: null,
+        promo,
       };
 
       const currentPage = data.page || 1;
