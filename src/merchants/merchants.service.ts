@@ -967,7 +967,12 @@ export class MerchantsService {
             ];
           merchant.recommended_discount_value =
             recommendedPromo.recommended_global_promo.discount_value;
+        } else {
+          merchant.recommended_promo_type = null;
+          merchant.recommended_discount_type = null;
+          merchant.recommended_discount_value = null;
         }
+
         if (isDefined(recommendedPromo.recommended_shopping_discount_promo)) {
           merchant.recommended_shopping_discount_type =
             DiscountType[
@@ -975,7 +980,11 @@ export class MerchantsService {
             ];
           merchant.recommended_shopping_discount_value =
             recommendedPromo.recommended_shopping_discount_promo.discount_value;
+        } else {
+          merchant.recommended_shopping_discount_type = null;
+          merchant.recommended_shopping_discount_value = null;
         }
+
         if (isDefined(recommendedPromo.recommended_delivery_discout_promo)) {
           merchant.recommended_delivery_discount_type =
             DiscountType[
@@ -983,6 +992,9 @@ export class MerchantsService {
             ];
           merchant.recommended_delivery_discount_value =
             recommendedPromo.recommended_delivery_discout_promo.discount_value;
+        } else {
+          merchant.recommended_delivery_discount_type = null;
+          merchant.recommended_delivery_discount_value = null;
         }
 
         this.merchantRepository.save(merchant);
