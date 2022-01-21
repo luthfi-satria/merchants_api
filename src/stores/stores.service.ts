@@ -1201,17 +1201,26 @@ export class StoresService {
   }
 
   async updateNumDiscounts(data: any) {
-    const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/discounts/active/${data.store_id}`;
-    const discounts: any = await this.commonService.getHttp(url);
-    const store = { store_id: data.store_id, count: 0 };
+    const urlmp = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu-price/${data.menu_price_id}`;
+    const menuPrice: any = await this.commonService.getHttp(urlmp);
 
-    for (const discount of discounts) {
-      if (discount.discount_status == 'ACTIVE') {
-        store.count += 1;
+    if (
+      menuPrice &&
+      menuPrice.menu_sales_channel &&
+      menuPrice.menu_sales_channel.platform == 'ONLINE'
+    ) {
+      const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/discounts/active/${data.store_id}`;
+      const discounts: any = await this.commonService.getHttp(url);
+      const store = { store_id: data.store_id, count: 0 };
+
+      for (const discount of discounts) {
+        if (discount.discount_status == 'ACTIVE') {
+          store.count += 1;
+        }
       }
+      await this.storeRepository.update(store.store_id, {
+        numdiscounts: store.count,
+      });
     }
-    await this.storeRepository.update(store.store_id, {
-      numdiscounts: store.count,
-    });
   }
 }

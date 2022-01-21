@@ -949,14 +949,12 @@ export class MerchantsService {
   }
 
   async updatedRecommendationPromo(data: any) {
-    console.log('data: ', data);
     const merchant: MerchantDocument = await this.merchantRepository.findOne(
       data.merchant_id,
     );
     if (merchant) {
       const url = `${process.env.BASEURL_LOYALTIES_SERVICE}/api/v1/internal/loyalties/recommended-promos/${data.merchant_id}`;
       const result: any = await this.commonService.getHttp(url);
-      console.log('result: ', result);
 
       if (result && result.success) {
         const recommendedPromo = result.data;
