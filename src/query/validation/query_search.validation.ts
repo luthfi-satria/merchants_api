@@ -93,6 +93,9 @@ export class QuerySearchValidation {
 
   @IsOptional()
   price_range_id: string[];
+
+  @IsOptional()
+  promo: string;
 }
 
 export class QuerySearchHistoryValidation {
