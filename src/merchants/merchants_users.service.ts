@@ -151,7 +151,12 @@ export class MerchantUsersService {
     Object.assign(usersExist, args);
 
     if (args.merchant_id) {
-      usersExist.merchant_id = args.merchant_id;
+      const merchant = await this.merchantRepository.findOne({
+        where: { id: args.merchant_id },
+      });
+      if (merchant) {
+        usersExist.merchant = merchant;
+      }
     }
 
     if (args.store_ids) {
