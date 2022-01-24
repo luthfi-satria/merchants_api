@@ -13,7 +13,7 @@ export class CreateMerchantUsersValidation {
   @IsNotEmpty({ message: 'Nama tidak boleh kosong' })
   name: string;
 
-  @IsNotEmpty({ message: 'Email tidak boleh kosong' })
+  @IsOptional()
   @IsEmail()
   email: string;
 
