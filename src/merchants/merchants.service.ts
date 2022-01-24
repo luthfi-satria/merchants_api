@@ -24,7 +24,6 @@ import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { HashService } from 'src/hash/hash.service';
-// import { Hash } from 'src/hash/hash.decorator';
 import {
   MerchantUsersDocument,
   MerchantUsersStatus,
