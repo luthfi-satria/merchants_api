@@ -150,6 +150,15 @@ export class MerchantUsersService {
     const usersExist = await this.getAndValidateMerchantUserById(id, user);
     Object.assign(usersExist, args);
 
+    if (args.merchant_id) {
+      const merchant = await this.merchantRepository.findOne({
+        where: { id: args.merchant_id },
+      });
+      if (merchant) {
+        usersExist.merchant = merchant;
+      }
+    }
+
     if (args.store_ids) {
       usersExist.stores =
         await this.commonStoresService.getAndValidateStoreByStoreIds(

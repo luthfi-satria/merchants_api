@@ -76,7 +76,6 @@ export class GroupsController {
     if (createGroupDTO.category == CategoryGroup.COMPANY) {
       this.imageValidationService.setFilter('siup_file', 'required');
       this.imageValidationService.setFilter('akta_pendirian_file', 'required');
-      this.imageValidationService.setFilter('akta_perubahan_file', 'required');
       this.imageValidationService.setFilter('npwp_file', 'required');
     } else if (createGroupDTO.category == CategoryGroup.PERSONAL) {
       this.imageValidationService.setFilter(

@@ -86,6 +86,9 @@ export class QueryListStoreDto extends LocationDto {
   @IsOptional()
   order: string;
 
+  @IsOptional()
+  promo: string;
+
   @IsBoolean()
   @IsOptional()
   @Transform(({ value }) => JSON.parse(value))

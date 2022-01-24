@@ -23,6 +23,7 @@ import { SettingModule } from './settings/setting.module';
 import { UsersModule } from './users/users.module';
 import { MenuOnlineModule } from './menu_online/menu_online.module';
 import { SeederModule } from './database/seeders/seeder.module';
+import { NatsModule } from './nats/nats.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { SeederModule } from './database/seeders/seeder.module';
     UsersModule,
     MenuOnlineModule,
     SeederModule,
+    NatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

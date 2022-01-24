@@ -12,7 +12,7 @@ import { StoreDocument } from 'src/database/entities/store.entity';
 import { CatalogsService } from './catalogs/catalogs.service';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
-import { NatsController } from './nats/nats.controller';
+import { CommonNatsController } from './nats/nats.controller';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { StoresService } from 'src/stores/stores.service';
@@ -130,6 +130,6 @@ import { LanguageDocument } from 'src/database/entities/language.entity';
     CatalogsService,
     OrdersService,
   ],
-  controllers: [NatsController],
+  controllers: [CommonNatsController],
 })
 export class CommonModule {}

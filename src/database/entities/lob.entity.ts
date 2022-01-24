@@ -7,6 +7,11 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+export enum LobStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
+
 @Entity({ name: 'merchant_lob' })
 export class LobDocument {
   @PrimaryGeneratedColumn('uuid')
@@ -14,6 +19,13 @@ export class LobDocument {
 
   @Column()
   name: string;
+
+  @Column({
+    type: 'enum',
+    enum: LobStatus,
+    nullable: true,
+  })
+  status: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date | string;

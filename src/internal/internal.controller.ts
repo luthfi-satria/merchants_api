@@ -20,6 +20,7 @@ import { ListStoreDTO } from 'src/stores/validation/list-store.validation';
 import { StoreCategoryBatchDTO } from './dto/store_category.dto';
 import { RSuccessMessage } from 'src/response/response.interface';
 import { MessageService } from 'src/message/message.service';
+import { MerchantsService } from 'src/merchants/merchants.service';
 
 @Controller('api/v1/internal')
 export class InternalController {
@@ -28,6 +29,7 @@ export class InternalController {
     private readonly responseService: ResponseService,
     private readonly commonStoreService: CommonStoresService,
     private readonly messageService: MessageService,
+    private readonly merchantsService: MerchantsService,
   ) {}
 
   @Get('merchants/merchant-users')
