@@ -209,6 +209,7 @@ export class StoresService {
     create_merchant_store_validation: CreateMerchantStoreValidation,
     user: Record<string, any>,
   ): Promise<StoreDocument> {
+    console.log('user: ', user);
     const store_document: Partial<StoreDocument> = {};
     Object.assign(store_document, create_merchant_store_validation);
 
@@ -241,8 +242,10 @@ export class StoresService {
     const countStore = await this.storeRepository.count({
       where: { merchant_id: create_merchant_store_validation.merchant_id },
     });
+    console.log('countStore: ', countStore);
     if (countStore == 0) {
       flagCreatePricingTemplate = true;
+      store_document.platform = true;
     }
 
     /**
@@ -292,7 +295,7 @@ export class StoresService {
       create_merchant_store_validation.auto_accept_order == 'true'
         ? true
         : false;
-
+    console.log('store_document');
     const create_store = await this.storeRepository.save(store_document);
     this.publishNatsCreateStore(create_store);
     const operational_hours = await this.storeOperationalService
@@ -300,6 +303,8 @@ export class StoresService {
       .catch((e) => {
         throw e;
       });
+
+    console.log('flagCreatePricingTemplate: ', flagCreatePricingTemplate);
 
     if (flagCreatePricingTemplate) {
       const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/populate/pricing-template`;
