@@ -401,6 +401,22 @@ export class StoreUsersService {
     args: Partial<MerchantStoreUsersValidation>,
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
+    if (args.id == user.id) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: args.id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant_user.delete.self_delete'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
     const gUsersExist: MerchantUsersDocument =
       await this.merchantUsersRepository
         .findOne({

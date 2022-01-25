@@ -324,6 +324,22 @@ export class MerchantUsersService {
   }
 
   async deleteMerchantUsers(user_id: string, user: any): Promise<UpdateResult> {
+    if (user_id == user.id) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant_user.delete.self_delete'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
     await this.getAndValidateMerchantUserById(user_id, user);
 
     try {
