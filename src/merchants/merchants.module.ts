@@ -2,10 +2,8 @@ import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BanksService } from 'src/banks/banks.service';
 import { CommonService } from 'src/common/common.service';
 import { GroupDocument } from 'src/database/entities/group.entity';
-import { ListBankDocument } from 'src/database/entities/list_banks';
 import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
@@ -36,6 +34,8 @@ import { StoreOperationalHoursDocument } from 'src/database/entities/store_opera
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
+import { MenuOnlineService } from 'src/menu_online/menu_online.service';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 
 @Module({
   imports: [
@@ -43,13 +43,13 @@ import { NatsService } from 'src/nats/nats.service';
       MerchantDocument,
       GroupDocument,
       LobDocument,
-      ListBankDocument,
       MerchantUsersDocument,
       StoreDocument,
       StoreCategoriesDocument,
       AddonDocument,
       StoreOperationalHoursDocument,
       StoreOperationalShiftDocument,
+      MenuOnlineDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
@@ -67,7 +67,6 @@ import { NatsService } from 'src/nats/nats.service';
     MerchantsService,
     GroupsService,
     LobService,
-    BanksService,
     HashService,
     LoginService,
     ImageValidationService,
@@ -83,6 +82,7 @@ import { NatsService } from 'src/nats/nats.service';
     StoreOperationalService,
     UsersService,
     NatsService,
+    MenuOnlineService,
   ],
 })
 export class MerchantsModule {}

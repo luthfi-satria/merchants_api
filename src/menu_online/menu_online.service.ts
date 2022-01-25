@@ -2,14 +2,13 @@ import { MenuOnlineDocument } from '../database/entities/menu_online.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { StoresService } from 'src/stores/stores.service';
+// import { StoresService } from 'src/stores/stores.service';
 
 @Injectable()
 export class MenuOnlineService {
   constructor(
     @InjectRepository(MenuOnlineDocument)
-    private readonly menuOnlineRepository: Repository<MenuOnlineDocument>,
-    private readonly storesService: StoresService,
+    private readonly menuOnlineRepository: Repository<MenuOnlineDocument>, // private readonly storesService: StoresService,
   ) {}
 
   async natsCreateStoreAvailability(data: any) {
@@ -109,5 +108,12 @@ export class MenuOnlineService {
     this.menuOnlineRepository.softDelete({
       menu_price_id: data.id,
     });
+  }
+
+  async updateMenuPriceByCriteria(
+    criteria: Partial<MenuOnlineDocument>,
+    data: Partial<MenuOnlineDocument>,
+  ) {
+    await this.menuOnlineRepository.update(criteria, data);
   }
 }

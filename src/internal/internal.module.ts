@@ -38,6 +38,8 @@ import { PriceRangeLanguageDocument } from 'src/database/entities/price_range_la
 import { SettingDocument } from 'src/database/entities/setting.entity';
 import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
 import { LanguageDocument } from 'src/database/entities/language.entity';
+import { MenuOnlineService } from 'src/menu_online/menu_online.service';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 
 @Module({
   imports: [
@@ -57,6 +59,7 @@ import { LanguageDocument } from 'src/database/entities/language.entity';
       PriceRangeLanguageDocument,
       SettingDocument,
       LanguageDocument,
+      MenuOnlineDocument,
     ]),
     HttpModule,
   ],
@@ -83,6 +86,7 @@ import { LanguageDocument } from 'src/database/entities/language.entity';
     PriceRangeService,
     SettingsService,
     StoreCategoriesService,
+    MenuOnlineService,
   ],
   exports: [AuthInternalService],
 })

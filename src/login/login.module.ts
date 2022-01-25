@@ -27,6 +27,8 @@ import { ResponseService } from 'src/response/response.service';
 import { LoginController } from './login.controller';
 import { LoginService } from './login.service';
 import { NatsService } from 'src/nats/nats.service';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
+import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { NatsService } from 'src/nats/nats.service';
       AddonDocument,
       StoreOperationalHoursDocument,
       StoreOperationalShiftDocument,
+      MenuOnlineDocument,
     ]),
     HttpModule,
     InternalModule,
@@ -61,6 +64,7 @@ import { NatsService } from 'src/nats/nats.service';
     StoreOperationalService,
     UsersService,
     NatsService,
+    MenuOnlineService,
   ],
 })
 export class LoginModule {}

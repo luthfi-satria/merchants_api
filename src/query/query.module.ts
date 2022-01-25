@@ -34,6 +34,8 @@ import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
 import { OrdersService } from 'src/common/orders/orders.service';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
+import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 
 @Module({
   imports: [
@@ -50,6 +52,7 @@ import { OrdersService } from 'src/common/orders/orders.service';
       LobDocument,
       SearchHistoryStoreDocument,
       SearchHistoryKeywordDocument,
+      MenuOnlineDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
@@ -79,6 +82,7 @@ import { OrdersService } from 'src/common/orders/orders.service';
     UsersService,
     NatsService,
     OrdersService,
+    MenuOnlineService,
   ],
 })
 export class QueryModule {}
