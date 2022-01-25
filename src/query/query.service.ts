@@ -1216,8 +1216,6 @@ export class QueryService {
     data: QuerySearchHistoryValidation,
     user: any,
   ): Promise<RSuccessMessage> {
-    console.log('data: ', data);
-    console.log('user: ', user);
     try {
       const currentPage = data.page || 1;
       const perPage = Number(data.limit) || 10;
@@ -1240,8 +1238,6 @@ export class QueryService {
         .getRawOne();
 
       const items = await query.getRawMany();
-      console.log('items: ', items);
-      console.log('counter: ', counter);
       const count = counter?.count ? +counter.count : 0;
 
       const list_result: ListResponse = {
