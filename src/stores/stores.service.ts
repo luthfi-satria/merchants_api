@@ -990,6 +990,18 @@ export class StoresService {
       .execute();
   }
 
+  async setAllInactiveByMerchantId(merchantId: string): Promise<UpdateResult> {
+    return this.storeRepository
+      .createQueryBuilder()
+      .update()
+      .set({ status: enumStoreStatus.inactive })
+      .where('merchant_id = :merchant_id', { merchant_id: merchantId })
+      .andWhere('status = :status', {
+        status: enumStoreStatus.inactive,
+      })
+      .execute();
+  }
+
   async getAndValidateStoreByStoreId(storeId: string): Promise<StoreDocument> {
     const store = await this.findStoreById(storeId);
     if (!store) {

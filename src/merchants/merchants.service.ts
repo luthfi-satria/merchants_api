@@ -24,6 +24,7 @@ import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { HashService } from 'src/hash/hash.service';
+// import { Hash } from 'src/hash/hash.decorator';
 import {
   MerchantUsersDocument,
   MerchantUsersStatus,
@@ -435,8 +436,7 @@ export class MerchantsService {
         }
         existMerchant.users[0].status = MerchantUsersStatus.Active;
       }
-    }
-    if (existMerchant.status == 'REJECTED') {
+    } else if (existMerchant.status == 'REJECTED') {
       existMerchant.rejected_at = new Date();
       this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
         existMerchant.id,
@@ -451,6 +451,12 @@ export class MerchantsService {
         }
         existMerchant.users[0].status = MerchantUsersStatus.Rejected;
       }
+    } else if (existMerchant.status == MerchantStatus.Inactive) {
+      existMerchant.rejected_at = new Date();
+      this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
+        existMerchant.id,
+        enumStoreStatus.rejected,
+      );
     }
     if (data.rejection_reason)
       existMerchant.rejection_reason = data.rejection_reason;
