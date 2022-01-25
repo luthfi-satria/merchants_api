@@ -1214,6 +1214,7 @@ export class QueryService {
 
   async searchHistoriesKeywords(
     data: QuerySearchHistoryValidation,
+    user: any,
   ): Promise<RSuccessMessage> {
     try {
       const currentPage = data.page || 1;
@@ -1223,6 +1224,7 @@ export class QueryService {
         .createQueryBuilder('qb')
         .select('DISTINCT qb.keyword', 'keyword')
         .addSelect('MAX(qb.created_at)', 'created_at')
+        .where('qb.customer_id = :cuid', { cuid: user.id })
         .groupBy('qb.keyword')
         .orderBy('created_at', 'DESC')
         .addOrderBy('qb.keyword')
@@ -1232,6 +1234,7 @@ export class QueryService {
       const counter = await this.searchHistoryKeywordDocument
         .createQueryBuilder('count')
         .select('COUNT(DISTINCT count.keyword)', 'count')
+        .where('count.customer_id = :cuid', { cuid: user.id })
         .getRawOne();
 
       const items = await query.getRawMany();

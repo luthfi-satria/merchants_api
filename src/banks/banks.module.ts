@@ -10,6 +10,7 @@ import { BanksController } from './banks.controller';
 import { BanksService } from './banks.service';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
+import { CommonService } from 'src/common/common.service';
 
 @Module({
   imports: [
@@ -19,6 +20,6 @@ import { MessageService } from 'src/message/message.service';
     StoresModule,
   ],
   controllers: [BanksController, BanksStoresController],
-  providers: [BanksService, ResponseService, MessageService],
+  providers: [BanksService, ResponseService, MessageService, CommonService],
 })
 export class BanksModule {}
