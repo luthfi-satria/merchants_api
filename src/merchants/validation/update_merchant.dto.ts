@@ -92,6 +92,7 @@ export class UpdateMerchantDTO {
   pic_phone: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.pic_email.replace(/\s/g, '') != '')
   @IsString()
   @IsEmail({}, { message: 'Pic Email bukan format email' })
   pic_email: string;
