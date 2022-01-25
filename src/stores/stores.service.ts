@@ -996,9 +996,6 @@ export class StoresService {
       .update()
       .set({ status: enumStoreStatus.inactive })
       .where('merchant_id = :merchant_id', { merchant_id: merchantId })
-      .andWhere('status = :status', {
-        status: enumStoreStatus.inactive,
-      })
       .execute();
   }
 
