@@ -43,6 +43,8 @@ import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import _ from 'lodash';
 import { UsersService } from 'src/users/users.service';
 import { NatsService } from 'src/nats/nats.service';
+import { MenuOnlineService } from 'src/menu_online/menu_online.service';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 
 @Injectable()
 export class StoresService {
@@ -66,6 +68,7 @@ export class StoresService {
     private readonly commonCatalogService: CatalogsService,
     private readonly usersService: UsersService,
     private readonly natsService: NatsService,
+    private readonly menuOnlineService: MenuOnlineService,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -1209,7 +1212,9 @@ export class StoresService {
     }
   }
 
-  async updateNumDiscounts(data: any) {
+  async updateNumDiscounts(data: any, action: string) {
+    this.calculateDiscountPriceMenuOnline(data, action);
+
     const urlmp = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu-price/${data.menu_price_id}`;
     const menuPrice: any = await this.commonService.getHttp(urlmp);
 
@@ -1222,14 +1227,38 @@ export class StoresService {
       const discounts: any = await this.commonService.getHttp(url);
       const store = { store_id: data.store_id, count: 0 };
 
-      for (const discount of discounts) {
-        if (discount.discount_status == 'ACTIVE') {
-          store.count += 1;
+      if (!discounts) {
+        store.count = null;
+      } else {
+        for (const discount of discounts) {
+          if (discount.discount_status == 'ACTIVE') {
+            store.count += 1;
+          }
         }
       }
+
       await this.storeRepository.update(store.store_id, {
         numdiscounts: store.count,
       });
     }
+  }
+
+  async calculateDiscountPriceMenuOnline(data: any, action: string) {
+    let discountedPrice = null;
+    if (action == 'started') {
+      if (data.type == 'PRICE') {
+        discountedPrice = data.value;
+      } else if (data.type == 'PERCENTAGE') {
+        discountedPrice =
+          data.menu_price.price - (data.value / 100) * data.menu_price.price;
+      }
+    }
+    const criteria: Partial<MenuOnlineDocument> = {
+      store_id: data.store_id,
+      menu_price_id: data.menu_price_id,
+    };
+    await this.menuOnlineService.updateMenuPriceByCriteria(criteria, {
+      discounted_price: discountedPrice,
+    });
   }
 }

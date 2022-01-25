@@ -40,6 +40,9 @@ export class MenuOnlineDocument {
   @JoinColumn({ name: 'store_id' })
   store: StoreDocument;
 
+  @Column({ nullable: true })
+  discounted_price: number;
+
   @CreateDateColumn({ type: 'timestamptz', default: () => 'LOCALTIMESTAMP' })
   created_at: Date | string;
 

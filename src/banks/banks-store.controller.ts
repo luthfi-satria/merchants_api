@@ -15,7 +15,6 @@ import { RoleStoreGuard } from 'src/auth/store.guard';
 import { CommonService } from 'src/common/common.service';
 import { ResponseService } from 'src/response/response.service';
 import { StoresService } from 'src/stores/stores.service';
-import { BanksService } from './banks.service';
 import { BanksStoreDto } from './validations/banks-store.dto';
 
 @Controller('api/v1/merchants/banks/stores')
@@ -24,7 +23,6 @@ export class BanksStoresController {
   constructor(
     private readonly responseService: ResponseService,
     private readonly storeService: StoresService,
-    private readonly bankService: BanksService,
     private readonly commonService: CommonService,
   ) {}
 

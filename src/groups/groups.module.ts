@@ -30,6 +30,8 @@ import { GroupUsersService } from './group_users.service';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
+import { MenuOnlineService } from 'src/menu_online/menu_online.service';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 
 @Module({
   imports: [
@@ -43,6 +45,7 @@ import { NatsService } from 'src/nats/nats.service';
       AddonDocument,
       StoreOperationalHoursDocument,
       StoreOperationalShiftDocument,
+      MenuOnlineDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
@@ -68,6 +71,7 @@ import { NatsService } from 'src/nats/nats.service';
     StoreOperationalService,
     UsersService,
     NatsService,
+    MenuOnlineService,
   ],
 })
 export class GroupsModule {}
