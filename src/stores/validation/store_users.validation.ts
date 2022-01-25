@@ -16,10 +16,10 @@ export class MerchantStoreUsersValidation {
   @IsNotEmpty({ message: 'Nama tidak boleh kosong' })
   name: string;
 
-  @IsNotEmpty({ message: 'Nip tidak boleh kosong' })
+  @IsOptional()
   nip: string;
 
-  @IsNotEmpty({ message: 'Email tidak boleh kosong' })
+  @IsOptional()
   @IsEmail()
   email: string;
 

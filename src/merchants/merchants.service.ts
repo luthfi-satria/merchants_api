@@ -436,8 +436,7 @@ export class MerchantsService {
         }
         existMerchant.users[0].status = MerchantUsersStatus.Active;
       }
-    }
-    if (existMerchant.status == 'REJECTED') {
+    } else if (existMerchant.status == 'REJECTED') {
       existMerchant.rejected_at = new Date();
       this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
         existMerchant.id,
@@ -464,6 +463,9 @@ export class MerchantsService {
         throw new Error('failed insert to merchant_group');
       }
       this.publishNatsUpdateMerchant(update, oldStatus);
+      if (update.status == MerchantStatus.Inactive) {
+        this.storesService.setAllInactiveByMerchantId(existMerchant.id);
+      }
 
       if (oldStatus == MerchantStatus.Draft && oldPhone != data.pic_phone) {
         this.merchantUserService.resendPhoneUser(update.users[0].id);
