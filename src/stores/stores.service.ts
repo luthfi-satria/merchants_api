@@ -1247,7 +1247,7 @@ export class StoresService {
     let discountedPrice = null;
     if (action == 'started') {
       if (data.type == 'PRICE') {
-        discountedPrice = data.value;
+        discountedPrice = data.menu_price.price - data.value;
       } else if (data.type == 'PERCENTAGE') {
         discountedPrice =
           data.menu_price.price - (data.value / 100) * data.menu_price.price;
