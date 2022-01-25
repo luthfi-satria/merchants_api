@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsNumberString,
   IsOptional,
+  IsString,
   Length,
   ValidateIf,
 } from 'class-validator';
@@ -57,6 +58,7 @@ export class UpdateMerchantUsersValidation {
   phone: string;
 
   @IsOptional()
+  @IsString()
   password: string;
 
   @IsOptional()

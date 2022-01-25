@@ -111,7 +111,7 @@ export class QueryController {
     @Query() query: QuerySearchHistoryValidation,
   ) {
     if (req.user) {
-      return this.queryService.searchHistoriesKeywords(query);
+      return this.queryService.searchHistoriesKeywords(query, req.user);
     }
   }
 

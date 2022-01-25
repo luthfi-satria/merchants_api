@@ -12,6 +12,7 @@ import {
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { UserType } from 'src/auth/guard/user-type.decorator';
 import { RoleStoreGuard } from 'src/auth/store.guard';
+import { CommonService } from 'src/common/common.service';
 import { ResponseService } from 'src/response/response.service';
 import { StoresService } from 'src/stores/stores.service';
 import { BanksService } from './banks.service';
@@ -24,6 +25,7 @@ export class BanksStoresController {
     private readonly responseService: ResponseService,
     private readonly storeService: StoresService,
     private readonly bankService: BanksService,
+    private readonly commonService: CommonService,
   ) {}
 
   @Put()
@@ -34,8 +36,9 @@ export class BanksStoresController {
   ) {
     try {
       const { bank_account_name, bank_account_no, bank_id } = body;
+      const urlPayment = `${process.env.BASEURL_PAYMENTS_SERVICE}/api/v1/payments/internal/disbursement_method/${bank_id}`;
+      const bankIsExists = await this.commonService.getHttp(urlPayment);
 
-      const bankIsExists = await this.bankService.findBankById(bank_id);
       if (!bankIsExists) {
         throw new NotFoundException(
           this.responseService.error(HttpStatus.NOT_FOUND, {

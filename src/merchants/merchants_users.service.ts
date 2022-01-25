@@ -283,15 +283,23 @@ export class MerchantUsersService {
       const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
       // biarkan tanpa await karena dilakukan secara asynchronous
-      this.notificationService.sendEmail(
-        merchantUser.email,
-        'Perubahan Email',
-        '',
-        `
-      <p>Silahkan klik link berikut untuk mereset password Anda,</p>
-      <a href="${url}">${url}</a>
-      `,
-      );
+      if (merchantUser.email_verified_at) {
+        this.notificationService.sendEmail(
+          merchantUser.email,
+          'Email Anda telah aktif',
+          'Alamat email Anda telah digunakan sebagai login baru',
+        );
+      } else {
+        this.notificationService.sendEmail(
+          merchantUser.email,
+          'Perubahan Email',
+          '',
+          `
+        <p>Silahkan klik link berikut untuk mereset password Anda,</p>
+        <a href="${url}">${url}</a>
+        `,
+        );
+      }
 
       if (process.env.NODE_ENV == 'test') {
         return { status: true, token: token, url: url };
@@ -316,6 +324,22 @@ export class MerchantUsersService {
   }
 
   async deleteMerchantUsers(user_id: string, user: any): Promise<UpdateResult> {
+    if (user_id == user.id) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant_user.delete.self_delete'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
     await this.getAndValidateMerchantUserById(user_id, user);
 
     try {
