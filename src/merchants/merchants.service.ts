@@ -379,6 +379,8 @@ export class MerchantsService {
         );
       }
       existMerchant.pic_email = data.pic_email;
+    } else {
+      existMerchant.pic_email = null;
     }
     if (data.type) existMerchant.type = data.type;
     if (data.name) existMerchant.name = data.name;
@@ -397,8 +399,8 @@ export class MerchantsService {
     if (data.pic_name) {
       existMerchant.pic_name = data.pic_name;
     }
-    if (data.pic_nip) {
-      existMerchant.pic_nip = data.pic_nip;
+    if (!data.pic_nip) {
+      existMerchant.pic_nip = null;
     }
     if (data.pb1_tariff) {
       existMerchant.pb1_tariff = data.pb1_tariff;
