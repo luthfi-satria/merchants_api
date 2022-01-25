@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  ValidateIf,
 } from 'class-validator';
 import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
 
@@ -15,6 +16,7 @@ export class CreateMerchantUsersValidation {
   name: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.email !== '')
   @IsEmail()
   email: string;
 
