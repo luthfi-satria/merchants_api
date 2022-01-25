@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsNumberString,
   IsOptional,
+  IsString,
   Length,
 } from 'class-validator';
 import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
@@ -55,6 +56,7 @@ export class UpdateMerchantUsersValidation {
   phone: string;
 
   @IsOptional()
+  @IsString()
   password: string;
 
   @IsOptional()
