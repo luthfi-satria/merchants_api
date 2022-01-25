@@ -1,4 +1,4 @@
-import { CommonService } from 'src/common/common.service';
+// import { CommonService } from 'src/common/common.service';
 import {
   BadRequestException,
   HttpStatus,
@@ -67,9 +67,7 @@ export class QueryService {
     private readonly searchHistoryStoreDocument: Repository<SearchHistoryStoreDocument>,
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
-    private readonly ordersService: OrdersService,
-    private readonly commonService: CommonService,
-    private readonly settingsService: SettingsService,
+    private readonly ordersService: OrdersService, // private readonly commonService: CommonService, // private readonly settingsService: SettingsService,
   ) {}
 
   logger = new Logger();
@@ -1190,14 +1188,16 @@ export class QueryService {
         (page - 1) * limit + limit,
       );
 
-      if (user && listStores.data.items.length) {
+      if (user) {
         const historyKeyword: Partial<SearchHistoryKeywordDocument> = {
           customer_id: user.id,
           keyword: data.search,
           lang: lang,
         };
         await this.searchHistoryKeywordDocument.save(historyKeyword);
+      }
 
+      if (user && listStores.data.items.length) {
         if (listStores.data?.total_item) {
           const historyStore: Partial<SearchHistoryStoreDocument> = {
             store_id: stores_with_menus[0].id,
