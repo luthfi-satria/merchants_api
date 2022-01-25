@@ -294,6 +294,24 @@ export class GroupUsersService {
   }
 
   async deleteGroupUsers(user_id: string, user: any): Promise<UpdateResult> {
+    console.log(user.id);
+
+    if (user_id == user.id) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: user_id,
+            property: 'user_id',
+            constraint: [
+              this.messageService.get('merchant_user.delete.self_delete'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
     await this.getAndValidateGroupUserById(user_id, user);
     try {
       return await this.merchantUsersRepository.softDelete({

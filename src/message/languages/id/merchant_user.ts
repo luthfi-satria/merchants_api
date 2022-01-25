@@ -6,6 +6,10 @@ export default {
       code: 'INVALID_USER_ID',
       message: 'User ID tidak valid.',
     },
+    self_delete: {
+      code: 'CAN_NOT_DELETE_OWN_USER',
+      message: 'Tidak dapat menghapus user sendiri',
+    },
   },
   general: {
     forbidden: {
