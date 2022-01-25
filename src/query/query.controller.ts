@@ -56,7 +56,7 @@ export class QueryController {
   async getstores(
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
-    const result = await this.queryService.getListQueryStore(data, {}, false);
+    const result = await this.queryService.getListQueryStore(data, {}, true);
     return result;
   }
 
