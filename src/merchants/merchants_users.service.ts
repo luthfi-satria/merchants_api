@@ -459,8 +459,8 @@ export class MerchantUsersService {
     try {
       const result_merchant = await query
         .orderBy('mu.name')
-        .offset((currentPage - 1) * perPage)
-        .limit(perPage)
+        .skip((currentPage - 1) * perPage)
+        .take(perPage)
         .getManyAndCount();
 
       formatingAllOutputTime(result_merchant[0]);

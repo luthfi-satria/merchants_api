@@ -633,7 +633,11 @@ export class QueryService {
           'merchant_store_categories_languages',
         );
       if (joinMenu) {
-        query1.leftJoinAndSelect('merchant_store.menus', 'menus');
+        query1.leftJoinAndSelect(
+          'merchant_store.menus',
+          'menus',
+          promo === 'DISKON_MENU' ? 'menus.discounted_price is not null' : '',
+        );
       }
       // --- Filter Conditions ---
       // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}

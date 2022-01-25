@@ -91,7 +91,7 @@ export class CreateMerchantDTO {
   @Length(10, 15)
   pic_phone: string;
 
-  @IsNotEmpty({ message: 'Pic Email harus diisi' })
+  @IsOptional()
   @IsString()
   @IsEmail({}, { message: 'Pic Email bukan format email' })
   pic_email: string;
