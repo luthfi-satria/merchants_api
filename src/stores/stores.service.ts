@@ -245,7 +245,7 @@ export class StoresService {
     console.log('countStore: ', countStore);
     if (countStore == 0) {
       flagCreatePricingTemplate = true;
-      // store_document.platform = true;
+      store_document.platform = true;
     }
 
     /**
