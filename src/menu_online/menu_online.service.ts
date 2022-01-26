@@ -95,11 +95,16 @@ export class MenuOnlineService {
     console.log('event natsUpdateMenuOnline: ', data);
     const menus = await this.menuOnlineRepository.find({ menu_id: data.id });
     for (const menu of menus) {
-      menu.name = data.name ? data.name : menu.name;
-      menu.photo = data.photo ? data.photo : menu.photo;
-      console.log('menu: ', menu);
+      const menuData = {
+        id: menu.id,
+        name: data.name ? data.name : menu.name,
+        photo: data.photo ? data.photo : menu.photo,
+      };
+      // menu.name = data.name ? data.name : menu.name;
+      // menu.photo = data.photo ? data.photo : menu.photo;
+      console.log('menu: ', menuData);
 
-      const result = await this.menuOnlineRepository.save(menu);
+      const result = await this.menuOnlineRepository.save(menuData);
       console.log('result: ', result);
     }
   }
