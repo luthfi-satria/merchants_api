@@ -12,6 +12,7 @@ export class MenuOnlineService {
   ) {}
 
   async natsCreateStoreAvailability(data: any) {
+    console.log('event natsCreateStoreAvailability: ', data);
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       const menuOnline = await this.menuOnlineRepository.findOne({
         where: {
@@ -27,6 +28,7 @@ export class MenuOnlineService {
         menuOnline.photo = data.menu_price.menu_menu.photo;
         menuOnline.price = data.menu_price.price;
         menuOnline.menu_store_id = data.id;
+        menuOnline.updated_at = new Date();
 
         await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
       } else {
@@ -47,6 +49,7 @@ export class MenuOnlineService {
   }
 
   async natsUpdateStoreAvailabilityy(data: any) {
+    console.log('event natsUpdateStoreAvailabilityy: ', data);
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       const menuOnline = await this.menuOnlineRepository.findOne({
         menu_store_id: data.id,
@@ -59,6 +62,7 @@ export class MenuOnlineService {
         menuOnline.name = data.menu_price.menu_menu.name;
         menuOnline.photo = data.menu_price.menu_menu.photo;
         menuOnline.price = data.menu_price.price;
+        menuOnline.updated_at = new Date();
 
         await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
       } else {
@@ -68,12 +72,14 @@ export class MenuOnlineService {
   }
 
   async natsdeleteStoreAvailability(data: any) {
+    console.log('event natsdeleteStoreAvailability: ', data);
     this.menuOnlineRepository.softDelete({
       menu_store_id: data.id,
     });
   }
 
   async natsUpdateMenuOnline(data: any) {
+    console.log('event natsUpdateMenuOnline: ', data);
     const menus = await this.menuOnlineRepository.find({ menu_id: data.id });
     for (const menu of menus) {
       menu.name = data.name ? data.name : menu.name;
@@ -83,10 +89,14 @@ export class MenuOnlineService {
   }
 
   async natsDeleteMenuOnline(data: any) {
+    console.log('event natsDeleteMenuOnline: ', data);
+
     this.menuOnlineRepository.softDelete({ menu_id: data.id });
   }
 
   async natsUpdateMenuPrice(data: any) {
+    console.log('event natsUpdateMenuPrice: ', data);
+
     if (data.menu_sales_channel.platform == 'ONLINE') {
       const menuOnlines = await this.menuOnlineRepository.find({
         menu_price_id: data.id,
@@ -105,6 +115,8 @@ export class MenuOnlineService {
   }
 
   async natsDeleteMenuPrice(data: any) {
+    console.log('event natsDeleteMenuPrice: ', data);
+
     this.menuOnlineRepository.softDelete({
       menu_price_id: data.id,
     });
