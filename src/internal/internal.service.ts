@@ -333,11 +333,13 @@ export class InternalService {
     args: Record<string, any>[],
   ): Promise<RSuccessMessage> {
     for (const raw of args) {
-      const updateStoreData: Partial<StoreDocument> = {
-        id: raw.store_id,
-        average_price: raw.average_price,
-      };
-      await this.storeService.updateStorePartial(updateStoreData);
+      if (raw.store_id) {
+        const updateStoreData: Partial<StoreDocument> = {
+          id: raw.store_id,
+          average_price: raw.average_price,
+        };
+        await this.storeService.updateStorePartial(updateStoreData);
+      }
     }
     return {
       success: true,
