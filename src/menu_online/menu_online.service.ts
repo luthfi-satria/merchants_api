@@ -21,7 +21,6 @@ export class MenuOnlineService {
           menu_price_id: data.menu_price.id,
         },
       });
-      console.log('menuOnline: ', menuOnline);
       if (menuOnline) {
         console.log('menu online exist');
         menuOnline.name = data.menu_price.menu_menu.name;
@@ -29,8 +28,13 @@ export class MenuOnlineService {
         menuOnline.price = data.menu_price.price;
         menuOnline.menu_store_id = data.id;
         menuOnline.updated_at = new Date();
+        console.log('menuOnline: ', menuOnline);
 
-        await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
+        const result = await this.menuOnlineRepository.update(
+          menuOnline.id,
+          menuOnline,
+        );
+        console.log('result: ', result);
       } else {
         console.log('menu online not exist');
         const menuOnlineData: Partial<MenuOnlineDocument> = {
@@ -42,8 +46,10 @@ export class MenuOnlineService {
           price: data.menu_price.price,
           store_id: data.store_id,
         };
+        console.log('menuOnline: ', menuOnlineData);
 
-        await this.menuOnlineRepository.save(menuOnlineData);
+        const result = await this.menuOnlineRepository.save(menuOnlineData);
+        console.log('result: ', result);
       }
     }
   }
@@ -64,7 +70,13 @@ export class MenuOnlineService {
         menuOnline.price = data.menu_price.price;
         menuOnline.updated_at = new Date();
 
-        await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
+        console.log('menuOnline: ', menuOnline);
+
+        const result = await this.menuOnlineRepository.update(
+          menuOnline.id,
+          menuOnline,
+        );
+        console.log('result: ', result);
       } else {
         await this.natsCreateStoreAvailability(data);
       }
@@ -73,9 +85,10 @@ export class MenuOnlineService {
 
   async natsdeleteStoreAvailability(data: any) {
     console.log('event natsdeleteStoreAvailability: ', data);
-    this.menuOnlineRepository.softDelete({
+    const result = await this.menuOnlineRepository.softDelete({
       menu_store_id: data.id,
     });
+    console.log('result: ', result);
   }
 
   async natsUpdateMenuOnline(data: any) {
@@ -84,14 +97,20 @@ export class MenuOnlineService {
     for (const menu of menus) {
       menu.name = data.name ? data.name : menu.name;
       menu.photo = data.photo ? data.photo : menu.photo;
-      this.menuOnlineRepository.save(menu);
+      console.log('menu: ', menu);
+
+      const result = await this.menuOnlineRepository.save(menu);
+      console.log('result: ', result);
     }
   }
 
   async natsDeleteMenuOnline(data: any) {
     console.log('event natsDeleteMenuOnline: ', data);
 
-    this.menuOnlineRepository.softDelete({ menu_id: data.id });
+    const result = await this.menuOnlineRepository.softDelete({
+      menu_id: data.id,
+    });
+    console.log('result: ', result);
   }
 
   async natsUpdateMenuPrice(data: any) {
@@ -108,7 +127,13 @@ export class MenuOnlineService {
           menuOnline.name = data.menu_menu.name;
           menuOnline.photo = data.menu_menu.photo;
           menuOnline.price = data.price;
-          await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
+          menuOnline.updated_at = new Date();
+          console.log('menuOnline: ', menuOnline);
+          const result = await this.menuOnlineRepository.update(
+            menuOnline.id,
+            menuOnline,
+          );
+          console.log('result: ', result);
         }
       }
     }
