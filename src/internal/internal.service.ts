@@ -21,6 +21,7 @@ import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { ListStoreDTO } from 'src/stores/validation/list-store.validation';
 import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
+import { isDefined } from 'class-validator';
 
 @Injectable()
 export class InternalService {
@@ -333,7 +334,7 @@ export class InternalService {
     args: Record<string, any>[],
   ): Promise<RSuccessMessage> {
     for (const raw of args) {
-      if (raw.store_id) {
+      if (isDefined(raw.store_id)) {
         const updateStoreData: Partial<StoreDocument> = {
           id: raw.store_id,
           average_price: raw.average_price,
