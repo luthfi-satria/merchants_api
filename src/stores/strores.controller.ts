@@ -88,10 +88,6 @@ export class StoresController {
     if (req.user.user_type == 'merchant' && req.user.level == 'merchant')
       create_merchant_store_validation.status =
         enumStoreStatus.waiting_for_approval;
-    console.log(
-      'create_merchant_store_validation: ',
-      create_merchant_store_validation,
-    );
     this.imageValidationService
       .setFilter('photo', 'required')
       .setFilter('banner', 'required');
