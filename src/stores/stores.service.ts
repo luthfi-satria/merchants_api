@@ -316,11 +316,17 @@ export class StoresService {
   // partial update
   async updateStorePartial(data: Partial<StoreDocument>) {
     try {
+      console.log('updateStorePartial');
       const store = await this.getAndValidateStoreByStoreId(data.id);
       const oldStatus = store.status;
       Object.assign(store, data);
-      const updateStore = await this.storeRepository.save(store);
+      const updateStore = await this.storeRepository.save(store).catch((e) => {
+        console.error(e);
+        console.log('catch error: updateStorePartial > save');
+        throw e;
+      });
       this.publishNatsUpdateStore(updateStore, oldStatus);
+      console.log(store.name, ' store name');
       return updateStore;
     } catch (e) {
       const logger = new Logger();
