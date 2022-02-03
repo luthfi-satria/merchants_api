@@ -107,6 +107,27 @@ export class StoresService {
       });
   }
 
+  async simpleFindStoreById(id: string): Promise<StoreDocument> {
+    return this.storeRepository
+      .findOne({
+        where: { id: id },
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
   async findMerchantStoreById(id: string): Promise<StoreDocument> {
     return this.storeRepository.findOne(id);
   }
@@ -319,8 +340,13 @@ export class StoresService {
       const store = await this.findMerchantStoreById(data.id);
       const oldStatus = store.status;
       Object.assign(store, data);
-      const updateStore = await this.storeRepository.save(store);
-      this.publishNatsUpdateStore(updateStore, oldStatus);
+      const updateStore = await this.storeRepository.save(store).catch((e) => {
+        console.error(e);
+        console.log('catch error: updateStorePartial > save');
+        throw e;
+      });
+      const publishStore = await this.findStoreById(updateStore.id);
+      this.publishNatsUpdateStore(publishStore, oldStatus);
       return updateStore;
     } catch (e) {
       const logger = new Logger();
@@ -1004,6 +1030,29 @@ export class StoresService {
 
   async getAndValidateStoreByStoreId(storeId: string): Promise<StoreDocument> {
     const store = await this.findStoreById(storeId);
+    if (!store) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: storeId,
+            property: 'store_id',
+            constraint: [
+              this.messageService.get('merchant.updatestore.id_notfound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    return store;
+  }
+
+  async simpleGetAndValidateStoreByStoreId(
+    storeId: string,
+  ): Promise<StoreDocument> {
+    const store = await this.simpleFindStoreById(storeId);
     if (!store) {
       throw new BadRequestException(
         this.responseService.error(
