@@ -333,7 +333,7 @@ export class InternalService {
   async updateStoreAveragePrice(
     args: Record<string, any>[],
   ): Promise<RSuccessMessage> {
-    for await (const raw of args) {
+    for (const raw of args) {
       if (isDefined(raw.store_id)) {
         const updateStoreData: Partial<StoreDocument> = {
           id: raw.store_id,
