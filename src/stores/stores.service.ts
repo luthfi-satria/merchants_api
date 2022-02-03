@@ -337,20 +337,16 @@ export class StoresService {
   // partial update
   async updateStorePartial(data: Partial<StoreDocument>) {
     try {
-      console.log('updateStorePartial');
       const store = await this.simpleGetAndValidateStoreByStoreId(data.id);
       const oldStatus = store.status;
       Object.assign(store, data);
-      console.log('saving to db: ', store.id);
       const updateStore = await this.storeRepository.save(store).catch((e) => {
         console.error(e);
         console.log('catch error: updateStorePartial > save');
         throw e;
       });
-      console.log('saved to db: ', updateStore.id);
       const publishStore = await this.findStoreById(updateStore.id);
       this.publishNatsUpdateStore(publishStore, oldStatus);
-      console.log(store.name, ' store name');
       return updateStore;
     } catch (e) {
       const logger = new Logger();

@@ -333,10 +333,7 @@ export class InternalService {
   async updateStoreAveragePrice(
     args: Record<string, any>[],
   ): Promise<RSuccessMessage> {
-    console.log('updateStoreAveragePrice');
-    console.log(args?.length, 'args?.length');
     for await (const raw of args) {
-      console.log('updateStoreAveragePrice > loop');
       if (isDefined(raw.store_id)) {
         const updateStoreData: Partial<StoreDocument> = {
           id: raw.store_id,
