@@ -316,7 +316,7 @@ export class StoresService {
   // partial update
   async updateStorePartial(data: Partial<StoreDocument>) {
     try {
-      const store = await this.getAndValidateStoreByStoreId(data.id);
+      const store = await this.findMerchantStoreById(data.id);
       const oldStatus = store.status;
       Object.assign(store, data);
       const updateStore = await this.storeRepository.save(store);
