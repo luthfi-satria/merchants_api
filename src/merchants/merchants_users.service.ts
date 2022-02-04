@@ -221,6 +221,45 @@ export class MerchantUsersService {
     }
   }
 
+  async updatePasswordMerchantUsers(userId: string, user?: any) {
+    const merchantUser = await this.getAndValidateMerchantUserById(
+      userId,
+      user,
+    );
+
+    const token = randomUUID();
+    merchantUser.token_reset_password = token;
+
+    try {
+      const result = await this.merchantUsersRepository.save(merchantUser);
+      formatingAllOutputTime(result);
+      delete result.password;
+
+      const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+
+      this.notificationService.sendSms(merchantUser.phone, urlVerification);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        result,
+      );
+    } catch (err) {
+      console.error('catch error: ', err);
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
   async updatePhoneMerchantUsers(
     args: MerchantUsersUpdatePhoneValidation,
     user: any,
