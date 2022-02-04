@@ -91,16 +91,14 @@ export class MerchantUsersController {
   @ResponseStatusCode()
   async updateMerchantUsersPassword(
     @Req() req: any,
-    @Body()
-    param: UpdateMerchantUsersValidation,
     @Param('uid') merchantUserId: string,
   ): Promise<any> {
     // param.id = merchantUserId;
-    const resultUpdate = await this.merchantUsersService.updateMerchantUsers(
-      param,
-      req.user,
-      merchantUserId,
-    );
+    const resultUpdate =
+      await this.merchantUsersService.updatePasswordMerchantUsers(
+        merchantUserId,
+        req.user,
+      );
 
     return this.responseService.success(
       true,
