@@ -1,3 +1,4 @@
+import moment from 'moment';
 // import { CommonService } from 'src/common/common.service';
 import {
   BadRequestException,
@@ -677,7 +678,7 @@ export class QueryService {
             }
             ${
               newThisWeek
-                ? `AND merchant_store.approved_at >= :newThisWeekDate`
+                ? `AND merchant_store.approved_at >= :newThisWeekDate AND merchant_store.approved_at <= :today`
                 : ''
             }
             ${
@@ -704,6 +705,7 @@ export class QueryService {
             priceLow: priceLow,
             priceHigh: priceHigh,
             newThisWeekDate: lastWeek,
+            today: moment(new Date()),
             budgetMaxValue: budgetMaxValue,
             minimum_rating: minimum_rating,
             favorite_store_ids: favoriteStoreIds,
