@@ -724,7 +724,7 @@ export class QueryService {
                 ${
                   // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
                   is24hrs == false
-                    ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
+                    ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h OR operational_hours.is_open = :isOpenOperational)`
                     : ''
                 }`,
                 {
@@ -732,6 +732,7 @@ export class QueryService {
                   weekOfDay: weekOfDay,
                   currTime: currTime,
                   all24h: true, //niel true for query all stores
+                  isOpenOperational: true,
                 },
               );
             }
