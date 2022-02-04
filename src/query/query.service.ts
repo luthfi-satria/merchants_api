@@ -1,3 +1,4 @@
+import moment from 'moment';
 // import { CommonService } from 'src/common/common.service';
 import {
   BadRequestException,
@@ -677,7 +678,7 @@ export class QueryService {
             }
             ${
               newThisWeek
-                ? `AND merchant_store.approved_at >= :newThisWeekDate`
+                ? `AND merchant_store.approved_at >= :newThisWeekDate AND merchant_store.approved_at <= :today`
                 : ''
             }
             ${
@@ -704,6 +705,7 @@ export class QueryService {
             priceLow: priceLow,
             priceHigh: priceHigh,
             newThisWeekDate: lastWeek,
+            today: moment(new Date()),
             budgetMaxValue: budgetMaxValue,
             minimum_rating: minimum_rating,
             favorite_store_ids: favoriteStoreIds,
@@ -721,6 +723,7 @@ export class QueryService {
                 `operational_hours.day_of_week = :weekOfDay
                   AND merchant_store.is_store_open = :is_open
                   AND operational_hours.merchant_store_id IS NOT NULL
+                  AND operational_hours.is_open = :isOpenOperational
                 ${
                   // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
                   is24hrs == false
@@ -732,6 +735,7 @@ export class QueryService {
                   weekOfDay: weekOfDay,
                   currTime: currTime,
                   all24h: true, //niel true for query all stores
+                  isOpenOperational: true,
                 },
               );
             }
