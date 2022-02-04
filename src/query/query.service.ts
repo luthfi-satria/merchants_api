@@ -942,7 +942,8 @@ export class QueryService {
       `Get store_operational_status(store open: ${is_store_status} && in_operational_time ${respectShiftTime})`,
     );
     return is_store_status &&
-      (respectShiftTime !== null || respectShiftTime !== undefined) &&
+      respectShiftTime !== null &&
+      respectShiftTime !== undefined &&
       isCurrentDay.is_open
       ? true
       : false;
