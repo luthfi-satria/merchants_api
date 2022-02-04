@@ -966,7 +966,9 @@ export class QueryService {
     console.log(
       is_store_status &&
         isCurrentDay.is_open &&
-        (isCurrentDay.is_open_24h || respectShiftTime),
+        (isCurrentDay.is_open_24h || respectShiftTime)
+        ? true
+        : false,
       'new result',
     );
     // return is_store_status && respectShiftTime !== null && isCurrentDay.is_open
