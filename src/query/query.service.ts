@@ -941,7 +941,7 @@ export class QueryService {
     console.log(isCurrentDay, 'isCurrentDay');
 
     const respectShiftTime = isCurrentDay.shifts.find((e) =>
-      currTime >= e.open_hour && currTime < e.close_hour ? true : false,
+      DateTimeUtils.checkTimeBetween(currTime, e.open_hour, e.close_hour),
     );
 
     console.log(respectShiftTime, 'respectShiftTime');
