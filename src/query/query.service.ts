@@ -934,21 +934,21 @@ export class QueryService {
     currWeekDay: number,
     curShiftHour: StoreOperationalHoursDocument[],
   ): boolean {
-    console.log(is_store_status, 'is_store_status');
-    console.log(currTime, 'currTime');
-    console.log(currWeekDay, 'currWeekDay');
-    console.log(curShiftHour, 'curShiftHour');
+    // console.log(is_store_status, 'is_store_status');
+    // console.log(currTime, 'currTime');
+    // console.log(currWeekDay, 'currWeekDay');
+    // console.log(curShiftHour, 'curShiftHour');
     const isCurrentDay = curShiftHour.find(
       (row) => row.day_of_week == String(currWeekDay),
     );
 
-    console.log(isCurrentDay, 'isCurrentDay');
+    // console.log(isCurrentDay, 'isCurrentDay');
 
     const respectShiftTime = isCurrentDay.shifts.find((e) =>
       DateTimeUtils.checkTimeBetween(currTime, e.open_hour, e.close_hour),
     );
 
-    console.log(respectShiftTime, 'respectShiftTime');
+    // console.log(respectShiftTime, 'respectShiftTime');
 
     Logger.debug(
       `Get store_operational_status(store open: ${is_store_status} && in_operational_time ${respectShiftTime})`,
@@ -961,20 +961,20 @@ export class QueryService {
      * 3. if is_open_24h is true
      * 4. if is_open_24h is false then operational_hour (shift) must exist within current time
      */
-    console.log(
-      is_store_status && respectShiftTime !== null && isCurrentDay.is_open
-        ? true
-        : false,
-      'old result',
-    );
-    console.log(
-      is_store_status &&
-        isCurrentDay.is_open &&
-        (isCurrentDay.is_open_24h || respectShiftTime)
-        ? true
-        : false,
-      'new result',
-    );
+    // console.log(
+    //   is_store_status && respectShiftTime !== null && isCurrentDay.is_open
+    //     ? true
+    //     : false,
+    //   'old result',
+    // );
+    // console.log(
+    //   is_store_status &&
+    //     isCurrentDay.is_open &&
+    //     (isCurrentDay.is_open_24h || respectShiftTime)
+    //     ? true
+    //     : false,
+    //   'new result',
+    // );
     // return is_store_status && respectShiftTime !== null && isCurrentDay.is_open
     //   ? true
     //   : false;

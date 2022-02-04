@@ -123,9 +123,18 @@ export class DateTimeUtils {
     start: string,
     end: string,
   ): boolean {
-    const dCurrent = moment(current, 'HH:mm');
-    const dstart = moment(start, 'HH:mm');
-    const dend = moment(end, 'HH:mm');
+    let dCurrent = moment(current, 'HH:mm');
+    let dstart = moment(start, 'HH:mm');
+    let dend = moment(end, 'HH:mm');
+
+    if (dstart.isAfter(dend)) {
+      dstart = dstart.subtract(1, 'day');
+
+      dCurrent = dCurrent.isAfter(dend)
+        ? dCurrent.subtract(1, 'day')
+        : dCurrent;
+    }
+
     return dCurrent.isBetween(dstart, dend);
   }
 }
