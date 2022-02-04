@@ -930,18 +930,51 @@ export class QueryService {
     currWeekDay: number,
     curShiftHour: StoreOperationalHoursDocument[],
   ): boolean {
+    console.log(is_store_status, 'is_store_status');
+    console.log(currTime, 'currTime');
+    console.log(currWeekDay, 'currWeekDay');
+    console.log(curShiftHour, 'curShiftHour');
     const isCurrentDay = curShiftHour.find(
       (row) => row.day_of_week == String(currWeekDay),
     );
+
+    console.log(isCurrentDay, 'isCurrentDay');
 
     const respectShiftTime = isCurrentDay.shifts.find((e) =>
       currTime >= e.open_hour && currTime < e.close_hour ? true : false,
     );
 
+    console.log(respectShiftTime, 'respectShiftTime');
+
     Logger.debug(
       `Get store_operational_status(store open: ${is_store_status} && in_operational_time ${respectShiftTime})`,
     );
-    return is_store_status && respectShiftTime !== null && isCurrentDay.is_open
+
+    /**
+     * Store is operational rule, store is open when:
+     * 1. Store is_store_open must true
+     * 2. StoreOperationalHours is_open must true
+     * 3. if is_open_24h is true
+     * 4. if is_open_24h is false then operational_hour (shift) must exist within current time
+     */
+    console.log(
+      is_store_status && respectShiftTime !== null && isCurrentDay.is_open
+        ? true
+        : false,
+      'old result',
+    );
+    console.log(
+      is_store_status &&
+        isCurrentDay.is_open &&
+        (isCurrentDay.is_open_24h || respectShiftTime),
+      'new result',
+    );
+    // return is_store_status && respectShiftTime !== null && isCurrentDay.is_open
+    //   ? true
+    //   : false;
+    return is_store_status &&
+      isCurrentDay.is_open &&
+      (isCurrentDay.is_open_24h || respectShiftTime)
       ? true
       : false;
   }
