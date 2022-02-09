@@ -426,7 +426,7 @@ export class MerchantsService {
     const oldPhone = existMerchant.phone;
     if (data.status) existMerchant.status = data.status;
     if (existMerchant.status == 'ACTIVE') {
-      existMerchant.approved_at = new Date();
+      if (!existMerchant.approved_at) existMerchant.approved_at = new Date();
       this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
         existMerchant.id,
         enumStoreStatus.active,
