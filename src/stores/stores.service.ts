@@ -449,7 +449,7 @@ export class StoresService {
     }
 
     if (store_document.status == 'ACTIVE')
-      store_document.approved_at = new Date();
+      if (!store_document.approved_at) store_document.approved_at = new Date();
     if (store_document.status == 'REJECTED')
       store_document.rejected_at = new Date();
 
