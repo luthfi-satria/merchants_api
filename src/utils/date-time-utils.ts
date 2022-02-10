@@ -125,7 +125,7 @@ export class DateTimeUtils {
   ): boolean {
     let dCurrent = moment(current, 'HH:mm');
     let dstart = moment(start, 'HH:mm');
-    let dend = moment(end, 'HH:mm');
+    const dend = moment(end, 'HH:mm');
 
     if (dstart.isAfter(dend)) {
       dstart = dstart.subtract(1, 'day');

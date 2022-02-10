@@ -45,6 +45,7 @@ import { UsersService } from 'src/users/users.service';
 import { NatsService } from 'src/nats/nats.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
+import { isDefined } from 'class-validator';
 
 @Injectable()
 export class StoresService {
@@ -154,6 +155,49 @@ export class StoresService {
     return this.storeRepository.find({
       where: data,
     });
+  }
+
+  async findMerchantStoresByCriteria(
+    data: any,
+    options?: any,
+    includes?: any,
+  ): Promise<any> {
+    let find = {
+      where: data,
+    };
+    if (options) {
+      find = { ...find, ...options };
+    }
+
+    const [stores, count] = await this.storeRepository.findAndCount(find);
+
+    if (includes?.city) {
+      const cityObj = {};
+      stores.forEach((store) => {
+        cityObj[store.city_id] = null;
+      });
+
+      const { data: cities } = await this.cityService.getCityBulk(
+        Object.keys(cityObj),
+      );
+
+      for (const city of cities) {
+        cityObj[city.id] = city;
+      }
+
+      stores.forEach((store) => {
+        store.city = cityObj[store.city_id];
+      });
+    }
+
+    return {
+      total_item: count,
+      limit: options?.take || null,
+      current_page: isDefined(options?.skip)
+        ? Math.round(options.skip / options.take) + 1
+        : null,
+      items: stores,
+    };
   }
 
   async findMerchantStores(): Promise<Partial<StoreDocument>[]> {
