@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
-import { catchError, lastValueFrom, map } from 'rxjs';
+import { catchError, firstValueFrom, lastValueFrom, map } from 'rxjs';
 import { CommonService } from 'src/common/common.service';
 import { MessageService } from 'src/message/message.service';
 import { RMessage } from 'src/response/response.interface';
@@ -63,6 +63,24 @@ export class CityService {
         );
       }
       return response_city_id.data;
+    } catch (error) {
+      throw new BadRequestException(error.response.data);
+    }
+  }
+
+  async getCityBulk(city_ids: string[]): Promise<any> {
+    try {
+      const headerRequest = {
+        'Content-Type': 'application/json',
+      };
+      return await firstValueFrom(
+        this.httpService
+          .get(
+            `${process.env.BASEURL_ADMINS_SERVICE}/api/v1/admins/internal/cities/bulks`,
+            { headers: headerRequest, params: { city_ids } },
+          )
+          .pipe(map((resp) => resp.data)),
+      );
     } catch (error) {
       throw new BadRequestException(error.response.data);
     }
