@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'merchant_settings' })
+@Entity({ name: 'merchants_settings' })
 export class SettingDocument {
   constructor(init?: Partial<SettingDocument>) {
     Object.assign(this, init);

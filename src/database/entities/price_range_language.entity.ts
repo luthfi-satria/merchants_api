@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { PriceRangeDocument } from './price_range.entity';
 
-@Entity({ name: 'merchant_price_range_language' })
+@Entity({ name: 'merchants_price_range_languages' })
 export class PriceRangeLanguageDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

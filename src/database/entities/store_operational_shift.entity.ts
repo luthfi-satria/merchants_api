@@ -10,7 +10,7 @@ import {
 import { Exclude } from 'class-transformer';
 import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
 
-@Entity({ name: 'merchant_store_operational_shifts' })
+@Entity({ name: 'merchants_store_operational_shifts' })
 export class StoreOperationalShiftDocument {
   @PrimaryGeneratedColumn('uuid')
   @Exclude()
