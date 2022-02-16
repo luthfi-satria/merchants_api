@@ -1,4 +1,5 @@
-import { CommonService } from 'src/common/common.service';
+import moment from 'moment';
+// import { CommonService } from 'src/common/common.service';
 import {
   BadRequestException,
   HttpStatus,
@@ -67,9 +68,7 @@ export class QueryService {
     private readonly searchHistoryStoreDocument: Repository<SearchHistoryStoreDocument>,
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
-    private readonly ordersService: OrdersService,
-    private readonly commonService: CommonService,
-    private readonly settingsService: SettingsService,
+    private readonly ordersService: OrdersService, // private readonly commonService: CommonService, // private readonly settingsService: SettingsService,
   ) {}
 
   logger = new Logger();
@@ -635,7 +634,11 @@ export class QueryService {
           'merchant_store_categories_languages',
         );
       if (joinMenu) {
-        query1.leftJoinAndSelect('merchant_store.menus', 'menus');
+        query1.leftJoinAndSelect(
+          'merchant_store.menus',
+          'menus',
+          promo === 'DISKON_MENU' ? 'menus.discounted_price is not null' : '',
+        );
       }
       // --- Filter Conditions ---
       // ${delivery_only ? `AND delivery_type = :delivery_only` : ''}
@@ -675,7 +678,7 @@ export class QueryService {
             }
             ${
               newThisWeek
-                ? `AND merchant_store.approved_at >= :newThisWeekDate`
+                ? `AND merchant_store.approved_at >= :newThisWeekDate AND merchant_store.approved_at <= :today`
                 : ''
             }
             ${
@@ -702,6 +705,7 @@ export class QueryService {
             priceLow: priceLow,
             priceHigh: priceHigh,
             newThisWeekDate: lastWeek,
+            today: moment(new Date()),
             budgetMaxValue: budgetMaxValue,
             minimum_rating: minimum_rating,
             favorite_store_ids: favoriteStoreIds,
@@ -719,10 +723,11 @@ export class QueryService {
                 `operational_hours.day_of_week = :weekOfDay
                   AND merchant_store.is_store_open = :is_open
                   AND operational_hours.merchant_store_id IS NOT NULL
+                  AND operational_hours.is_open = :isOpenOperational
                 ${
                   // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
                   is24hrs == false
-                    ? `AND ((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR operational_hours.is_open_24h = :all24h)`
+                    ? `AND (((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR (operational_shifts.open_hour > operational_shifts.close_hour AND ((operational_shifts.open_hour > :currTime AND operational_shifts.close_hour > :currTime) OR (operational_shifts.open_hour < :currTime AND operational_shifts.close_hour < :currTime)) )) OR operational_hours.is_open_24h = :all24h)`
                     : ''
                 }`,
                 {
@@ -730,6 +735,7 @@ export class QueryService {
                   weekOfDay: weekOfDay,
                   currTime: currTime,
                   all24h: true, //niel true for query all stores
+                  isOpenOperational: true,
                 },
               );
             }
@@ -928,18 +934,53 @@ export class QueryService {
     currWeekDay: number,
     curShiftHour: StoreOperationalHoursDocument[],
   ): boolean {
+    // console.log(is_store_status, 'is_store_status');
+    // console.log(currTime, 'currTime');
+    // console.log(currWeekDay, 'currWeekDay');
+    // console.log(curShiftHour, 'curShiftHour');
     const isCurrentDay = curShiftHour.find(
       (row) => row.day_of_week == String(currWeekDay),
     );
 
+    // console.log(isCurrentDay, 'isCurrentDay');
+
     const respectShiftTime = isCurrentDay.shifts.find((e) =>
-      currTime >= e.open_hour && currTime < e.close_hour ? true : false,
+      DateTimeUtils.checkTimeBetween(currTime, e.open_hour, e.close_hour),
     );
+
+    // console.log(respectShiftTime, 'respectShiftTime');
 
     Logger.debug(
       `Get store_operational_status(store open: ${is_store_status} && in_operational_time ${respectShiftTime})`,
     );
-    return is_store_status && respectShiftTime !== null && isCurrentDay.is_open
+
+    /**
+     * Store is operational rule, store is open when:
+     * 1. Store is_store_open must true
+     * 2. StoreOperationalHours is_open must true
+     * 3. if is_open_24h is true
+     * 4. if is_open_24h is false then operational_hour (shift) must exist within current time
+     */
+    // console.log(
+    //   is_store_status && respectShiftTime !== null && isCurrentDay.is_open
+    //     ? true
+    //     : false,
+    //   'old result',
+    // );
+    // console.log(
+    //   is_store_status &&
+    //     isCurrentDay.is_open &&
+    //     (isCurrentDay.is_open_24h || respectShiftTime)
+    //     ? true
+    //     : false,
+    //   'new result',
+    // );
+    // return is_store_status && respectShiftTime !== null && isCurrentDay.is_open
+    //   ? true
+    //   : false;
+    return is_store_status &&
+      isCurrentDay.is_open &&
+      (isCurrentDay.is_open_24h || respectShiftTime)
       ? true
       : false;
   }
@@ -1186,14 +1227,16 @@ export class QueryService {
         (page - 1) * limit + limit,
       );
 
-      if (user && listStores.data.items.length) {
+      if (user) {
         const historyKeyword: Partial<SearchHistoryKeywordDocument> = {
           customer_id: user.id,
           keyword: data.search,
           lang: lang,
         };
         await this.searchHistoryKeywordDocument.save(historyKeyword);
+      }
 
+      if (user && listStores.data.items.length) {
         if (listStores.data?.total_item) {
           const historyStore: Partial<SearchHistoryStoreDocument> = {
             store_id: stores_with_menus[0].id,

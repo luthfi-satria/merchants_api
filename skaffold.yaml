@@ -8,4 +8,4 @@ build:
   artifacts:
     - image: ghcr.io/wofood/efood_merchants
       docker:
-        dockerfile: dev.Dockerfile
+        dockerfile: prod.Dockerfile

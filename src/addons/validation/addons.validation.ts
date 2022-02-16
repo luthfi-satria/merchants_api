@@ -8,5 +8,5 @@ export class MerchantAddonsValidation {
   code: string;
 
   sequence: number;
-  id: string;
+  id?: string;
 }

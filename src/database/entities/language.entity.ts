@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { StoreCategoriesDocument } from './store-categories.entity';
 
-@Entity({ name: 'merchant_store_categories_languages' })
+@Entity({ name: 'merchants_store_category_languages' })
 export class LanguageDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -22,7 +22,7 @@ export enum MerchantUsersStatus {
   Rejected = 'REJECTED',
 }
 
-@Entity({ name: 'merchant_users' })
+@Entity({ name: 'merchants_users' })
 export class MerchantUsersDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

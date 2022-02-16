@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { StoreDocument } from './store.entity';
 
-@Entity({ name: 'merchant_menus_online' })
+@Entity({ name: 'merchants_menu_onlines' })
 export class MenuOnlineDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -39,6 +39,9 @@ export class MenuOnlineDocument {
   @ManyToOne(() => StoreDocument, (store) => store.menus)
   @JoinColumn({ name: 'store_id' })
   store: StoreDocument;
+
+  @Column({ nullable: true })
+  discounted_price: number;
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'LOCALTIMESTAMP' })
   created_at: Date | string;

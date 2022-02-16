@@ -43,6 +43,9 @@ import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import _ from 'lodash';
 import { UsersService } from 'src/users/users.service';
 import { NatsService } from 'src/nats/nats.service';
+import { MenuOnlineService } from 'src/menu_online/menu_online.service';
+import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
+import { isDefined } from 'class-validator';
 
 @Injectable()
 export class StoresService {
@@ -66,6 +69,7 @@ export class StoresService {
     private readonly commonCatalogService: CatalogsService,
     private readonly usersService: UsersService,
     private readonly natsService: NatsService,
+    private readonly menuOnlineService: MenuOnlineService,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -87,6 +91,27 @@ export class StoresService {
           'users',
           'menus',
         ],
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  async simpleFindStoreById(id: string): Promise<StoreDocument> {
+    return this.storeRepository
+      .findOne({
+        where: { id: id },
       })
       .catch((err) => {
         const errors: RMessage = {
@@ -130,6 +155,49 @@ export class StoresService {
     return this.storeRepository.find({
       where: data,
     });
+  }
+
+  async findMerchantStoresByCriteria(
+    data: any,
+    options?: any,
+    includes?: any,
+  ): Promise<any> {
+    let find = {
+      where: data,
+    };
+    if (options) {
+      find = { ...find, ...options };
+    }
+
+    const [stores, count] = await this.storeRepository.findAndCount(find);
+
+    if (includes?.city) {
+      const cityObj = {};
+      stores.forEach((store) => {
+        cityObj[store.city_id] = null;
+      });
+
+      const { data: cities } = await this.cityService.getCityBulk(
+        Object.keys(cityObj),
+      );
+
+      for (const city of cities) {
+        cityObj[city.id] = city;
+      }
+
+      stores.forEach((store) => {
+        store.city = cityObj[store.city_id];
+      });
+    }
+
+    return {
+      total_item: count,
+      limit: options?.take || null,
+      current_page: isDefined(options?.skip)
+        ? Math.round(options.skip / options.take) + 1
+        : null,
+      items: stores,
+    };
   }
 
   async findMerchantStores(): Promise<Partial<StoreDocument>[]> {
@@ -240,6 +308,7 @@ export class StoresService {
     });
     if (countStore == 0) {
       flagCreatePricingTemplate = true;
+      store_document.platform = true;
     }
 
     /**
@@ -289,7 +358,6 @@ export class StoresService {
       create_merchant_store_validation.auto_accept_order == 'true'
         ? true
         : false;
-
     const create_store = await this.storeRepository.save(store_document);
     this.publishNatsCreateStore(create_store);
     const operational_hours = await this.storeOperationalService
@@ -313,7 +381,7 @@ export class StoresService {
   // partial update
   async updateStorePartial(data: Partial<StoreDocument>) {
     try {
-      const store = await this.getAndValidateStoreByStoreId(data.id);
+      const store = await this.findMerchantStoreById(data.id);
       const oldStatus = store.status;
       Object.assign(store, data);
       const updateStore = await this.storeRepository.save(store);
@@ -425,7 +493,7 @@ export class StoresService {
     }
 
     if (store_document.status == 'ACTIVE')
-      store_document.approved_at = new Date();
+      if (!store_document.approved_at) store_document.approved_at = new Date();
     if (store_document.status == 'REJECTED')
       store_document.rejected_at = new Date();
 
@@ -1020,6 +1088,29 @@ export class StoresService {
     return store;
   }
 
+  async simpleGetAndValidateStoreByStoreId(
+    storeId: string,
+  ): Promise<StoreDocument> {
+    const store = await this.simpleFindStoreById(storeId);
+    if (!store) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: storeId,
+            property: 'store_id',
+            constraint: [
+              this.messageService.get('merchant.updatestore.id_notfound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    return store;
+  }
+
   //Publish Payload to Nats
   publishNatsUpdateStore(
     payload: StoreDocument,
@@ -1209,7 +1300,9 @@ export class StoresService {
     }
   }
 
-  async updateNumDiscounts(data: any) {
+  async updateNumDiscounts(data: any, action: string) {
+    this.calculateDiscountPriceMenuOnline(data, action);
+
     const urlmp = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu-price/${data.menu_price_id}`;
     const menuPrice: any = await this.commonService.getHttp(urlmp);
 
@@ -1222,14 +1315,38 @@ export class StoresService {
       const discounts: any = await this.commonService.getHttp(url);
       const store = { store_id: data.store_id, count: 0 };
 
-      for (const discount of discounts) {
-        if (discount.discount_status == 'ACTIVE') {
-          store.count += 1;
+      if (!discounts) {
+        store.count = null;
+      } else {
+        for (const discount of discounts) {
+          if (discount.discount_status == 'ACTIVE') {
+            store.count += 1;
+          }
         }
       }
+
       await this.storeRepository.update(store.store_id, {
         numdiscounts: store.count,
       });
     }
+  }
+
+  async calculateDiscountPriceMenuOnline(data: any, action: string) {
+    let discountedPrice = null;
+    if (action == 'started') {
+      if (data.type == 'PRICE') {
+        discountedPrice = data.value;
+      } else if (data.type == 'PERCENTAGE') {
+        discountedPrice =
+          data.menu_price.price - (data.value / 100) * data.menu_price.price;
+      }
+    }
+    const criteria: Partial<MenuOnlineDocument> = {
+      store_id: data.store_id,
+      menu_price_id: data.menu_price_id,
+    };
+    await this.menuOnlineService.updateMenuPriceByCriteria(criteria, {
+      discounted_price: discountedPrice,
+    });
   }
 }

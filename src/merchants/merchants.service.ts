@@ -358,7 +358,9 @@ export class MerchantsService {
       }
       existMerchant.pic_phone = data.pic_phone;
     }
-    if (data.pic_email) {
+    if (data.pic_email == '') {
+      existMerchant.pic_email = null;
+    } else if (data.pic_email) {
       const cekemail: MerchantDocument = await this.findMerchantMerchantByEmail(
         data.pic_email,
       );
@@ -397,7 +399,9 @@ export class MerchantsService {
     if (data.pic_name) {
       existMerchant.pic_name = data.pic_name;
     }
-    if (data.pic_nip) {
+    if (data.pic_nip == '') {
+      existMerchant.pic_nip = null;
+    } else if (data.pic_nip) {
       existMerchant.pic_nip = data.pic_nip;
     }
     if (data.pb1_tariff) {
@@ -422,7 +426,7 @@ export class MerchantsService {
     const oldPhone = existMerchant.phone;
     if (data.status) existMerchant.status = data.status;
     if (existMerchant.status == 'ACTIVE') {
-      existMerchant.approved_at = new Date();
+      if (!existMerchant.approved_at) existMerchant.approved_at = new Date();
       this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
         existMerchant.id,
         enumStoreStatus.active,

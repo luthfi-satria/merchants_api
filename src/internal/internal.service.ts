@@ -7,7 +7,7 @@ import {
 import { MessageService } from 'src/message/message.service';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { Brackets, IsNull, Not, Repository } from 'typeorm';
+import { Any, Brackets, ILike, IsNull, Not, Repository } from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoresService } from 'src/stores/stores.service';
@@ -21,6 +21,8 @@ import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { ListStoreDTO } from 'src/stores/validation/list-store.validation';
 import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
+import { isDefined } from 'class-validator';
+import { MerchantStoresDto } from './dto/merchant_stores.dto';
 
 @Injectable()
 export class InternalService {
@@ -333,11 +335,13 @@ export class InternalService {
     args: Record<string, any>[],
   ): Promise<RSuccessMessage> {
     for (const raw of args) {
-      const updateStoreData: Partial<StoreDocument> = {
-        id: raw.store_id,
-        average_price: raw.average_price,
-      };
-      await this.storeService.updateStorePartial(updateStoreData);
+      if (isDefined(raw.store_id)) {
+        const updateStoreData: Partial<StoreDocument> = {
+          id: raw.store_id,
+          average_price: raw.average_price,
+        };
+        await this.storeService.updateStorePartial(updateStoreData);
+      }
     }
     return {
       success: true,
@@ -394,6 +398,53 @@ export class InternalService {
               constraint: [
                 this.messageService.get('merchant.general.dataNotfound'),
               ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  async getMerchantStores(data: MerchantStoresDto): Promise<any> {
+    let storeData = {};
+
+    storeData = {
+      ...storeData,
+      merchant_id: data.merchant_id,
+      status: Any(data.statuses),
+    };
+
+    let options = null;
+
+    if (data.limit && data.page) {
+      const page = data.page || 1;
+      const limit = data.limit || 10;
+      const offset = (page - 1) * limit;
+
+      options = {
+        ...options,
+        take: limit,
+        skip: offset,
+        order: { created_at: 'DESC' },
+      };
+    }
+
+    if (data.search)
+      storeData = {
+        ...storeData,
+        name: ILike('%' + data.search + '%'),
+      };
+
+    return this.storeService
+      .findMerchantStoresByCriteria(storeData, options, { city: true })
+      .catch(() => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: data.merchant_id,
+              property: 'merchant_id',
+              constraint: ['error'],
             },
             'Bad Request',
           ),

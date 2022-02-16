@@ -21,6 +21,7 @@ import { StoreCategoryBatchDTO } from './dto/store_category.dto';
 import { RSuccessMessage } from 'src/response/response.interface';
 import { MessageService } from 'src/message/message.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
+import { MerchantStoresDto } from './dto/merchant_stores.dto';
 
 @Controller('api/v1/internal')
 export class InternalController {
@@ -160,6 +161,21 @@ export class InternalController {
       return {
         stores: result,
       };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }
+
+  @Get('merchants/merchants/stores/:merchant_id')
+  @ResponseStatusCode()
+  async getMerchantStores(
+    @Param('merchant_id') merchant_id: string,
+    @Query() data: MerchantStoresDto,
+  ): Promise<any> {
+    try {
+      const result = await this.internalService.getMerchantStores(data);
+      return this.responseService.success(true, 'SUCCESS', result);
     } catch (err) {
       console.error(err);
       throw err;

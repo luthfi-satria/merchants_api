@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { StoreDocument } from './store.entity';
 import { StoreOperationalShiftDocument } from './store_operational_shift.entity';
-@Entity({ name: 'merchant_store_operational_hours' })
+@Entity({ name: 'merchants_store_operational_hours' })
 export class StoreOperationalHoursDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

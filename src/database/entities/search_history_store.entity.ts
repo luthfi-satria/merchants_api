@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { StoreDocument } from './store.entity';
 
-@Entity({ name: 'merchant_search_history_stores' })
+@Entity({ name: 'merchants_search_history_stores' })
 export class SearchHistoryStoreDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

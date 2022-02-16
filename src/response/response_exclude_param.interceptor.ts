@@ -16,7 +16,7 @@ export class ResponseExcludeData implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       tap((response) => {
-        console.log(response);
+        // console.log(response);
 
         const structure = this.reflector.get<string[]>(
           'exclude_param',

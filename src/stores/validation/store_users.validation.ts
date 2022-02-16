@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsUUID,
   Length,
+  ValidateIf,
 } from 'class-validator';
 import { MerchantUsersStatus } from 'src/database/entities/merchant_users.entity';
 
@@ -20,6 +21,7 @@ export class MerchantStoreUsersValidation {
   nip: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.email !== '')
   @IsEmail()
   email: string;
 

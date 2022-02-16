@@ -28,7 +28,7 @@ export enum DirectorIdentityType {
   KTP = 'KTP',
   PASSPORT = 'PASSPORT',
 }
-@Entity({ name: 'merchant_group' })
+@Entity({ name: 'merchants_groups' })
 export class GroupDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -158,7 +158,7 @@ export class GroupDocument {
 
   @OneToMany(
     () => MerchantUsersDocument,
-    (merchant_users) => merchant_users.group,
+    (merchants_users) => merchants_users.group,
   )
   users: MerchantUsersDocument[];
 

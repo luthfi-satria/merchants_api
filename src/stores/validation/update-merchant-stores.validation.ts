@@ -8,6 +8,7 @@ import {
   IsUUID,
   ArrayMaxSize,
   IsBooleanString,
+  ValidateIf,
 } from 'class-validator';
 import { CityDTO } from 'src/common/services/admins/dto/city.dto';
 import {
@@ -29,6 +30,7 @@ export class UpdateMerchantStoreValidation {
   phone: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.email && o.email.replace(/\s/g, '') != '')
   @IsEmail()
   email: string;
 

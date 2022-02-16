@@ -96,30 +96,31 @@ export class CommonNatsController {
   @EventPattern('catalogs.menu.online.averageprice.updated')
   async averagePriceUpdated(@Payload() data: any) {
     this.logger.log('catalogs.menu.online.averageprice.updated');
+    console.log('data: ', data);
     this.internalService.updateStoreAveragePrice(data);
   }
 
   @EventPattern('catalogs.discount.started')
   async orderCancelledByCustomer(@Payload() data: any) {
     this.logger.log('catalogs.discount.started');
-    this.storesService.updateNumDiscounts(data);
+    this.storesService.updateNumDiscounts(data, 'started');
   }
 
   @EventPattern('catalogs.discount.stopped')
   async orderCancelledByStoreStocks(@Payload() data: any) {
     this.logger.log('catalogs.discount.stopped');
-    this.storesService.updateNumDiscounts(data);
+    this.storesService.updateNumDiscounts(data, 'stopped');
   }
 
   @EventPattern('catalogs.discount.cancelled')
   async orderCancelledByStoreOperational(@Payload() data: any) {
     this.logger.log('catalogs.discount.cancelled');
-    this.storesService.updateNumDiscounts(data);
+    this.storesService.updateNumDiscounts(data, 'cancelled');
   }
 
   @EventPattern('catalogs.discount.finished')
   async orderCancelledByStoreBusy(@Payload() data: any) {
     this.logger.log('catalogs.discount.finished');
-    this.storesService.updateNumDiscounts(data);
+    this.storesService.updateNumDiscounts(data, 'finished');
   }
 }

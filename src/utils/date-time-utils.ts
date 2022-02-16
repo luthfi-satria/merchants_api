@@ -110,4 +110,31 @@ export class DateTimeUtils {
   static getNewThisWeekDate(currentDate: Date) {
     return moment(currentDate).subtract(1, 'week').startOf('day');
   }
+
+  /**
+   *
+   * @param current time 1 as current time
+   * @param start time 2 as start time
+   * @param end time 2 as end time
+   * @returns boolean if current is between start and end
+   */
+  static checkTimeBetween(
+    current: string,
+    start: string,
+    end: string,
+  ): boolean {
+    let dCurrent = moment(current, 'HH:mm');
+    let dstart = moment(start, 'HH:mm');
+    const dend = moment(end, 'HH:mm');
+
+    if (dstart.isAfter(dend)) {
+      dstart = dstart.subtract(1, 'day');
+
+      dCurrent = dCurrent.isAfter(dend)
+        ? dCurrent.subtract(1, 'day')
+        : dCurrent;
+    }
+
+    return dCurrent.isBetween(dstart, dend);
+  }
 }
