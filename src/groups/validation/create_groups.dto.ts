@@ -68,7 +68,8 @@ export class CreateGroupDTO {
   @IsString()
   director_phone: string;
 
-  @IsNotEmpty()
+  @IsOptional()
+  @ValidateIf((o) => o.email != '')
   @IsEmail()
   director_email: string;
 
@@ -94,7 +95,8 @@ export class CreateGroupDTO {
   @IsOptional()
   pic_operational_nip: string;
 
-  @IsNotEmpty()
+  @IsOptional()
+  @ValidateIf((o) => o.email != '')
   @IsEmail()
   pic_operational_email: string;
 
@@ -111,7 +113,8 @@ export class CreateGroupDTO {
   @IsOptional()
   pic_finance_nip: string;
 
-  @IsNotEmpty()
+  @IsOptional()
+  @ValidateIf((o) => o.email != '')
   @IsEmail()
   pic_finance_email: string;
 

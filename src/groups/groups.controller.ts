@@ -4,41 +4,41 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpStatus,
   Param,
   Post,
   Put,
   Query,
-  UseInterceptors,
-  Headers,
-  UnauthorizedException,
   Req,
+  UnauthorizedException,
   UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
-import { MessageService } from 'src/message/message.service';
-import { ResponseService } from 'src/response/response.service';
-import { ResponseStatusCode } from 'src/response/response.decorator';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { catchError, map } from 'rxjs';
+import { AuthJwtGuard } from 'src/auth/auth.decorators';
+import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
+import { UserType } from 'src/auth/guard/user-type.decorator';
+import { NotificationService } from 'src/common/notification/notification.service';
+import { CommonStorageService } from 'src/common/storage/storage.service';
 import {
   CategoryGroup,
   GroupDocument,
 } from 'src/database/entities/group.entity';
+import { MessageService } from 'src/message/message.service';
+import { ResponseStatusCode } from 'src/response/response.decorator';
 import { RMessage } from 'src/response/response.interface';
-import { diskStorage } from 'multer';
-import { editFileName, imageAndPdfFileFilter } from 'src/utils/general-utils';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import { GroupsService } from './groups.service';
-import { catchError, map } from 'rxjs';
-import { DeleteResult } from 'typeorm';
-import { ImageValidationService } from 'src/utils/image-validation.service';
-import { AuthJwtGuard } from 'src/auth/auth.decorators';
-import { UserType } from 'src/auth/guard/user-type.decorator';
-import { CreateGroupDTO } from './validation/create_groups.dto';
-import { CommonStorageService } from 'src/common/storage/storage.service';
-import { UpdateGroupDTO } from './validation/update_groups.dto';
-import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
-import { ListGroupDTO } from './validation/list-group.validation';
+import { ResponseService } from 'src/response/response.service';
 import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
-import { NotificationService } from 'src/common/notification/notification.service';
+import { editFileName, imageAndPdfFileFilter } from 'src/utils/general-utils';
+import { ImageValidationService } from 'src/utils/image-validation.service';
+import { DeleteResult } from 'typeorm';
+import { GroupsService } from './groups.service';
+import { CreateGroupDTO } from './validation/create_groups.dto';
+import { ListGroupDTO } from './validation/list-group.validation';
+import { UpdateGroupDTO } from './validation/update_groups.dto';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -92,7 +92,7 @@ export class GroupsController {
     if (group) {
       const errors: RMessage = {
         value: createGroupDTO.phone,
-        property: 'phone',
+        property: 'pic_phone',
         constraint: [
           this.messageService.get('merchant.creategroup.phoneExist'),
         ],
@@ -177,7 +177,7 @@ export class GroupsController {
     if (cekphone && cekphone.phone != updateGroupDTO.phone) {
       const errors: RMessage = {
         value: updateGroupDTO.phone,
-        property: 'phone',
+        property: 'pic_phone',
         constraint: [
           this.messageService.get('merchant.creategroup.phoneExist'),
         ],
