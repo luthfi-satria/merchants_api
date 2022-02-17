@@ -178,7 +178,7 @@ export class GroupsService {
           status: MerchantUsersStatus.Active,
         };
         // role jika pic_operational & pic_finance sama tetapi berbeda dengan directur
-        if (createGroupDTO.pic_operational_email == createGroupDTO.pic_finance_email) {
+        if (createGroupDTO.pic_operational_phone == createGroupDTO.pic_finance_phone) {
           create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_finance_operational } ).role.id;
         }
         const pic_operational = await this.groupUserService.createUserPassword(
