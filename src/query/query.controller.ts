@@ -90,6 +90,8 @@ export class QueryController {
     @Req() req: any,
     @Query() query: QuerySearchValidation,
   ) {
+    console.log('search as customer');
+    console.log('query: ', query);
     return this.queryService.searchStoreMenu(query, req.user);
   }
 
@@ -99,6 +101,8 @@ export class QueryController {
     @Req() req: any,
     @Query() query: QuerySearchValidation,
   ) {
+    console.log('search');
+    console.log('query: ', query);
     return this.queryService.searchStoreMenu(query, null);
   }
 

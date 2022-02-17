@@ -1282,6 +1282,8 @@ export class QueryService {
 
       const items = await query.getRawMany();
       const count = counter?.count ? +counter.count : 0;
+      console.log('count: ', count);
+      console.log('items: ', items);
 
       const list_result: ListResponse = {
         total_item: count,
