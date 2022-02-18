@@ -144,9 +144,9 @@ export class GroupsService {
         ]
       );
 
-      const array_email = [];
+      const array_phone = [];
       create.users = [];
-      array_email.push(createGroupDTO.director_email);
+      array_phone.push(createGroupDTO.director_phone);
       const create_director: Partial<GroupUser> = {
         group_id: create.id,
         name: createGroupDTO.director_name,
@@ -158,15 +158,15 @@ export class GroupsService {
         status: MerchantUsersStatus.Active,
       };
       // role jika pic_operational & pic_finance sama dengan directur
-      if (array_email.includes(createGroupDTO.pic_operational_email)) {
+      if (array_phone.includes(createGroupDTO.pic_operational_phone)) {
         create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_director_finance_operational } ).role.id;
       }
       const director = await this.groupUserService.createUserPassword(
         create_director,
       );
       create.users.push(director);
-      if (!array_email.includes(createGroupDTO.pic_operational_email)) {
-        array_email.push(createGroupDTO.pic_operational_email);
+      if (!array_phone.includes(createGroupDTO.pic_operational_phone)) {
+        array_phone.push(createGroupDTO.pic_operational_phone);
         const create_pic_operational: Partial<GroupUser> = {
           group_id: create.id,
           name: createGroupDTO.pic_operational_name,
@@ -178,7 +178,7 @@ export class GroupsService {
           status: MerchantUsersStatus.Active,
         };
         // role jika pic_operational & pic_finance sama tetapi berbeda dengan directur
-        if (createGroupDTO.pic_operational_email == createGroupDTO.pic_finance_email) {
+        if (createGroupDTO.pic_operational_phone == createGroupDTO.pic_finance_phone) {
           create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_finance_operational } ).role.id;
         }
         const pic_operational = await this.groupUserService.createUserPassword(
@@ -186,8 +186,8 @@ export class GroupsService {
         );
         create.users.push(pic_operational);
       }
-      if (!array_email.includes(createGroupDTO.pic_finance_email)) {
-        array_email.push(createGroupDTO.pic_finance_email);
+      if (!array_phone.includes(createGroupDTO.pic_finance_phone)) {
+        array_phone.push(createGroupDTO.pic_finance_phone);
         const create_pic_finance: Partial<GroupUser> = {
           group_id: create.id,
           name: createGroupDTO.pic_finance_name,

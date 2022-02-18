@@ -1,6 +1,7 @@
 import { extname } from 'path';
 import momenttz from 'moment-timezone';
 import { randomBytes } from 'crypto';
+import moment from 'moment';
 
 export function CreateRandomNumber(pjg: number): string {
   const random_number = parseInt(randomBytes(4).toString('hex'), 16).toString();
@@ -11,14 +12,16 @@ export function CreateRandomNumber(pjg: number): string {
 }
 
 export const editFileName = (req: any, file: any, callback: any) => {
-  const random_number = parseInt('0.' + randomBytes(8).toString('hex'), 16);
+  // const random_number = parseInt('0.' + randomBytes(8).toString('hex'), 16);
   const name = file.originalname.split('.')[0];
   const fileExtName = extname(file.originalname);
-  const randomName = Array(4)
-    .fill(null)
-    .map(() => Math.round(random_number * 16).toString(16))
-    .join('');
-  callback(null, `${name}-${randomName}${fileExtName}`);
+  // const randomName = Array(4)
+  //   .fill(null)
+  //   .map(() => Math.round(random_number * 16).toString(16))
+  //   .join('');
+  const randomName = moment().format('x');
+  // callback(null, `${name}-${randomName}${fileExtName}`);
+  callback(null, `${randomName}-${name}${fileExtName}`);
 };
 
 export const imageJpgPngFileFilter = (req: any, file: any, callback) => {

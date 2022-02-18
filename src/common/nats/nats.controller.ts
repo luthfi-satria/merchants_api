@@ -96,7 +96,6 @@ export class CommonNatsController {
   @EventPattern('catalogs.menu.online.averageprice.updated')
   async averagePriceUpdated(@Payload() data: any) {
     this.logger.log('catalogs.menu.online.averageprice.updated');
-    console.log('data: ', data);
     this.internalService.updateStoreAveragePrice(data);
   }
 
