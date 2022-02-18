@@ -123,7 +123,7 @@ export class MerchantsService {
     if (cekphone) {
       const errors: RMessage = {
         value: data.pic_phone,
-        property: 'pic_phone (OFI)',
+        property: 'pic_phone',
         constraint: [
           this.messageService.get('merchant.createmerchant.phoneExist'),
         ],
@@ -878,7 +878,7 @@ export class MerchantsService {
           HttpStatus.BAD_REQUEST,
           {
             value: phone,
-            property: 'phone (IFO)',
+            property: 'phone',
             constraint: [
               this.messageService.get('merchant.general.phoneExist'),
             ],
