@@ -38,7 +38,13 @@ export const imageJpgPngFileFilter = (req: any, file: any, callback) => {
 };
 
 export const imageFileFilter = (req: any, file: any, callback) => {
-  if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+  if (
+    !file.originalname.match(/\.(jpg|jpeg|png|gif)$/) &&
+    !file.mimetype.includes('png') &&
+    !file.mimetype.includes('jpg') &&
+    !file.mimetype.includes('jpeg') &&
+    !file.mimetype.includes('gif')
+  ) {
     if (!req.fileValidationError) {
       req.fileValidationError = [];
     }
