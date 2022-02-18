@@ -887,6 +887,7 @@ export class MerchantsService {
         ),
       );
     }
+    return cekMerchantPhone;
   }
 
   //Publish Payload to Nats
