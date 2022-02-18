@@ -19,4 +19,5 @@ export class PriceCategoryStoreDTO {
   created_at: Date;
   updated_at: Date;
   deleted_at: Date;
+  sales_channel_id: string;
 }

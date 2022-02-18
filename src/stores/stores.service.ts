@@ -893,20 +893,33 @@ export class StoresService {
       const storeIds: string[] = [];
       list.forEach((element) => {
         storeIds.push(element.id);
+        if (data.sales_channel_id) list.price_category = null;
       });
       const priceCategories =
         await this.commonCatalogService.getPriceCategoryByStoreIds(storeIds);
+
       for (const priceCategory of priceCategories) {
         const idx = _.findIndex(list, function (ix: any) {
           return ix.id == priceCategory.store_id;
         });
 
         if (idx != -1) {
-          if (!list[idx].price_category) {
-            delete priceCategory.store_id;
-            list[idx].price_category = priceCategory;
+          delete priceCategory.store_id;
+          if (data.sales_channel_id) {
+            if (priceCategory.sales_channel_id == data.sales_channel_id) {
+              delete priceCategory.sales_channel_id;
+              list[idx].price_category = priceCategory;
+            }
+          } else {
+            delete priceCategory.sales_channel_id;
+            if (!list[idx].price_category) {
+              list[idx].price_category = priceCategory;
+            }
           }
         }
+      }
+      for (const lis of list) {
+        if (!lis.price_category) lis.price_category = null;
       }
       response.items = list;
       return response;
