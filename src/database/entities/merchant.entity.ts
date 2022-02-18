@@ -38,7 +38,7 @@ export enum DiscountType {
   PRICE = 'PRICE',
 }
 
-@Entity({ name: 'merchant_merchant' })
+@Entity({ name: 'merchants_merchants' })
 export class MerchantDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

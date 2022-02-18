@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'merchant_addons' })
+@Entity({ name: 'merchants_addons' })
 export class AddonDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

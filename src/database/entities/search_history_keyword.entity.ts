@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'merchant_search_history_keywords' })
+@Entity({ name: 'merchants_search_history_keywords' })
 export class SearchHistoryKeywordDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

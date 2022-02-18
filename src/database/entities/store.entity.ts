@@ -14,7 +14,6 @@ import {
 } from 'typeorm';
 import { ColumnNumericTransformer } from '../helper/column_numberic_transformer';
 import { AddonDocument } from './addons.entity';
-// import { ListBankDocument } from './list_banks';
 import { MenuOnlineDocument } from './menu_online.entity';
 import { MerchantDocument } from './merchant.entity';
 import { MerchantUsersDocument } from './merchant_users.entity';
@@ -38,7 +37,7 @@ export enum enumStoreStatus {
   rejected = 'REJECTED',
 }
 
-@Entity({ name: 'merchant_store' })
+@Entity({ name: 'merchants_stores' })
 export class StoreDocument {
   //General Info
   @PrimaryGeneratedColumn('uuid')
@@ -115,7 +114,7 @@ export class StoreDocument {
   banner: string;
 
   @ManyToMany(() => StoreCategoriesDocument)
-  @JoinTable({ name: 'merchant_store_store_categories' })
+  @JoinTable({ name: 'merchants_stores_store_categories' })
   store_categories: StoreCategoriesDocument[];
 
   @Column({
@@ -126,7 +125,7 @@ export class StoreDocument {
   delivery_type: enumDeliveryType;
 
   @ManyToMany(() => AddonDocument)
-  @JoinTable({ name: 'merchant_store_addon' })
+  @JoinTable({ name: 'merchants_stores_addons' })
   service_addons: AddonDocument[];
 
   //Data Bank

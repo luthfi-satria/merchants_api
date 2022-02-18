@@ -12,7 +12,7 @@ export enum LobStatus {
   INACTIVE = 'INACTIVE',
 }
 
-@Entity({ name: 'merchant_lob' })
+@Entity({ name: 'merchants_lobs' })
 export class LobDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
