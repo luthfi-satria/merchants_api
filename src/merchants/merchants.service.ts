@@ -8,48 +8,48 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { isDefined } from 'class-validator';
+import { CommonService } from 'src/common/common.service';
+import {
+  RoleService,
+  SpecialRoleCodes,
+} from 'src/common/services/admins/role.service';
+import { CommonStorageService } from 'src/common/storage/storage.service';
+import { GroupDocument } from 'src/database/entities/group.entity';
+import { LobDocument } from 'src/database/entities/lob.entity';
 import {
   DiscountType,
   MerchantDocument,
   MerchantStatus,
   PromoType,
 } from 'src/database/entities/merchant.entity';
+// import { Hash } from 'src/hash/hash.decorator';
+import {
+  MerchantUsersDocument,
+  MerchantUsersStatus,
+} from 'src/database/entities/merchant_users.entity';
+import { enumStoreStatus } from 'src/database/entities/store.entity';
+import { GroupsService } from 'src/groups/groups.service';
+import { HashService } from 'src/hash/hash.service';
+import { LobService } from 'src/lob/lob.service';
+import { MessageService } from 'src/message/message.service';
+import { NatsService } from 'src/nats/nats.service';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
+import { ResponseService } from 'src/response/response.service';
+import { StoresService } from 'src/stores/stores.service';
 import {
   deleteCredParam,
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
-import { ResponseService } from 'src/response/response.service';
-import { MessageService } from 'src/message/message.service';
-import { HashService } from 'src/hash/hash.service';
-// import { Hash } from 'src/hash/hash.decorator';
-import {
-  MerchantUsersDocument,
-  MerchantUsersStatus,
-} from 'src/database/entities/merchant_users.entity';
-import { CommonStorageService } from 'src/common/storage/storage.service';
-import { CommonService } from 'src/common/common.service';
-import { CreateMerchantDTO } from './validation/create_merchant.dto';
-import { GroupDocument } from 'src/database/entities/group.entity';
-import { GroupsService } from 'src/groups/groups.service';
-import { LobService } from 'src/lob/lob.service';
-import { LobDocument } from 'src/database/entities/lob.entity';
 import { MerchantUsersService } from './merchants_users.service';
-import { UpdateMerchantDTO } from './validation/update_merchant.dto';
+import { CreateMerchantDTO } from './validation/create_merchant.dto';
 import {
   ListMerchantDTO,
   SearchFields,
 } from './validation/list-merchant.validation';
-import {
-  RoleService,
-  SpecialRoleCodes,
-} from 'src/common/services/admins/role.service';
-import { StoresService } from 'src/stores/stores.service';
-import { enumStoreStatus } from 'src/database/entities/store.entity';
-import { NatsService } from 'src/nats/nats.service';
-import { isDefined } from 'class-validator';
+import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 @Injectable()
 export class MerchantsService {
   constructor(
@@ -878,7 +878,7 @@ export class MerchantsService {
           HttpStatus.BAD_REQUEST,
           {
             value: phone,
-            property: 'phone',
+            property: 'pic_phone',
             constraint: [
               this.messageService.get('merchant.general.phoneExist'),
             ],

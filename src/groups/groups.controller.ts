@@ -92,7 +92,7 @@ export class GroupsController {
     if (group) {
       const errors: RMessage = {
         value: createGroupDTO.phone,
-        property: 'pic_phone',
+        property: 'phone',
         constraint: [
           this.messageService.get('merchant.creategroup.phoneExist'),
         ],
@@ -177,7 +177,7 @@ export class GroupsController {
     if (cekphone && cekphone.phone != updateGroupDTO.phone) {
       const errors: RMessage = {
         value: updateGroupDTO.phone,
-        property: 'pic_phone',
+        property: 'phone',
         constraint: [
           this.messageService.get('merchant.creategroup.phoneExist'),
         ],
