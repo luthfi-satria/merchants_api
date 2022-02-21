@@ -384,6 +384,8 @@ export class StoresService {
       const store = await this.findMerchantStoreById(data.id);
       const oldStatus = store.status;
       Object.assign(store, data);
+      console.log(store, '=> store service');
+
       const updateStore = await this.storeRepository.save(store);
       this.publishNatsUpdateStore(updateStore, oldStatus);
       return updateStore;

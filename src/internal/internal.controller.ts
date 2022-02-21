@@ -125,6 +125,8 @@ export class InternalController {
     @Body()
     args: Record<string, any>[],
   ): Promise<any> {
+    console.log(args, '=> args controller platform');
+
     return this.internalService.updateStorePlatform(args);
   }
 
