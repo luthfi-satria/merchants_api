@@ -599,7 +599,7 @@ export class MerchantUsersService {
             HttpStatus.BAD_REQUEST,
             {
               value: email,
-              property: 'email',
+              property: 'pic_email',
               constraint: [
                 this.messageService.get('merchant.general.emailExist'),
               ],
@@ -620,7 +620,7 @@ export class MerchantUsersService {
           HttpStatus.BAD_REQUEST,
           {
             value: phone,
-            property: 'phone',
+            property: 'pic_phone',
             constraint: [
               this.messageService.get('merchant.general.phoneExist'),
             ],

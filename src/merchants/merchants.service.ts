@@ -878,7 +878,7 @@ export class MerchantsService {
           HttpStatus.BAD_REQUEST,
           {
             value: phone,
-            property: 'pic_phone',
+            property: 'phone',
             constraint: [
               this.messageService.get('merchant.general.phoneExist'),
             ],
@@ -887,6 +887,7 @@ export class MerchantsService {
         ),
       );
     }
+    return cekMerchantPhone;
   }
 
   //Publish Payload to Nats
