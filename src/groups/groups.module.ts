@@ -32,7 +32,6 @@ import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
-import { MerchantsModule } from 'src/merchants/merchants.module';
 
 @Module({
   imports: [
