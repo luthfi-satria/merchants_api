@@ -201,6 +201,7 @@ export class GroupsController {
     try {
       const updateresult: Record<string, any> =
         await this.groupsService.updateMerchantGroupProfile(updateGroupDTO, id);
+
       return this.responseService.success(
         true,
         this.messageService.get('merchant.updategroup.success'),

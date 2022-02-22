@@ -1,7 +1,9 @@
 /* eslint-disable prettier/prettier */
 import {
   BadRequestException,
+  forwardRef,
   HttpStatus,
+  Inject,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -31,6 +33,9 @@ import { ListGroupDTO, SearchFields } from './validation/list-group.validation';
 import { RoleService, SpecialRoleCodes } from 'src/common/services/admins/role.service';
 import { NatsService } from 'src/nats/nats.service';
 import _ from 'lodash';
+import { MerchantDocument, MerchantStatus } from 'src/database/entities/merchant.entity';
+import { MerchantsService } from 'src/merchants/merchants.service';
+import { StoresService } from 'src/stores/stores.service';
 
 @Injectable()
 export class GroupsService {
@@ -40,7 +45,6 @@ export class GroupsService {
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private readonly groupUserService: GroupUsersService,
-    private readonly storage: CommonStorageService,
     private httpService: HttpService,
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
@@ -48,6 +52,10 @@ export class GroupsService {
     private readonly hashService: HashService,
     private readonly roleService: RoleService,
     private readonly natsService: NatsService,
+    @Inject(forwardRef(() => MerchantsService))
+    private readonly merchantService: MerchantsService,
+    @Inject(forwardRef(() => StoresService))
+    private readonly storeService: StoresService,
   ) {}
 
   async findMerchantById(id: string): Promise<GroupDocument> {
@@ -241,6 +249,18 @@ export class GroupsService {
     const update_group = await this.groupRepository.save(group);
     if (!update_group) {
       throw new Error('Update Failed');
+    }
+
+    //Checking Status
+    if (updateGroupDTO.status == GroupStatus.Inactive) {
+      const updateMerchantData: Partial<MerchantDocument> = {status: MerchantStatus.Inactive};
+      const criteria: Partial<MerchantDocument> = {group_id: update_group.id}
+      const merchants = await this.merchantService.updateMerchantByCriteria(criteria,updateMerchantData);
+      if (merchants && merchants.length > 0) {
+          for (const merchant of merchants) {
+            await this.storeService.setAllInactiveByMerchantId(merchant.id);
+          }
+      }
     }
     this.publishNatsUpdateGroup(update_group, oldStatus);
     return group;

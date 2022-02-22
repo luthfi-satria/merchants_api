@@ -1007,4 +1007,21 @@ export class MerchantsService {
       }
     }
   }
+
+  async updateMerchantByCriteria(
+    criteria: Partial<MerchantDocument>,
+    data: Partial<MerchantDocument>,
+  ) {
+    try {
+      const merchants = await this.merchantRepository.find({
+        where: criteria,
+      });
+      if (!merchants) return null;
+
+      await this.merchantRepository.update(criteria, data);
+      return merchants;
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
