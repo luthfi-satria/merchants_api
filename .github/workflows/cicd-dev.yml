@@ -1,19 +1,4 @@
-# name: Continuous Integration
-# on: push
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v2
-#       - uses: actions/setup-node@v2
-#         with:
-#           node-version: '14'
-#       - name: Install
-#         run: npm install
-#       - name: Run ESLint
-#         run: npm run lint
-
-name: Deploy Dev
+name: CI/CD Dev
 on:
   push:
     branches:
@@ -34,8 +19,8 @@ jobs:
       - name: Authenticate with Github Container Registry
         run: echo $GHCR_PASSWORD | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
         env:
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-          GHCR_PASSWORD: ${{ secrets.GHCR_PASSWORD }}
+          GHCR_USERNAME: ${{ secrets.DEV_GHCR_USERNAME }}
+          GHCR_PASSWORD: ${{ secrets.DEV_GHCR_PASSWORD }}
 
       - name: Deploy
         run: |
@@ -43,4 +28,4 @@ jobs:
           export KUBECONFIG=/tmp/kubeconfig
           skaffold run
         env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG_DEV }}
+          KUBECONFIG: ${{ secrets.DEV_KUBECONFIG }}

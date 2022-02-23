@@ -1,0 +1,31 @@
+name: CI/CD Prod
+on:
+  push:
+    branches:
+      - "main"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+
+      - name: Install skaffold
+        uses: yokawasa/action-setup-kube-tools@v0.7.1
+        with:
+          kubectl: '1.17.1'
+          skaffold: '1.20.0'
+
+      - name: Authenticate with Github Container Registry
+        run: echo $GHCR_PASSWORD | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
+        env:
+          GHCR_USERNAME: ${{ secrets.PROD_GHCR_USERNAME }}
+          GHCR_PASSWORD: ${{ secrets.PROD_GHCR_PASSWORD }}
+
+      - name: Deploy
+        run: |
+          echo "$KUBECONFIG" | base64 -d > /tmp/kubeconfig
+          export KUBECONFIG=/tmp/kubeconfig
+          skaffold run
+        env:
+          KUBECONFIG: ${{ secrets.PROD_KUBECONFIG }}
