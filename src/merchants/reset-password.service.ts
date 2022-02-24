@@ -1,16 +1,17 @@
 import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
-import { MessageService } from 'src/message/message.service';
-import { ResponseService } from 'src/response/response.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { CommonService } from 'src/common/common.service';
 import { randomUUID } from 'crypto';
-import { RMessage } from 'src/response/response.interface';
-import { HashService } from 'src/hash/hash.service';
+import { CommonService } from 'src/common/common.service';
+import { NotificationService } from 'src/common/notification/notification.service';
 // import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { HashService } from 'src/hash/hash.service';
+import { MessageService } from 'src/message/message.service';
+import { RMessage } from 'src/response/response.interface';
+import { ResponseService } from 'src/response/response.service';
+import { Repository } from 'typeorm';
+import { wordingLinkFormatForSms } from './../groups/wordings/wording-link-format-for-sms';
 import { MerchantUsersValidation } from './validation/merchants_users.validation';
-import { NotificationService } from 'src/common/notification/notification.service';
 
 @Injectable()
 export class ResetPasswordService {
@@ -150,7 +151,10 @@ export class ResetPasswordService {
       await this.merchantUserRepository.save(cekPhone);
       const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(cekPhone.phone, url);
+      this.notificationService.sendSms(
+        cekPhone.phone,
+        wordingLinkFormatForSms(cekPhone.name, url),
+      );
 
       if (process.env.NODE_ENV == 'test') {
         return { status: true, token: token, url: url };

@@ -1,3 +1,4 @@
+import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   forwardRef,
@@ -6,10 +7,19 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
+import { randomUUID } from 'crypto';
+import _ from 'lodash';
 import { catchError, map, Observable } from 'rxjs';
+import { NotificationService } from 'src/common/notification/notification.service';
+import { CommonStoresService } from 'src/common/own/stores.service';
+import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
+import { RoleService } from 'src/common/services/admins/role.service';
+import { MerchantDocument } from 'src/database/entities/merchant.entity';
+// import { Hash } from 'src/hash/hash.decorator';
+import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { HashService } from 'src/hash/hash.service';
 import { MessageService } from 'src/message/message.service';
 import {
   ListResponse,
@@ -23,27 +33,18 @@ import {
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
-import { HashService } from 'src/hash/hash.service';
-// import { Hash } from 'src/hash/hash.decorator';
-import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
-import {
-  CreateMerchantUsersValidation,
-  UpdateMerchantUsersValidation,
-} from './validation/merchants_users.validation';
-import { MerchantDocument } from 'src/database/entities/merchant.entity';
-import { randomUUID } from 'crypto';
-import { RoleService } from 'src/common/services/admins/role.service';
-import _ from 'lodash';
+import { wordingLinkFormatForSms } from './../groups/wordings/wording-link-format-for-sms';
+import { MerchantsService } from './merchants.service';
 import {
   GetMerchantUsers,
   ListMerchantUsersValidation,
 } from './validation/list_merchants_users.validation';
-import { MerchantsService } from './merchants.service';
-import { NotificationService } from 'src/common/notification/notification.service';
-import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
+import {
+  CreateMerchantUsersValidation,
+  UpdateMerchantUsersValidation,
+} from './validation/merchants_users.validation';
 import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
-import { CommonStoresService } from 'src/common/own/stores.service';
-import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
+import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
 
 @Injectable()
 export class MerchantUsersService {
@@ -124,7 +125,10 @@ export class MerchantUsersService {
         createMerchant.token_reset_password = token;
       }
 
-      this.notificationService.sendSms(createMerchant.phone, url);
+      this.notificationService.sendSms(
+        createMerchant.phone,
+        wordingLinkFormatForSms(createMerchant.name, url),
+      );
 
       return createMerchant;
     } catch (err) {
@@ -237,7 +241,10 @@ export class MerchantUsersService {
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(merchantUser.phone, urlVerification);
+      this.notificationService.sendSms(
+        merchantUser.phone,
+        wordingLinkFormatForSms(merchantUser.name, urlVerification),
+      );
 
       return this.responseService.success(
         true,
@@ -279,7 +286,10 @@ export class MerchantUsersService {
       const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
       // biarkan tanpa await karena dilakukan secara asynchronous
-      this.notificationService.sendSms(merchantUser.phone, url);
+      this.notificationService.sendSms(
+        merchantUser.phone,
+        wordingLinkFormatForSms(merchantUser.name, url),
+      );
 
       if (process.env.NODE_ENV == 'test') {
         return { status: true, token: token, url: url };
@@ -645,7 +655,10 @@ export class MerchantUsersService {
     if (process.env.NODE_ENV == 'test') {
       result.url = url;
     }
-    this.notificationService.sendSms(args.phone, url);
+    this.notificationService.sendSms(
+      args.phone,
+      wordingLinkFormatForSms(args.name, url),
+    );
 
     return result;
   }
@@ -880,7 +893,10 @@ export class MerchantUsersService {
         result.token_reset_password = token;
         result.url = urlVerification;
       }
-      this.notificationService.sendSms(userAccount.phone, urlVerification);
+      this.notificationService.sendSms(
+        userAccount.phone,
+        wordingLinkFormatForSms(userAccount.name, urlVerification),
+      );
 
       return this.responseService.success(
         true,

@@ -1,3 +1,4 @@
+import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   ForbiddenException,
@@ -7,10 +8,21 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
+import { randomUUID } from 'crypto';
+import _ from 'lodash';
 import { catchError, map, Observable } from 'rxjs';
+import { UserType } from 'src/auth/guard/interface/user.interface';
+import { NotificationService } from 'src/common/notification/notification.service';
+import { RoleService } from 'src/common/services/admins/role.service';
+// import { Hash } from 'src/hash/hash.decorator';
+import { GroupDocument } from 'src/database/entities/group.entity';
+import {
+  MerchantUsersDocument,
+  MerchantUsersStatus,
+} from 'src/database/entities/merchant_users.entity';
+import { HashService } from 'src/hash/hash.service';
 import { MessageService } from 'src/message/message.service';
 import {
   ListResponse,
@@ -23,27 +35,17 @@ import {
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
+import { GroupsService } from './groups.service';
+import { GroupUser } from './interface/group_users.interface';
 import {
   MerchantGroupUsersValidation,
   UpdateMerchantGroupUsersValidation,
 } from './validation/groups_users.validation';
-import { HashService } from 'src/hash/hash.service';
-// import { Hash } from 'src/hash/hash.decorator';
-import { GroupDocument } from 'src/database/entities/group.entity';
-import {
-  MerchantUsersDocument,
-  MerchantUsersStatus,
-} from 'src/database/entities/merchant_users.entity';
-import { GroupUser } from './interface/group_users.interface';
-import { randomUUID } from 'crypto';
 import { ListGroupUserDTO } from './validation/list-group-user.validation';
-import { RoleService } from 'src/common/services/admins/role.service';
-import _ from 'lodash';
-import { GroupsService } from './groups.service';
-import { UserType } from 'src/auth/guard/interface/user.interface';
-import { NotificationService } from 'src/common/notification/notification.service';
-import { UpdatePhoneGroupUsersValidation } from './validation/update_phone_group_users.validation';
 import { UpdateEmailGroupUsersValidation } from './validation/update_email_group_users.validation';
+import { UpdatePhoneGroupUsersValidation } from './validation/update_phone_group_users.validation';
+import { wordingLinkFormatForSms } from './wordings/wording-link-format-for-sms';
+import { wordingNotifFormatForSms } from './wordings/wording-notif-format-for-sms';
 
 @Injectable()
 export class GroupUsersService {
@@ -81,7 +83,10 @@ export class GroupUsersService {
       // result.url = urlVerification;
     }
 
-    this.notificationService.sendSms(groupUser.phone, urlVerification);
+    this.notificationService.sendSms(
+      groupUser.phone,
+      wordingLinkFormatForSms(groupUser.name, urlVerification),
+    );
     return result;
   }
 
@@ -214,7 +219,10 @@ export class GroupUsersService {
         resultCreate.url = urlVerification;
       }
 
-      this.notificationService.sendSms(args.phone, urlVerification);
+      this.notificationService.sendSms(
+        args.phone,
+        wordingLinkFormatForSms(args.name, urlVerification),
+      );
 
       return resultCreate;
     } catch (err) {
@@ -513,7 +521,7 @@ export class GroupUsersService {
 
       this.notificationService.sendSms(
         merchantUser.phone,
-        'Nomor Anda telah digunakan sebagai login baru',
+        wordingNotifFormatForSms(merchantUser.name),
       );
 
       return result;
@@ -588,7 +596,10 @@ export class GroupUsersService {
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(merchantUser.phone, urlVerification);
+      this.notificationService.sendSms(
+        merchantUser.phone,
+        wordingLinkFormatForSms(merchantUser.name, urlVerification),
+      );
 
       return result;
     } catch (err) {
@@ -896,7 +907,10 @@ export class GroupUsersService {
         result.token_reset_password = token;
         result.url = urlVerification;
       }
-      this.notificationService.sendSms(userAccount.phone, urlVerification);
+      this.notificationService.sendSms(
+        userAccount.phone,
+        wordingLinkFormatForSms(userAccount.name, urlVerification),
+      );
 
       return this.responseService.success(
         true,
