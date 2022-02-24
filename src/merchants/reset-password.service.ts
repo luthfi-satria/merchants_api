@@ -9,6 +9,7 @@ import { HashService } from 'src/hash/hash.service';
 import { MessageService } from 'src/message/message.service';
 import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
+import { generateMessageResetPassword } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
 import { wordingLinkFormatForSms } from './../groups/wordings/wording-link-format-for-sms';
 import { MerchantUsersValidation } from './validation/merchants_users.validation';
@@ -71,16 +72,17 @@ export class ResetPasswordService {
     try {
       await this.merchantUserRepository.save(cekEmail);
       const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
+      const messageResetPassword = await generateMessageResetPassword(
+        cekEmail.name,
+        url,
+      );
 
       // biarkan tanpa await karena dilakukan secara asynchronous
       this.notificationService.sendEmail(
         cekEmail.email,
         'Reset Password',
         '',
-        `
-      <p>Silahkan klik link berikut untuk mereset password Anda,</p>
-      <a href="${url}">${url}</a>
-      `,
+        messageResetPassword,
       );
 
       if (process.env.NODE_ENV == 'test') {

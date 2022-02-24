@@ -32,6 +32,8 @@ import {
 import { ResponseService } from 'src/response/response.service';
 import {
   formatingAllOutputTime,
+  generateMessageChangeActiveEmail,
+  generateMessageUrlVerification,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
@@ -557,10 +559,14 @@ export class GroupUsersService {
       removeAllFieldPassword(result);
 
       if (result.email_verified_at) {
+        const messageChangeActiveEmail = generateMessageChangeActiveEmail(
+          merchantUser.name,
+        );
         this.notificationService.sendEmail(
           merchantUser.email,
           'Email Anda telah aktif',
-          'Alamat email Anda telah digunakan sebagai login baru',
+          '',
+          messageChangeActiveEmail,
         );
       } else {
         this.sendNewEmailUser(userId);
@@ -785,6 +791,10 @@ export class GroupUsersService {
       formatingAllOutputTime(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      const messageUrlVerifivation = await generateMessageUrlVerification(
+        userAccount.name,
+        urlVerification,
+      );
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -792,7 +802,8 @@ export class GroupUsersService {
       this.notificationService.sendEmail(
         userAccount.email,
         'Verifikasi Email baru',
-        urlVerification,
+        '',
+        messageUrlVerifivation,
       );
 
       return this.responseService.success(
@@ -844,6 +855,10 @@ export class GroupUsersService {
       formatingAllOutputTime(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      const messageUrlVerifivation = await generateMessageUrlVerification(
+        userAccount.name,
+        urlVerification,
+      );
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -851,7 +866,8 @@ export class GroupUsersService {
       this.notificationService.sendEmail(
         userAccount.email,
         'Verifikasi Ulang Email',
-        urlVerification,
+        '',
+        messageUrlVerifivation,
       );
 
       return this.responseService.success(

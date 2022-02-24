@@ -30,6 +30,9 @@ import { ResponseService } from 'src/response/response.service';
 import {
   deleteCredParam,
   formatingAllOutputTime,
+  generateMessageChangeActiveEmail,
+  generateMessageResetPassword,
+  generateMessageUrlVerification,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
@@ -333,20 +336,25 @@ export class MerchantUsersService {
 
       // biarkan tanpa await karena dilakukan secara asynchronous
       if (merchantUser.email_verified_at) {
+        const messageChangeActiveEmail = generateMessageChangeActiveEmail(
+          merchantUser.name,
+        );
         this.notificationService.sendEmail(
           merchantUser.email,
           'Email Anda telah aktif',
-          'Alamat email Anda telah digunakan sebagai login baru',
+          '',
+          messageChangeActiveEmail,
         );
       } else {
+        const messageResetPassword = await generateMessageResetPassword(
+          merchantUser.name,
+          url,
+        );
         this.notificationService.sendEmail(
           merchantUser.email,
           'Perubahan Email',
           '',
-          `
-        <p>Silahkan klik link berikut untuk mereset password Anda,</p>
-        <a href="${url}">${url}</a>
-        `,
+          messageResetPassword,
         );
       }
 
@@ -830,6 +838,10 @@ export class MerchantUsersService {
       formatingAllOutputTime(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      const messageUrlVerifivation = await generateMessageUrlVerification(
+        userAccount.name,
+        urlVerification,
+      );
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -837,7 +849,8 @@ export class MerchantUsersService {
       this.notificationService.sendEmail(
         userAccount.email,
         'Verifikasi Ulang Email',
-        urlVerification,
+        '',
+        messageUrlVerifivation,
       );
 
       return this.responseService.success(

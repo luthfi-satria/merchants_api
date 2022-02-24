@@ -37,6 +37,8 @@ import { ResponseService } from 'src/response/response.service';
 import {
   dbOutputTime,
   formatingAllOutputTime,
+  generateMessageChangeActiveEmail,
+  generateMessageUrlVerification,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository } from 'typeorm';
@@ -273,10 +275,14 @@ export class StoreUsersService {
       delete result.password;
 
       if (result.email_verified_at) {
+        const messageChangeActiveEmail = generateMessageChangeActiveEmail(
+          storeUser.name,
+        );
         this.notificationService.sendEmail(
           storeUser.email,
           'Email Anda telah aktif',
-          'Alamat email Anda telah digunakan sebagai login baru',
+          '',
+          messageChangeActiveEmail,
         );
       } else {
         this.sendNewEmailUser(userId);
@@ -946,6 +952,10 @@ export class StoreUsersService {
       formatingAllOutputTime(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      const messageUrlVerifivation = await generateMessageUrlVerification(
+        userAccount.name,
+        urlVerification,
+      );
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -953,7 +963,8 @@ export class StoreUsersService {
       this.notificationService.sendEmail(
         userAccount.email,
         'Verifikasi Email baru',
-        urlVerification,
+        '',
+        messageUrlVerifivation,
       );
 
       return this.responseService.success(
@@ -1005,6 +1016,10 @@ export class StoreUsersService {
       formatingAllOutputTime(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      const messageUrlVerifivation = await generateMessageUrlVerification(
+        userAccount.name,
+        urlVerification,
+      );
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -1012,7 +1027,8 @@ export class StoreUsersService {
       this.notificationService.sendEmail(
         userAccount.email,
         'Verifikasi Ulang Email',
-        urlVerification,
+        '',
+        messageUrlVerifivation,
       );
 
       return this.responseService.success(
