@@ -109,11 +109,20 @@ export default {
   creategroup: {
     success: 'SUCCESS',
     fail: 'Create Group Gagal.',
-    phoneExist: 'Nomor telepon sudah digunakan oleh Group lain',
-    emailExist: 'Email sudah digunakan oleh Group lain',
+    phoneExist: {
+      code: 'PHONE_ALREADY_REGISTERED',
+      message: 'Nomor telepon sudah digunakan oleh Corporate lain',
+    },
+    emailExist: {
+      code: 'EMAIL_ALREADY_REGISTERED',
+      message: 'Email sudah digunakan oleh Corporate lain.',
+    },
     invalid_token: 'Kode Token tidak valid.',
     empty_token: 'Kode Token tidak ada.',
-    empty_photo: 'File photo kosong.',
+    empty_photo: {
+      code: 'IMAGE_NOT_FOUND',
+      message: 'File photo kosong.',
+    },
   },
   updategroup: {
     success: 'Update Group Success.',
