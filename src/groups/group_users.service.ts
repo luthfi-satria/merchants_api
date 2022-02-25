@@ -36,7 +36,14 @@ import {
   generateMessageUrlVerification,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
+import {
+  Brackets,
+  FindOperator,
+  In,
+  Not,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { GroupsService } from './groups.service';
 import { GroupUser } from './interface/group_users.interface';
 import {
@@ -630,7 +637,14 @@ export class GroupUsersService {
     id?: string,
     property?: string,
   ): Promise<MerchantUsersDocument> {
-    const where: { phone: string; id?: FindOperator<string> } = { phone };
+    const where: { phone: string; id?: FindOperator<string>; status: any } = {
+      phone,
+      status: In([
+        MerchantUsersStatus.Active,
+        MerchantUsersStatus.Inactive,
+        MerchantUsersStatus.Waiting_for_approval,
+      ]),
+    };
     if (id) {
       where.id = Not(id);
     }
@@ -664,7 +678,14 @@ export class GroupUsersService {
     id?: string,
     property?: string,
   ): Promise<MerchantUsersDocument> {
-    const where: { email: string; id?: FindOperator<string> } = { email };
+    const where: { email: string; id?: FindOperator<string>; status: any } = {
+      email,
+      status: In([
+        MerchantUsersStatus.Active,
+        MerchantUsersStatus.Inactive,
+        MerchantUsersStatus.Waiting_for_approval,
+      ]),
+    };
     if (id) {
       where.id = Not(id);
     }

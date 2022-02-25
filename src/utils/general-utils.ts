@@ -2,7 +2,6 @@ import { extname } from 'path';
 import momenttz from 'moment-timezone';
 import { randomBytes } from 'crypto';
 import moment from 'moment';
-import { Readable } from 'stream';
 import { FirebaseDynamicLinks } from 'firebase-dynamic-links';
 
 export function CreateRandomNumber(pjg: number): string {
@@ -150,9 +149,9 @@ export const getDistanceInKilometers = (
 };
 
 export const deleteCredParam = function (input: Record<string, any>) {
-  delete input.approved_at;
-  delete input.created_at;
-  delete input.updated_at;
+  // delete input.approved_at;
+  // delete input.created_at;
+  // delete input.updated_at;
   delete input.deleted_at;
   delete input.director_password;
   delete input.password;
@@ -218,21 +217,6 @@ export const removeAllFieldPassword = function removeAllFieldPassword(
   }
 };
 
-export async function getImageProperties(url: string): Promise<any> {
-  const buffer = await this.storage.getBuff(url);
-
-  // async getReadableStream(buffer: Buffer) {
-  const stream = new Readable();
-  stream.push(buffer);
-  stream.push(null);
-
-  let type = null;
-  const ext = url.split('.')[url.split('.').length - 1].toLowerCase();
-  if (ext == 'png' || ext == 'jpg' || ext == 'jpeg' || ext == 'gif') {
-    type = 'image';
-  }
-  return { buffer, stream, type, ext };
-}
 export const generateMessageUrlVerification = async (
   name: string,
   link: string,

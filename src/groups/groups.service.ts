@@ -17,7 +17,7 @@ import { AxiosResponse } from 'axios';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
-import { deleteCredParam, getImageProperties } from 'src/utils/general-utils';
+import { deleteCredParam } from 'src/utils/general-utils';
 import { HashService } from 'src/hash/hash.service';
 import {
   MerchantUsersDocument,
@@ -35,7 +35,6 @@ import { MerchantDocument, MerchantStatus } from 'src/database/entities/merchant
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
 import { CommonStorageService } from 'src/common/storage/storage.service';
-import { Readable } from 'typeorm/platform/PlatformTools';
 import { isDefined } from 'class-validator';
 
 @Injectable()
@@ -213,6 +212,7 @@ export class GroupsService {
         );
         create.users.push(pic_finance);
       }
+      deleteCredParam(create);
       return create;
     } catch (error) {
       throw new BadRequestException(
@@ -265,6 +265,7 @@ export class GroupsService {
       }
     }
     this.publishNatsUpdateGroup(update_group, oldStatus);
+    deleteCredParam(group);
     return group;
   }
 
@@ -319,6 +320,8 @@ export class GroupsService {
     try {
       const gid = user.user_type == 'admin' ? id : user.group_id;
       const result = await this.groupRepository.findOne(gid);
+
+      deleteCredParam(result);
 
       await this.manipulateGroupUrl(result);
 
@@ -577,7 +580,7 @@ export class GroupsService {
           ),
         );
       }
-      return await getImageProperties(group[data.doc]);
+      return await this.storage.getImageProperties(group[data.doc]);
     } catch (error) {
       console.error(error);
     }

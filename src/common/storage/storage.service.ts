@@ -3,6 +3,7 @@ import { StorageService as NestStorageService } from '@codebrew/nestjs-storage';
 import { AmazonWebServicesS3Storage } from '@slynova/flydrive-s3';
 import fs from 'fs';
 import { createUrl } from '../../utils/general-utils';
+import { Readable } from 'stream';
 
 @Injectable()
 export class CommonStorageService {
@@ -46,5 +47,21 @@ export class CommonStorageService {
         throw new InternalServerErrorException(e.message);
       }
     }
+  }
+
+  async getImageProperties(url: string): Promise<any> {
+    const buffer = await this.getBuff(url);
+
+    // async getReadableStream(buffer: Buffer) {
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
+
+    let type = null;
+    const ext = url.split('.')[url.split('.').length - 1].toLowerCase();
+    if (ext == 'png' || ext == 'jpg' || ext == 'jpeg' || ext == 'gif') {
+      type = 'image';
+    }
+    return { buffer, stream, type, ext };
   }
 }

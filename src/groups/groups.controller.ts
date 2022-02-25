@@ -4,7 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  Headers,
   HttpException,
   HttpStatus,
   Param,
@@ -13,13 +12,11 @@ import {
   Query,
   Req,
   Res,
-  UnauthorizedException,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { catchError, map } from 'rxjs';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
 import { UserType } from 'src/auth/guard/user-type.decorator';
@@ -43,7 +40,6 @@ import { ListGroupDTO } from './validation/list-group.validation';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { Response } from 'express';
 import etag from 'etag';
-import { isDefined } from 'class-validator';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
