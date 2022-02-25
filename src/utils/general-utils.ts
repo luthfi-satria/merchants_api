@@ -2,6 +2,7 @@ import { extname } from 'path';
 import momenttz from 'moment-timezone';
 import { randomBytes } from 'crypto';
 import moment from 'moment';
+import { Readable } from 'stream';
 
 export function CreateRandomNumber(pjg: number): string {
   const random_number = parseInt(randomBytes(4).toString('hex'), 16).toString();
@@ -215,3 +216,19 @@ export const removeAllFieldPassword = function removeAllFieldPassword(
     }
   }
 };
+
+export async function getImageProperties(url: string): Promise<any> {
+  const buffer = await this.storage.getBuff(url);
+
+  // async getReadableStream(buffer: Buffer) {
+  const stream = new Readable();
+  stream.push(buffer);
+  stream.push(null);
+
+  let type = null;
+  const ext = url.split('.')[url.split('.').length - 1].toLowerCase();
+  if (ext == 'png' || ext == 'jpg' || ext == 'jpeg' || ext == 'gif') {
+    type = 'image';
+  }
+  return { buffer, stream, type, ext };
+}

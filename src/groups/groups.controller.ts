@@ -5,12 +5,14 @@ import {
   Delete,
   Get,
   Headers,
+  HttpException,
   HttpStatus,
   Param,
   Post,
   Put,
   Query,
   Req,
+  Res,
   UnauthorizedException,
   UploadedFiles,
   UseInterceptors,
@@ -39,6 +41,9 @@ import { GroupsService } from './groups.service';
 import { CreateGroupDTO } from './validation/create_groups.dto';
 import { ListGroupDTO } from './validation/list-group.validation';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
+import { Response } from 'express';
+import etag from 'etag';
+import { isDefined } from 'class-validator';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -86,7 +91,7 @@ export class GroupsController {
     this.imageValidationService.setFilter('director_id_file', 'required');
     await this.imageValidationService.validate(req);
 
-    const group = await this.groupsService.findMerchantByPhone(
+    const group = await this.groupsService.findGroupByPhone(
       createGroupDTO.phone,
     );
     if (group) {
@@ -114,6 +119,9 @@ export class GroupsController {
 
     const create_result: GroupDocument =
       await this.groupsService.createMerchantGroupProfile(createGroupDTO);
+
+    await this.groupsService.manipulateGroupUrl(create_result);
+
     const result: Record<string, any> = { ...create_result };
     for (let i = 0; i < create_result.users.length; i++) {
       const url = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${create_result.users[i].token_reset_password}`;
@@ -151,7 +159,7 @@ export class GroupsController {
   ): Promise<any> {
     await this.imageValidationService.validate(req);
 
-    const group: GroupDocument = await this.groupsService.findMerchantById(id);
+    const group: GroupDocument = await this.groupsService.findGroupById(id);
     if (!group) {
       const errors: RMessage = {
         value: id,
@@ -168,7 +176,7 @@ export class GroupsController {
     }
 
     const cekphone: GroupDocument =
-      await this.groupsService.findMerchantByPhoneExceptId(
+      await this.groupsService.findGroupByPhoneExceptId(
         updateGroupDTO.phone,
         id,
       );
@@ -197,8 +205,10 @@ export class GroupsController {
       }
     }
     try {
-      const updateresult: Record<string, any> =
+      const updateresult: GroupDocument =
         await this.groupsService.updateMerchantGroupProfile(updateGroupDTO, id);
+
+      await this.groupsService.manipulateGroupUrl(updateresult);
 
       return this.responseService.success(
         true,
@@ -220,72 +230,28 @@ export class GroupsController {
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async deletegroups(
-    @Param('id') id: string,
-    @Headers('Authorization') token: string,
-  ): Promise<any> {
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-    };
-
-    return (await this.groupsService.getHttp(url, headersRequest)).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.creategroup.invalid_token'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'UNAUTHORIZED',
-            ),
-          );
-        }
-        const result: DeleteResult =
-          await this.groupsService.deleteMerchantGroupProfile(id);
-        if (result && result.affected == 0) {
-          const errors: RMessage = {
-            value: id,
-            property: 'id',
-            constraint: [
-              this.messageService.get('merchant.deletegroup.invalid_id'),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.deletegroup.success'),
-        );
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
+  async deletegroups(@Param('id') id: string): Promise<any> {
+    const result: DeleteResult =
+      await this.groupsService.deleteMerchantGroupProfile(id);
+    if (result && result.affected == 0) {
+      const errors: RMessage = {
+        value: id,
+        property: 'id',
+        constraint: [
+          this.messageService.get('merchant.deletegroup.invalid_id'),
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.deletegroup.success'),
     );
   }
 
@@ -323,6 +289,37 @@ export class GroupsController {
           'Bad Request',
         ),
       );
+    }
+  }
+
+  @Get('groups/:id/image/:doc')
+  async streamFile(
+    @Param('id') id: string,
+    @Param('doc') doc: string,
+    @Res() res: Response,
+    @Req() req: any,
+  ) {
+    const data = { id, doc };
+    try {
+      const { buffer, stream, type, ext } =
+        await this.groupsService.getGroupBufferS3(data);
+      const tag = etag(buffer);
+      if (
+        req.headers['if-none-match'] &&
+        req.headers['if-none-match'] === tag
+      ) {
+        throw new HttpException('Not Modified', HttpStatus.NOT_MODIFIED);
+      }
+
+      res.set({
+        'Content-Type': type + '/' + ext,
+        'Content-Length': buffer.length,
+        ETag: tag,
+      });
+
+      stream.pipe(res);
+    } catch (error) {
+      console.error(error);
     }
   }
 }

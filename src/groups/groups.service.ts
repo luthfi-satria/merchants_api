@@ -17,7 +17,7 @@ import { AxiosResponse } from 'axios';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
-import { deleteCredParam } from 'src/utils/general-utils';
+import { deleteCredParam, getImageProperties } from 'src/utils/general-utils';
 import { HashService } from 'src/hash/hash.service';
 import {
   MerchantUsersDocument,
@@ -34,6 +34,9 @@ import _ from 'lodash';
 import { MerchantDocument, MerchantStatus } from 'src/database/entities/merchant.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
+import { CommonStorageService } from 'src/common/storage/storage.service';
+import { Readable } from 'typeorm/platform/PlatformTools';
+import { isDefined } from 'class-validator';
 
 @Injectable()
 export class GroupsService {
@@ -54,24 +57,25 @@ export class GroupsService {
     private readonly merchantService: MerchantsService,
     @Inject(forwardRef(() => StoresService))
     private readonly storeService: StoresService,
+    private readonly storage: CommonStorageService,
   ) {}
 
-  async findMerchantById(id: string): Promise<GroupDocument> {
+  async findGroupById(id: string): Promise<GroupDocument> {
     return this.groupRepository.findOne({ id: id });
   }
 
-  async findMerchantByPhone(phone: string): Promise<GroupDocument> {
+  async findGroupByPhone(phone: string): Promise<GroupDocument> {
     return this.groupRepository.findOne({ where: { phone: phone } });
   }
 
-  async findMerchantByPhoneExceptId(
+  async findGroupByPhoneExceptId(
     phone: string,
     id: string,
   ): Promise<GroupDocument> {
     return this.groupRepository.findOne({ where: { phone, id } });
   }
 
-  async findMerchantByEmail(email: string): Promise<GroupDocument> {
+  async findGroupByEmail(email: string): Promise<GroupDocument> {
     return this.groupRepository.findOne({
       where: { email: email },
     });
@@ -265,7 +269,7 @@ export class GroupsService {
   }
 
   async deleteMerchantGroupProfile(data: string): Promise<any> {
-    const cekid = await this.findMerchantById(data);
+    const cekid = await this.findGroupById(data);
     if (cekid) {
       if (cekid.status == 'ACTIVE') {
         throw new BadRequestException(
@@ -315,6 +319,9 @@ export class GroupsService {
     try {
       const gid = user.user_type == 'admin' ? id : user.group_id;
       const result = await this.groupRepository.findOne(gid);
+
+      await this.manipulateGroupUrl(result);
+
       return this.responseService.success(
         true,
         this.messageService.get('merchant.listgroup.success'),
@@ -412,9 +419,12 @@ export class GroupsService {
     const count = await query.getCount();
     const list = await query.getMany();
 
-    list.forEach((element) => {
-      return deleteCredParam(element);
-    });
+    for (const element of list) {
+      deleteCredParam(element);
+
+      await this.manipulateGroupUrl(element);
+
+    };
     return {
       total_item: count,
       limit: Number(perPage),
@@ -513,23 +523,26 @@ export class GroupsService {
     }
   }
 
-//Publish Payload to Nats
-publishNatsUpdateGroup(
-  payload: GroupDocument,
-  oldStatus: GroupStatus = GroupStatus.Active,
-) {
-  if (payload.status == GroupStatus.Inactive) {
-    this.natsService.clientEmit('merchants.group.deleted', payload);
-  } else if (
-    payload.status == GroupStatus.Active &&
-    (oldStatus == GroupStatus.Inactive ||
-      oldStatus == GroupStatus.Draft)
+  //Publish Payload to Nats
+  async publishNatsUpdateGroup(
+    payload: GroupDocument,
+    oldStatus: GroupStatus = GroupStatus.Active,
   ) {
-    this.natsService.clientEmit('merchants.group.created', payload);
-  } else if (payload.status == GroupStatus.Active) {
-    this.natsService.clientEmit('merchants.group.updated', payload);
+
+    await this.manipulateGroupUrl(payload);
+
+    if (payload.status == GroupStatus.Inactive) {
+      this.natsService.clientEmit('merchants.group.deleted', payload);
+    } else if (
+      payload.status == GroupStatus.Active &&
+      (oldStatus == GroupStatus.Inactive ||
+        oldStatus == GroupStatus.Draft)
+    ) {
+      this.natsService.clientEmit('merchants.group.created', payload);
+    } else if (payload.status == GroupStatus.Active) {
+      this.natsService.clientEmit('merchants.group.updated', payload);
+    }
   }
-}
   //------------------------------------------------------------------------------
 
   async getHttp(
@@ -542,5 +555,56 @@ publishNatsUpdateGroup(
         throw err;
       }),
     );
+  }
+
+  async getGroupBufferS3(data: any) {
+    try {
+      const group = await this.groupRepository.findOne({
+        id: data.id,
+      });
+
+      if (!group) {
+        const errors: RMessage = {
+          value: data.id,
+          property: 'id',
+          constraint: [this.messageService.get('merchant.general.dataNotFound')],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+      return await getImageProperties(group[data.doc]);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async manipulateGroupUrl(group: GroupDocument): Promise<GroupDocument> {
+    if (isDefined(group)) {
+      group.siup_file = isDefined(group.siup_file)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/siup_file`
+        : group.siup_file;
+      group.akta_pendirian_file = isDefined(group.akta_pendirian_file)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/akta_pendirian_file`
+        : group.akta_pendirian_file;
+      group.akta_perubahan_file = isDefined(group.akta_perubahan_file)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/akta_perubahan_file`
+        : group.akta_perubahan_file;
+      group.npwp_file = isDefined(group.npwp_file)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/npwp_file`
+        : group.npwp_file;
+      group.director_id_file = isDefined(group.director_id_file)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/director_id_file`
+        : group.director_id_file;
+      group.director_id_face_file = isDefined(group.director_id_face_file)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/director_id_face_file`
+        : group.director_id_face_file;
+
+      return group;
+    }
   }
 }

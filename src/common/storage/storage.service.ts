@@ -31,4 +31,20 @@ export class CommonStorageService {
       }
     }
   }
+
+  async getBuff(url: string) {
+    if (process.env.STORAGE_DRIVER === 's3') {
+      try {
+        this.storage.registerDriver('s3', AmazonWebServicesS3Storage);
+        url = url.split(process.env.STORAGE_S3_BUCKET)[1].substring(1);
+
+        const buff = (await this.storage.getDisk('s3').getBuffer(url)).content;
+
+        return buff;
+      } catch (e) {
+        console.error(e);
+        throw new InternalServerErrorException(e.message);
+      }
+    }
+  }
 }
