@@ -3,6 +3,7 @@ import momenttz from 'moment-timezone';
 import { randomBytes } from 'crypto';
 import moment from 'moment';
 import { Readable } from 'stream';
+import { FirebaseDynamicLinks } from 'firebase-dynamic-links';
 
 export function CreateRandomNumber(pjg: number): string {
   const random_number = parseInt(randomBytes(4).toString('hex'), 16).toString();
@@ -232,3 +233,52 @@ export async function getImageProperties(url: string): Promise<any> {
   }
   return { buffer, stream, type, ext };
 }
+export const generateMessageUrlVerification = async (
+  name: string,
+  link: string,
+): Promise<string> => {
+  const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
+  const { shortLink } = await fbLink.createLink({
+    dynamicLinkInfo: {
+      domainUriPrefix: 'https://s.efood.co.id',
+      link,
+    },
+  });
+
+  const message = `
+  Hai, ${name}!
+  <br><br>
+  Untuk verifikasi perubahan Email Anda klik link berikut: <a href="${shortLink}">${shortLink}</a> . <br>
+  JANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD. <br>
+  WASPADA PENIPUAN!`;
+  return message;
+};
+
+export const generateMessageChangeActiveEmail = (name: string): string => {
+  const message = `
+  Hai, ${name}!
+  <br><br>
+  Alamat email Anda berhasil diperbaharui, Anda dapat login pada aplikasi eFOOD menggunakan email ini.`;
+  return message;
+};
+
+export const generateMessageResetPassword = async (
+  name: string,
+  link: string,
+): Promise<string> => {
+  const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
+  const { shortLink } = await fbLink.createLink({
+    dynamicLinkInfo: {
+      domainUriPrefix: 'https://s.efood.co.id',
+      link,
+    },
+  });
+
+  const message = `
+  Hai, ${name}!
+  <br><br>
+  Untuk mengubah Kata Sandi Anda, Klik link berikut: <a href="${shortLink}">${shortLink}</a> . <br>
+  JANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD. <br>
+  WASPADA PENIPUAN!`;
+  return message;
+};

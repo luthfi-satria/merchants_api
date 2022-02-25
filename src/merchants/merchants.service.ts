@@ -155,7 +155,7 @@ export class MerchantsService {
         ),
       );
     }
-    const cekgroup: GroupDocument = await this.groupsService.findMerchantById(
+    const cekgroup: GroupDocument = await this.groupsService.findGroupById(
       data.group_id,
     );
     if (!cekgroup) {

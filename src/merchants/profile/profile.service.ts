@@ -18,6 +18,7 @@ import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { randomUUID } from 'crypto';
 import {
   formatingAllOutputTime,
+  generateMessageUrlVerification,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { NotificationService } from 'src/common/notification/notification.service';
@@ -137,6 +138,10 @@ export class ProfileService {
       formatingAllOutputTime(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      const messageUrlVerifivation = await generateMessageUrlVerification(
+        userAccount.name,
+        urlVerification,
+      );
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -144,7 +149,8 @@ export class ProfileService {
       this.notificationService.sendEmail(
         data.email,
         'Verifikasi Email baru',
-        urlVerification,
+        '',
+        messageUrlVerifivation,
       );
 
       return this.responseService.success(
@@ -197,6 +203,10 @@ export class ProfileService {
       formatingAllOutputTime(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      const messageUrlVerifivation = await generateMessageUrlVerification(
+        userAccount.name,
+        urlVerification,
+      );
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -204,7 +214,8 @@ export class ProfileService {
       this.notificationService.sendEmail(
         userAccount.email,
         'Verifikasi Ulang Email',
-        urlVerification,
+        '',
+        messageUrlVerifivation,
       );
 
       return this.responseService.success(

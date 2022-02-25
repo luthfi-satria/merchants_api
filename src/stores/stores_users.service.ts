@@ -1,3 +1,4 @@
+import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   forwardRef,
@@ -7,10 +8,25 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
+import { randomUUID } from 'crypto';
 import { catchError, map, Observable } from 'rxjs';
+import { User } from 'src/auth/guard/interface/user.interface';
+import { CommonService } from 'src/common/common.service';
+import { NotificationService } from 'src/common/notification/notification.service';
+import { CommonStoresService } from 'src/common/own/stores.service';
+import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
+import {
+  RoleService,
+  SpecialRoleCodes,
+} from 'src/common/services/admins/role.service';
+// import { Hash } from 'src/hash/hash.decorator';
+import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { StoreDocument } from 'src/database/entities/store.entity';
+import { wordingNotifFormatForSms } from 'src/groups/wordings/wording-notif-format-for-sms';
+import { HashService } from 'src/hash/hash.service';
+import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
 import {
   ListResponse,
@@ -21,31 +37,19 @@ import { ResponseService } from 'src/response/response.service';
 import {
   dbOutputTime,
   formatingAllOutputTime,
+  generateMessageChangeActiveEmail,
+  generateMessageUrlVerification,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository } from 'typeorm';
-import { HashService } from 'src/hash/hash.service';
-// import { Hash } from 'src/hash/hash.decorator';
-import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
-import { StoreDocument } from 'src/database/entities/store.entity';
-import { MerchantStoreUsersValidation } from './validation/store_users.validation';
-import { CommonService } from 'src/common/common.service';
-import { MerchantsService } from 'src/merchants/merchants.service';
-import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
-import { UpdateMerchantStoreUsersValidation } from './validation/update_store_users.validation';
-import {
-  RoleService,
-  SpecialRoleCodes,
-} from 'src/common/services/admins/role.service';
-import { NotificationService } from 'src/common/notification/notification.service';
-import { randomUUID } from 'crypto';
-import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
-import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
+import { wordingLinkFormatForSms } from './../groups/wordings/wording-link-format-for-sms';
 import { StoresService } from './stores.service';
-import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
-import { User } from 'src/auth/guard/interface/user.interface';
-import { CommonStoresService } from 'src/common/own/stores.service';
+import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
 import { ListMerchantStoreUsersBySpecialRoleCodeValidation } from './validation/list_store_users_by_special_role_code.validation';
+import { MerchantStoreUsersValidation } from './validation/store_users.validation';
+import { UpdateEmailStoreUsersValidation } from './validation/update_email_store_users.validation';
+import { UpdatePhoneStoreUsersValidation } from './validation/update_phone_store_users.validation';
+import { UpdateMerchantStoreUsersValidation } from './validation/update_store_users.validation';
 
 @Injectable()
 export class StoreUsersService {
@@ -184,7 +188,7 @@ export class StoreUsersService {
 
       this.notificationService.sendSms(
         createMerchantUser.phone,
-        urlVerification,
+        wordingLinkFormatForSms(createMerchantUser.name, urlVerification),
       );
 
       dbOutputTime(result);
@@ -230,7 +234,7 @@ export class StoreUsersService {
 
       this.notificationService.sendSms(
         store_user.phone,
-        'Nomor Anda telah digunakan sebagai login baru',
+        wordingNotifFormatForSms(store_user.name),
       );
 
       return this.responseService.success(
@@ -271,10 +275,14 @@ export class StoreUsersService {
       delete result.password;
 
       if (result.email_verified_at) {
+        const messageChangeActiveEmail = generateMessageChangeActiveEmail(
+          storeUser.name,
+        );
         this.notificationService.sendEmail(
           storeUser.email,
           'Email Anda telah aktif',
-          'Alamat email Anda telah digunakan sebagai login baru',
+          '',
+          messageChangeActiveEmail,
         );
       } else {
         this.sendNewEmailUser(userId);
@@ -315,7 +323,10 @@ export class StoreUsersService {
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(storeUser.phone, urlVerification);
+      this.notificationService.sendSms(
+        storeUser.phone,
+        wordingLinkFormatForSms(storeUser.name, urlVerification),
+      );
 
       return this.responseService.success(
         true,
@@ -941,6 +952,10 @@ export class StoreUsersService {
       formatingAllOutputTime(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      const messageUrlVerifivation = await generateMessageUrlVerification(
+        userAccount.name,
+        urlVerification,
+      );
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -948,7 +963,8 @@ export class StoreUsersService {
       this.notificationService.sendEmail(
         userAccount.email,
         'Verifikasi Email baru',
-        urlVerification,
+        '',
+        messageUrlVerifivation,
       );
 
       return this.responseService.success(
@@ -1000,6 +1016,10 @@ export class StoreUsersService {
       formatingAllOutputTime(result);
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/email-verification?t=${token}`;
+      const messageUrlVerifivation = await generateMessageUrlVerification(
+        userAccount.name,
+        urlVerification,
+      );
       if (process.env.NODE_ENV == 'test') {
         result.token_reset_password = token;
         result.url = urlVerification;
@@ -1007,7 +1027,8 @@ export class StoreUsersService {
       this.notificationService.sendEmail(
         userAccount.email,
         'Verifikasi Ulang Email',
-        urlVerification,
+        '',
+        messageUrlVerifivation,
       );
 
       return this.responseService.success(
@@ -1063,7 +1084,10 @@ export class StoreUsersService {
         result.token_reset_password = token;
         result.url = urlVerification;
       }
-      this.notificationService.sendSms(userAccount.phone, urlVerification);
+      this.notificationService.sendSms(
+        userAccount.phone,
+        wordingLinkFormatForSms(userAccount.name, urlVerification),
+      );
 
       return this.responseService.success(
         true,
