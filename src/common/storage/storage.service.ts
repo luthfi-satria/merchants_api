@@ -63,10 +63,12 @@ export class CommonStorageService {
       type = 'image';
     }
 
-    console.log('url: ', url);
-    console.log('buffer: ', buffer);
-    console.log('type: ', type);
-    console.log('ext: ', ext);
-    return { buffer, stream, type, ext };
+    return {
+      buffer: buffer,
+      stream: stream,
+      type: type,
+      ext: ext,
+    };
+    // return images;
   }
 }
