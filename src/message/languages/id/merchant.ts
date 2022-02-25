@@ -111,11 +111,11 @@ export default {
     fail: 'Create Group Gagal.',
     phoneExist: {
       code: 'PHONE_ALREADY_REGISTERED',
-      message: 'Nomor telepon sudah digunakan oleh Merchant lain',
+      message: 'Nomor telepon sudah digunakan oleh Corporate lain',
     },
     emailExist: {
       code: 'EMAIL_ALREADY_REGISTERED',
-      message: 'Email sudah digunakan oleh Merchant lain.',
+      message: 'Email sudah digunakan oleh Corporate lain.',
     },
     invalid_token: 'Kode Token tidak valid.',
     empty_token: 'Kode Token tidak ada.',
