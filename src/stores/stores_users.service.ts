@@ -24,7 +24,6 @@ import {
 // import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
-import { wordingNotifFormatForSms } from 'src/groups/wordings/wording-notif-format-for-sms';
 import { HashService } from 'src/hash/hash.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
@@ -39,10 +38,14 @@ import {
   formatingAllOutputTime,
   generateMessageChangeActiveEmail,
   generateMessageUrlVerification,
+  generateSmsResetPassword,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository } from 'typeorm';
-import { wordingLinkFormatForSms } from './../groups/wordings/wording-link-format-for-sms';
+import {
+  generateSmsChangeActiveNoHp,
+  generateSmsUrlVerification,
+} from './../utils/general-utils';
 import { StoresService } from './stores.service';
 import { ListMerchantStoreUsersValidation } from './validation/list_store_users.validation';
 import { ListMerchantStoreUsersBySpecialRoleCodeValidation } from './validation/list_store_users_by_special_role_code.validation';
@@ -186,10 +189,12 @@ export class StoreUsersService {
         result.url = urlVerification;
       }
 
-      this.notificationService.sendSms(
-        createMerchantUser.phone,
-        wordingLinkFormatForSms(createMerchantUser.name, urlVerification),
+      const smsMessage = await generateSmsUrlVerification(
+        createMerchantUser.name,
+        urlVerification,
       );
+
+      this.notificationService.sendSms(createMerchantUser.phone, smsMessage);
 
       dbOutputTime(result);
       dbOutputTime(result.store);
@@ -232,10 +237,9 @@ export class StoreUsersService {
       dbOutputTime(result.store);
       delete result.password;
 
-      this.notificationService.sendSms(
-        store_user.phone,
-        wordingNotifFormatForSms(store_user.name),
-      );
+      const smsMessage = generateSmsChangeActiveNoHp(store_user.name);
+
+      this.notificationService.sendSms(store_user.phone, smsMessage);
 
       return this.responseService.success(
         true,
@@ -323,10 +327,12 @@ export class StoreUsersService {
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(
-        storeUser.phone,
-        wordingLinkFormatForSms(storeUser.name, urlVerification),
+      const smsMessage = await generateSmsResetPassword(
+        storeUser.name,
+        urlVerification,
       );
+
+      this.notificationService.sendSms(storeUser.phone, smsMessage);
 
       return this.responseService.success(
         true,
@@ -1084,10 +1090,13 @@ export class StoreUsersService {
         result.token_reset_password = token;
         result.url = urlVerification;
       }
-      this.notificationService.sendSms(
-        userAccount.phone,
-        wordingLinkFormatForSms(userAccount.name, urlVerification),
+
+      const smsMessage = await generateSmsUrlVerification(
+        userAccount.name,
+        urlVerification,
       );
+
+      this.notificationService.sendSms(userAccount.phone, smsMessage);
 
       return this.responseService.success(
         true,

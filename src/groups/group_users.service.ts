@@ -34,9 +34,14 @@ import {
   formatingAllOutputTime,
   generateMessageChangeActiveEmail,
   generateMessageUrlVerification,
+  generateSmsResetPassword,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
+import {
+  generateSmsChangeActiveNoHp,
+  generateSmsUrlVerification,
+} from './../utils/general-utils';
 import { GroupsService } from './groups.service';
 import { GroupUser } from './interface/group_users.interface';
 import {
@@ -46,8 +51,6 @@ import {
 import { ListGroupUserDTO } from './validation/list-group-user.validation';
 import { UpdateEmailGroupUsersValidation } from './validation/update_email_group_users.validation';
 import { UpdatePhoneGroupUsersValidation } from './validation/update_phone_group_users.validation';
-import { wordingLinkFormatForSms } from './wordings/wording-link-format-for-sms';
-import { wordingNotifFormatForSms } from './wordings/wording-notif-format-for-sms';
 
 @Injectable()
 export class GroupUsersService {
@@ -85,10 +88,12 @@ export class GroupUsersService {
       // result.url = urlVerification;
     }
 
-    this.notificationService.sendSms(
-      groupUser.phone,
-      wordingLinkFormatForSms(groupUser.name, urlVerification),
+    const smsMessage = await generateSmsUrlVerification(
+      groupUser.name,
+      urlVerification,
     );
+
+    this.notificationService.sendSms(groupUser.phone, smsMessage);
     return result;
   }
 
@@ -221,10 +226,12 @@ export class GroupUsersService {
         resultCreate.url = urlVerification;
       }
 
-      this.notificationService.sendSms(
-        args.phone,
-        wordingLinkFormatForSms(args.name, urlVerification),
+      const smsMessage = await generateSmsUrlVerification(
+        args.name,
+        urlVerification,
       );
+
+      this.notificationService.sendSms(args.phone, smsMessage);
 
       return resultCreate;
     } catch (err) {
@@ -521,10 +528,9 @@ export class GroupUsersService {
       formatingAllOutputTime(result);
       removeAllFieldPassword(result);
 
-      this.notificationService.sendSms(
-        merchantUser.phone,
-        wordingNotifFormatForSms(merchantUser.name),
-      );
+      const smsMessage = generateSmsChangeActiveNoHp(merchantUser.name);
+
+      this.notificationService.sendSms(merchantUser.phone, smsMessage);
 
       return result;
     } catch (err) {
@@ -602,10 +608,12 @@ export class GroupUsersService {
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(
-        merchantUser.phone,
-        wordingLinkFormatForSms(merchantUser.name, urlVerification),
+      const smsMessage = await generateSmsResetPassword(
+        merchantUser.name,
+        urlVerification,
       );
+
+      this.notificationService.sendSms(merchantUser.phone, smsMessage);
 
       return result;
     } catch (err) {
@@ -923,10 +931,13 @@ export class GroupUsersService {
         result.token_reset_password = token;
         result.url = urlVerification;
       }
-      this.notificationService.sendSms(
-        userAccount.phone,
-        wordingLinkFormatForSms(userAccount.name, urlVerification),
+
+      const smsMessage = await generateSmsUrlVerification(
+        userAccount.name,
+        urlVerification,
       );
+
+      this.notificationService.sendSms(userAccount.phone, smsMessage);
 
       return this.responseService.success(
         true,

@@ -11,7 +11,7 @@ import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { generateMessageResetPassword } from 'src/utils/general-utils';
 import { Repository } from 'typeorm';
-import { wordingLinkFormatForSms } from './../groups/wordings/wording-link-format-for-sms';
+import { generateSmsResetPassword } from './../utils/general-utils';
 import { MerchantUsersValidation } from './validation/merchants_users.validation';
 
 @Injectable()
@@ -153,10 +153,9 @@ export class ResetPasswordService {
       await this.merchantUserRepository.save(cekPhone);
       const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(
-        cekPhone.phone,
-        wordingLinkFormatForSms(cekPhone.name, url),
-      );
+      const smsMessage = await generateSmsResetPassword(cekPhone.name, url);
+
+      this.notificationService.sendSms(cekPhone.phone, smsMessage);
 
       if (process.env.NODE_ENV == 'test') {
         return { status: true, token: token, url: url };

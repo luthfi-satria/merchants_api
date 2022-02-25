@@ -36,7 +36,10 @@ import {
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
-import { wordingLinkFormatForSms } from './../groups/wordings/wording-link-format-for-sms';
+import {
+  generateSmsResetPassword,
+  generateSmsUrlVerification,
+} from './../utils/general-utils';
 import { MerchantsService } from './merchants.service';
 import {
   GetMerchantUsers,
@@ -128,10 +131,12 @@ export class MerchantUsersService {
         createMerchant.token_reset_password = token;
       }
 
-      this.notificationService.sendSms(
-        createMerchant.phone,
-        wordingLinkFormatForSms(createMerchant.name, url),
+      const smsMessage = await generateSmsUrlVerification(
+        createMerchant.name,
+        url,
       );
+
+      this.notificationService.sendSms(createMerchant.phone, smsMessage);
 
       return createMerchant;
     } catch (err) {
@@ -244,10 +249,12 @@ export class MerchantUsersService {
 
       const urlVerification = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      this.notificationService.sendSms(
-        merchantUser.phone,
-        wordingLinkFormatForSms(merchantUser.name, urlVerification),
+      const smsMessage = await generateSmsResetPassword(
+        merchantUser.name,
+        urlVerification,
       );
+
+      this.notificationService.sendSms(merchantUser.phone, smsMessage);
 
       return this.responseService.success(
         true,
@@ -288,11 +295,10 @@ export class MerchantUsersService {
       await this.merchantUsersRepository.save(merchantUser);
       const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
+      const smsMessage = await generateSmsResetPassword(merchantUser.name, url);
+
       // biarkan tanpa await karena dilakukan secara asynchronous
-      this.notificationService.sendSms(
-        merchantUser.phone,
-        wordingLinkFormatForSms(merchantUser.name, url),
-      );
+      this.notificationService.sendSms(merchantUser.phone, smsMessage);
 
       if (process.env.NODE_ENV == 'test') {
         return { status: true, token: token, url: url };
@@ -663,10 +669,10 @@ export class MerchantUsersService {
     if (process.env.NODE_ENV == 'test') {
       result.url = url;
     }
-    this.notificationService.sendSms(
-      args.phone,
-      wordingLinkFormatForSms(args.name, url),
-    );
+
+    const smsMessage = await generateSmsUrlVerification(args.name, url);
+
+    this.notificationService.sendSms(args.phone, smsMessage);
 
     return result;
   }
@@ -906,10 +912,13 @@ export class MerchantUsersService {
         result.token_reset_password = token;
         result.url = urlVerification;
       }
-      this.notificationService.sendSms(
-        userAccount.phone,
-        wordingLinkFormatForSms(userAccount.name, urlVerification),
+
+      const smsMessage = await generateSmsUrlVerification(
+        userAccount.name,
+        urlVerification,
       );
+
+      this.notificationService.sendSms(userAccount.phone, smsMessage);
 
       return this.responseService.success(
         true,
