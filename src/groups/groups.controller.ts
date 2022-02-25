@@ -288,7 +288,7 @@ export class GroupsController {
     }
   }
 
-  @Get('groups/:id/image/:doc')
+  @Get('groups/:doc/:id/image')
   async streamFile(
     @Param('id') id: string,
     @Param('doc') doc: string,
@@ -296,6 +296,7 @@ export class GroupsController {
     @Req() req: any,
   ) {
     const data = { id, doc };
+    console.log('data: ', data);
     try {
       const { buffer, stream, type, ext } =
         await this.groupsService.getGroupBufferS3(data);

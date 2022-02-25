@@ -62,6 +62,11 @@ export class CommonStorageService {
     if (ext == 'png' || ext == 'jpg' || ext == 'jpeg' || ext == 'gif') {
       type = 'image';
     }
+
+    console.log('url: ', url);
+    console.log('buffer: ', buffer);
+    console.log('type: ', type);
+    console.log('ext: ', ext);
     return { buffer, stream, type, ext };
   }
 }

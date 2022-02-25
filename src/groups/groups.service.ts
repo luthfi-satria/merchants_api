@@ -589,22 +589,22 @@ export class GroupsService {
   async manipulateGroupUrl(group: GroupDocument): Promise<GroupDocument> {
     if (isDefined(group)) {
       group.siup_file = isDefined(group.siup_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/siup_file`
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/siup_file/${group.id}/image`
         : group.siup_file;
       group.akta_pendirian_file = isDefined(group.akta_pendirian_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/akta_pendirian_file`
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/akta_pendirian_file/${group.id}/image`
         : group.akta_pendirian_file;
       group.akta_perubahan_file = isDefined(group.akta_perubahan_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/akta_perubahan_file`
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/akta_perubahan_file/${group.id}/image`
         : group.akta_perubahan_file;
       group.npwp_file = isDefined(group.npwp_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/npwp_file`
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/npwp_file/${group.id}/image`
         : group.npwp_file;
       group.director_id_file = isDefined(group.director_id_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/director_id_file`
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/director_id_file/${group.id}/image`
         : group.director_id_file;
       group.director_id_face_file = isDefined(group.director_id_face_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/${group.id}/image/director_id_face_file`
+        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/director_id_face_file/${group.id}/image`
         : group.director_id_face_file;
 
       return group;
