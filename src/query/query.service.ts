@@ -851,6 +851,12 @@ export class QueryService {
               );
             const price_symbol = priceRange ? priceRange.symbol : null;
 
+            //Manipulate Menu Photo Url
+            if (row.menus && row.menus.length > 0) {
+              for (const menu of row.menus) {
+                menu.photo = `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image`;
+              }
+            }
             // formattedArr.push({
             //   ...row,
             //   distance_in_km: distance_in_km,

@@ -1,13 +1,25 @@
 import { MenuOnlineDocument } from '../database/entities/menu_online.entity';
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { RMessage } from 'src/response/response.interface';
+import { MessageService } from 'src/message/message.service';
+import { ResponseService } from 'src/response/response.service';
+import { CommonStorageService } from 'src/common/storage/storage.service';
 
 @Injectable()
 export class MenuOnlineService {
   constructor(
     @InjectRepository(MenuOnlineDocument)
-    private readonly menuOnlineRepository: Repository<MenuOnlineDocument>, // private readonly storesService: StoresService,
+    private readonly menuOnlineRepository: Repository<MenuOnlineDocument>,
+    private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
+    private readonly storage: CommonStorageService,
   ) {}
 
   async natsCreateStoreAvailability(data: any) {
@@ -132,5 +144,33 @@ export class MenuOnlineService {
     data: Partial<MenuOnlineDocument>,
   ) {
     await this.menuOnlineRepository.update(criteria, data);
+  }
+
+  async getGroupBufferS3(data: any) {
+    try {
+      const menuOnline = await this.menuOnlineRepository.findOne({
+        id: data.id,
+      });
+
+      if (!menuOnline) {
+        const errors: RMessage = {
+          value: data.id,
+          property: 'id',
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+      return await this.storage.getImageProperties(menuOnline.photo);
+    } catch (error) {
+      console.error(error);
+    }
   }
 }

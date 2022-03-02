@@ -296,7 +296,6 @@ export class GroupsController {
     @Req() req: any,
   ) {
     const data = { id, doc };
-    console.log('data: ', data);
     let images = null;
 
     try {
@@ -305,7 +304,6 @@ export class GroupsController {
       console.error(error);
       throw error;
     }
-    console.log('images: ', images);
 
     const tag = etag(images.buffer);
     if (req.headers['if-none-match'] && req.headers['if-none-match'] === tag) {
