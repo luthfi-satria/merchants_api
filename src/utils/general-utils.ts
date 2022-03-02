@@ -1,8 +1,8 @@
-import { extname } from 'path';
-import momenttz from 'moment-timezone';
 import { randomBytes } from 'crypto';
-import moment from 'moment';
 import { FirebaseDynamicLinks } from 'firebase-dynamic-links';
+import moment from 'moment';
+import momenttz from 'moment-timezone';
+import { extname } from 'path';
 
 export function CreateRandomNumber(pjg: number): string {
   const random_number = parseInt(randomBytes(4).toString('hex'), 16).toString();
@@ -278,7 +278,7 @@ export const generateSmsUrlVerification = async (
       link,
     },
   });
-  const message = `Hai, ${name}!\n\nUntuk verifikasi perubahan No HP Anda klik link berikut: ${shortLink} .\nJANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD.\nWASPADA PENIPUAN!
+  const message = `Hai, ${name}!\n\nUntuk verifikasi No HP Anda klik link berikut: ${shortLink} .\nJANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD.\nWASPADA PENIPUAN!
   `;
   return message;
 };
