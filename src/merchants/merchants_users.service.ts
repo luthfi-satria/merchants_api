@@ -33,6 +33,7 @@ import {
   generateMessageChangeActiveEmail,
   generateMessageResetPassword,
   generateMessageUrlVerification,
+  generateSmsChangeActiveNoHp,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
 import { Brackets, FindOperator, Not, Repository, UpdateResult } from 'typeorm';
@@ -293,18 +294,11 @@ export class MerchantUsersService {
 
     try {
       await this.merchantUsersRepository.save(merchantUser);
-      const url = `${process.env.BASEURL_HERMES}/auth/create-password?t=${token}`;
 
-      const smsMessage = await generateSmsResetPassword(merchantUser.name, url);
+      const smsMessage = generateSmsChangeActiveNoHp(merchantUser.name);
 
       // biarkan tanpa await karena dilakukan secara asynchronous
       this.notificationService.sendSms(merchantUser.phone, smsMessage);
-
-      if (process.env.NODE_ENV == 'test') {
-        return { status: true, token: token, url: url };
-      } else {
-        return { status: true };
-      }
     } catch (err) {
       console.error(err);
       const errors: RMessage = {
