@@ -31,7 +31,6 @@ import {
   deleteCredParam,
   formatingAllOutputTime,
   generateMessageChangeActiveEmail,
-  generateMessageResetPassword,
   generateMessageUrlVerification,
   generateSmsChangeActiveNoHp,
   removeAllFieldPassword,
@@ -346,7 +345,7 @@ export class MerchantUsersService {
           messageChangeActiveEmail,
         );
       } else {
-        const messageResetPassword = await generateMessageResetPassword(
+        const messageUrlVerifivation = await generateMessageUrlVerification(
           merchantUser.name,
           url,
         );
@@ -354,7 +353,7 @@ export class MerchantUsersService {
           merchantUser.email,
           'Perubahan Email',
           '',
-          messageResetPassword,
+          messageUrlVerifivation,
         );
       }
 
