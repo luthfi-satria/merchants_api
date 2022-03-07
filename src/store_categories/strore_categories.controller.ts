@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Post,
-  UnauthorizedException,
   HttpStatus,
   BadRequestException,
   Put,
@@ -13,9 +12,10 @@ import {
   UseInterceptors,
   Req,
   UploadedFile,
+  Res,
+  HttpException,
 } from '@nestjs/common';
 import { RequestValidationPipe } from 'src/utils/request-validation.pipe';
-import { catchError, lastValueFrom, map } from 'rxjs';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
@@ -29,6 +29,9 @@ import { StoreCategoriesValidation } from './validation/store_categories.validat
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { StoreCategoriesService } from './store_categories.service';
 import { RSuccessMessage } from 'src/response/response.interface';
+import { Response } from 'express';
+import etag from 'etag';
+import { CommonStorageService } from 'src/common/storage/storage.service';
 
 @Controller('api/v1/merchants')
 export class StoreCategoriesController {
@@ -37,6 +40,7 @@ export class StoreCategoriesController {
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
     private readonly imageValidationService: ImageValidationService,
+    private readonly storage: CommonStorageService,
   ) {}
 
   @Post('store/categories')
@@ -82,8 +86,7 @@ export class StoreCategoriesController {
     }
     data.image = '/upload_store_categories/' + file.filename;
 
-    return await this.storeCategoriesService.createStoreCategories(data);
-    // return await this.validatePermission('create', token, data);
+    return this.storeCategoriesService.createStoreCategories(data);
   }
 
   @Put('store/categories/:id')
@@ -114,18 +117,14 @@ export class StoreCategoriesController {
     await this.imageValidationService.validate(req);
     if (file) data.image = '/upload_store_categories/' + file.filename;
 
-    return await this.storeCategoriesService.updateStoreCategories(data);
-    // return await this.validatePermission('update', token, data);
+    return this.storeCategoriesService.updateStoreCategories(data);
   }
 
   @Delete('store/categories/:id')
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async deleteStoreCategories(
-    @Param('id') id: string,
-    // @Headers('Authorization') token: string,
-  ): Promise<any> {
+  async deleteStoreCategories(@Param('id') id: string): Promise<any> {
     const cekuuid = isUUID(id);
 
     if (!cekuuid) {
@@ -143,8 +142,7 @@ export class StoreCategoriesController {
         ),
       );
     }
-    return await this.storeCategoriesService.deleteStoreCategories(id);
-    // return await this.validatePermission('delete', token, { id: id });
+    return this.storeCategoriesService.deleteStoreCategories(id);
   }
 
   @Get('store/categories')
@@ -170,72 +168,34 @@ export class StoreCategoriesController {
     );
   }
 
-  //-------------------------------------------------------------------------------------
+  @Get('store/categories/:id/image')
+  async streamFile(
+    @Param('id') id: string,
+    @Param('doc') doc: string,
+    @Res() res: Response,
+    @Req() req: any,
+  ) {
+    const data = { id };
+    let images = null;
 
-  async validatePermission(
-    method: string,
-    token: string,
-    data: StoreCategoriesValidation | Partial<StoreCategoriesValidation>,
-  ): Promise<any> {
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-    };
-    const validateToken$ = (
-      await this.storeCategoriesService.getHttp(url, headersRequest)
-    ).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-
-        const user_type = rsp.data.payload.user_type;
-        let permission = false;
-
-        if (user_type == 'admin') {
-          permission = true;
-        }
-        if (!permission) {
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              {
-                value: token.replace('Bearer ', ''),
-                property: 'token',
-                constraint: [
-                  this.messageService.get('catalog.general.invalidUserAccess'),
-                ],
-              },
-              'UNAUTHORIZED',
-            ),
-          );
-        }
-        return rsp.data.payload;
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
-    );
-    await lastValueFrom(validateToken$);
-    switch (method) {
-      case 'create':
-        return await this.storeCategoriesService.createStoreCategories(data);
-      case 'update':
-        return await this.storeCategoriesService.updateStoreCategories(data);
-      case 'delete':
-        return await this.storeCategoriesService.deleteStoreCategories(data.id);
-      case 'get':
-        return await this.storeCategoriesService.listStoreCategories(data);
+    try {
+      images = await this.storeCategoriesService.getStoreCategoryBufferS3(data);
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
+
+    const tag = etag(images.buffer);
+    if (req.headers['if-none-match'] && req.headers['if-none-match'] === tag) {
+      throw new HttpException('Not Modified', HttpStatus.NOT_MODIFIED);
+    }
+
+    res.set({
+      'Content-Type': images.type + '/' + images.ext,
+      'Content-Length': images.buffer.length,
+      ETag: tag,
+    });
+
+    images.stream.pipe(res);
   }
 }

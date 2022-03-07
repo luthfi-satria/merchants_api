@@ -27,11 +27,16 @@ import { UbahPasswordValidation } from './validation/ubah-password.validation';
 import { UpdateProfileValidation } from './validation/update-profile.validation';
 import { AuthInternalService } from 'src/internal/auth-internal.service';
 import { MerchantProfileResponse } from './types';
+import { MerchantsService } from 'src/merchants/merchants.service';
+import { StoresService } from 'src/stores/stores.service';
+import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 
 @Controller('api/v1/merchants')
 export class LoginController {
   constructor(
-    private readonly groupsService: GroupsService,
+    private readonly groupService: GroupsService,
+    private readonly merchantService: MerchantsService,
+    private readonly storeService: StoresService,
     private readonly loginService: LoginService,
     private readonly authInternalService: AuthInternalService,
     private readonly responseService: ResponseService,
@@ -64,7 +69,7 @@ export class LoginController {
         ),
       );
     }
-    delete profile.password;
+    await this.manipulateMerchantUserUrl(profile);
 
     const user_role = await this.authInternalService.getMerchantUserRoleDetail(
       profile.role_id,
@@ -125,7 +130,15 @@ export class LoginController {
     @Body()
     data: UpdateProfileValidation,
   ): Promise<any> {
-    return this.loginService.updateProfile(data, req.user);
+    const result = await this.loginService.updateProfile(data, req.user);
+
+    await this.manipulateMerchantUserUrl(result);
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
   }
 
   @Post('login/verify')
@@ -136,6 +149,9 @@ export class LoginController {
   ): Promise<RSuccessMessage> {
     try {
       const result = await this.loginService.verifyLogin(data);
+
+      await this.manipulateMerchantUserUrl(result);
+
       return this.responseService.success(
         true,
         this.messageService.get('merchant.general.success'),
@@ -145,5 +161,36 @@ export class LoginController {
       console.error(error);
       throw error;
     }
+  }
+
+  async manipulateMerchantUserUrl(
+    result: MerchantUsersDocument,
+  ): Promise<MerchantUsersDocument> {
+    delete result.password;
+
+    if (result.merchant) {
+      await this.merchantService.manipulateMerchantUrl(result.merchant);
+      if (result.merchant.group)
+        await this.groupService.manipulateGroupUrl(result.merchant.group);
+      delete result.merchant.pic_password;
+    }
+    if (result.group) {
+      delete result.group.director_password;
+      delete result.group.pic_operational_password;
+      delete result.group.pic_finance_password;
+      await this.groupService.manipulateGroupUrl(result.group);
+    }
+    if (result.store) {
+      await this.storeService.manipulateStoreUrl(result.store);
+      if (result.store.merchant) {
+        await this.merchantService.manipulateMerchantUrl(result.store.merchant);
+        if (result.store.merchant.group)
+          await this.groupService.manipulateGroupUrl(
+            result.store.merchant.group,
+          );
+      }
+    }
+
+    return result;
   }
 }

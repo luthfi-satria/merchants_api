@@ -30,7 +30,7 @@ export class BannersService {
       item.banner = data.banner;
       this.storeRepository.save(item);
     });
-    return await this.getByMerchantId(data.merchant_id);
+    return this.getByMerchantId(data.merchant_id);
   }
 
   async updateBannerByStoreId(

@@ -25,7 +25,7 @@ export class MenuOnlineController {
     let images = null;
 
     try {
-      images = await this.menuOnlineService.getGroupBufferS3(data);
+      images = await this.menuOnlineService.getMenuOnlineBufferS3(data);
     } catch (error) {
       console.error(error);
       throw error;

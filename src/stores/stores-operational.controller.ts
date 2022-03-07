@@ -243,6 +243,8 @@ export class StoreOperationalController {
           throw e;
         });
 
+      await this.mStoreService.manipulateStoreUrl(updatedResult);
+
       const msg = is_open_24_hour
         ? `Sukses mengubah status toko menjadi 'Buka 24 Jam'`
         : `Sukses mereset status 'Buka 24 Jam', sekarang toko mengikuti jadwal operasional toko.`;
@@ -287,6 +289,8 @@ export class StoreOperationalController {
         .catch((e) => {
           throw e;
         });
+
+      await this.mStoreService.manipulateStoreUrl(updatedResult);
 
       return this.responseService.success(
         true,

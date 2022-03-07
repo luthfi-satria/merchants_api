@@ -14,6 +14,8 @@ import {
   Req,
   ForbiddenException,
   Logger,
+  Res,
+  HttpException,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -38,7 +40,8 @@ import { ListMerchantDTO } from './validation/list-merchant.validation';
 import { ResponseExcludeParam } from 'src/response/response_exclude_param.decorator';
 import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
 import { MerchantStatus } from 'src/database/entities/merchant.entity';
-
+import { Response } from 'express';
+import etag from 'etag';
 @Controller('api/v1/merchants')
 export class MerchantsController {
   constructor(
@@ -250,5 +253,36 @@ export class MerchantsController {
       this.messageService.get('merchant.listmerchant.success'),
       listgroup,
     );
+  }
+
+  @Get('merchants/:doc/:id/image')
+  async streamFile(
+    @Param('id') id: string,
+    @Param('doc') doc: string,
+    @Res() res: Response,
+    @Req() req: any,
+  ) {
+    const data = { id, doc };
+    let images = null;
+
+    try {
+      images = await this.merchantsService.getMerchantBufferS3(data);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+
+    const tag = etag(images.buffer);
+    if (req.headers['if-none-match'] && req.headers['if-none-match'] === tag) {
+      throw new HttpException('Not Modified', HttpStatus.NOT_MODIFIED);
+    }
+
+    res.set({
+      'Content-Type': images.type + '/' + images.ext,
+      'Content-Length': images.buffer.length,
+      ETag: tag,
+    });
+
+    images.stream.pipe(res);
   }
 }

@@ -19,6 +19,7 @@ import { RoleService } from 'src/common/services/admins/role.service';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 // import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { GroupsService } from 'src/groups/groups.service';
 import { HashService } from 'src/hash/hash.service';
 import { MessageService } from 'src/message/message.service';
 import {
@@ -27,6 +28,7 @@ import {
   RSuccessMessage,
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
+import { StoresService } from 'src/stores/stores.service';
 import {
   deleteCredParam,
   formatingAllOutputTime,
@@ -69,6 +71,9 @@ export class MerchantUsersService {
     private readonly merchantService: MerchantsService,
     private readonly notificationService: NotificationService,
     private readonly commonStoresService: CommonStoresService,
+    private readonly groupService: GroupsService,
+    @Inject(forwardRef(() => StoresService))
+    private readonly storeService: StoresService,
   ) {}
 
   async findByMerchantId(mid: string): Promise<MerchantUsersDocument> {
@@ -523,11 +528,23 @@ export class MerchantUsersService {
       removeAllFieldPassword(result_merchant[0]);
 
       const role_ids: string[] = [];
-      result_merchant[0].forEach((raw) => {
+      // result_merchant[0].forEach((raw) => {
+      for (const raw of result_merchant[0]) {
         if (raw.role_id) {
           role_ids.push(raw.role_id);
         }
-      });
+        if (raw.merchant) {
+          await this.merchantService.manipulateMerchantUrl(raw.merchant);
+          if (raw.merchant.group) {
+            await this.groupService.manipulateGroupUrl(raw.merchant.group);
+          }
+        }
+        if (raw.stores && raw.stores.length > 0) {
+          for (const store of raw.stores) {
+            await this.storeService.manipulateStoreUrl(store);
+          }
+        }
+      }
 
       const roles = await this.roleService.getRole(role_ids);
 

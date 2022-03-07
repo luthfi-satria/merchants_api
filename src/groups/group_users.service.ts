@@ -426,11 +426,16 @@ export class GroupUsersService {
       const countGroupUsers = await query.getCount();
 
       const role_ids: string[] = [];
-      listGroupUsers.forEach((raw) => {
+      // listGroupUsers.forEach((raw) => {
+      for (const raw of listGroupUsers) {
         if (raw.role_id) {
           role_ids.push(raw.role_id);
         }
-      });
+
+        if (raw.group) {
+          await this.groupService.manipulateGroupUrl(raw.group);
+        }
+      }
 
       const roles = await this.roleService.getRole(role_ids);
 
@@ -516,6 +521,9 @@ export class GroupUsersService {
 
     removeAllFieldPassword(user_group);
     formatingAllOutputTime(user_group);
+    if (user_group.group) {
+      await this.groupService.manipulateGroupUrl(user_group.group);
+    }
 
     return user_group;
   }

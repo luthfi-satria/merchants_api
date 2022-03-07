@@ -256,7 +256,7 @@ export class MerchantsService {
 
     const createMerchant = this.merchantRepository.create(merchantDTO);
     try {
-      const create: Record<string, any> = await this.merchantRepository.save(
+      const create: MerchantDocument = await this.merchantRepository.save(
         createMerchant,
       );
       this.publishNatsCreateMerchant(
@@ -306,6 +306,10 @@ export class MerchantsService {
         id: create.id,
       };
       await this.createCatalogs(pclogdata);
+
+      await this.manipulateMerchantUrl(create);
+      if (create.group)
+        await this.groupsService.manipulateGroupUrl(create.group);
 
       return this.responseService.success(
         true,
@@ -478,6 +482,10 @@ export class MerchantsService {
       formatingAllOutputTime(update);
       removeAllFieldPassword(update);
 
+      await this.manipulateMerchantUrl(update);
+      if (update.group)
+        await this.groupsService.manipulateGroupUrl(update.group);
+
       return this.responseService.success(
         true,
         this.messageService.get('merchant.createmerchant.success'),
@@ -528,7 +536,7 @@ export class MerchantsService {
     id: string,
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
-    let result = null;
+    let result: MerchantDocument = null;
     try {
       const mid = user.level == 'merchant' ? user.merchant_id : id;
       result = await this.merchantRepository.findOne({
@@ -563,6 +571,10 @@ export class MerchantsService {
         ),
       );
     }
+
+    await this.manipulateMerchantUrl(result);
+    await this.groupsService.manipulateGroupUrl(result.group);
+
     return this.responseService.success(
       true,
       this.messageService.get('merchant.listmerchant.success'),
@@ -667,10 +679,14 @@ export class MerchantsService {
     try {
       const totalItems = await merchant.getCount();
       const list = await merchant.getMany();
-      list.forEach((element) => {
+
+      for (const element of list) {
         deleteCredParam(element);
         deleteCredParam(element.group);
-      });
+
+        await this.manipulateMerchantUrl(element);
+        await this.groupsService.manipulateGroupUrl(element.group);
+      }
 
       return {
         total_item: totalItems,
@@ -929,7 +945,10 @@ export class MerchantsService {
         result.is_manual_refund_enabled = data.is_manual_refund_enabled;
 
       const update = await this.merchantRepository.save(result);
+
       this.publishNatsUpdateStatusEndOfDay(update);
+
+      await this.manipulateMerchantUrl(update);
 
       return this.responseService.success(
         true,
@@ -1023,6 +1042,52 @@ export class MerchantsService {
       return merchants;
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  async getMerchantBufferS3(data: any) {
+    try {
+      const merchant = await this.merchantRepository.findOne({
+        id: data.id,
+      });
+
+      if (!merchant) {
+        const errors: RMessage = {
+          value: data.id,
+          property: 'id',
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+      return await this.storage.getImageProperties(merchant[data.doc]);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async manipulateMerchantUrl(
+    merchant: MerchantDocument,
+  ): Promise<MerchantDocument> {
+    if (isDefined(merchant)) {
+      merchant.logo = isDefined(merchant.logo)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/merchants/logo/${merchant.id}/image`
+        : merchant.logo;
+      merchant.profile_store_photo = isDefined(merchant.profile_store_photo)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/merchants/profile_store_photo/${merchant.id}/image`
+        : merchant.profile_store_photo;
+      merchant.npwp_file = isDefined(merchant.npwp_file)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/merchants/npwp_file/${merchant.id}/image`
+        : merchant.npwp_file;
+
+      return merchant;
     }
   }
 }

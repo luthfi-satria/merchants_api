@@ -46,6 +46,10 @@ import { CatalogsService } from 'src/common/catalogs/catalogs.service';
 import { SettingsService } from 'src/settings/settings.service';
 import { OrdersService } from 'src/common/orders/orders.service';
 import { CountOrdersStoresDTO } from 'src/common/orders/dto/orders.dto';
+import { isDefined } from 'class-validator';
+import { MerchantsService } from 'src/merchants/merchants.service';
+import { StoresService } from 'src/stores/stores.service';
+import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
 // import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
 
 @Injectable()
@@ -68,7 +72,10 @@ export class QueryService {
     private readonly searchHistoryStoreDocument: Repository<SearchHistoryStoreDocument>,
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
-    private readonly ordersService: OrdersService, // private readonly commonService: CommonService, // private readonly settingsService: SettingsService,
+    private readonly ordersService: OrdersService,
+    private readonly merchantService: MerchantsService,
+    private readonly storeService: StoresService,
+    private readonly storeCategoryService: StoreCategoriesService,
   ) {}
 
   logger = new Logger();
@@ -423,6 +430,10 @@ export class QueryService {
               (e) => e.lang === language,
             );
 
+            item.image = isDefined(item.image)
+              ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${item.id}/image`
+              : item.image;
+
             const x = new StoreCategoriesDocument({ ...item });
             delete x.languages;
             return { ...x, name: ctg_language.name };
@@ -448,6 +459,8 @@ export class QueryService {
               return result;
             });
 
+          await this.storeService.manipulateStoreUrl(row);
+          await this.merchantService.manipulateMerchantUrl(merchant);
           // Get Price Symbol
           const priceRange = await this.priceRangeService.getPriceRangeByPrice(
             row.average_price,
@@ -820,6 +833,11 @@ export class QueryService {
               const ctg_language = item.languages.find((e) => e.lang === lang);
 
               const x = new StoreCategoriesDocument({ ...item });
+
+              x.image = isDefined(x.image)
+                ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${x.id}/image`
+                : x.image;
+
               delete x.languages;
               return { ...x, name: ctg_language.name };
             });
@@ -844,6 +862,9 @@ export class QueryService {
                 return result;
               });
 
+            await this.storeService.manipulateStoreUrl(row);
+            await this.merchantService.manipulateMerchantUrl(merchant);
+
             // Get Price Symbol
             const priceRange =
               await this.priceRangeService.getPriceRangeByPrice(
@@ -854,7 +875,9 @@ export class QueryService {
             //Manipulate Menu Photo Url
             if (row.menus && row.menus.length > 0) {
               for (const menu of row.menus) {
-                menu.photo = `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image`;
+                menu.photo = isDefined(menu.photo)
+                  ? `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image`
+                  : menu.photo;
               }
             }
             // formattedArr.push({
@@ -1036,9 +1059,12 @@ export class QueryService {
             return ix.id == row.sc_id;
           });
           if (idx == -1) {
+            const image = isDefined(row.sc_image)
+              ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${row.sc_id}/image`
+              : row.sc_image;
             const manipulatedRow = {
               id: row.sc_id,
-              image: row.sc_image,
+              image: image,
               active: row.sc_active,
               name: row.merchant_store_categories_languages_name,
               created_at: row.sc_created_at,
@@ -1091,7 +1117,11 @@ export class QueryService {
       const long = data.location_longitude;
       const page = data.page || 1;
       const limit = data.limit || 10;
-      const distance = data.distance || 25;
+      const settingRadius = await this.settingService.findByName(
+        'store_radius',
+      );
+      const defaultRadius = Number(settingRadius.value);
+      const distance = data.distance || defaultRadius;
       const store_category_id = data.store_category_id || null;
       const merchant_id = data.merchant_id || null;
       const order = data.order || null;
@@ -1210,6 +1240,9 @@ export class QueryService {
             }
 
             store.menus = filter_menus;
+
+            if (store.merchant)
+              await this.merchantService.manipulateMerchantUrl(store);
             return store;
           }),
         );
@@ -1317,7 +1350,11 @@ export class QueryService {
 
       const page = data.page || 1;
       const limit = data.limit || 10;
-      const distance = 25;
+      const settingRadius = await this.settingService.findByName(
+        'store_radius',
+      );
+      const defaultRadius = Number(settingRadius.value);
+      const distance = defaultRadius;
       const store_category_id = null;
       const merchant_id = null;
       const order = null;

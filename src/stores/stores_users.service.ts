@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
+import { isDefined } from 'class-validator';
 import { randomUUID } from 'crypto';
 import { catchError, map, Observable } from 'rxjs';
 import { User } from 'src/auth/guard/interface/user.interface';
@@ -24,6 +25,7 @@ import {
 // import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
+import { GroupsService } from 'src/groups/groups.service';
 import { HashService } from 'src/hash/hash.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MessageService } from 'src/message/message.service';
@@ -73,6 +75,7 @@ export class StoreUsersService {
     @Inject(forwardRef(() => StoresService))
     private readonly storeService: StoresService,
     private readonly commonStoreService: CommonStoresService,
+    private readonly groupService: GroupsService,
   ) {}
 
   async createStoreUsers(
@@ -655,24 +658,37 @@ export class StoreUsersService {
       .getManyAndCount()
       .then(async (result) => {
         totalItems = result[1];
-        result[0].forEach((raw: Record<string, any>) => {
+        result[0].forEach(async (raw: Record<string, any>) => {
           if (raw.merchant) {
+            await this.merchantService.manipulateMerchantUrl(raw.merchant);
+            await this.groupService.manipulateGroupUrl(raw.merchant.group);
             delete raw.merchant.pic_password;
           }
           if (raw.group) {
             delete raw.group.director_password;
             delete raw.group.pic_operational_password;
             delete raw.group.pic_finance_password;
+            await this.groupService.manipulateGroupUrl(raw.group);
           }
           if (raw.store) {
             raw.store.store_categories.forEach(
               (element: Record<string, any>) => {
                 element.name = element.languages[0].name;
                 delete element.languages;
+                element.image = isDefined(element.image)
+                  ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${element.id}/image`
+                  : element.image;
               },
             );
             raw.store_categories = raw.store.store_categories;
             delete raw.store.store_categories;
+            await this.storeService.manipulateStoreUrl(raw.store);
+            await this.merchantService.manipulateMerchantUrl(
+              raw.store.merchant,
+            );
+            await this.groupService.manipulateGroupUrl(
+              raw.store.merchant.group,
+            );
           }
           delete raw.password;
           raw.role_name = raw.role_id || '';
@@ -744,6 +760,27 @@ export class StoreUsersService {
       const store_user = await query.getOne();
       if (!store_user) {
         return null;
+      }
+
+      if (store_user.merchant) {
+        await this.merchantService.manipulateMerchantUrl(store_user.merchant);
+        await this.groupService.manipulateGroupUrl(store_user.merchant.group);
+        delete store_user.merchant.pic_password;
+      }
+      if (store_user.group) {
+        delete store_user.group.director_password;
+        delete store_user.group.pic_operational_password;
+        delete store_user.group.pic_finance_password;
+        await this.groupService.manipulateGroupUrl(store_user.group);
+      }
+      if (store_user.store) {
+        await this.storeService.manipulateStoreUrl(store_user.store);
+        await this.merchantService.manipulateMerchantUrl(
+          store_user.store.merchant,
+        );
+        await this.groupService.manipulateGroupUrl(
+          store_user.store.merchant.group,
+        );
       }
 
       const roles = await this.roleService.getRole([store_user.role_id]);

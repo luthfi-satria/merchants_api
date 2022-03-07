@@ -88,10 +88,15 @@ export class StoreCategoriesService {
       }
     }
 
-    return await this.storeCategoriesRepository
+    return this.storeCategoriesRepository
       .save(createStocat)
       .then(async (result) => {
         dbOutputTime(result);
+
+        result.image = isDefined(result.image)
+          ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
+          : result.image;
+
         result.languages.forEach((row) => {
           dbOutputTime(row);
         });
@@ -218,6 +223,11 @@ export class StoreCategoriesService {
       .save(stoCatExist)
       .then(async (result) => {
         dbOutputTime(result);
+
+        result.image = isDefined(result.image)
+          ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
+          : result.image;
+
         result.languages.forEach((row) => {
           dbOutputTime(row);
         });
@@ -339,6 +349,10 @@ export class StoreCategoriesService {
       } else if (!result.active) {
         result.status = StoreCategoryStatus.INACTIVE;
       }
+
+      result.image = isDefined(result.image)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
+        : result.image;
     }
 
     const listResult: ListResponse = {
@@ -380,6 +394,11 @@ export class StoreCategoriesService {
     } else if (!result.active) {
       result.status = StoreCategoryStatus.INACTIVE;
     }
+
+    result.image = isDefined(result.image)
+      ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
+      : result.image;
+
     return this.responseService.success(
       true,
       this.messageService.get('merchant.general.success'),
@@ -390,11 +409,11 @@ export class StoreCategoriesService {
   async getStoreCategoryByIds(
     storeCatgoryIds: string[],
   ): Promise<StoreCategoriesDocument[]> {
-    const result = await this.storeCategoriesRepository.find({
+    const results = await this.storeCategoriesRepository.find({
       where: { id: In(storeCatgoryIds) },
       relations: ['languages'],
     });
-    if (!result) {
+    if (!results) {
       const errors: RMessage = {
         value: storeCatgoryIds.join(','),
         property: 'store_category_id',
@@ -408,7 +427,13 @@ export class StoreCategoriesService {
         ),
       );
     }
-    return result;
+
+    for (const result of results) {
+      result.image = isDefined(result.image)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
+        : result.image;
+    }
+    return results;
   }
 
   //------------------------------------------------------------------------------
@@ -423,5 +448,33 @@ export class StoreCategoriesService {
         throw err;
       }),
     );
+  }
+
+  async getStoreCategoryBufferS3(data: any) {
+    try {
+      const storeCategory = await this.storeCategoriesRepository.findOne({
+        id: data.id,
+      });
+
+      if (!storeCategory) {
+        const errors: RMessage = {
+          value: data.id,
+          property: 'id',
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+      return await this.storage.getImageProperties(storeCategory.image);
+    } catch (error) {
+      console.error(error);
+    }
   }
 }

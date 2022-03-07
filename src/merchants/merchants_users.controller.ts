@@ -20,7 +20,6 @@ import {
   CreateMerchantUsersValidation,
   UpdateMerchantUsersValidation,
 } from './validation/merchants_users.validation';
-import { HttpService } from '@nestjs/axios';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { ListMerchantUsersValidation } from './validation/list_merchants_users.validation';
@@ -28,14 +27,19 @@ import { RSuccessMessage } from 'src/response/response.interface';
 import { MerchantUsersUpdatePhoneValidation } from './validation/merchants_users_update_phone.validation';
 import { MerchantUsersUpdateEmailValidation } from './validation/merchants_users_update_email.validation';
 import { UserTypeAndLevel } from 'src/auth/guard/user-type-and-level.decorator';
+import { MerchantsService } from './merchants.service';
+import { GroupsService } from 'src/groups/groups.service';
+import { StoresService } from 'src/stores/stores.service';
 
 @Controller('api/v1/merchants/merchants')
 export class MerchantUsersController {
   constructor(
     private readonly merchantUsersService: MerchantUsersService,
-    private readonly httpService: HttpService,
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
+    private readonly merchantService: MerchantsService,
+    private readonly groupService: GroupsService,
+    private readonly storeService: StoresService,
   ) {}
 
   @Post('users')
@@ -216,6 +220,19 @@ export class MerchantUsersController {
       user_id,
       req.user,
     );
+
+    if (user.merchant) {
+      await this.merchantService.manipulateMerchantUrl(user.merchant);
+      if (user.merchant.group)
+        await this.groupService.manipulateGroupUrl(user.merchant.group);
+    }
+
+    if (user.stores && user.stores.length > 0) {
+      for (const store of user.stores) {
+        await this.storeService.manipulateStoreUrl(store);
+      }
+    }
+
     return this.responseService.success(
       true,
       this.messageService.get('merchant.general.success'),

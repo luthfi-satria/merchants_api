@@ -23,6 +23,8 @@ import { StoreCategoriesService } from 'src/store_categories/store_categories.se
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { isDefined } from 'class-validator';
 import { MerchantStoresDto } from './dto/merchant_stores.dto';
+import { MerchantsService } from 'src/merchants/merchants.service';
+import { GroupsService } from 'src/groups/groups.service';
 
 @Injectable()
 export class InternalService {
@@ -39,9 +41,11 @@ export class InternalService {
     private readonly storeService: StoresService,
     private readonly commonService: CommonService,
     private readonly loginService: LoginService,
-    private readonly merchantService: MerchantUsersService,
+    private readonly merchantUserService: MerchantUsersService,
     private readonly queryService: QueryService,
     private readonly storeCategoryService: StoreCategoriesService,
+    private readonly merchantService: MerchantsService,
+    private readonly groupService: GroupsService,
   ) {}
 
   async updateRatingStore(id, data) {
@@ -250,10 +254,10 @@ export class InternalService {
       const totalItems = await store.getCount().catch((err) => {
         console.error('err ', err);
       });
-      const list: any = await store.getMany().catch((err2) => {
-        console.error('err2 ', err2);
-      });
-      list.forEach(async (element) => {
+      const list = await store.getMany();
+
+      // list.forEach(async (element) => {
+      for (const element of list) {
         deleteCredParam(element);
         deleteCredParam(element.merchant);
         const row = deleteCredParam(element.merchant.group);
@@ -262,8 +266,12 @@ export class InternalService {
             deleteCredParam(sao);
           });
         }
-        return row;
-      });
+
+        // return row;
+        await this.storeService.manipulateStoreUrl(element);
+        await this.merchantService.manipulateMerchantUrl(element.merchant);
+        await this.groupService.manipulateGroupUrl(element.merchant.group);
+      }
 
       const response = {
         total_item: totalItems,
@@ -292,7 +300,7 @@ export class InternalService {
       .findOne({
         where: { id: id },
       })
-      .then((result) => {
+      .then(async (result) => {
         if (!result) {
           throw new BadRequestException(
             this.responseService.error(
@@ -306,6 +314,7 @@ export class InternalService {
             ),
           );
         }
+        await this.merchantService.manipulateMerchantUrl(result);
         return result;
       })
       .catch((err) => {
@@ -453,11 +462,31 @@ export class InternalService {
   }
 
   async findMerchantUser(user: any): Promise<MerchantUsersDocument> {
-    return this.loginService.getProfile(user);
+    const result = await this.loginService.getProfile(user);
+
+    if (result.merchant) {
+      await this.merchantService.manipulateMerchantUrl(result.merchant);
+      await this.groupService.manipulateGroupUrl(result.merchant.group);
+      delete result.merchant.pic_password;
+    }
+    if (result.group) {
+      delete result.group.director_password;
+      delete result.group.pic_operational_password;
+      delete result.group.pic_finance_password;
+      await this.groupService.manipulateGroupUrl(result.group);
+    }
+    if (result.store) {
+      delete result.store.store_categories;
+      await this.storeService.manipulateStoreUrl(result.store);
+      await this.merchantService.manipulateMerchantUrl(result.store.merchant);
+      await this.groupService.manipulateGroupUrl(result.store.merchant.group);
+    }
+
+    return result;
   }
 
   async getMerchantUsers(data: GetMerchantUsersDto): Promise<any> {
-    return this.merchantService.getMerchantUsers(data).catch((error) => {
+    return this.merchantUserService.getMerchantUsers(data).catch((error) => {
       console.error(error);
       throw error;
     });
@@ -467,7 +496,7 @@ export class InternalService {
     return this.storeService.listStoreByLevel(data, user);
   }
 
-  async findStoreLevel(store_id: string): Promise<any> {
+  async findStoreLevel(store_id: string): Promise<StoreDocument> {
     return this.storeService.findStoreLevel(store_id);
   }
 

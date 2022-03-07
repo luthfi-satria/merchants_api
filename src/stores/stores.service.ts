@@ -46,6 +46,7 @@ import { NatsService } from 'src/nats/nats.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { isDefined } from 'class-validator';
+import { CommonStorageService } from 'src/common/storage/storage.service';
 
 @Injectable()
 export class StoresService {
@@ -70,6 +71,7 @@ export class StoresService {
     private readonly usersService: UsersService,
     private readonly natsService: NatsService,
     private readonly menuOnlineService: MenuOnlineService,
+    private readonly storage: CommonStorageService,
   ) {}
 
   createInstance(data: StoreDocument): StoreDocument {
@@ -597,6 +599,10 @@ export class StoresService {
       list.store_categories.forEach((element: Record<string, any>) => {
         element.name = element.languages[0].name;
         delete element.languages;
+
+        element.image = isDefined(element.image)
+          ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${element.id}/image`
+          : element.image;
       });
       list.operational_hours.forEach((element) => {
         element.day_of_week = DateTimeUtils.convertToDayOfWeek(
@@ -606,6 +612,12 @@ export class StoresService {
 
       list.city = await this.cityService.getCity(list.city_id);
 
+      await this.manipulateStoreUrl(list);
+      if (list.merchant) {
+        await this.merchantService.manipulateMerchantUrl(list.merchant);
+        if (list.merchant.group)
+          await this.groupService.manipulateGroupUrl(list.merchant.group);
+      }
       return this.responseService.success(
         true,
         this.messageService.get('merchant.liststore.success'),
@@ -865,21 +877,27 @@ export class StoresService {
       const totalItems = await store.getCount().catch((err) => {
         console.error('err ', err);
       });
-      const list: any = await store.getMany().catch((err2) => {
-        console.error('err2 ', err2);
-      });
+      const list: any = await store.getMany();
 
-      list.forEach(async (element) => {
+      for (const element of list) {
+        // list.forEach(async (element) => {
         deleteCredParam(element);
         deleteCredParam(element.merchant);
+
+        await this.manipulateStoreUrl(element);
+        if (element.merchant) {
+          await this.merchantService.manipulateMerchantUrl(element.merchant);
+          if (element.merchant.group)
+            await this.groupService.manipulateGroupUrl(element.merchant.group);
+        }
         const row = deleteCredParam(element.merchant.group);
         if (row.service_addon) {
           row.service_addon.forEach((sao: any) => {
             deleteCredParam(sao);
           });
         }
-        return row;
-      });
+        // return row;
+      }
 
       const response = {
         total_item: totalItems,
@@ -1036,6 +1054,9 @@ export class StoresService {
           delete sao.created_at;
           delete sao.updated_at;
         });
+
+        await this.manipulateStoreUrl(updateResult);
+
         return this.responseService.success(
           true,
           this.messageService.get('merchant.general.success'),
@@ -1231,9 +1252,10 @@ export class StoresService {
 
     try {
       const totalItems = await store.getCount();
-      const list: any = await store.getMany();
+      const list = await store.getMany();
 
-      list.forEach(async (element) => {
+      // list.forEach(async (element) => {
+      for (const element of list) {
         deleteCredParam(element);
         deleteCredParam(element.merchant);
         const row = deleteCredParam(element.merchant.group);
@@ -1242,8 +1264,13 @@ export class StoresService {
             deleteCredParam(sao);
           });
         }
-        return row;
-      });
+
+        await this.manipulateStoreUrl(element);
+        await this.merchantService.manipulateMerchantUrl(element.merchant);
+        await this.groupService.manipulateGroupUrl(element.merchant.group);
+
+        // return row;
+      }
 
       return {
         total_item: totalItems,
@@ -1363,5 +1390,45 @@ export class StoresService {
     await this.menuOnlineService.updateMenuPriceByCriteria(criteria, {
       discounted_price: discountedPrice,
     });
+  }
+
+  async getStoreBufferS3(data: any) {
+    try {
+      const merchant = await this.storeRepository.findOne({
+        id: data.id,
+      });
+
+      if (!merchant) {
+        const errors: RMessage = {
+          value: data.id,
+          property: 'id',
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+      return await this.storage.getImageProperties(merchant[data.doc]);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async manipulateStoreUrl(store: StoreDocument): Promise<StoreDocument> {
+    if (isDefined(store)) {
+      store.photo = isDefined(store.photo)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/stores/photo/${store.id}/image`
+        : store.photo;
+      store.banner = isDefined(store.banner)
+        ? `${process.env.BASEURL_API}/api/v1/merchants/stores/banner/${store.id}/image`
+        : store.banner;
+      return store;
+    }
   }
 }

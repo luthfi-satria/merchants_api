@@ -10,13 +10,13 @@ import {
   Put,
   Query,
   UseInterceptors,
-  Headers,
-  UnauthorizedException,
   UploadedFiles,
   Req,
   UseGuards,
   Logger,
   NotFoundException,
+  Res,
+  HttpException,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -35,7 +35,6 @@ import {
   imageJpgPngFileFilter,
 } from 'src/utils/general-utils';
 import { StoresService } from './stores.service';
-import { catchError, map } from 'rxjs';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
@@ -51,7 +50,8 @@ import { ResponseExcludeParam } from 'src/response/response_exclude_param.decora
 import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 import { InternalService } from 'src/internal/internal.service';
-
+import { Response } from 'express';
+import etag from 'etag';
 @Controller('api/v1/merchants')
 export class StoresController {
   constructor(
@@ -104,6 +104,9 @@ export class StoresController {
           create_merchant_store_validation,
           req.user,
         );
+
+      await this.storesService.manipulateStoreUrl(result_db);
+
       return this.responseService.success(
         true,
         this.messageService.get('merchant.createstore.success'),
@@ -175,6 +178,9 @@ export class StoresController {
           update_merchant_store_validation,
           req.user,
         );
+
+      await this.storesService.manipulateStoreUrl(updateresult);
+
       return this.responseService.success(
         true,
         this.messageService.get('merchant.updatestore.success'),
@@ -190,55 +196,11 @@ export class StoresController {
   @UserType('admin')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async deletestores(
-    @Param('id') id: string,
-    @Headers('Authorization') token: string,
-  ): Promise<any> {
-    const url: string =
-      process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/validate-token';
-    const headersRequest: Record<string, any> = {
-      'Content-Type': 'application/json',
-      Authorization: token,
-    };
-
-    return (await this.storesService.getHttp(url, headersRequest)).pipe(
-      map(async (response) => {
-        const rsp: Record<string, any> = response;
-
-        if (rsp.statusCode) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              rsp.message[0],
-              'Bad Request',
-            ),
-          );
-        }
-        if (response.data.payload.user_type != 'admin') {
-          const errors: RMessage = {
-            value: token.replace('Bearer ', ''),
-            property: 'token',
-            constraint: [
-              this.messageService.get('merchant.createmerchant.invalid_token'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'UNAUTHORIZED',
-            ),
-          );
-        }
-        await this.storesService.deleteMerchantStoreProfile(id);
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.deletestore.success'),
-        );
-      }),
-      catchError((err) => {
-        throw err.response.data;
-      }),
+  async deletestores(@Param('id') id: string): Promise<any> {
+    await this.storesService.deleteMerchantStoreProfile(id);
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.deletestore.success'),
     );
   }
 
@@ -334,6 +296,9 @@ export class StoresController {
 
           // quick parsing and update record
           item.delivery_type = delivery_type;
+
+          await this.storesService.manipulateStoreUrl(item);
+
           const updated = await this.storesService.updateStoreProfile(item);
           if (!updated) {
             Logger.warn(
@@ -356,5 +321,36 @@ export class StoresController {
     } catch (e) {
       throw e;
     }
+  }
+
+  @Get('stores/:doc/:id/image')
+  async streamFile(
+    @Param('id') id: string,
+    @Param('doc') doc: string,
+    @Res() res: Response,
+    @Req() req: any,
+  ) {
+    const data = { id, doc };
+    let images = null;
+
+    try {
+      images = await this.storesService.getStoreBufferS3(data);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+
+    const tag = etag(images.buffer);
+    if (req.headers['if-none-match'] && req.headers['if-none-match'] === tag) {
+      throw new HttpException('Not Modified', HttpStatus.NOT_MODIFIED);
+    }
+
+    res.set({
+      'Content-Type': images.type + '/' + images.ext,
+      'Content-Length': images.buffer.length,
+      ETag: tag,
+    });
+
+    images.stream.pipe(res);
   }
 }

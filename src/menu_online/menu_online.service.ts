@@ -146,7 +146,7 @@ export class MenuOnlineService {
     await this.menuOnlineRepository.update(criteria, data);
   }
 
-  async getGroupBufferS3(data: any) {
+  async getMenuOnlineBufferS3(data: any) {
     try {
       const menuOnline = await this.menuOnlineRepository.findOne({
         id: data.id,

@@ -23,6 +23,7 @@ import {
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { editFileName, imageJpgPngFileFilter } from 'src/utils/general-utils';
+import { StoresService } from 'src/stores/stores.service';
 
 @Controller('/api/v1/merchants/banners')
 export class BannersController {
@@ -31,6 +32,7 @@ export class BannersController {
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
     private readonly storage: CommonStorageService,
+    private readonly storeService: StoresService,
   ) {}
 
   @Put()
@@ -65,13 +67,18 @@ export class BannersController {
         const updateBannerDto = new UpdateBannerByMerchantIdDto();
         updateBannerDto.banner = data.banner;
         updateBannerDto.merchant_id = data.merchant_id;
-        const result = await this.bannersService.updateBannerByMerchantId(
+        const results = await this.bannersService.updateBannerByMerchantId(
           updateBannerDto,
         );
+
+        for (const result of results) {
+          await this.storeService.manipulateStoreUrl(result);
+        }
+
         return this.responseService.success(
           true,
           this.messageService.get('merchant.general.success'),
-          result,
+          results,
         );
       } else {
         const errors: RMessage = {
@@ -97,6 +104,7 @@ export class BannersController {
           updateBannerDto,
         );
         if (result) {
+          await this.storeService.manipulateStoreUrl(result);
           collection.push(result);
         }
       }

@@ -22,6 +22,8 @@ import { RSuccessMessage } from 'src/response/response.interface';
 import { MessageService } from 'src/message/message.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantStoresDto } from './dto/merchant_stores.dto';
+import { GroupsService } from 'src/groups/groups.service';
+import { StoresService } from 'src/stores/stores.service';
 
 @Controller('api/v1/internal')
 export class InternalController {
@@ -30,7 +32,9 @@ export class InternalController {
     private readonly responseService: ResponseService,
     private readonly commonStoreService: CommonStoresService,
     private readonly messageService: MessageService,
-    private readonly merchantsService: MerchantsService,
+    private readonly storeService: StoresService,
+    private readonly merchantService: MerchantsService,
+    private readonly groupService: GroupsService,
   ) {}
 
   @Get('merchants/merchant-users')
@@ -48,10 +52,17 @@ export class InternalController {
     @Body()
     storeBatchDTO: StoreBatchDTO,
   ): Promise<any> {
-    return this.commonStoreService.getAndValidateStoreByStoreIds(
+    const results = await this.commonStoreService.getAndValidateStoreByStoreIds(
       storeBatchDTO.store_ids,
       storeBatchDTO.user,
     );
+
+    for (const result of results) {
+      await this.storeService.manipulateStoreUrl(result);
+      await this.merchantService.manipulateMerchantUrl(result.merchant);
+      await this.groupService.manipulateGroupUrl(result.merchant.group);
+    }
+    return results;
   }
 
   @Get('merchants/merchants/batchs')
@@ -59,7 +70,14 @@ export class InternalController {
   async getMerchantsWithGroupBulk(
     @Query() data: MerchantsBatchDTO,
   ): Promise<any> {
-    return this.internalService.getMerchantsWithGroupBulk(data.merchant_ids);
+    const result = await this.internalService.getMerchantsWithGroupBulk(
+      data.merchant_ids,
+    );
+    for (const merchant of result.merchants) {
+      await this.merchantService.manipulateMerchantUrl(merchant);
+      await this.groupService.manipulateGroupUrl(merchant.group);
+    }
+    return result;
   }
 
   @Get('merchants/stores')
@@ -81,13 +99,25 @@ export class InternalController {
   @Get('merchants/stores/:id')
   @ResponseStatusCode()
   async getStoresId(@Param('id') id: string): Promise<any> {
-    return this.internalService.findStorebyId(id);
+    const result = await this.internalService.findStorebyId(id);
+
+    await this.storeService.manipulateStoreUrl(result);
+    await this.merchantService.manipulateMerchantUrl(result.merchant);
+    await this.groupService.manipulateGroupUrl(result.merchant.group);
+
+    return result;
   }
 
   @Get('merchants/stores/level/:id')
   @ResponseStatusCode()
   async getStoreWithLevel(@Param('id') store_id: string): Promise<any> {
-    return this.internalService.findStoreLevel(store_id);
+    const result = await this.internalService.findStoreLevel(store_id);
+
+    await this.storeService.manipulateStoreUrl(result);
+    await this.merchantService.manipulateMerchantUrl(result.merchant);
+    await this.groupService.manipulateGroupUrl(result.merchant.group);
+
+    return result;
   }
 
   @Post('merchants/stores/bylevel')
@@ -101,7 +131,18 @@ export class InternalController {
   @Get('merchants/stores/by/automatic_refund')
   @ResponseStatusCode()
   async listStoresAutomaticRefund(): Promise<any> {
-    return this.internalService.findStoreAutomaticRefund();
+    const result = await this.internalService.findStoreAutomaticRefund();
+
+    for (const data of result.data) {
+      await this.storeService.manipulateStoreUrl(data);
+      if (data.merchant) {
+        await this.merchantService.manipulateMerchantUrl(data.merchant);
+        if (data.merchant.group)
+          await this.groupService.manipulateGroupUrl(data.merchant.group);
+      }
+    }
+
+    return result;
   }
 
   @Get('merchants/:id')
@@ -157,11 +198,16 @@ export class InternalController {
     @Param('mid') mid: string,
   ): Promise<Record<string, StoreDocument[]>> {
     try {
-      const result = await this.internalService.findStoreActivebyMerchantId(
+      const results = await this.internalService.findStoreActivebyMerchantId(
         mid,
       );
+
+      for (const result of results) {
+        await this.storeService.manipulateStoreUrl(result);
+      }
+
       return {
-        stores: result,
+        stores: results,
       };
     } catch (err) {
       console.error(err);
@@ -176,8 +222,11 @@ export class InternalController {
     @Query() data: MerchantStoresDto,
   ): Promise<any> {
     try {
-      const result = await this.internalService.getMerchantStores(data);
-      return this.responseService.success(true, 'SUCCESS', result);
+      const results = await this.internalService.getMerchantStores(data);
+      for (const result of results.items) {
+        await this.storeService.manipulateStoreUrl(result);
+      }
+      return this.responseService.success(true, 'SUCCESS', results);
     } catch (err) {
       console.error(err);
       throw err;

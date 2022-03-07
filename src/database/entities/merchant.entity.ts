@@ -151,6 +151,8 @@ export class MerchantDocument {
   })
   users: MerchantUsersDocument[];
 
+  user: any;
+
   @Column({
     type: 'enum',
     enum: PromoType,

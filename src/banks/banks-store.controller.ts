@@ -79,7 +79,15 @@ export class BanksStoresController {
             );
           }
 
-          return this.storeService.findMerchantStoresByIds(stores_ids);
+          const results = await this.storeService.findMerchantStoresByIds(
+            stores_ids,
+          );
+
+          for (const result of results) {
+            await this.storeService.manipulateStoreUrl(result);
+          }
+
+          return results;
         });
 
       return this.responseService.success(
