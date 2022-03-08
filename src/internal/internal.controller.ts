@@ -183,7 +183,7 @@ export class InternalController {
     }
   }
 
-  @Get('merchant_user/:id/:level')
+  @Get('merchants/user/:id/:level')
   @ResponseStatusCode()
   async getMerchantUser(
     @Param('id') id: string,
@@ -192,7 +192,7 @@ export class InternalController {
     return this.internalService.findMerchantUser({ id: id, level: level });
   }
 
-  @Get('stores/active/:mid')
+  @Get('merchants/stores/active/:mid')
   @ResponseStatusCode()
   async getStoresActiveByMerchantId(
     @Param('mid') mid: string,
