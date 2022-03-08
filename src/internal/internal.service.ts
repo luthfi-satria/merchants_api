@@ -480,12 +480,19 @@ export class InternalService {
         delete result.store.store_categories;
         await this.storeService.manipulateStoreUrl(result.store);
         await this.merchantService.manipulateMerchantUrl(result.store.merchant);
-        await this.groupService.manipulateGroupUrl(result.store.merchant.group);
+
+        if (result.store.merchant) {
+          await this.groupService.manipulateGroupUrl(
+            result.store.merchant.group,
+          );
+        }
       }
 
       return result;
     } catch (e) {
       console.error(e);
+
+      throw e;
     }
   }
 
