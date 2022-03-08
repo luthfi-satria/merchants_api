@@ -12,7 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { GroupDocument, GroupStatus } from 'src/database/entities/group.entity';
-import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
+import { Brackets, FindOperator, ILike, Like, Not, Repository } from 'typeorm';
 import { AxiosResponse } from 'axios';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
@@ -28,10 +28,16 @@ import { GroupUsersService } from './group_users.service';
 import { GroupUser } from './interface/group_users.interface';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { ListGroupDTO, SearchFields } from './validation/list-group.validation';
-import { RoleService, SpecialRoleCodes } from 'src/common/services/admins/role.service';
+import {
+  RoleService,
+  SpecialRoleCodes,
+} from 'src/common/services/admins/role.service';
 import { NatsService } from 'src/nats/nats.service';
 import _ from 'lodash';
-import { MerchantDocument, MerchantStatus } from 'src/database/entities/merchant.entity';
+import {
+  MerchantDocument,
+  MerchantStatus,
+} from 'src/database/entities/merchant.entity';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
 import { CommonStorageService } from 'src/common/storage/storage.service';
@@ -143,15 +149,13 @@ export class GroupsService {
         this.natsService.clientEmit('merchants.group.created', create);
       }
 
-      const specialRoles = await this.roleService.getSpecialRoleByCodes(
-        [
-          SpecialRoleCodes.corporate_director,
-          SpecialRoleCodes.corporate_finance,
-          SpecialRoleCodes.corporate_operational,
-          SpecialRoleCodes.corporate_director_finance_operational,
-          SpecialRoleCodes.corporate_finance_operational,
-        ]
-      );
+      const specialRoles = await this.roleService.getSpecialRoleByCodes([
+        SpecialRoleCodes.corporate_director,
+        SpecialRoleCodes.corporate_finance,
+        SpecialRoleCodes.corporate_operational,
+        SpecialRoleCodes.corporate_director_finance_operational,
+        SpecialRoleCodes.corporate_finance_operational,
+      ]);
 
       const array_phone = [];
       create.users = [];
@@ -163,12 +167,16 @@ export class GroupsService {
         email: createGroupDTO.director_email,
         password: createGroupDTO.director_password,
         nip: createGroupDTO.director_nip,
-        role_id: _.find(specialRoles, { code: SpecialRoleCodes.corporate_director } ).role.id,
+        role_id: _.find(specialRoles, {
+          code: SpecialRoleCodes.corporate_director,
+        }).role.id,
         status: MerchantUsersStatus.Active,
       };
       // role jika pic_operational & pic_finance sama dengan directur
       if (array_phone.includes(createGroupDTO.pic_operational_phone)) {
-        create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_director_finance_operational } ).role.id;
+        create_director.role_id = _.find(specialRoles, {
+          code: SpecialRoleCodes.corporate_director_finance_operational,
+        }).role.id;
       }
       const director = await this.groupUserService.createUserPassword(
         create_director,
@@ -183,12 +191,19 @@ export class GroupsService {
           email: createGroupDTO.pic_operational_email,
           password: createGroupDTO.pic_operational_password,
           nip: createGroupDTO.pic_operational_nip,
-          role_id: _.find(specialRoles, { code: SpecialRoleCodes.corporate_operational } ).role.id,
+          role_id: _.find(specialRoles, {
+            code: SpecialRoleCodes.corporate_operational,
+          }).role.id,
           status: MerchantUsersStatus.Active,
         };
         // role jika pic_operational & pic_finance sama tetapi berbeda dengan directur
-        if (createGroupDTO.pic_operational_phone == createGroupDTO.pic_finance_phone) {
-          create_director.role_id = _.find(specialRoles, { code: SpecialRoleCodes.corporate_finance_operational } ).role.id;
+        if (
+          createGroupDTO.pic_operational_phone ==
+          createGroupDTO.pic_finance_phone
+        ) {
+          create_director.role_id = _.find(specialRoles, {
+            code: SpecialRoleCodes.corporate_finance_operational,
+          }).role.id;
         }
         const pic_operational = await this.groupUserService.createUserPassword(
           create_pic_operational,
@@ -204,7 +219,9 @@ export class GroupsService {
           email: createGroupDTO.pic_finance_email,
           password: createGroupDTO.pic_finance_password,
           nip: createGroupDTO.pic_finance_nip,
-          role_id: _.find(specialRoles, { code: SpecialRoleCodes.corporate_finance } ).role.id,
+          role_id: _.find(specialRoles, {
+            code: SpecialRoleCodes.corporate_finance,
+          }).role.id,
           status: MerchantUsersStatus.Active,
         };
         const pic_finance = await this.groupUserService.createUserPassword(
@@ -255,13 +272,18 @@ export class GroupsService {
 
     //Checking Status
     if (updateGroupDTO.status == GroupStatus.Inactive) {
-      const updateMerchantData: Partial<MerchantDocument> = {status: MerchantStatus.Inactive};
-      const criteria: Partial<MerchantDocument> = {group_id: update_group.id}
-      const merchants = await this.merchantService.updateMerchantByCriteria(criteria,updateMerchantData);
+      const updateMerchantData: Partial<MerchantDocument> = {
+        status: MerchantStatus.Inactive,
+      };
+      const criteria: Partial<MerchantDocument> = { group_id: update_group.id };
+      const merchants = await this.merchantService.updateMerchantByCriteria(
+        criteria,
+        updateMerchantData,
+      );
       if (merchants && merchants.length > 0) {
-          for (const merchant of merchants) {
-            await this.storeService.setAllInactiveByMerchantId(merchant.id);
-          }
+        for (const merchant of merchants) {
+          await this.storeService.setAllInactiveByMerchantId(merchant.id);
+        }
       }
     }
     this.publishNatsUpdateGroup(update_group, oldStatus);
@@ -426,8 +448,7 @@ export class GroupsService {
       deleteCredParam(element);
 
       await this.manipulateGroupUrl(element);
-
-    };
+    }
     return {
       total_item: count,
       limit: Number(perPage),
@@ -439,7 +460,7 @@ export class GroupsService {
   async getAndValidateGroupByGroupId(group_id: string): Promise<GroupDocument> {
     try {
       const group = await this.groupRepository.findOne({
-        where: { id: group_id},
+        where: { id: group_id },
         relations: ['merchants', 'merchants.stores', 'users'],
       });
       if (!group) {
@@ -531,15 +552,13 @@ export class GroupsService {
     payload: GroupDocument,
     oldStatus: GroupStatus = GroupStatus.Active,
   ) {
-
     await this.manipulateGroupUrl(payload);
 
     if (payload.status == GroupStatus.Inactive) {
       this.natsService.clientEmit('merchants.group.deleted', payload);
     } else if (
       payload.status == GroupStatus.Active &&
-      (oldStatus == GroupStatus.Inactive ||
-        oldStatus == GroupStatus.Draft)
+      (oldStatus == GroupStatus.Inactive || oldStatus == GroupStatus.Draft)
     ) {
       this.natsService.clientEmit('merchants.group.created', payload);
     } else if (payload.status == GroupStatus.Active) {
@@ -564,13 +583,16 @@ export class GroupsService {
     try {
       const group = await this.groupRepository.findOne({
         id: data.id,
+        [data.doc]: Like(`%${data.fileName}%`),
       });
 
       if (!group) {
         const errors: RMessage = {
           value: data.id,
           property: 'id',
-          constraint: [this.messageService.get('merchant.general.dataNotFound')],
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
         };
         throw new BadRequestException(
           this.responseService.error(
@@ -587,25 +609,75 @@ export class GroupsService {
   }
 
   async manipulateGroupUrl(group: GroupDocument): Promise<GroupDocument> {
+    let filename = null;
     if (isDefined(group)) {
-      group.siup_file = isDefined(group.siup_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/siup_file/${group.id}/image`
-        : group.siup_file;
-      group.akta_pendirian_file = isDefined(group.akta_pendirian_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/akta_pendirian_file/${group.id}/image`
-        : group.akta_pendirian_file;
-      group.akta_perubahan_file = isDefined(group.akta_perubahan_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/akta_perubahan_file/${group.id}/image`
-        : group.akta_perubahan_file;
-      group.npwp_file = isDefined(group.npwp_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/npwp_file/${group.id}/image`
-        : group.npwp_file;
-      group.director_id_file = isDefined(group.director_id_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/director_id_file/${group.id}/image`
-        : group.director_id_file;
-      group.director_id_face_file = isDefined(group.director_id_face_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/groups/director_id_face_file/${group.id}/image`
-        : group.director_id_face_file;
+      if (
+        isDefined(group.siup_file) &&
+        group.siup_file &&
+        !group.siup_file.includes('dummyimage')
+      ) {
+        filename =
+          group.siup_file.split('/')[group.siup_file.split('/').length - 1];
+        group.siup_file = `${process.env.BASEURL_API}/api/v1/merchants/groups/siup_file/${group.id}/image/${filename}`;
+      }
+
+      if (
+        isDefined(group.akta_pendirian_file) &&
+        group.akta_pendirian_file &&
+        !group.akta_pendirian_file.includes('dummyimage')
+      ) {
+        filename =
+          group.akta_pendirian_file.split('/')[
+            group.akta_pendirian_file.split('/').length - 1
+          ];
+        group.akta_pendirian_file = `${process.env.BASEURL_API}/api/v1/merchants/groups/akta_pendirian_file/${group.id}/image/${filename}`;
+      }
+
+      if (
+        isDefined(group.akta_perubahan_file) &&
+        group.akta_perubahan_file &&
+        !group.akta_perubahan_file.includes('dummyimage')
+      ) {
+        filename =
+          group.akta_perubahan_file.split('/')[
+            group.akta_perubahan_file.split('/').length - 1
+          ];
+        group.akta_perubahan_file = `${process.env.BASEURL_API}/api/v1/merchants/groups/akta_perubahan_file/${group.id}/image/${filename}`;
+      }
+
+      if (
+        isDefined(group.npwp_file) &&
+        group.npwp_file &&
+        !group.npwp_file.includes('dummyimage')
+      ) {
+        filename =
+          group.npwp_file.split('/')[group.npwp_file.split('/').length - 1];
+        group.npwp_file = `${process.env.BASEURL_API}/api/v1/merchants/groups/npwp_file/${group.id}/image/${filename}`;
+      }
+
+      if (
+        isDefined(group.director_id_file) &&
+        group.director_id_file &&
+        !group.director_id_file.includes('dummyimage')
+      ) {
+        filename =
+          group.director_id_file.split('/')[
+            group.director_id_file.split('/').length - 1
+          ];
+        group.director_id_file = `${process.env.BASEURL_API}/api/v1/merchants/groups/director_id_file/${group.id}/image/${filename}`;
+      }
+
+      if (
+        isDefined(group.director_id_face_file) &&
+        group.director_id_face_file &&
+        !group.director_id_face_file.includes('dummyimage')
+      ) {
+        filename =
+          group.director_id_face_file.split('/')[
+            group.director_id_face_file.split('/').length - 1
+          ];
+        group.director_id_face_file = `${process.env.BASEURL_API}/api/v1/merchants/groups/director_id_face_file/${group.id}/image/${filename}`;
+      }
 
       return group;
     }

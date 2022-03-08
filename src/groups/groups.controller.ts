@@ -288,14 +288,15 @@ export class GroupsController {
     }
   }
 
-  @Get('groups/:doc/:id/image')
+  @Get('groups/:doc/:id/image/:image')
   async streamFile(
     @Param('id') id: string,
     @Param('doc') doc: string,
+    @Param('image') fileName: string,
     @Res() res: Response,
     @Req() req: any,
   ) {
-    const data = { id, doc };
+    const data = { id, doc, fileName };
     let images = null;
 
     try {

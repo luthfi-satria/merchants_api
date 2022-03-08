@@ -168,14 +168,15 @@ export class StoreCategoriesController {
     );
   }
 
-  @Get('store/categories/:id/image')
+  @Get('store/categories/:id/image/:image')
   async streamFile(
     @Param('id') id: string,
     @Param('doc') doc: string,
+    @Param('image') fileName: string,
     @Res() res: Response,
     @Req() req: any,
   ) {
-    const data = { id };
+    const data = { id, fileName };
     let images = null;
 
     try {

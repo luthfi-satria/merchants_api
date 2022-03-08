@@ -16,7 +16,7 @@ import {
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime } from 'src/utils/general-utils';
-import { In, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import {
   StoreCategoriesValidation,
   StoreCategoryStatus,
@@ -92,10 +92,15 @@ export class StoreCategoriesService {
       .save(createStocat)
       .then(async (result) => {
         dbOutputTime(result);
-
-        result.image = isDefined(result.image)
-          ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
-          : result.image;
+        if (
+          isDefined(result.image) &&
+          result.image &&
+          !result.image.includes('dummyimage')
+        ) {
+          const fileNameImage =
+            result.image.split('/')[result.image.split('/').length - 1];
+          result.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image/${fileNameImage}`;
+        }
 
         result.languages.forEach((row) => {
           dbOutputTime(row);
@@ -223,10 +228,15 @@ export class StoreCategoriesService {
       .save(stoCatExist)
       .then(async (result) => {
         dbOutputTime(result);
-
-        result.image = isDefined(result.image)
-          ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
-          : result.image;
+        if (
+          isDefined(result.image) &&
+          result.image &&
+          !result.image.includes('dummyimage')
+        ) {
+          const fileNameImage =
+            result.image.split('/')[result.image.split('/').length - 1];
+          result.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image/${fileNameImage}`;
+        }
 
         result.languages.forEach((row) => {
           dbOutputTime(row);
@@ -349,10 +359,15 @@ export class StoreCategoriesService {
       } else if (!result.active) {
         result.status = StoreCategoryStatus.INACTIVE;
       }
-
-      result.image = isDefined(result.image)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
-        : result.image;
+      if (
+        isDefined(result.image) &&
+        result.image &&
+        !result.image.includes('dummyimage')
+      ) {
+        const fileNameImage =
+          result.image.split('/')[result.image.split('/').length - 1];
+        result.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image/${fileNameImage}`;
+      }
     }
 
     const listResult: ListResponse = {
@@ -394,10 +409,15 @@ export class StoreCategoriesService {
     } else if (!result.active) {
       result.status = StoreCategoryStatus.INACTIVE;
     }
-
-    result.image = isDefined(result.image)
-      ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
-      : result.image;
+    if (
+      isDefined(result.image) &&
+      result.image &&
+      !result.image.includes('dummyimage')
+    ) {
+      const fileNameImage =
+        result.image.split('/')[result.image.split('/').length - 1];
+      result.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image/${fileNameImage}`;
+    }
 
     return this.responseService.success(
       true,
@@ -429,9 +449,15 @@ export class StoreCategoriesService {
     }
 
     for (const result of results) {
-      result.image = isDefined(result.image)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image`
-        : result.image;
+      if (
+        isDefined(result.image) &&
+        result.image &&
+        !result.image.includes('dummyimage')
+      ) {
+        const fileNameImage =
+          result.image.split('/')[result.image.split('/').length - 1];
+        result.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image/${fileNameImage}`;
+      }
     }
     return results;
   }
@@ -454,6 +480,7 @@ export class StoreCategoriesService {
     try {
       const storeCategory = await this.storeCategoriesRepository.findOne({
         id: data.id,
+        image: Like(`%${data.fileName}%`),
       });
 
       if (!storeCategory) {
