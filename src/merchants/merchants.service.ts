@@ -42,7 +42,7 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, FindOperator, ILike, Not, Repository } from 'typeorm';
+import { Brackets, FindOperator, ILike, Like, Not, Repository } from 'typeorm';
 import { MerchantUsersService } from './merchants_users.service';
 import { CreateMerchantDTO } from './validation/create_merchant.dto';
 import {
@@ -1049,6 +1049,7 @@ export class MerchantsService {
     try {
       const merchant = await this.merchantRepository.findOne({
         id: data.id,
+        [data.doc]: Like(`%${data.fileName}%`),
       });
 
       if (!merchant) {
@@ -1077,15 +1078,30 @@ export class MerchantsService {
     merchant: MerchantDocument,
   ): Promise<MerchantDocument> {
     if (isDefined(merchant)) {
-      merchant.logo = isDefined(merchant.logo)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/merchants/logo/${merchant.id}/image`
-        : merchant.logo;
-      merchant.profile_store_photo = isDefined(merchant.profile_store_photo)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/merchants/profile_store_photo/${merchant.id}/image`
-        : merchant.profile_store_photo;
-      merchant.npwp_file = isDefined(merchant.npwp_file)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/merchants/npwp_file/${merchant.id}/image`
-        : merchant.npwp_file;
+      if (isDefined(merchant.logo) && merchant.logo) {
+        const fileNameLogo =
+          merchant.logo.split('/')[merchant.logo.split('/').length - 1];
+        merchant.logo = `${process.env.BASEURL_API}/api/v1/merchants/merchants/logo/${merchant.id}/image/${fileNameLogo}`;
+      }
+
+      if (
+        isDefined(merchant.profile_store_photo) &&
+        merchant.profile_store_photo
+      ) {
+        const fileNameProfile =
+          merchant.profile_store_photo.split('/')[
+            merchant.profile_store_photo.split('/').length - 1
+          ];
+        merchant.profile_store_photo = `${process.env.BASEURL_API}/api/v1/merchants/merchants/profile_store_photo/${merchant.id}/image/${fileNameProfile}`;
+      }
+
+      if (isDefined(merchant.npwp_file) && merchant.npwp_file) {
+        const fileNameNpwp =
+          merchant.npwp_file.split('/')[
+            merchant.npwp_file.split('/').length - 1
+          ];
+        merchant.npwp_file = `${process.env.BASEURL_API}/api/v1/merchants/merchants/npwp_file/${merchant.id}/image/${fileNameNpwp}`;
+      }
 
       return merchant;
     }
