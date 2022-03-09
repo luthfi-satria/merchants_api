@@ -26,7 +26,7 @@ import {
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
-import { Brackets, Repository, UpdateResult } from 'typeorm';
+import { Brackets, Like, Repository, UpdateResult } from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreOperationalService } from './stores-operational.service';
 import { UpdateStoreCategoriesValidation } from './validation/update-store-categories.validation';
@@ -1396,6 +1396,7 @@ export class StoresService {
     try {
       const merchant = await this.storeRepository.findOne({
         id: data.id,
+        [data.doc]: Like(`%${data.fileName}%`),
       });
 
       if (!merchant) {
@@ -1422,12 +1423,28 @@ export class StoresService {
 
   async manipulateStoreUrl(store: StoreDocument): Promise<StoreDocument> {
     if (isDefined(store)) {
-      store.photo = isDefined(store.photo)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/stores/photo/${store.id}/image`
-        : store.photo;
-      store.banner = isDefined(store.banner)
-        ? `${process.env.BASEURL_API}/api/v1/merchants/stores/banner/${store.id}/image`
-        : store.banner;
+      if (
+        isDefined(store.photo) &&
+        store.photo &&
+        !store.photo.includes('dummyimage')
+      ) {
+        console.log('store.photo =>');
+        console.log(store.photo);
+
+        const fileNamePhoto =
+          store.photo.split('/')[store.photo.split('/').length - 1];
+        store.photo = `${process.env.BASEURL_API}/api/v1/merchants/stores/photo/${store.id}/image/${fileNamePhoto}`;
+      }
+
+      if (
+        isDefined(store.banner) &&
+        store.banner &&
+        !store.banner.includes('dummyimage')
+      ) {
+        const fileNameBanner =
+          store.banner.split('/')[store.banner.split('/').length - 1];
+        store.banner = `${process.env.BASEURL_API}/api/v1/merchants/stores/banner/${store.id}/image/${fileNameBanner}`;
+      }
       return store;
     }
   }

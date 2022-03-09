@@ -462,27 +462,38 @@ export class InternalService {
   }
 
   async findMerchantUser(user: any): Promise<MerchantUsersDocument> {
-    const result = await this.loginService.getProfile(user);
+    try {
+      const result = await this.loginService.getProfile(user);
 
-    if (result.merchant) {
-      await this.merchantService.manipulateMerchantUrl(result.merchant);
-      await this.groupService.manipulateGroupUrl(result.merchant.group);
-      delete result.merchant.pic_password;
-    }
-    if (result.group) {
-      delete result.group.director_password;
-      delete result.group.pic_operational_password;
-      delete result.group.pic_finance_password;
-      await this.groupService.manipulateGroupUrl(result.group);
-    }
-    if (result.store) {
-      delete result.store.store_categories;
-      await this.storeService.manipulateStoreUrl(result.store);
-      await this.merchantService.manipulateMerchantUrl(result.store.merchant);
-      await this.groupService.manipulateGroupUrl(result.store.merchant.group);
-    }
+      if (result.merchant) {
+        await this.merchantService.manipulateMerchantUrl(result.merchant);
+        await this.groupService.manipulateGroupUrl(result.merchant.group);
+        delete result.merchant.pic_password;
+      }
+      if (result.group) {
+        delete result.group.director_password;
+        delete result.group.pic_operational_password;
+        delete result.group.pic_finance_password;
+        await this.groupService.manipulateGroupUrl(result.group);
+      }
+      if (result.store) {
+        delete result.store.store_categories;
+        await this.storeService.manipulateStoreUrl(result.store);
+        await this.merchantService.manipulateMerchantUrl(result.store.merchant);
 
-    return result;
+        if (result.store.merchant) {
+          await this.groupService.manipulateGroupUrl(
+            result.store.merchant.group,
+          );
+        }
+      }
+
+      return result;
+    } catch (e) {
+      console.error(e);
+
+      throw e;
+    }
   }
 
   async getMerchantUsers(data: GetMerchantUsersDto): Promise<any> {

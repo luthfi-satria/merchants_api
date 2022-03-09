@@ -1059,9 +1059,12 @@ export class QueryService {
             return ix.id == row.sc_id;
           });
           if (idx == -1) {
-            const image = isDefined(row.sc_image)
-              ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${row.sc_id}/image`
-              : row.sc_image;
+            let image = row.sc_image;
+            if (isDefined(row.sc_image)) {
+              const fileNameImage =
+                row.sc_image.split('/')[row.sc_image.split('/').length - 1];
+              image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${row.sc_id}/image/${fileNameImage}`;
+            }
             const manipulatedRow = {
               id: row.sc_id,
               image: image,
