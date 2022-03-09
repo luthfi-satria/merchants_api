@@ -1428,6 +1428,9 @@ export class StoresService {
         store.photo &&
         !store.photo.includes('dummyimage')
       ) {
+        console.log('store.photo =>');
+        console.log(store.photo);
+
         const fileNamePhoto =
           store.photo.split('/')[store.photo.split('/').length - 1];
         store.photo = `${process.env.BASEURL_API}/api/v1/merchants/stores/photo/${store.id}/image/${fileNamePhoto}`;
