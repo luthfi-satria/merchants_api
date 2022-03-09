@@ -297,8 +297,6 @@ export class StoresController {
           // quick parsing and update record
           item.delivery_type = delivery_type;
 
-          await this.storesService.manipulateStoreUrl(item);
-
           const updated = await this.storesService.updateStoreProfile(item);
           if (!updated) {
             Logger.warn(
@@ -306,6 +304,7 @@ export class StoresController {
               'StoreController',
             );
           }
+          await this.storesService.manipulateStoreUrl(updated);
 
           return item;
         })
