@@ -1077,7 +1077,7 @@ export class QueryService {
             return ix.id == row.sc_id;
           });
           if (idx == -1) {
-            let image = null;
+            let image = row.sc_image;
             if (
               isDefined(row.sc_image) &&
               row.sc_image &&
