@@ -675,9 +675,17 @@ export class StoreUsersService {
               (element: Record<string, any>) => {
                 element.name = element.languages[0].name;
                 delete element.languages;
-                element.image = isDefined(element.image)
-                  ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${element.id}/image`
-                  : element.image;
+                if (
+                  isDefined(element.image) &&
+                  element.image &&
+                  !element.image.includes('dummyimage')
+                ) {
+                  const fileName =
+                    element.image.split('/')[
+                      element.image.split('/').length - 1
+                    ];
+                  element.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${element.id}/image/${fileName}`;
+                }
               },
             );
             raw.store_categories = raw.store.store_categories;
