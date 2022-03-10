@@ -34,7 +34,7 @@ export class BanksStoresController {
   ) {
     try {
       const { bank_account_name, bank_account_no, bank_id } = body;
-      const urlPayment = `${process.env.BASEURL_PAYMENTS_SERVICE}/api/v1/payments/internal/disbursement_method/${bank_id}`;
+      const urlPayment = `${process.env.BASEURL_PAYMENTS_SERVICE}/api/v1/internal/payments/disbursement_method/${bank_id}`;
       const bankIsExists = await this.commonService.getHttp(urlPayment);
 
       if (!bankIsExists) {
