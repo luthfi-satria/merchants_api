@@ -430,9 +430,15 @@ export class QueryService {
               (e) => e.lang === language,
             );
 
-            item.image = isDefined(item.image)
-              ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${item.id}/image`
-              : item.image;
+            if (
+              isDefined(item.image) &&
+              item.image &&
+              !item.image.includes('dummyimage')
+            ) {
+              const fileName =
+                item.image.split('/')[item.image.split('/').length - 1];
+              item.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${item.id}/image/${fileName}`;
+            }
 
             const x = new StoreCategoriesDocument({ ...item });
             delete x.languages;
@@ -834,9 +840,15 @@ export class QueryService {
 
               const x = new StoreCategoriesDocument({ ...item });
 
-              x.image = isDefined(x.image)
-                ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${x.id}/image`
-                : x.image;
+              if (
+                isDefined(x.image) &&
+                x.image &&
+                !x.image.includes('dummyimage')
+              ) {
+                const fileName =
+                  x.image.split('/')[x.image.split('/').length - 1];
+                x.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${x.id}/image/${fileName}`;
+              }
 
               delete x.languages;
               return { ...x, name: ctg_language.name };
@@ -875,9 +887,15 @@ export class QueryService {
             //Manipulate Menu Photo Url
             if (row.menus && row.menus.length > 0) {
               for (const menu of row.menus) {
-                menu.photo = isDefined(menu.photo)
-                  ? `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image`
-                  : menu.photo;
+                if (
+                  isDefined(menu.photo) &&
+                  menu.photo &&
+                  !menu.photo.includes('dummyimage')
+                ) {
+                  const fileName =
+                    menu.photo.split('/')[menu.photo.split('/').length - 1];
+                  menu.photo = `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image/${fileName}`;
+                }
               }
             }
             // formattedArr.push({
@@ -1059,9 +1077,17 @@ export class QueryService {
             return ix.id == row.sc_id;
           });
           if (idx == -1) {
-            const image = isDefined(row.sc_image)
-              ? `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${row.sc_id}/image`
-              : row.sc_image;
+            let image = null;
+            if (
+              isDefined(row.sc_image) &&
+              row.sc_image &&
+              !row.sc_image.includes('dummyimage')
+            ) {
+              const fileName =
+                row.sc_image.split('/')[row.sc_image.split('/').length - 1];
+              image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${row.sc_id}/image/${fileName}`;
+            }
+
             const manipulatedRow = {
               id: row.sc_id,
               image: image,
