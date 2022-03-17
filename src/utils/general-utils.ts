@@ -3,7 +3,6 @@ import { FirebaseDynamicLinks } from 'firebase-dynamic-links';
 import moment from 'moment';
 import momenttz from 'moment-timezone';
 import { extname } from 'path';
-import { generateHtml } from './const';
 
 export function CreateRandomNumber(pjg: number): string {
   const random_number = parseInt(randomBytes(4).toString('hex'), 16).toString();
@@ -230,35 +229,19 @@ export const generateMessageUrlVerification = async (
     },
   });
 
-  // const message = `
-  // Hai, ${name || 'User'}!
-  // <br><br>
-  // Untuk verifikasi perubahan Email Anda klik link berikut: <a href="${shortLink}">${shortLink}</a> . <br>
-  // JANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD. <br>
-  // WASPADA PENIPUAN!`;
-
-  const message = generateHtml(
-    [
-      `Untuk verifikasi perubahan Email Anda klik link berikut: <a href="${shortLink}">${shortLink}</a> .`,
-      `JANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD.<br>WASPADA PENIPUAN!`,
-    ],
-    name,
-  );
+  const message = `
+  <h1 class="title">Hai, ${name || 'User'}!</h1>
+  <p class="content"> Untuk verifikasi perubahan Email Anda klik link berikut: <a href="${shortLink}">${shortLink}</a> . </p>
+  <p class="content"> JANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD. <br>
+  WASPADA PENIPUAN! </p>`;
 
   return message;
 };
 
 export const generateMessageChangeActiveEmail = (name: string): string => {
-  // const message = `
-  // Hai, ${name || 'User'}!
-  // <br><br>
-  // Alamat email Anda berhasil diperbaharui, Anda dapat login pada aplikasi eFOOD menggunakan email ini.`;
-  const message = generateHtml(
-    [
-      `Alamat email Anda berhasil diperbaharui, Anda dapat login pada aplikasi eFOOD menggunakan email ini.`,
-    ],
-    name,
-  );
+  const message = `
+  <h1 class="title">Hai, ${name || 'User'}!</h1>
+  <p class="content"> Alamat email Anda berhasil diperbaharui, Anda dapat login pada aplikasi eFOOD menggunakan email ini.</p>`;
   return message;
 };
 
@@ -274,19 +257,11 @@ export const generateMessageResetPassword = async (
     },
   });
 
-  // const message = `
-  // Hai, ${name || 'User'}!
-  // <br><br>
-  // Untuk mengubah Kata Sandi Anda, Klik link berikut: <a href="${shortLink}">${shortLink}</a> . <br>
-  // JANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD. <br>
-  // WASPADA PENIPUAN!`;
-  const message = generateHtml(
-    [
-      `Untuk verifikasi perubahan Email Anda klik link berikut: <a href="${shortLink}">${shortLink}</a> .`,
-      `JANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD.<br>WASPADA PENIPUAN!`,
-    ],
-    name,
-  );
+  const message = `
+  <h1 class="title">Hai, ${name || 'User'}!</h1>
+  <p class="content"> Untuk mengubah Kata Sandi Anda, Klik link berikut: <a href="${shortLink}">${shortLink}</a> . </p>
+  <p class="content"> JANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD. <br>
+  WASPADA PENIPUAN! </p>`;
 
   return message;
 };
