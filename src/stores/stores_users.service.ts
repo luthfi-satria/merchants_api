@@ -904,7 +904,7 @@ export class StoreUsersService {
           value: '',
           property: '',
           constraint: [
-            this.messageService.get('general.list.fail'),
+            this.messageService.get('merchant_user.general.list_failed'),
             error.message,
           ],
         };
