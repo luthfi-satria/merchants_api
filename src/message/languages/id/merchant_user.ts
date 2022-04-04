@@ -33,5 +33,9 @@ export default {
       code: 'FETCH_STORE_USERS_FAILED',
       message: 'Gagal mengambil data user toko.',
     },
+    list_failed: {
+      code: 'LIST_FAILED',
+      message: 'Gagal mengambil data.',
+    },
   },
 };
