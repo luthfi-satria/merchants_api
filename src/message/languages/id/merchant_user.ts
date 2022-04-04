@@ -21,5 +21,17 @@ export default {
       message:
         'Store tidak di miliki oleh merchant atau tidak di miliki oleh user. ',
     },
+    validation_store_failed: {
+      code: 'VALIDATION_STORE_BY_IDS_FAILED',
+      message: 'Validasi toko gagal.',
+    },
+    fetch_special_role_code_failed: {
+      code: 'FETCH_SPECIAL_ROLE_FAILED',
+      message: 'Gagal mengambil data spesial role.',
+    },
+    fetch_store_users_failed: {
+      code: 'FETCH_STORE_USERS_FAILED',
+      message: 'Gagal mengambil data user toko.',
+    },
   },
 };
