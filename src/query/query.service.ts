@@ -759,8 +759,7 @@ export class QueryService {
               );
             }
           }),
-        )
-        .orderBy(OrderFilter);
+        );
 
       if (options.fetch_using_ids) {
         if (options.fetch_using_ids.length) {
@@ -774,22 +773,25 @@ export class QueryService {
         query1.skip((currentPage - 1) * perPage).take(perPage);
       }
 
-      const qlistStore = await query1.getManyAndCount().catch((e) => {
-        Logger.error(e.message, '', 'QueryListStore');
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: '',
-              constraint: [
-                this.messageService.get('merchant.liststore.not_found'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+      const qlistStore = await query1
+        .orderBy(OrderFilter)
+        .getManyAndCount()
+        .catch((e) => {
+          Logger.error(e.message, '', 'QueryListStore');
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: '',
+                property: '',
+                constraint: [
+                  this.messageService.get('merchant.liststore.not_found'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        });
       let storeItems = qlistStore[0];
       let totalItems = qlistStore[1];
       if (favoriteStore) {
