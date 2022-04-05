@@ -109,14 +109,17 @@ export class QueryService {
         Object.assign(OrderQuery, {
           'merchant_store.numorders': order || 'ASC',
         });
+        Object.assign(OrderQuery, {
+          distance_in_km: 'ASC',
+        });
         break;
       default:
+        Object.assign(OrderQuery, {
+          distance_in_km: 'ASC',
+        });
+        break;
     }
-    if (sort !== 'price') {
-      Object.assign(OrderQuery, {
-        distance_in_km: 'ASC',
-      });
-    }
+
     return OrderQuery;
   }
 
@@ -1282,12 +1285,14 @@ export class QueryService {
         (item) => item.priority !== 4,
       );
 
-      stores_with_menus.sort(
-        (a, b) =>
-          a.priority * 100 +
-          a.distance_in_km -
-          (b.priority * 100 + b.distance_in_km),
-      );
+      if (sort !== 'price') {
+        stores_with_menus.sort(
+          (a, b) =>
+            a.priority * 100 +
+            a.distance_in_km -
+            (b.priority * 100 + b.distance_in_km),
+        );
+      }
 
       listStores.data.total_item = stores_with_menus.length;
 
