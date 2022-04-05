@@ -112,9 +112,11 @@ export class QueryService {
         break;
       default:
     }
-    Object.assign(OrderQuery, {
-      distance_in_km: 'ASC',
-    });
+    if (sort !== 'price') {
+      Object.assign(OrderQuery, {
+        distance_in_km: 'ASC',
+      });
+    }
     return OrderQuery;
   }
 
