@@ -1285,7 +1285,9 @@ export class QueryService {
         (item) => item.priority !== 4,
       );
 
-      if (sort !== 'price') {
+      if (sort === 'price') {
+        stores_with_menus.sort((a, b) => a.average_price - b.average_price);
+      } else {
         stores_with_menus.sort(
           (a, b) =>
             a.priority * 100 +
