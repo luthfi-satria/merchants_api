@@ -78,6 +78,9 @@ export class CreateMerchantDTO {
   @IsOptional()
   is_manual_refund_enabled: boolean;
 
+  @IsOptional()
+  is_pos_rounded_payment: boolean;
+
   @IsNotEmpty({ message: 'Pic Name harus diisi' })
   @IsString()
   pic_name: string;

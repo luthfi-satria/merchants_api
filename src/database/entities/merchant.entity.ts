@@ -98,6 +98,9 @@ export class MerchantDocument {
   @Column({ default: false })
   is_manual_refund_enabled: boolean;
 
+  @Column({ default: false })
+  is_pos_rounded_payment: boolean;
+
   @Column({ nullable: true })
   pic_name: string;
 
