@@ -79,6 +79,9 @@ export class UpdateMerchantDTO {
   is_manual_refund_enabled: boolean;
 
   @IsOptional()
+  is_pos_rounded_payment: boolean;
+
+  @IsOptional()
   @IsString()
   pic_name: string;
 
@@ -121,4 +124,7 @@ export class UpdateStoreSettingsDTO {
 
   @IsOptional()
   is_manual_refund_enabled: boolean;
+
+  @IsOptional()
+  is_pos_rounded_payment: boolean;
 }

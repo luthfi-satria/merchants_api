@@ -943,6 +943,8 @@ export class MerchantsService {
         result.is_pos_printer_enabled = data.is_pos_printer_enabled;
       if (typeof data.is_manual_refund_enabled !== 'undefined')
         result.is_manual_refund_enabled = data.is_manual_refund_enabled;
+      if (typeof data.is_pos_rounded_payment !== 'undefined')
+        result.is_pos_rounded_payment = data.is_pos_rounded_payment;
 
       const update = await this.merchantRepository.save(result);
 
