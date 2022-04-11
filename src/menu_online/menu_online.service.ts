@@ -45,7 +45,6 @@ export class MenuOnlineService {
           ? data.discounted_price
           : null;
 
-        await this.menuOnlineRepository.save(menuOnlineData);
         if (menuOnlines) {
           if (menuOnlines.length == 1) {
             const menuOnline = menuOnlines[0];
@@ -66,19 +65,6 @@ export class MenuOnlineService {
             await this.menuOnlineRepository.save(menuOnlineData);
           }
         } else {
-          // const menuOnlineData: Partial<MenuOnlineDocument> = {
-          //   menu_store_id: data.id,
-          //   menu_price_id: data.menu_price.id,
-          //   menu_id: data.menu_price.menu_menu.id,
-          //   name: data.menu_price.menu_menu.name,
-          //   photo: data.menu_price.menu_menu.photo,
-          //   price: data.menu_price.price,
-          //   store_id: data.store_id,
-          // };
-          // menuOnlineData.discounted_price = data.discounted_price
-          //   ? data.discounted_price
-          //   : null;
-
           await this.menuOnlineRepository.save(menuOnlineData);
         }
       } catch (e) {
