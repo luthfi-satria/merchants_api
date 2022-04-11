@@ -76,7 +76,6 @@ export class MenuOnlineService {
   }
 
   async natsUpdateStoreAvailabilityy(data: any) {
-    console.log('data:\n', data);
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       try {
         //Check By Menu
@@ -87,10 +86,7 @@ export class MenuOnlineService {
 
         if (!menuOnlines) {
           await this.natsCreateStoreAvailability(data);
-        } else if (
-          menuOnlines.length == 1 &&
-          menuOnlines[0].menu_price_id == data.menu_price.id
-        ) {
+        } else if (menuOnlines.length == 1) {
           menuOnlines[0].store_id = data.store_id;
           menuOnlines[0].menu_price_id = data.menu_price.id;
           menuOnlines[0].menu_id = data.menu_price.menu_menu.id;
