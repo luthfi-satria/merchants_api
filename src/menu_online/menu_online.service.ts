@@ -23,6 +23,7 @@ export class MenuOnlineService {
   ) {}
 
   async natsCreateStoreAvailability(data: any) {
+    console.log('data:\n', data);
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       try {
         const menuOnlines = await this.menuOnlineRepository.find({
@@ -76,6 +77,7 @@ export class MenuOnlineService {
   }
 
   async natsUpdateStoreAvailabilityy(data: any) {
+    console.log('data:\n', data);
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       try {
         //Check By Menu
