@@ -98,6 +98,9 @@ export class MerchantDocument {
   @Column({ default: false })
   is_manual_refund_enabled: boolean;
 
+  @Column({ default: false })
+  is_pos_rounded_payment: boolean;
+
   @Column({ nullable: true })
   pic_name: string;
 
@@ -170,6 +173,9 @@ export class MerchantDocument {
   @Column({ nullable: true })
   recommended_discount_value: number;
 
+  @Column({ nullable: true, type: 'uuid' })
+  recommended_discount_id: string;
+
   @Column({
     type: 'enum',
     enum: DiscountType,
@@ -180,6 +186,9 @@ export class MerchantDocument {
   @Column({ nullable: true })
   recommended_shopping_discount_value: number;
 
+  @Column({ nullable: true, type: 'uuid' })
+  recommended_shopping_discount_id: string;
+
   @Column({
     type: 'enum',
     enum: DiscountType,
@@ -189,6 +198,9 @@ export class MerchantDocument {
 
   @Column({ nullable: true })
   recommended_delivery_discount_value: number;
+
+  @Column({ nullable: true, type: 'uuid' })
+  recommended_delivery_discount_id: string;
 
   constructor(init?: Partial<MerchantDocument>) {
     Object.assign(this, init);
