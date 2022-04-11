@@ -49,6 +49,9 @@ export class MerchantUsersDocument {
   @Column('uuid', { nullable: true })
   store_id: string;
 
+  @Column({ type: 'boolean', default: false })
+  is_multilevel_login: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date | string;
 
