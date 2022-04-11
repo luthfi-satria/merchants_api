@@ -1321,6 +1321,29 @@ export class StoresService {
     }
   }
 
+  async findStoreLevelWithoutStatus(store_id: string): Promise<StoreDocument> {
+    const store = this.storeRepository
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
+      .leftJoinAndSelect('ms.merchant', 'merchant')
+      .leftJoinAndSelect('merchant.group', 'group')
+      .andWhere('ms.id = :mid', {
+        mid: store_id,
+      });
+
+    try {
+      return await store.getOne();
+    } catch (error) {
+      console.error(
+        '===========================Start Database error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Database error==================================',
+      );
+    }
+  }
+
   async findStoresAutomaticRefund(): Promise<StoreDocument[]> {
     const store = this.storeRepository
       .createQueryBuilder('ms')
