@@ -23,7 +23,7 @@ export class MenuOnlineService {
   ) {}
 
   async natsCreateStoreAvailability(data: any) {
-    console.log('data:\n', data);
+    console.log('natsCreateStoreAvailability:\n', data);
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       try {
         const menuOnlines = await this.menuOnlineRepository.find({
@@ -34,7 +34,6 @@ export class MenuOnlineService {
           },
         });
         const menuOnlineData: Partial<MenuOnlineDocument> = {
-          menu_store_id: data.id,
           menu_price_id: data.menu_price.id,
           menu_id: data.menu_price.menu_menu.id,
           name: data.menu_price.menu_menu.name,
@@ -45,6 +44,7 @@ export class MenuOnlineService {
         menuOnlineData.discounted_price = data.discounted_price
           ? data.discounted_price
           : null;
+        if (data.id) menuOnlineData.menu_store_id = data.id;
 
         if (menuOnlines) {
           if (menuOnlines.length == 1) {
@@ -77,7 +77,7 @@ export class MenuOnlineService {
   }
 
   async natsUpdateStoreAvailabilityy(data: any) {
-    console.log('data:\n', data);
+    console.log('natsUpdateStoreAvailabilityy:\n', data);
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       try {
         //Check By Menu
