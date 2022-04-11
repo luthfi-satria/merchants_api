@@ -313,3 +313,8 @@ export const generateSmsResetPassword = async (
   }!\n\nUntuk mengubah Kata Sandi Anda, Klik link berikut: ${shortLink} .\nJANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD.\nWASPADA PENIPUAN!`;
   return message;
 };
+
+export const cleanSearchString = (search: string): string => {
+  if (!search) return search;
+  return search.toLowerCase().replace(/\s\s+/g, ' ');
+};
