@@ -35,6 +35,10 @@ export default {
       code: 'DATA_NOT_FOUND',
       message: 'Data tidak ditemukan.',
     },
+    differentGroupId: {
+      code: 'DIFFERENT_GROUP_ID',
+      message: 'Group ID tidak sesuai User.',
+    },
     emailExist: {
       code: 'EMAIL_ALREADY_EXISTS',
       message: 'Email sudah digunakan.',
@@ -94,10 +98,6 @@ export default {
     unverifiedEmail: {
       code: 'EMAIL_NOT_VERIFIED',
       message: 'Email belum terverifikasi.',
-    },
-    unverifiedPhone: {
-      code: 'PHONE_NOT_VERIFIED',
-      message: 'Nomer telepon belum terverifikasi.',
     },
   },
   status: {

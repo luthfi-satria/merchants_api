@@ -139,8 +139,8 @@ export class MerchantDocument {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   rejected_at: Date;
 
-  @ManyToOne(() => GroupDocument, (merchant) => merchant.merchants)
-  @JoinColumn({ name: 'group_id', referencedColumnName: 'id' })
+  @ManyToOne(() => GroupDocument, (group) => group.merchants)
+  @JoinColumn({ name: 'group_id' })
   group: GroupDocument;
 
   @OneToMany(() => StoreDocument, (store) => store.merchant)

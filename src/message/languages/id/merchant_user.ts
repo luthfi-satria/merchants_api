@@ -21,5 +21,13 @@ export default {
       message:
         'Store tidak di miliki oleh merchant atau tidak di miliki oleh user. ',
     },
+    unauthorizedMultilevelLogin: {
+      code: 'UNAUTHORIZED',
+      message: 'User tidak memiliki hak akses Multilevel.',
+    },
+    idNotFound: {
+      code: 'INVALID_ID',
+      message: 'Merchant User ID tidak ditemukan.',
+    },
   },
 };

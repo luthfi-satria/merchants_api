@@ -34,6 +34,7 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { StoresService } from 'src/stores/stores.service';
+import { isNotEmpty } from 'class-validator';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -402,25 +403,30 @@ export class LoginService {
     try {
       const query = this.merchantUsersRepository
         .createQueryBuilder('mu')
-        .leftJoinAndSelect('mu.store', 'merchant_store');
-      if (user.level == 'store') {
-        query
-          .leftJoinAndSelect('merchant_store.merchant', 'merchant')
-          .leftJoinAndSelect('merchant.group', 'group');
-      }
-      query
+        .leftJoinAndSelect('mu.store', 'merchant_store')
         .leftJoinAndSelect(
           'merchant_store.service_addons',
           'merchant_store_service_addons',
         )
-        .leftJoinAndSelect('mu.merchant', 'merchant_merchant');
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+        .leftJoinAndSelect('mu.group', 'merchant_group');
+      if (user.level == 'store') {
+        query
+          .leftJoinAndSelect('merchant_store.merchant', 'merchant')
+          .leftJoinAndSelect('merchant.group', 'group')
+          .where('mu.store_id = :sid', { sid: user.store_id });
+      }
       if (user.level == 'merchant') {
-        query.leftJoinAndSelect('merchant_merchant.group', 'group');
+        query
+          .leftJoinAndSelect('merchant_merchant.group', 'group')
+          .where('mu.merchant_id = :mid', { mid: user.merchant_id });
+      }
+      if (user.level == 'group') {
+        query.where('mu.group_id = :gid', { gid: user.group_id });
       }
       query
-        .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
-        .leftJoinAndSelect('mu.group', 'merchant_group')
-        .where('mu.id = :id', { id: user.id })
+        // .where('mu.id = :id', { id: levelId })
         .andWhere('mu.role_id is not null')
         .andWhere("mu.status = 'ACTIVE'");
 
@@ -489,6 +495,7 @@ export class LoginService {
       request.password,
       existMerchantUser.password,
     );
+
     if (!cekPassword) {
       throw new UnauthorizedException(
         this.responseService.error(
