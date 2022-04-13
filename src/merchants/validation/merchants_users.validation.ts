@@ -70,6 +70,10 @@ export class UpdateMerchantUsersValidation {
   merchant_id: string;
 
   @IsOptional()
+  @IsBoolean()
+  is_multilevel_login: boolean;
+
+  @IsOptional()
   nip: string;
 
   @IsOptional()

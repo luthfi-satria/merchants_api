@@ -63,6 +63,10 @@ export class UpdateMerchantGroupUsersValidation {
   group_id: string;
 
   @IsOptional()
+  @IsBoolean()
+  is_multilevel_login: boolean;
+
+  @IsOptional()
   name: string;
 
   @IsOptional()
