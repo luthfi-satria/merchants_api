@@ -215,11 +215,12 @@ export class MerchantsService {
       );
     }
 
-    await this.merchantUserService.checkExistEmailPhone(
-      data.pic_email,
-      data.pic_phone,
-      '',
-    );
+    if (!data.pic_is_multilevel_login)
+      await this.merchantUserService.checkExistEmailPhone(
+        data.pic_email,
+        data.pic_phone,
+        '',
+      );
 
     const salt: string = await this.hashService.randomSalt();
     data.pic_password = await this.hashService.hashPassword(
