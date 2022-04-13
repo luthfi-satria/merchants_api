@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsBooleanString,
   IsEmail,
   IsIn,
@@ -102,6 +104,11 @@ export class CreateMerchantDTO {
   @IsNotEmpty({ message: 'Pic Password harus diisi' })
   @IsString()
   pic_password: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  @Type(() => Boolean)
+  pic_is_multilevel_login: boolean;
 
   @IsNotEmpty()
   @IsIn(Object.values(MerchantStatus))
