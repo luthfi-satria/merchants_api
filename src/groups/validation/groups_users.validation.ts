@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -18,6 +19,10 @@ export class MerchantGroupUsersValidation {
   @IsNotEmpty()
   @IsUUID()
   group_id: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  is_multilevel_login: boolean;
 
   @IsNotEmpty()
   name: string;
@@ -56,6 +61,10 @@ export class UpdateMerchantGroupUsersValidation {
   @ValidateIf((o) => o.group_id != '')
   @IsUUID()
   group_id: string;
+
+  @IsOptional()
+  @IsBoolean()
+  is_multilevel_login: boolean;
 
   @IsOptional()
   name: string;

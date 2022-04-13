@@ -22,7 +22,11 @@ import {
   RSuccessMessage,
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime, getDistanceInKilometers } from 'src/utils/general-utils';
+import {
+  cleanSearchString,
+  dbOutputTime,
+  getDistanceInKilometers,
+} from 'src/utils/general-utils';
 import { Brackets, OrderByCondition, Repository } from 'typeorm';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
@@ -1306,7 +1310,7 @@ export class QueryService {
       if (user) {
         const historyKeyword: Partial<SearchHistoryKeywordDocument> = {
           customer_id: user.id,
-          keyword: data.search,
+          keyword: cleanSearchString(data.search),
           lang: lang,
         };
         await this.searchHistoryKeywordDocument.save(historyKeyword);
