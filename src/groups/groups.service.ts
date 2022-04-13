@@ -171,6 +171,7 @@ export class GroupsService {
           code: SpecialRoleCodes.corporate_director,
         }).role.id,
         status: MerchantUsersStatus.Active,
+        is_multilevel_login: createGroupDTO.director_is_multilevel_login
       };
       // role jika pic_operational & pic_finance sama dengan directur
       if (array_phone.includes(createGroupDTO.pic_operational_phone)) {
@@ -195,6 +196,7 @@ export class GroupsService {
             code: SpecialRoleCodes.corporate_operational,
           }).role.id,
           status: MerchantUsersStatus.Active,
+          is_multilevel_login: createGroupDTO.pic_operational_is_multilevel_login
         };
         // role jika pic_operational & pic_finance sama tetapi berbeda dengan directur
         if (
@@ -223,6 +225,7 @@ export class GroupsService {
             code: SpecialRoleCodes.corporate_finance,
           }).role.id,
           status: MerchantUsersStatus.Active,
+          is_multilevel_login: createGroupDTO.pic_finance_is_multilevel_login
         };
         const pic_finance = await this.groupUserService.createUserPassword(
           create_pic_finance,
