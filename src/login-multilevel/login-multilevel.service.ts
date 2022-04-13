@@ -65,13 +65,24 @@ export class LoginMultilevelService {
       },
     );
 
-    let groupId = null;
+    let userGroupId = null;
+    let userLevel = null;
+    let groupID = '';
+    let merchantID = '';
+    let storeID = '';
+
     if (isNotEmpty(merchantUserById.group)) {
-      groupId = merchantUserById.group.id;
+      userGroupId = merchantUserById.group.id;
+      userLevel = 'group';
+      groupID = merchantUserById.group.id;
     } else if (isNotEmpty(merchantUserById.merchant)) {
-      groupId = merchantUserById.merchant.group.id;
+      userGroupId = merchantUserById.merchant.group.id;
+      userLevel = 'merchant';
+      merchantID = merchantUserById.merchant.id;
     } else if (isNotEmpty(merchantUserById.store)) {
-      groupId = merchantUserById.store.merchant.group.id;
+      userGroupId = merchantUserById.store.merchant.group.id;
+      userLevel = 'store';
+      storeID = merchantUserById.store.id;
     }
 
     let id = null;
@@ -102,7 +113,7 @@ export class LoginMultilevelService {
       );
     }
     if (data.level == 'merchant') {
-      if (existMerchantUser.merchant.group.id != groupId) {
+      if (existMerchantUser.merchant.group.id != userGroupId) {
         const errors: RMessage = {
           value: existMerchantUser.merchant.group.id,
           property: `${data.level}_id`,
@@ -120,7 +131,7 @@ export class LoginMultilevelService {
       }
     }
     if (data.level == 'store') {
-      if (existMerchantUser.store.merchant.group.id != groupId) {
+      if (existMerchantUser.store.merchant.group.id != userGroupId) {
         const errors: RMessage = {
           value: existMerchantUser.store.merchant.group_id,
           property: `${data.level}_id`,
@@ -139,29 +150,6 @@ export class LoginMultilevelService {
     }
 
     let merchantLevel = '';
-    const groupID = '';
-    let merchantID = '';
-    let storeID = '';
-    const lang = 'id';
-
-    if (existMerchantUser.email_verified_at == null) {
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          {
-            value: id,
-            property: `${data.level}_id`,
-            constraint: [
-              this.messageService.getLang(
-                `${lang}.merchant.general.unverifiedEmail`,
-              ),
-            ],
-          },
-          'Unauthorized',
-        ),
-      );
-    }
-
     if (existMerchantUser.store_id != null) {
       if (existMerchantUser.store.status != 'ACTIVE') {
         throw new UnauthorizedException(
@@ -204,6 +192,26 @@ export class LoginMultilevelService {
       merchantID = existMerchantUser.merchant_id;
     }
 
+    let role_id = null;
+    if (merchantLevel == userLevel) {
+      role_id = merchantUserById.role_id;
+    } else {
+      let code = '';
+      if (merchantLevel == 'merchant') {
+        code = 'brand_manager';
+      } else {
+        code = 'pic_store';
+      }
+      const urlRole = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/internal/special-roles/get-by-code/${code}`;
+      try {
+        const merchantRole = await this.commonService.postHttp(urlRole);
+        console.log('merchantRole:\n', merchantRole);
+        if (merchantRole) {
+          role_id = merchantRole.data.role.id;
+        }
+      } catch {}
+    }
+
     const http_req: Record<string, any> = {
       phone: existMerchantUser.phone,
       id_profile: merchantID,
@@ -214,6 +222,7 @@ export class LoginMultilevelService {
       merchant_id: merchantID,
       store_id: storeID,
       roles: [`${user.user_type}`],
+      role_id: role_id,
     };
 
     const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
@@ -293,6 +302,7 @@ export class LoginMultilevelService {
       merchant_id: merchantId,
       store_id: storeId,
       roles: [`merchant`],
+      role_id: existMerchantUser.role_id,
     };
 
     const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
