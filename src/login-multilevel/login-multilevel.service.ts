@@ -83,9 +83,14 @@ export class LoginMultilevelService {
       data.level = 'merchant';
       id = data.merchant_id;
     }
+    console.log('data:\n', data);
+    console.log('groupId:\n', groupId);
+    console.log('id:\n', id);
 
     const existMerchantUser =
       await this.merchantUserService.getMerchantUserByLevelId(data);
+    console.log('existMerchantUser:\n', existMerchantUser);
+
     if (!existMerchantUser) {
       const errors: RMessage = {
         value: id,
@@ -100,7 +105,8 @@ export class LoginMultilevelService {
         ),
       );
     }
-
+    console.log('data.level:\n', data.level);
+    console.log('db groupId:\n', existMerchantUser.merchant.group.id);
     if (data.level == 'merchant') {
       if (existMerchantUser.merchant.group.id != groupId) {
         const errors: RMessage = {
@@ -215,12 +221,14 @@ export class LoginMultilevelService {
       store_id: storeID,
       roles: [`${user.user_type}`],
     };
+    console.log('http_req:\n', http_req);
 
     const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
     const resp: Record<string, any> = await this.commonService.postHttp(
       url,
       http_req,
     );
+    console.log('resp:\n', resp);
     if (resp.statusCode) {
       throw resp;
     } else {
