@@ -811,39 +811,112 @@ export class StoreUsersService {
     query: ListMerchantStoreUsersBySpecialRoleCodeValidation,
     user: User,
   ): Promise<MerchantUsersDocument[]> {
-    await this.commonStoreService.getAndValidateStoreByStoreIds(
-      [storeId],
-      user,
-    );
+    try {
+      await this.commonStoreService
+        .getAndValidateStoreByStoreIds([storeId], user)
+        .catch(() => {
+          const errors: RMessage = {
+            value: storeId,
+            property: 'store_id',
+            constraint: [
+              this.messageService.get(
+                'merchant_user.general.validation_store_failed',
+              ),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        });
 
-    const specialRole = await this.roleService.getSpecialRoleByCode(
-      specialRoleCode,
-    );
+      const specialRole = await this.roleService
+        .getSpecialRoleByCode(specialRoleCode)
+        .catch(() => {
+          const errors: RMessage = {
+            value: specialRoleCode,
+            property: 'special_role_code',
+            constraint: [
+              this.messageService.get(
+                'merchant_user.general.fetch_special_role_code_failed',
+              ),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        });
 
-    const role = specialRole.role;
-    role.special_role = specialRole;
-    delete role.special_role.role;
+      const role = specialRole.role;
+      role.special_role = specialRole;
+      delete role.special_role.role;
 
-    const param: ListMerchantStoreUsersValidation = {
-      ...query,
-      role_id: role.id,
-      id: null,
-      name: null,
-      nip: null,
-      email: null,
-      phone: null,
-      password: null,
-      store_id: storeId,
-      merchant_id: null,
-      group_id: null,
-    };
+      const param: ListMerchantStoreUsersValidation = {
+        ...query,
+        role_id: role.id,
+        id: null,
+        name: null,
+        nip: null,
+        email: null,
+        phone: null,
+        password: null,
+        store_id: storeId,
+        merchant_id: null,
+        group_id: null,
+      };
 
-    const listUser = await this.listStoreUsers(param, user);
-    listUser.data.items.map((user) => {
-      user.role = role;
-      return user;
-    });
-    return listUser.data;
+      const listUser = await this.listStoreUsers(param, user).catch(() => {
+        const errors: RMessage = {
+          value: JSON.stringify(param, null, 4),
+          property: 'query',
+          constraint: [
+            this.messageService.get(
+              'merchant_user.general.fetch_store_users_failed',
+            ),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+      listUser.data.items.map((user) => {
+        user.role = role;
+        return user;
+      });
+      return listUser.data;
+    } catch (error) {
+      console.error(error);
+      if (error.message == 'Bad Request Exception') {
+        throw error;
+      } else {
+        const errors: RMessage = {
+          value: '',
+          property: '',
+          constraint: [
+            this.messageService.get('merchant_user.general.list_failed'),
+            error.message,
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+    }
   }
 
   async getAndValidateStoreUserById(

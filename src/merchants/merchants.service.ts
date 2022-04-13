@@ -943,6 +943,8 @@ export class MerchantsService {
         result.is_pos_printer_enabled = data.is_pos_printer_enabled;
       if (typeof data.is_manual_refund_enabled !== 'undefined')
         result.is_manual_refund_enabled = data.is_manual_refund_enabled;
+      if (typeof data.is_pos_rounded_payment !== 'undefined')
+        result.is_pos_rounded_payment = data.is_pos_rounded_payment;
 
       const update = await this.merchantRepository.save(result);
 
@@ -993,10 +995,13 @@ export class MerchantsService {
             ];
           merchant.recommended_discount_value =
             recommendedPromo.recommended_global_promo.discount_value;
+          merchant.recommended_discount_id =
+            recommendedPromo.recommended_global_promo.id;
         } else {
           merchant.recommended_promo_type = null;
           merchant.recommended_discount_type = null;
           merchant.recommended_discount_value = null;
+          merchant.recommended_discount_id = null;
         }
 
         if (isDefined(recommendedPromo.recommended_shopping_discount_promo)) {
@@ -1006,9 +1011,12 @@ export class MerchantsService {
             ];
           merchant.recommended_shopping_discount_value =
             recommendedPromo.recommended_shopping_discount_promo.discount_value;
+          merchant.recommended_shopping_discount_id =
+            recommendedPromo.recommended_shopping_discount_promo.id;
         } else {
           merchant.recommended_shopping_discount_type = null;
           merchant.recommended_shopping_discount_value = null;
+          merchant.recommended_shopping_discount_id = null;
         }
 
         if (isDefined(recommendedPromo.recommended_delivery_discout_promo)) {
@@ -1018,9 +1026,12 @@ export class MerchantsService {
             ];
           merchant.recommended_delivery_discount_value =
             recommendedPromo.recommended_delivery_discout_promo.discount_value;
+          merchant.recommended_delivery_discount_id =
+            recommendedPromo.recommended_delivery_discout_promo.id;
         } else {
           merchant.recommended_delivery_discount_type = null;
           merchant.recommended_delivery_discount_value = null;
+          merchant.recommended_delivery_discount_id = null;
         }
 
         this.merchantRepository.save(merchant);

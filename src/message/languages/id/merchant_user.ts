@@ -29,5 +29,21 @@ export default {
       code: 'INVALID_ID',
       message: 'Merchant User ID tidak ditemukan.',
     },
+    validation_store_failed: {
+      code: 'VALIDATION_STORE_BY_IDS_FAILED',
+      message: 'Validasi toko gagal.',
+    },
+    fetch_special_role_code_failed: {
+      code: 'FETCH_SPECIAL_ROLE_FAILED',
+      message: 'Gagal mengambil data spesial role.',
+    },
+    fetch_store_users_failed: {
+      code: 'FETCH_STORE_USERS_FAILED',
+      message: 'Gagal mengambil data user toko.',
+    },
+    list_failed: {
+      code: 'LIST_FAILED',
+      message: 'Gagal mengambil data.',
+    },
   },
 };

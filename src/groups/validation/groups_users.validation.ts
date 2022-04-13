@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -18,6 +19,10 @@ export class MerchantGroupUsersValidation {
   @IsNotEmpty()
   @IsUUID()
   group_id: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  is_multilevel_login: boolean;
 
   @IsNotEmpty()
   name: string;
