@@ -106,8 +106,8 @@ export class LoginMultilevelService {
       );
     }
     console.log('data.level:\n', data.level);
-    console.log('db groupId:\n', existMerchantUser.merchant.group.id);
     if (data.level == 'merchant') {
+      console.log('db groupId:\n', existMerchantUser.merchant.group.id);
       if (existMerchantUser.merchant.group.id != groupId) {
         const errors: RMessage = {
           value: existMerchantUser.merchant.group.id,
@@ -126,6 +126,8 @@ export class LoginMultilevelService {
       }
     }
     if (data.level == 'store') {
+      console.log('db groupId:\n', existMerchantUser.store.merchant.group.id);
+
       if (existMerchantUser.store.merchant.group.id != groupId) {
         const errors: RMessage = {
           value: existMerchantUser.store.merchant.group_id,
@@ -209,6 +211,13 @@ export class LoginMultilevelService {
       merchantLevel = 'merchant';
       merchantID = existMerchantUser.merchant_id;
     }
+    console.log('phone:\n', existMerchantUser.phone);
+    console.log('merchantID:\n', merchantID);
+    console.log('groupID:\n', groupID);
+    console.log('merchantLevel:\n', merchantLevel);
+    console.log('user_type:\n', user.user_type);
+    console.log('merchantLevel:\n', merchantLevel);
+    console.log('storeID:\n', storeID);
 
     const http_req: Record<string, any> = {
       phone: existMerchantUser.phone,
