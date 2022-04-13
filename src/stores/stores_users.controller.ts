@@ -279,19 +279,24 @@ export class StoreUsersController {
     @Param('store_id') storeId: string,
     @Query() query: ListMerchantStoreUsersBySpecialRoleCodeValidation,
   ): Promise<any> {
-    const listUsersCashiers =
-      await this.storeUsersService.listStoreUsersBySpecialRoleCode(
-        storeId,
-        SpecialRoleCodes.store_cashier,
-        query,
-        user,
-      );
+    try {
+      const listUsersCashiers =
+        await this.storeUsersService.listStoreUsersBySpecialRoleCode(
+          storeId,
+          SpecialRoleCodes.store_cashier,
+          query,
+          user,
+        );
 
-    return this.responseService.success(
-      true,
-      this.messageService.get('merchant.liststore.success'),
-      listUsersCashiers,
-    );
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.liststore.success'),
+        listUsersCashiers,
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 
   @Get('users/:store_id/managers')

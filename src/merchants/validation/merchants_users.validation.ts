@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -29,6 +30,10 @@ export class CreateMerchantUsersValidation {
 
   @IsNotEmpty()
   merchant_id: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  is_multilevel_login: boolean;
 
   @IsOptional()
   nip: string;
