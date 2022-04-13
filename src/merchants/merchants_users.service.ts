@@ -17,11 +17,9 @@ import { CommonStoresService } from 'src/common/own/stores.service';
 import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
 import { RoleService } from 'src/common/services/admins/role.service';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
-// import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { GroupsService } from 'src/groups/groups.service';
 import { HashService } from 'src/hash/hash.service';
-import merchant_user from 'src/message/languages/id/merchant_user';
 import { MessageService } from 'src/message/message.service';
 import {
   ListResponse,

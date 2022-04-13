@@ -34,7 +34,6 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { StoresService } from 'src/stores/stores.service';
-import { isNotEmpty } from 'class-validator';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',

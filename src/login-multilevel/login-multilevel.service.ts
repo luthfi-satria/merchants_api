@@ -1,7 +1,6 @@
 import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { isNotEmpty } from 'class-validator';
 import { CommonService } from 'src/common/common.service';
-import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 import { MessageService } from 'src/message/message.service';
@@ -87,7 +86,6 @@ export class LoginMultilevelService {
 
     const existMerchantUser =
       await this.merchantUserService.getMerchantUserByLevelId(data);
-    console.log('existMerchantUser', existMerchantUser);
     if (!existMerchantUser) {
       const errors: RMessage = {
         value: id,
@@ -104,9 +102,6 @@ export class LoginMultilevelService {
     }
 
     if (data.level == 'merchant') {
-      console.log('db merchant id:\n', existMerchantUser.merchant.group.id);
-      console.log('user.group id:\n', groupId);
-
       if (existMerchantUser.merchant.group.id != groupId) {
         const errors: RMessage = {
           value: existMerchantUser.merchant.group.id,
@@ -125,9 +120,6 @@ export class LoginMultilevelService {
       }
     }
     if (data.level == 'store') {
-      console.log('db group id:\n', existMerchantUser.store.merchant.group.id);
-      console.log('user.group id:\n', user.group_id);
-
       if (existMerchantUser.store.merchant.group.id != groupId) {
         const errors: RMessage = {
           value: existMerchantUser.store.merchant.group_id,
@@ -239,7 +231,6 @@ export class LoginMultilevelService {
   async originalLevel(user: any): Promise<any> {
     const existMerchantUser =
       await this.merchantUserService.getMerchantUserById(user);
-    console.log('existMerchantUser', existMerchantUser);
     if (!existMerchantUser) {
       const errors: RMessage = {
         value: user.id,
