@@ -1,7 +1,10 @@
+import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsBooleanString,
   IsEmail,
   IsIn,
+  IsNotEmpty,
   IsNumberString,
   IsOptional,
   IsString,
@@ -80,6 +83,11 @@ export class UpdateMerchantDTO {
 
   @IsOptional()
   is_pos_rounded_payment: boolean;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  @Type(() => Boolean)
+  pic_is_multilevel_login: boolean;
 
   @IsOptional()
   @IsString()

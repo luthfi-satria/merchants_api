@@ -120,7 +120,7 @@ export class MerchantsService {
     const cekphone: MerchantDocument = await this.merchantRepository.findOne({
       where: { pic_phone: data.pic_phone },
     });
-    if (cekphone && !cekphone.pic_is_multilevel_login) {
+    if (cekphone && !data.pic_is_multilevel_login) {
       const errors: RMessage = {
         value: data.pic_phone,
         property: 'pic_phone',
@@ -215,11 +215,12 @@ export class MerchantsService {
       );
     }
 
-    await this.merchantUserService.checkExistEmailPhone(
-      data.pic_email,
-      data.pic_phone,
-      '',
-    );
+    if (!data.pic_is_multilevel_login)
+      await this.merchantUserService.checkExistEmailPhone(
+        data.pic_email,
+        data.pic_phone,
+        '',
+      );
 
     const salt: string = await this.hashService.randomSalt();
     data.pic_password = await this.hashService.hashPassword(
@@ -241,6 +242,7 @@ export class MerchantsService {
       pic_email: data.pic_email,
       pic_password: data.pic_password,
       status: data.status,
+      pic_is_multilevel_login: data.pic_is_multilevel_login,
     };
 
     merchantDTO.logo = data.logo ? data.logo : '';
@@ -346,7 +348,11 @@ export class MerchantsService {
       const cekphone: MerchantDocument = await this.findMerchantMerchantByPhone(
         data.pic_phone,
       );
-      if (cekphone && cekphone.pic_phone != existMerchant.pic_phone) {
+      if (
+        cekphone &&
+        cekphone.pic_phone != existMerchant.pic_phone &&
+        !data.pic_is_multilevel_login
+      ) {
         const errors: RMessage = {
           value: data.pic_phone,
           property: 'pic_phone',
@@ -413,12 +419,16 @@ export class MerchantsService {
     if (data.pb1_tariff) {
       existMerchant.pb1_tariff = data.pb1_tariff;
     }
+    if (typeof data.pic_is_multilevel_login != 'undefined') {
+      existMerchant.pic_is_multilevel_login = data.pic_is_multilevel_login;
+    }
 
-    await this.merchantUserService.checkExistEmailPhone(
-      data.pic_email,
-      data.pic_phone,
-      existMerchant.users[0].id,
-    );
+    if (!data.pic_is_multilevel_login)
+      await this.merchantUserService.checkExistEmailPhone(
+        data.pic_email,
+        data.pic_phone,
+        existMerchant.users[0].id,
+      );
 
     if (data.pic_password) {
       const salt: string = await this.hashService.randomSalt();
