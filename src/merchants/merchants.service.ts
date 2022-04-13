@@ -120,7 +120,7 @@ export class MerchantsService {
     const cekphone: MerchantDocument = await this.merchantRepository.findOne({
       where: { pic_phone: data.pic_phone },
     });
-    if (cekphone) {
+    if (cekphone && !cekphone.pic_is_multilevel_login) {
       const errors: RMessage = {
         value: data.pic_phone,
         property: 'pic_phone',
@@ -294,13 +294,15 @@ export class MerchantsService {
           break;
       }
 
-      const result =
-        await this.merchantUserService.createMerchantUsersFromMerchant(
-          createMerchantUser,
-        );
-      deleteCredParam(result);
-      create.user = result;
-      deleteCredParam(create);
+      if (!cekphone) {
+        const result =
+          await this.merchantUserService.createMerchantUsersFromMerchant(
+            createMerchantUser,
+          );
+        deleteCredParam(result);
+        create.user = result;
+        deleteCredParam(create);
+      }
 
       const pclogdata = {
         id: create.id,
