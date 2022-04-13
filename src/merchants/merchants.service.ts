@@ -423,11 +423,12 @@ export class MerchantsService {
       existMerchant.pic_is_multilevel_login = data.pic_is_multilevel_login;
     }
 
-    await this.merchantUserService.checkExistEmailPhone(
-      data.pic_email,
-      data.pic_phone,
-      existMerchant.users[0].id,
-    );
+    if (!data.pic_is_multilevel_login)
+      await this.merchantUserService.checkExistEmailPhone(
+        data.pic_email,
+        data.pic_phone,
+        existMerchant.users[0].id,
+      );
 
     if (data.pic_password) {
       const salt: string = await this.hashService.randomSalt();
