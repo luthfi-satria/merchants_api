@@ -101,6 +101,9 @@ export class MerchantDocument {
   @Column({ default: false })
   is_pos_rounded_payment: boolean;
 
+  @Column({ default: false })
+  pic_is_multilevel_login: boolean;
+
   @Column({ nullable: true })
   pic_name: string;
 
