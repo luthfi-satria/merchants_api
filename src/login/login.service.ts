@@ -34,6 +34,7 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { StoresService } from 'src/stores/stores.service';
+import { MerchantsService } from 'src/merchants/merchants.service';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -58,6 +59,7 @@ export class LoginService {
     private readonly hashService: HashService,
     private readonly commonService: CommonService,
     private readonly storesService: StoresService,
+    private readonly merchantService: MerchantsService,
   ) {}
 
   async postHttp(
@@ -430,6 +432,18 @@ export class LoginService {
       const merchant_user = await query.getOne();
       removeAllFieldPassword(merchant_user);
       formatingAllOutputTime(merchant_user);
+
+      //Checking Multilevel
+      if (user.level == 'store' && !merchant_user.store) {
+        merchant_user.store =
+          await this.storesService.findStoreLevelWithoutStatus(user.store_id);
+      }
+      if (user.level == 'merchant' && !merchant_user.merchant) {
+        merchant_user.merchant =
+          await this.merchantService.getMerchantRelationGroupById(
+            user.merchant_id,
+          );
+      }
 
       return merchant_user;
     } catch (err) {

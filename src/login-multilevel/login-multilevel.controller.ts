@@ -17,7 +17,7 @@ export class LoginMultilevelController {
   ) {}
 
   @Get('brand-store')
-  @UserTypeAndLevel('merchant.group', 'merchant.merchant')
+  @UserType('merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async listBrandStore(@Req() req: any) {
@@ -33,7 +33,7 @@ export class LoginMultilevelController {
   }
 
   @Post('change-level')
-  @UserTypeAndLevel('merchant.group', 'merchant.merchant')
+  @UserType('merchant')
   @AuthJwtGuard()
   @ResponseStatusCode()
   async changeLevel(

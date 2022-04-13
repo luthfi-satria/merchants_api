@@ -205,7 +205,6 @@ export class LoginMultilevelService {
       const urlRole = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/internal/special-roles/get-by-code/${code}`;
       try {
         const merchantRole = await this.commonService.postHttp(urlRole);
-        console.log('merchantRole:\n', merchantRole);
         if (merchantRole) {
           role_id = merchantRole.data.role.id;
         }

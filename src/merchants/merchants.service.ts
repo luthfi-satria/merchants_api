@@ -843,6 +843,47 @@ export class MerchantsService {
     }
   }
 
+  async getMerchantRelationGroupById(
+    merchantId: string,
+  ): Promise<MerchantDocument> {
+    try {
+      const cekMerchantId = await this.merchantRepository.findOne({
+        where: { id: merchantId },
+        relations: ['group'],
+      });
+      if (!cekMerchantId) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: merchantId,
+              property: 'merchant_id',
+              constraint: [
+                this.messageService.get('merchant.general.idNotFound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      return cekMerchantId;
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: merchantId,
+            property: 'merchant_id',
+            constraint: [
+              this.messageService.get('merchant.general.idNotFound'),
+            ],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
   async getAndValidateMerchantActiveById(
     merchantId: string,
   ): Promise<MerchantDocument> {
