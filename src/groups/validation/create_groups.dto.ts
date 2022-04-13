@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -87,6 +89,11 @@ export class CreateGroupDTO {
   // @IsNotEmpty()
   director_id_face_file: string;
 
+  @IsNotEmpty()
+  @IsBoolean()
+  @Type(() => Boolean)
+  director_is_multilevel_login: boolean;
+
   //Penanggung Jawab Operasional
   @IsNotEmpty()
   @IsString()
@@ -105,6 +112,11 @@ export class CreateGroupDTO {
   @Length(10, 15)
   pic_operational_phone: string;
 
+  @IsNotEmpty()
+  @IsBoolean()
+  @Type(() => Boolean)
+  pic_operational_is_multilevel_login: boolean;
+
   //Penanggung Jawab Keuangan
   @IsNotEmpty()
   @IsString()
@@ -122,6 +134,11 @@ export class CreateGroupDTO {
   @IsNumberString()
   @Length(10, 15)
   pic_finance_phone: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  @Type(() => Boolean)
+  pic_finance_is_multilevel_login: boolean;
 
   @IsNotEmpty()
   @IsIn(Object.values(GroupStatus))
