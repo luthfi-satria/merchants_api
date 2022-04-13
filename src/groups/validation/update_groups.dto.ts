@@ -1,12 +1,14 @@
+import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
-  IsOptional,
+  IsNotEmpty,
   IsNumberString,
+  IsOptional,
   IsString,
   Length,
   ValidateIf,
-  IsNotEmpty,
 } from 'class-validator';
 import {
   CategoryGroup,
@@ -87,6 +89,11 @@ export class UpdateGroupDTO {
 
   director_id_face_file: string;
 
+  @IsOptional()
+  @Transform(({ value }) => String(value) === 'true')
+  @IsBoolean()
+  director_is_multilevel_login: boolean;
+
   //Penanggung Jawab Operasional
   @IsOptional()
   @IsNotEmpty()
@@ -107,6 +114,11 @@ export class UpdateGroupDTO {
   @Length(10, 15)
   pic_operational_phone: string;
 
+  @IsOptional()
+  @Transform(({ value }) => String(value) === 'true')
+  @IsBoolean()
+  pic_operational_is_multilevel_login: boolean;
+
   //Penanggung Jawab Keuangan
   @IsOptional()
   @IsNotEmpty()
@@ -126,6 +138,11 @@ export class UpdateGroupDTO {
   @IsNumberString()
   @Length(10, 15)
   pic_finance_phone: string;
+
+  @IsOptional()
+  @Transform(({ value }) => String(value) === 'true')
+  @IsBoolean()
+  pic_finance_is_multilevel_login: boolean;
 
   @IsOptional()
   @IsIn(Object.values(GroupStatus))
