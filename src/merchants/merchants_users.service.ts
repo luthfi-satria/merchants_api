@@ -864,51 +864,52 @@ export class MerchantUsersService {
   async getMerchantUserByLevelId(user: any): Promise<MerchantUsersDocument> {
     const query = this.merchantUsersRepository
       .createQueryBuilder('mu')
-      .leftJoinAndSelect('mu.group', 'merchant_group')
-      // get data group in merchant
-      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
-      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
-      // get data group in store
-      .leftJoinAndSelect('mu.store', 'merchant_store')
-      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
-      .leftJoinAndSelect(
-        'merchant_store_merchant.group',
-        'merchant_store_merchant_group',
-      )
       // get data group in stores (many-to-many)
       .leftJoinAndSelect('mu.stores', 'user_stores');
 
     if (user && user.level == 'store') {
-      query.andWhere(
-        new Brackets((queryBracket) => {
-          queryBracket.where('mu.store_id = :store_id', {
-            store_id: user.store_id,
-          });
-        }),
-      );
+      // get data group in store
+      query
+        .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+        .leftJoinAndSelect(
+          'merchant_store_merchant.group',
+          'merchant_store_merchant_group',
+        )
+        .where(
+          new Brackets((queryBracket) => {
+            queryBracket.where('mu.store_id = :store_id', {
+              store_id: user.store_id,
+            });
+          }),
+        );
     } else if (user && user.level == 'merchant') {
-      query.andWhere(
-        new Brackets((queryBracket) => {
-          queryBracket.where('mu.merchant_id = :merchant_id', {
-            merchant_id: user.merchant_id,
-          });
-          queryBracket.orWhere('merchant_store.merchant_id = :merchant_id', {
-            merchant_id: user.merchant_id,
-          });
-        }),
-      );
+      // get data group in merchant
+      query
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+        .where(
+          new Brackets((queryBracket) => {
+            queryBracket.where('mu.merchant_id = :merchant_id', {
+              merchant_id: user.merchant_id,
+            });
+            // queryBracket.orWhere('merchant_store.merchant_id = :merchant_id', {
+            //   merchant_id: user.merchant_id,
+            // });
+          }),
+        );
     } else if (user && user.level == 'group') {
-      query.andWhere(
+      query.leftJoinAndSelect('mu.group', 'merchant_group').where(
         new Brackets((queryBracket) => {
           queryBracket.where('mu.group_id = :group_id', {
             group_id: user.group_id,
           });
-          queryBracket.orWhere('merchant_merchant.group_id = :group_id', {
-            group_id: user.group_id,
-          });
-          queryBracket.orWhere('merchant_store_merchant.group_id = :group_id', {
-            group_id: user.group_id,
-          });
+          // queryBracket.orWhere('merchant_merchant.group_id = :group_id', {
+          //   group_id: user.group_id,
+          // });
+          // queryBracket.orWhere('merchant_store_merchant.group_id = :group_id', {
+          //   group_id: user.group_id,
+          // });
         }),
       );
     }

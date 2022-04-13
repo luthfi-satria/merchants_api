@@ -83,13 +83,9 @@ export class LoginMultilevelService {
       data.level = 'merchant';
       id = data.merchant_id;
     }
-    console.log('data:\n', data);
-    console.log('groupId:\n', groupId);
-    console.log('id:\n', id);
 
     const existMerchantUser =
       await this.merchantUserService.getMerchantUserByLevelId(data);
-    console.log('existMerchantUser:\n', existMerchantUser);
 
     if (!existMerchantUser) {
       const errors: RMessage = {
@@ -105,9 +101,7 @@ export class LoginMultilevelService {
         ),
       );
     }
-    console.log('data.level:\n', data.level);
     if (data.level == 'merchant') {
-      console.log('db groupId:\n', existMerchantUser.merchant.group.id);
       if (existMerchantUser.merchant.group.id != groupId) {
         const errors: RMessage = {
           value: existMerchantUser.merchant.group.id,
@@ -126,8 +120,6 @@ export class LoginMultilevelService {
       }
     }
     if (data.level == 'store') {
-      console.log('db groupId:\n', existMerchantUser.store.merchant.group.id);
-
       if (existMerchantUser.store.merchant.group.id != groupId) {
         const errors: RMessage = {
           value: existMerchantUser.store.merchant.group_id,
@@ -211,13 +203,6 @@ export class LoginMultilevelService {
       merchantLevel = 'merchant';
       merchantID = existMerchantUser.merchant_id;
     }
-    console.log('phone:\n', existMerchantUser.phone);
-    console.log('merchantID:\n', merchantID);
-    console.log('groupID:\n', groupID);
-    console.log('merchantLevel:\n', merchantLevel);
-    console.log('user_type:\n', user.user_type);
-    console.log('merchantLevel:\n', merchantLevel);
-    console.log('storeID:\n', storeID);
 
     const http_req: Record<string, any> = {
       phone: existMerchantUser.phone,
@@ -230,14 +215,12 @@ export class LoginMultilevelService {
       store_id: storeID,
       roles: [`${user.user_type}`],
     };
-    console.log('http_req:\n', http_req);
 
     const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
     const resp: Record<string, any> = await this.commonService.postHttp(
       url,
       http_req,
     );
-    console.log('resp:\n', resp);
     if (resp.statusCode) {
       throw resp;
     } else {
@@ -247,7 +230,11 @@ export class LoginMultilevelService {
 
   async originalLevel(user: any): Promise<any> {
     const existMerchantUser =
-      await this.merchantUserService.getMerchantUserById(user);
+      await this.merchantUserService.getMerchantUserById({
+        id: user.id,
+      });
+    // const existMerchantUser =
+    //   await this.merchantUserService.getMerchantUserById(user);
     if (!existMerchantUser) {
       const errors: RMessage = {
         value: user.id,
@@ -281,15 +268,30 @@ export class LoginMultilevelService {
       );
     }
 
+    let groupId = '';
+    let merchantId = '';
+    let storeId = '';
+    let level = null;
+    if (isNotEmpty(existMerchantUser.group)) {
+      groupId = existMerchantUser.group.id;
+      level = 'group';
+    } else if (isNotEmpty(existMerchantUser.merchant)) {
+      merchantId = existMerchantUser.merchant.id;
+      level = 'merchant';
+    } else if (isNotEmpty(existMerchantUser.store)) {
+      storeId = existMerchantUser.store.id;
+      level = 'store';
+    }
+
     const http_req: Record<string, any> = {
       phone: existMerchantUser.phone,
       id_profile: user.id,
       user_type: user.user_type,
-      level: 'group',
+      level: level,
       id: user.id,
-      group_id: existMerchantUser.group.id,
-      merchant_id: '',
-      store_id: '',
+      group_id: groupId,
+      merchant_id: merchantId,
+      store_id: storeId,
       roles: [`merchant`],
     };
 
