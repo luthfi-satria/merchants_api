@@ -402,30 +402,25 @@ export class LoginService {
     try {
       const query = this.merchantUsersRepository
         .createQueryBuilder('mu')
-        .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect('mu.store', 'merchant_store');
+      if (user.level == 'store') {
+        query
+          .leftJoinAndSelect('merchant_store.merchant', 'merchant')
+          .leftJoinAndSelect('merchant.group', 'group');
+      }
+      query
         .leftJoinAndSelect(
           'merchant_store.service_addons',
           'merchant_store_service_addons',
         )
-        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
-        .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
-        .leftJoinAndSelect('mu.group', 'merchant_group');
-      if (user.level == 'store') {
-        query
-          .leftJoinAndSelect('merchant_store.merchant', 'merchant')
-          .leftJoinAndSelect('merchant.group', 'group')
-          .where('mu.store_id = :sid', { sid: user.store_id });
-      }
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant');
       if (user.level == 'merchant') {
-        query
-          .leftJoinAndSelect('merchant_merchant.group', 'group')
-          .where('mu.merchant_id = :mid', { mid: user.merchant_id });
-      }
-      if (user.level == 'group') {
-        query.where('mu.group_id = :gid', { gid: user.group_id });
+        query.leftJoinAndSelect('merchant_merchant.group', 'group');
       }
       query
-        // .where('mu.id = :id', { id: levelId })
+        .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+        .leftJoinAndSelect('mu.group', 'merchant_group')
+        .where('mu.id = :id', { id: user.id })
         .andWhere('mu.role_id is not null')
         .andWhere("mu.status = 'ACTIVE'");
 
@@ -494,7 +489,6 @@ export class LoginService {
       request.password,
       existMerchantUser.password,
     );
-
     if (!cekPassword) {
       throw new UnauthorizedException(
         this.responseService.error(
