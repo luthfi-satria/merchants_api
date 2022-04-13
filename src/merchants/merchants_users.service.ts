@@ -17,7 +17,6 @@ import { CommonStoresService } from 'src/common/own/stores.service';
 import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
 import { RoleService } from 'src/common/services/admins/role.service';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
-// import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { GroupsService } from 'src/groups/groups.service';
 import { HashService } from 'src/hash/hash.service';
@@ -824,6 +823,164 @@ export class MerchantUsersService {
       );
     }
     return merechant_user;
+  }
+
+  async getMerchantUserById(user: any): Promise<MerchantUsersDocument> {
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in merchant
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+      .leftJoinAndSelect(
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
+      )
+      // get data group in stores (many-to-many)
+      .leftJoinAndSelect('mu.stores', 'user_stores')
+      .where('mu.id = :muid', { muid: user.id });
+
+    const merechant_user = await query.getOne();
+    if (!merechant_user) {
+      const errors: RMessage = {
+        value: '',
+        property: `${user.level}_id`,
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return merechant_user;
+  }
+
+  async getMerchantUserByLevelId(user: any): Promise<MerchantUsersDocument> {
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in merchant
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+      .leftJoinAndSelect(
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
+      )
+      // get data group in stores (many-to-many)
+      .leftJoinAndSelect('mu.stores', 'user_stores');
+
+    if (user && user.level == 'store') {
+      query.andWhere(
+        new Brackets((queryBracket) => {
+          queryBracket.where('mu.store_id = :store_id', {
+            store_id: user.store_id,
+          });
+        }),
+      );
+    } else if (user && user.level == 'merchant') {
+      query.andWhere(
+        new Brackets((queryBracket) => {
+          queryBracket.where('mu.merchant_id = :merchant_id', {
+            merchant_id: user.merchant_id,
+          });
+          queryBracket.orWhere('merchant_store.merchant_id = :merchant_id', {
+            merchant_id: user.merchant_id,
+          });
+        }),
+      );
+    } else if (user && user.level == 'group') {
+      query.andWhere(
+        new Brackets((queryBracket) => {
+          queryBracket.where('mu.group_id = :group_id', {
+            group_id: user.group_id,
+          });
+          queryBracket.orWhere('merchant_merchant.group_id = :group_id', {
+            group_id: user.group_id,
+          });
+          queryBracket.orWhere('merchant_store_merchant.group_id = :group_id', {
+            group_id: user.group_id,
+          });
+        }),
+      );
+    }
+    const merechant_user = await query.getOne();
+    if (!merechant_user) {
+      const errors: RMessage = {
+        value: '',
+        property: `${user.level}_id`,
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return merechant_user;
+  }
+
+  async getMerchantUserGroupById(
+    user_id: string,
+    user?: any,
+  ): Promise<MerchantUsersDocument> {
+    const query = this.merchantUsersRepository.createQueryBuilder('mu');
+
+    if (user && user.level == 'group') {
+      query
+        .leftJoinAndSelect('mu.group', 'group')
+        .leftJoinAndSelect('group.merchants', 'gmerchant')
+        .leftJoinAndSelect('gmerchant.stores', 'gmstore')
+        .where('group.id = :gid', { gid: user.group_id });
+    } else if (user && user.level == 'merchant') {
+      query
+        .leftJoinAndSelect('mu.merchant', 'merchant')
+        .leftJoinAndSelect('merchant.stores', 'store')
+        .where('merchant.id = :mid', { mid: user.merchant_id });
+    } else if (user && user.level == 'store') {
+      query
+        .leftJoinAndSelect('mu.store', 'store')
+        .where('store.id = :sid', { sid: user.store_id });
+    }
+
+    // query.andWhere('mu.id = :user_id', { user_id });
+
+    const merechant_user = await query.getOne();
+    if (!merechant_user) {
+      const errors: RMessage = {
+        value: user_id,
+        property: 'merchant_user_id',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    const merchantUser: any = JSON.parse(JSON.stringify(merechant_user));
+    if (user && user.level == 'group') {
+      if (merchantUser.group && merchantUser.group['__merchants__']) {
+        delete Object.assign(merchantUser.group, {
+          ['merchants']: merchantUser.group['__merchants__'],
+        })['__merchants__'];
+      }
+    }
+
+    return merchantUser;
   }
 
   async resendEmailUser(user_id: string): Promise<RSuccessMessage> {
