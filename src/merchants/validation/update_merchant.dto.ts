@@ -84,7 +84,7 @@ export class UpdateMerchantDTO {
   @IsOptional()
   is_pos_rounded_payment: boolean;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
   pic_is_multilevel_login: boolean;

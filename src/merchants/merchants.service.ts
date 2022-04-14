@@ -504,6 +504,8 @@ export class MerchantsService {
         update,
       );
     } catch (error) {
+      console.log(error);
+
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
