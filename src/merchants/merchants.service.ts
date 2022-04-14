@@ -339,143 +339,142 @@ export class MerchantsService {
   async updateMerchantMerchantProfile(
     data: UpdateMerchantDTO,
   ): Promise<RSuccessMessage> {
-    await this.validateMerchantUniqueName(data.name, data.id);
-    await this.validateMerchantUniquePhone(data.phone, data.id);
-    const existMerchant: MerchantDocument =
-      await this.getAndValidateMerchantById(data.id);
-
-    if (data.pic_phone) {
-      const cekphone: MerchantDocument = await this.findMerchantMerchantByPhone(
-        data.pic_phone,
-      );
-      if (
-        cekphone &&
-        cekphone.pic_phone != existMerchant.pic_phone &&
-        !data.pic_is_multilevel_login
-      ) {
-        const errors: RMessage = {
-          value: data.pic_phone,
-          property: 'pic_phone',
-          constraint: [
-            this.messageService.get('merchant.createmerchant.phoneExist'),
-          ],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      }
-      existMerchant.pic_phone = data.pic_phone;
-    }
-    if (data.pic_email == '') {
-      existMerchant.pic_email = null;
-    } else if (data.pic_email) {
-      const cekemail: MerchantDocument = await this.findMerchantMerchantByEmail(
-        data.pic_email,
-      );
-      if (cekemail && cekemail.pic_email != existMerchant.pic_email) {
-        const errors: RMessage = {
-          value: data.pic_email,
-          property: 'pic_email',
-          constraint: [
-            this.messageService.get('merchant.createmerchant.emailExist'),
-          ],
-        };
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            errors,
-            'Bad Request',
-          ),
-        );
-      }
-      existMerchant.pic_email = data.pic_email;
-    }
-    if (data.type) existMerchant.type = data.type;
-    if (data.name) existMerchant.name = data.name;
-    if (data.phone) existMerchant.phone = data.phone;
-    if (data.logo) existMerchant.logo = data.logo;
-    if (data.profile_store_photo)
-      existMerchant.profile_store_photo = data.profile_store_photo;
-    if (data.address) existMerchant.address = data.address;
-    if (data.lob_id) existMerchant.lob_id = data.lob_id;
-    if (data.pb1) {
-      existMerchant.pb1 = data.pb1 == 'true' ? true : false;
-    }
-    if (data.npwp_no) existMerchant.npwp_no = data.npwp_no;
-    if (data.npwp_name) existMerchant.npwp_name = data.npwp_name;
-    if (data.npwp_file) existMerchant.npwp_file = data.npwp_file;
-    if (data.pic_name) {
-      existMerchant.pic_name = data.pic_name;
-    }
-    if (data.pic_nip == '') {
-      existMerchant.pic_nip = null;
-    } else if (data.pic_nip) {
-      existMerchant.pic_nip = data.pic_nip;
-    }
-    if (data.pb1_tariff) {
-      existMerchant.pb1_tariff = data.pb1_tariff;
-    }
-    if (typeof data.pic_is_multilevel_login != 'undefined') {
-      existMerchant.pic_is_multilevel_login = data.pic_is_multilevel_login;
-    }
-
-    if (!data.pic_is_multilevel_login)
-      await this.merchantUserService.checkExistEmailPhone(
-        data.pic_email,
-        data.pic_phone,
-        existMerchant.users[0].id,
-      );
-
-    if (data.pic_password) {
-      const salt: string = await this.hashService.randomSalt();
-      data.pic_password = await this.hashService.hashPassword(
-        data.pic_password,
-        salt,
-      );
-    }
-
-    const oldStatus = existMerchant.status;
-    const oldPhone = existMerchant.phone;
-    if (data.status) existMerchant.status = data.status;
-    if (existMerchant.status == 'ACTIVE') {
-      if (!existMerchant.approved_at) existMerchant.approved_at = new Date();
-      this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
-        existMerchant.id,
-        enumStoreStatus.active,
-      );
-      if (oldStatus == MerchantStatus.Draft) {
-        existMerchant.users[0].name = data.pic_name;
-        existMerchant.users[0].email = data.pic_email;
-        existMerchant.users[0].phone = data.pic_phone;
-        if (data.pic_password) {
-          existMerchant.users[0].password = data.pic_password;
-        }
-        existMerchant.users[0].status = MerchantUsersStatus.Active;
-      }
-    } else if (existMerchant.status == 'REJECTED') {
-      existMerchant.rejected_at = new Date();
-      this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
-        existMerchant.id,
-        enumStoreStatus.rejected,
-      );
-      if (oldStatus == MerchantStatus.Draft) {
-        existMerchant.users[0].name = data.pic_name;
-        existMerchant.users[0].email = data.pic_email;
-        existMerchant.users[0].phone = data.pic_phone;
-        if (data.pic_password) {
-          existMerchant.users[0].password = data.pic_password;
-        }
-        existMerchant.users[0].status = MerchantUsersStatus.Rejected;
-      }
-    }
-    if (data.rejection_reason)
-      existMerchant.rejection_reason = data.rejection_reason;
-
     try {
+      await this.validateMerchantUniqueName(data.name, data.id);
+      await this.validateMerchantUniquePhone(data.phone, data.id);
+      const existMerchant: MerchantDocument =
+        await this.getAndValidateMerchantById(data.id);
+
+      if (data.pic_phone) {
+        const cekphone: MerchantDocument =
+          await this.findMerchantMerchantByPhone(data.pic_phone);
+        if (
+          cekphone &&
+          cekphone.pic_phone != existMerchant.pic_phone &&
+          !data.pic_is_multilevel_login
+        ) {
+          const errors: RMessage = {
+            value: data.pic_phone,
+            property: 'pic_phone',
+            constraint: [
+              this.messageService.get('merchant.createmerchant.phoneExist'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        existMerchant.pic_phone = data.pic_phone;
+      }
+      if (data.pic_email == '') {
+        existMerchant.pic_email = null;
+      } else if (data.pic_email) {
+        const cekemail: MerchantDocument =
+          await this.findMerchantMerchantByEmail(data.pic_email);
+        if (cekemail && cekemail.pic_email != existMerchant.pic_email) {
+          const errors: RMessage = {
+            value: data.pic_email,
+            property: 'pic_email',
+            constraint: [
+              this.messageService.get('merchant.createmerchant.emailExist'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        existMerchant.pic_email = data.pic_email;
+      }
+      if (data.type) existMerchant.type = data.type;
+      if (data.name) existMerchant.name = data.name;
+      if (data.phone) existMerchant.phone = data.phone;
+      if (data.logo) existMerchant.logo = data.logo;
+      if (data.profile_store_photo)
+        existMerchant.profile_store_photo = data.profile_store_photo;
+      if (data.address) existMerchant.address = data.address;
+      if (data.lob_id) existMerchant.lob_id = data.lob_id;
+      if (data.pb1) {
+        existMerchant.pb1 = data.pb1 == 'true' ? true : false;
+      }
+      if (data.npwp_no) existMerchant.npwp_no = data.npwp_no;
+      if (data.npwp_name) existMerchant.npwp_name = data.npwp_name;
+      if (data.npwp_file) existMerchant.npwp_file = data.npwp_file;
+      if (data.pic_name) {
+        existMerchant.pic_name = data.pic_name;
+      }
+      if (data.pic_nip == '') {
+        existMerchant.pic_nip = null;
+      } else if (data.pic_nip) {
+        existMerchant.pic_nip = data.pic_nip;
+      }
+      if (data.pb1_tariff) {
+        existMerchant.pb1_tariff = data.pb1_tariff;
+      }
+      if (typeof data.pic_is_multilevel_login != 'undefined') {
+        existMerchant.pic_is_multilevel_login = data.pic_is_multilevel_login;
+      }
+
+      if (!data.pic_is_multilevel_login)
+        await this.merchantUserService.checkExistEmailPhone(
+          data.pic_email,
+          data.pic_phone,
+          existMerchant.users[0].id,
+        );
+
+      if (data.pic_password) {
+        const salt: string = await this.hashService.randomSalt();
+        data.pic_password = await this.hashService.hashPassword(
+          data.pic_password,
+          salt,
+        );
+      }
+
+      const oldStatus = existMerchant.status;
+      const oldPhone = existMerchant.phone;
+      if (data.status) existMerchant.status = data.status;
+      if (existMerchant.status == 'ACTIVE') {
+        if (!existMerchant.approved_at) existMerchant.approved_at = new Date();
+        this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
+          existMerchant.id,
+          enumStoreStatus.active,
+        );
+        if (oldStatus == MerchantStatus.Draft) {
+          existMerchant.users[0].name = data.pic_name;
+          existMerchant.users[0].email = data.pic_email;
+          existMerchant.users[0].phone = data.pic_phone;
+          if (data.pic_password) {
+            existMerchant.users[0].password = data.pic_password;
+          }
+          existMerchant.users[0].status = MerchantUsersStatus.Active;
+        }
+      } else if (existMerchant.status == 'REJECTED') {
+        existMerchant.rejected_at = new Date();
+        this.storesService.setAllStatusWithWaitingForBrandApprovalByMerchantId(
+          existMerchant.id,
+          enumStoreStatus.rejected,
+        );
+        if (oldStatus == MerchantStatus.Draft) {
+          existMerchant.users[0].name = data.pic_name;
+          existMerchant.users[0].email = data.pic_email;
+          existMerchant.users[0].phone = data.pic_phone;
+          if (data.pic_password) {
+            existMerchant.users[0].password = data.pic_password;
+          }
+          existMerchant.users[0].status = MerchantUsersStatus.Rejected;
+        }
+      }
+      if (data.rejection_reason)
+        existMerchant.rejection_reason = data.rejection_reason;
+
+      // try {
       const update: MerchantDocument = await this.merchantRepository.save(
         existMerchant,
       );
@@ -487,7 +486,11 @@ export class MerchantsService {
         this.storesService.setAllInactiveByMerchantId(existMerchant.id);
       }
 
-      if (oldStatus == MerchantStatus.Draft && oldPhone != data.pic_phone) {
+      if (
+        oldStatus == MerchantStatus.Draft &&
+        oldPhone != data.pic_phone &&
+        !data.pic_is_multilevel_login
+      ) {
         this.merchantUserService.resendPhoneUser(update.users[0].id);
       }
 
