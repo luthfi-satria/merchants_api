@@ -296,7 +296,7 @@ export class MerchantsService {
           break;
       }
 
-      if (!cekphone) {
+      if (!data.pic_is_multilevel_login) {
         const result =
           await this.merchantUserService.createMerchantUsersFromMerchant(
             createMerchantUser,
