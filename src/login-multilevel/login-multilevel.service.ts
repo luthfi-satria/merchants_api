@@ -2,10 +2,12 @@ import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { isNotEmpty } from 'class-validator';
 import { CommonService } from 'src/common/common.service';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 import { MessageService } from 'src/message/message.service';
 import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
+import { StoresService } from 'src/stores/stores.service';
 import { ChangeLevelDto } from './validation/login_multilevel.validation';
 
 @Injectable()
@@ -15,6 +17,8 @@ export class LoginMultilevelService {
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
     private readonly commonService: CommonService,
+    private readonly merchantService: MerchantsService,
+    private readonly storeService: StoresService,
   ) {}
 
   async getListBrandStore(user: any): Promise<MerchantUsersDocument> {
@@ -85,111 +89,92 @@ export class LoginMultilevelService {
       storeID = merchantUserById.store.id;
     }
 
-    let id = null;
     if (isNotEmpty(data.store_id)) {
       data.level = 'store';
-      id = data.store_id;
     }
     if (isNotEmpty(data.merchant_id)) {
       data.level = 'merchant';
-      id = data.merchant_id;
-    }
-
-    const existMerchantUser =
-      await this.merchantUserService.getMerchantUserByLevelId(data);
-
-    if (!existMerchantUser) {
-      const errors: RMessage = {
-        value: id,
-        property: `${data.level}_id`,
-        constraint: [this.messageService.get('merchant.general.dataNotFound')],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'Unauthorized',
-        ),
-      );
-    }
-    if (data.level == 'merchant') {
-      if (existMerchantUser.merchant.group.id != userGroupId) {
-        const errors: RMessage = {
-          value: existMerchantUser.merchant.group.id,
-          property: `${data.level}_id`,
-          constraint: [
-            this.messageService.get('merchant.general.differentGroupId'),
-          ],
-        };
-        throw new UnauthorizedException(
-          this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
-            errors,
-            'Unauthorized',
-          ),
-        );
-      }
-    }
-    if (data.level == 'store') {
-      if (existMerchantUser.store.merchant.group.id != userGroupId) {
-        const errors: RMessage = {
-          value: existMerchantUser.store.merchant.group_id,
-          property: `${data.level}_id`,
-          constraint: [
-            this.messageService.get('merchant.general.differentGroupId'),
-          ],
-        };
-        throw new UnauthorizedException(
-          this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
-            errors,
-            'Unauthorized',
-          ),
-        );
-      }
     }
 
     let merchantLevel = '';
-    if (existMerchantUser.store_id != null) {
-      if (existMerchantUser.store.status != 'ACTIVE') {
+    let phone = '';
+    if (data.level == 'merchant') {
+      const merchant = await this.merchantService.findMerchantById(
+        data.merchant_id,
+      );
+      if (!merchant) {
+        const errors: RMessage = {
+          value: data.merchant_id,
+          property: `merchant_id`,
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
+        };
         throw new UnauthorizedException(
           this.responseService.error(
             HttpStatus.UNAUTHORIZED,
-            {
-              value: existMerchantUser.store.status,
-              property: 'store_status',
-              constraint: [
-                this.messageService.get('merchant.general.unverificatedUser'),
-              ],
-            },
+            errors,
             'Unauthorized',
           ),
         );
       }
-      merchantLevel = 'store';
-      storeID = existMerchantUser.store_id;
-    }
-    if (existMerchantUser.merchant_id != null) {
-      if (
-        existMerchantUser.status != 'ACTIVE' ||
-        existMerchantUser.merchant.status != 'ACTIVE'
-      ) {
+      if (merchant.group.id != userGroupId) {
+        const errors: RMessage = {
+          value: merchant.group.id,
+          property: `merchant_id`,
+          constraint: [
+            this.messageService.get('merchant.general.differentGroupId'),
+          ],
+        };
         throw new UnauthorizedException(
           this.responseService.error(
             HttpStatus.UNAUTHORIZED,
-            {
-              value: existMerchantUser.merchant.status,
-              property: 'merchant_status',
-              constraint: [
-                this.messageService.get('merchant.general.unverificatedUser'),
-              ],
-            },
+            errors,
             'Unauthorized',
           ),
         );
       }
+      phone = merchant.phone;
       merchantLevel = 'merchant';
-      merchantID = existMerchantUser.merchant_id;
+      merchantID = merchant.id;
+    }
+    if (data.level == 'store') {
+      const store = await this.storeService.findStoreLevel(data.store_id);
+      if (!store) {
+        const errors: RMessage = {
+          value: data.store_id,
+          property: `store_id`,
+          constraint: [
+            this.messageService.get('merchant.general.dataNotFound'),
+          ],
+        };
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            errors,
+            'Unauthorized',
+          ),
+        );
+      }
+      if (store.merchant.group.id != userGroupId) {
+        const errors: RMessage = {
+          value: store.merchant.group_id,
+          property: `store_id`,
+          constraint: [
+            this.messageService.get('merchant.general.differentGroupId'),
+          ],
+        };
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            errors,
+            'Unauthorized',
+          ),
+        );
+      }
+      phone = store.phone;
+      merchantLevel = 'store';
+      storeID = store.id;
     }
 
     let role_id = null;
@@ -212,8 +197,8 @@ export class LoginMultilevelService {
     }
 
     const http_req: Record<string, any> = {
-      phone: existMerchantUser.phone,
-      id_profile: merchantID,
+      phone: phone,
+      id_profile: user.id,
       user_type: user.user_type,
       level: merchantLevel,
       id: user.id,
@@ -241,8 +226,7 @@ export class LoginMultilevelService {
       await this.merchantUserService.getMerchantUserById({
         id: user.id,
       });
-    // const existMerchantUser =
-    //   await this.merchantUserService.getMerchantUserById(user);
+
     if (!existMerchantUser) {
       const errors: RMessage = {
         value: user.id,
@@ -253,24 +237,6 @@ export class LoginMultilevelService {
         this.responseService.error(
           HttpStatus.UNAUTHORIZED,
           errors,
-          'Unauthorized',
-        ),
-      );
-    }
-
-    if (existMerchantUser.email_verified_at == null) {
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          {
-            value: user.id,
-            property: `merchant_user_id`,
-            constraint: [
-              this.messageService.getLang(
-                `id.merchant.general.unverifiedEmail`,
-              ),
-            ],
-          },
           'Unauthorized',
         ),
       );
