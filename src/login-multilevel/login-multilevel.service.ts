@@ -99,7 +99,7 @@ export class LoginMultilevelService {
     let merchantLevel = '';
     let phone = '';
     if (data.level == 'merchant') {
-      const merchant = await this.merchantService.findMerchantById(
+      const merchant = await this.merchantService.getMerchantRelationGroupById(
         data.merchant_id,
       );
       if (!merchant) {
