@@ -893,9 +893,6 @@ export class MerchantUsersService {
             queryBracket.where('mu.merchant_id = :merchant_id', {
               merchant_id: user.merchant_id,
             });
-            // queryBracket.orWhere('merchant_store.merchant_id = :merchant_id', {
-            //   merchant_id: user.merchant_id,
-            // });
           }),
         );
     } else if (user && user.level == 'group') {
@@ -904,12 +901,6 @@ export class MerchantUsersService {
           queryBracket.where('mu.group_id = :group_id', {
             group_id: user.group_id,
           });
-          // queryBracket.orWhere('merchant_merchant.group_id = :group_id', {
-          //   group_id: user.group_id,
-          // });
-          // queryBracket.orWhere('merchant_store_merchant.group_id = :group_id', {
-          //   group_id: user.group_id,
-          // });
         }),
       );
     }
@@ -935,26 +926,36 @@ export class MerchantUsersService {
     user_id: string,
     user?: any,
   ): Promise<MerchantUsersDocument> {
-    const query = this.merchantUsersRepository.createQueryBuilder('mu');
+    const stat = 'ACTIVE';
 
-    if (user && user.level == 'group') {
-      query
-        .leftJoinAndSelect('mu.group', 'group')
-        .leftJoinAndSelect('group.merchants', 'gmerchant')
-        .leftJoinAndSelect('gmerchant.stores', 'gmstore')
-        .where('group.id = :gid', { gid: user.group_id });
-    } else if (user && user.level == 'merchant') {
-      query
-        .leftJoinAndSelect('mu.merchant', 'merchant')
-        .leftJoinAndSelect('merchant.stores', 'store')
-        .where('merchant.id = :mid', { mid: user.merchant_id });
-    } else if (user && user.level == 'store') {
-      query
-        .leftJoinAndSelect('mu.store', 'store')
-        .where('store.id = :sid', { sid: user.store_id });
-    }
-
-    // query.andWhere('mu.id = :user_id', { user_id });
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.group', 'group', 'group.status = :stat', {
+        stat,
+      })
+      .leftJoinAndSelect(
+        'group.merchants',
+        'gmerchant',
+        'gmerchant.status = :stat',
+        { stat },
+      )
+      .leftJoinAndSelect(
+        'gmerchant.stores',
+        'gmstore',
+        'gmstore.status = :stat',
+        { stat },
+      )
+      .leftJoinAndSelect('mu.merchant', 'merchant', 'merchant.status = :stat', {
+        stat,
+      })
+      .leftJoinAndSelect('merchant.stores', 'mstore', 'mstore.status = :stat', {
+        stat,
+      })
+      .leftJoinAndSelect('mu.store', 'store', 'store.status = :stat', {
+        stat,
+      })
+      .leftJoinAndSelect('mu.stores', 'user_stores')
+      .where('mu.id = :uid', { uid: user_id });
 
     const merechant_user = await query.getOne();
     if (!merechant_user) {
@@ -973,11 +974,35 @@ export class MerchantUsersService {
     }
 
     const merchantUser: any = JSON.parse(JSON.stringify(merechant_user));
-    if (user && user.level == 'group') {
-      if (merchantUser.group && merchantUser.group['__merchants__']) {
-        delete Object.assign(merchantUser.group, {
-          ['merchants']: merchantUser.group['__merchants__'],
-        })['__merchants__'];
+    if (merchantUser.group && merchantUser.group['__merchants__']) {
+      delete Object.assign(merchantUser.group, {
+        ['merchants']: merchantUser.group['__merchants__'],
+      })['__merchants__'];
+    }
+
+    if (merchantUser.stores.length == 0) {
+      if (merchantUser.group) {
+        if (
+          merchantUser.group.merchants &&
+          merchantUser.group.merchants.length
+        ) {
+          for (const merchant of merchantUser.group.merchants) {
+            if (merchant.stores && merchant.stores.length) {
+              for (const store of merchant.stores) {
+                merchantUser.stores.push(store);
+              }
+            }
+          }
+        }
+      } else if (merchantUser.merchant) {
+        if (
+          merchantUser.merchant.stores &&
+          merchantUser.merchant.stores.length
+        ) {
+          for (const store of merchantUser.merchant.stores) {
+            merchantUser.stores.push(store);
+          }
+        }
       }
     }
 

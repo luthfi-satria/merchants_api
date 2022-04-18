@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
@@ -90,8 +90,8 @@ export class CreateGroupDTO {
   director_id_face_file: string;
 
   @IsNotEmpty()
+  @Transform(({ value }) => String(value) === 'true')
   @IsBoolean()
-  @Type(() => Boolean)
   director_is_multilevel_login: boolean;
 
   //Penanggung Jawab Operasional
@@ -113,8 +113,8 @@ export class CreateGroupDTO {
   pic_operational_phone: string;
 
   @IsNotEmpty()
+  @Transform(({ value }) => String(value) === 'true')
   @IsBoolean()
-  @Type(() => Boolean)
   pic_operational_is_multilevel_login: boolean;
 
   //Penanggung Jawab Keuangan
@@ -136,8 +136,8 @@ export class CreateGroupDTO {
   pic_finance_phone: string;
 
   @IsNotEmpty()
+  @Transform(({ value }) => String(value) === 'true')
   @IsBoolean()
-  @Type(() => Boolean)
   pic_finance_is_multilevel_login: boolean;
 
   @IsNotEmpty()

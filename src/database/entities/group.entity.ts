@@ -99,6 +99,9 @@ export class GroupDocument {
   @Column({ nullable: true })
   director_id_face_file: string;
 
+  @Column({ nullable: true })
+  director_is_multilevel_login: boolean;
+
   //Penanggung Jawab Operasional
   @Column({ nullable: true })
   pic_operational_name: string;
@@ -115,6 +118,9 @@ export class GroupDocument {
   @Column({ nullable: true })
   pic_operational_password: string;
 
+  @Column({ nullable: true })
+  pic_operational_is_multilevel_login: boolean;
+
   //Penanggung Jawab Keuangan
   @Column({ nullable: true })
   pic_finance_name: string;
@@ -130,6 +136,9 @@ export class GroupDocument {
 
   @Column({ nullable: true })
   pic_finance_password: string;
+
+  @Column({ nullable: true })
+  pic_finance_is_multilevel_login: boolean;
 
   @Column({
     type: 'enum',
