@@ -97,7 +97,7 @@ export class StoresService {
           'service_addons',
           // 'bank',
           'operational_hours',
-          'search_history_stores',
+          // 'search_history_stores',
           'users',
           'menus',
         ],
@@ -500,6 +500,7 @@ export class StoresService {
 
     const cekmerchant: MerchantDocument =
       await this.merchantService.findMerchantById(store_document.merchant_id);
+
     if (!cekmerchant) {
       throw new BadRequestException(
         this.responseService.error(
@@ -1152,7 +1153,7 @@ export class StoresService {
   }
 
   async getAndValidateStoreByStoreId(storeId: string): Promise<StoreDocument> {
-    const store = await this.findStoreById(storeId);
+    const store = await this.findMerchantStoreById(storeId); // .findStoreById(storeId);
     if (!store) {
       throw new BadRequestException(
         this.responseService.error(
