@@ -447,13 +447,40 @@ export class MerchantsService {
           enumStoreStatus.active,
         );
         if (oldStatus == MerchantStatus.Draft) {
-          existMerchant.users[0].name = data.pic_name;
-          existMerchant.users[0].email = data.pic_email;
-          existMerchant.users[0].phone = data.pic_phone;
-          if (data.pic_password) {
-            existMerchant.users[0].password = data.pic_password;
+          if (existMerchant.users[0]) {
+            if (!data.pic_is_multilevel_login) {
+              existMerchant.users[0].name = data.pic_name;
+              existMerchant.users[0].email = data.pic_email;
+              existMerchant.users[0].phone = data.pic_phone;
+              if (data.pic_password) {
+                existMerchant.users[0].password = data.pic_password;
+              }
+              existMerchant.users[0].status = MerchantUsersStatus.Active;
+            }
+          } else {
+            const specialRoles = await this.roleService.getSpecialRoleByCode(
+              SpecialRoleCodes.brand_manager,
+            );
+            if (!data.pic_is_multilevel_login) {
+              const createMerchantUser: Partial<MerchantUsersDocument> = {
+                merchant_id: existMerchant.id,
+                name: data.pic_name,
+                phone: data.pic_phone,
+                email: data.pic_email,
+                password: data.pic_password,
+                nip: data.pic_nip,
+                role_id: specialRoles.role_id,
+              };
+
+              const result =
+                await this.merchantUserService.createMerchantUsersFromMerchant(
+                  createMerchantUser,
+                );
+              deleteCredParam(result);
+              existMerchant.user = result;
+              deleteCredParam(existMerchant);
+            }
           }
-          existMerchant.users[0].status = MerchantUsersStatus.Active;
         }
       } else if (existMerchant.status == 'REJECTED') {
         existMerchant.rejected_at = new Date();
@@ -462,13 +489,41 @@ export class MerchantsService {
           enumStoreStatus.rejected,
         );
         if (oldStatus == MerchantStatus.Draft) {
-          existMerchant.users[0].name = data.pic_name;
-          existMerchant.users[0].email = data.pic_email;
-          existMerchant.users[0].phone = data.pic_phone;
-          if (data.pic_password) {
-            existMerchant.users[0].password = data.pic_password;
+          if (existMerchant.users[0]) {
+            if (!data.pic_is_multilevel_login) {
+              existMerchant.users[0].name = data.pic_name;
+              existMerchant.users[0].email = data.pic_email;
+              existMerchant.users[0].phone = data.pic_phone;
+              if (data.pic_password) {
+                existMerchant.users[0].password = data.pic_password;
+              }
+              existMerchant.users[0].status = MerchantUsersStatus.Rejected;
+            }
+          } else {
+            const specialRoles = await this.roleService.getSpecialRoleByCode(
+              SpecialRoleCodes.brand_manager,
+            );
+            if (!data.pic_is_multilevel_login) {
+              const createMerchantUser: Partial<MerchantUsersDocument> = {
+                merchant_id: existMerchant.id,
+                name: data.pic_name,
+                phone: data.pic_phone,
+                email: data.pic_email,
+                password: data.pic_password,
+                nip: data.pic_nip,
+                role_id: specialRoles.role_id,
+                status: MerchantUsersStatus.Active,
+              };
+
+              const result =
+                await this.merchantUserService.createMerchantUsersFromMerchant(
+                  createMerchantUser,
+                );
+              deleteCredParam(result);
+              existMerchant.user = result;
+              deleteCredParam(existMerchant);
+            }
           }
-          existMerchant.users[0].status = MerchantUsersStatus.Rejected;
         }
       }
       if (data.rejection_reason)
