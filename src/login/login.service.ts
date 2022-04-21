@@ -448,6 +448,7 @@ export class LoginService {
             user.merchant_id,
           );
       }
+      console.log('merchant_user:\n', merchant_user);
 
       return merchant_user;
     } catch (err) {
