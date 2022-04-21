@@ -52,7 +52,6 @@ export class LoginController {
   @UserType('merchant')
   @AuthJwtGuard()
   async profile(@Req() req: any) {
-    console.log('req.user:\n', req.user);
     const profile = await this.loginService.getProfile(req.user);
     if (!profile) {
       const errors: RMessage = {
@@ -73,8 +72,7 @@ export class LoginController {
     await this.manipulateMerchantUserUrl(profile);
 
     const user_role = await this.authInternalService.getMerchantUserRoleDetail(
-      // profile.role_id,
-      req.user.role_id,
+      profile.role_id,
     );
     // parse to new Response with additional attribute
     const result = new MerchantProfileResponse({
