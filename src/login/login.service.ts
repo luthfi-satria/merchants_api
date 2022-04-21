@@ -433,6 +433,10 @@ export class LoginService {
       removeAllFieldPassword(merchant_user);
       formatingAllOutputTime(merchant_user);
 
+      console.log('merchant_user:\n', merchant_user);
+      console.log('merchant_user store:\n', merchant_user.store);
+      console.log('merchant_user merchant:\n', merchant_user.merchant);
+
       //Checking Multilevel
       if (user.level == 'store' && !merchant_user.store) {
         merchant_user.store =
