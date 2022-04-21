@@ -52,6 +52,7 @@ export class LoginController {
   @UserType('merchant')
   @AuthJwtGuard()
   async profile(@Req() req: any) {
+    console.log('req.user:\n', req.user);
     const profile = await this.loginService.getProfile(req.user);
     if (!profile) {
       const errors: RMessage = {
