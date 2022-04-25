@@ -706,10 +706,12 @@ export class MerchantsService {
               })
               .orWhere('mc_group.name ilike :gname', {
                 gname: '%' + search + '%',
-              })
-              .orWhere('mc_group.category::text ilike :gcat', {
+              });
+            if (!data.group_category) {
+              query.orWhere('mc_group.category::text ilike :gcat', {
                 gcat: '%' + search + '%',
               });
+            }
           }
         }),
       );
