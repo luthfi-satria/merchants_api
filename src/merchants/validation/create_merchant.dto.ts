@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsBooleanString,
   IsEmail,
   IsIn,
@@ -78,6 +80,9 @@ export class CreateMerchantDTO {
   @IsOptional()
   is_manual_refund_enabled: boolean;
 
+  @IsOptional()
+  is_pos_rounded_payment: boolean;
+
   @IsNotEmpty({ message: 'Pic Name harus diisi' })
   @IsString()
   pic_name: string;
@@ -99,6 +104,11 @@ export class CreateMerchantDTO {
   @IsNotEmpty({ message: 'Pic Password harus diisi' })
   @IsString()
   pic_password: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  @Type(() => Boolean)
+  pic_is_multilevel_login: boolean;
 
   @IsNotEmpty()
   @IsIn(Object.values(MerchantStatus))

@@ -26,7 +26,15 @@ import {
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { dbOutputTime, deleteCredParam } from 'src/utils/general-utils';
-import { Brackets, Like, Repository, UpdateResult } from 'typeorm';
+import {
+  Brackets,
+  FindOperator,
+  ILike,
+  Like,
+  Not,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { StoreOperationalService } from './stores-operational.service';
 import { UpdateStoreCategoriesValidation } from './validation/update-store-categories.validation';
@@ -272,10 +280,40 @@ export class StoresService {
     return addons;
   }
 
+  async validateStoreUniqueName(
+    name: string,
+    id?: string,
+  ): Promise<StoreDocument> {
+    const where: { name: FindOperator<string>; id?: FindOperator<string> } = {
+      name: ILike(name),
+    };
+    if (id) {
+      where.id = Not(id);
+    }
+    const cekStoreName = await this.storeRepository.findOne({
+      where,
+    });
+    if (cekStoreName) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: name,
+            property: 'name',
+            constraint: [this.messageService.get('merchant.general.nameExist')],
+          },
+          'Bad Request',
+        ),
+      );
+    }
+    return cekStoreName;
+  }
+
   async createMerchantStoreProfile(
     create_merchant_store_validation: CreateMerchantStoreValidation,
     user: Record<string, any>,
   ): Promise<StoreDocument> {
+    await this.validateStoreUniqueName(create_merchant_store_validation.name);
     const store_document: Partial<StoreDocument> = {};
     Object.assign(store_document, create_merchant_store_validation);
 
@@ -417,6 +455,10 @@ export class StoresService {
     update_merchant_store_validation: UpdateMerchantStoreValidation,
     user: Record<string, any>,
   ): Promise<StoreDocument> {
+    await this.validateStoreUniqueName(
+      update_merchant_store_validation.name,
+      update_merchant_store_validation.id,
+    );
     const store_document: StoreDocument =
       await this.getAndValidateStoreByStoreId(
         update_merchant_store_validation.id,
@@ -1305,6 +1347,29 @@ export class StoresService {
       .where('ms.status = :sstat', { sstat: 'ACTIVE' })
       .andWhere('merchant.status = :mstat', { mstat: 'ACTIVE' })
       .andWhere('group.status = :gstat', { gstat: 'ACTIVE' })
+      .andWhere('ms.id = :mid', {
+        mid: store_id,
+      });
+
+    try {
+      return await store.getOne();
+    } catch (error) {
+      console.error(
+        '===========================Start Database error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Database error==================================',
+      );
+    }
+  }
+
+  async findStoreLevelWithoutStatus(store_id: string): Promise<StoreDocument> {
+    const store = this.storeRepository
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
+      .leftJoinAndSelect('ms.merchant', 'merchant')
+      .leftJoinAndSelect('merchant.group', 'group')
       .andWhere('ms.id = :mid', {
         mid: store_id,
       });

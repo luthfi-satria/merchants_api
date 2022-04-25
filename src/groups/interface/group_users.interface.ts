@@ -18,4 +18,6 @@ export interface GroupUser {
   role_id: string;
 
   status: MerchantUsersStatus;
+
+  is_multilevel_login: boolean;
 }

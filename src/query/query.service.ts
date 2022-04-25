@@ -22,7 +22,11 @@ import {
   RSuccessMessage,
 } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
-import { dbOutputTime, getDistanceInKilometers } from 'src/utils/general-utils';
+import {
+  cleanSearchString,
+  dbOutputTime,
+  getDistanceInKilometers,
+} from 'src/utils/general-utils';
 import { Brackets, OrderByCondition, Repository } from 'typeorm';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
@@ -109,12 +113,17 @@ export class QueryService {
         Object.assign(OrderQuery, {
           'merchant_store.numorders': order || 'ASC',
         });
+        Object.assign(OrderQuery, {
+          distance_in_km: 'ASC',
+        });
         break;
       default:
+        Object.assign(OrderQuery, {
+          distance_in_km: 'ASC',
+        });
+        break;
     }
-    Object.assign(OrderQuery, {
-      distance_in_km: 'ASC',
-    });
+
     return OrderQuery;
   }
 
@@ -759,8 +768,7 @@ export class QueryService {
               );
             }
           }),
-        )
-        .orderBy(OrderFilter);
+        );
 
       if (options.fetch_using_ids) {
         if (options.fetch_using_ids.length) {
@@ -774,22 +782,25 @@ export class QueryService {
         query1.skip((currentPage - 1) * perPage).take(perPage);
       }
 
-      const qlistStore = await query1.getManyAndCount().catch((e) => {
-        Logger.error(e.message, '', 'QueryListStore');
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: '',
-              property: '',
-              constraint: [
-                this.messageService.get('merchant.liststore.not_found'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
-      });
+      const qlistStore = await query1
+        .orderBy(OrderFilter)
+        .getManyAndCount()
+        .catch((e) => {
+          Logger.error(e.message, '', 'QueryListStore');
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: '',
+                property: '',
+                constraint: [
+                  this.messageService.get('merchant.liststore.not_found'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        });
       let storeItems = qlistStore[0];
       let totalItems = qlistStore[1];
       if (favoriteStore) {
@@ -1278,12 +1289,16 @@ export class QueryService {
         (item) => item.priority !== 4,
       );
 
-      stores_with_menus.sort(
-        (a, b) =>
-          a.priority * 100 +
-          a.distance_in_km -
-          (b.priority * 100 + b.distance_in_km),
-      );
+      if (sort === 'price') {
+        stores_with_menus.sort((a, b) => a.average_price - b.average_price);
+      } else {
+        stores_with_menus.sort(
+          (a, b) =>
+            a.priority * 100 +
+            a.distance_in_km -
+            (b.priority * 100 + b.distance_in_km),
+        );
+      }
 
       listStores.data.total_item = stores_with_menus.length;
 
@@ -1295,7 +1310,7 @@ export class QueryService {
       if (user) {
         const historyKeyword: Partial<SearchHistoryKeywordDocument> = {
           customer_id: user.id,
-          keyword: data.search,
+          keyword: cleanSearchString(data.search),
           lang: lang,
         };
         await this.searchHistoryKeywordDocument.save(historyKeyword);

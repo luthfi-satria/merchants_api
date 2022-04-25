@@ -1,7 +1,10 @@
+import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsBooleanString,
   IsEmail,
   IsIn,
+  IsNotEmpty,
   IsNumberString,
   IsOptional,
   IsString,
@@ -79,6 +82,14 @@ export class UpdateMerchantDTO {
   is_manual_refund_enabled: boolean;
 
   @IsOptional()
+  is_pos_rounded_payment: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  pic_is_multilevel_login: boolean;
+
+  @IsOptional()
   @IsString()
   pic_name: string;
 
@@ -121,4 +132,7 @@ export class UpdateStoreSettingsDTO {
 
   @IsOptional()
   is_manual_refund_enabled: boolean;
+
+  @IsOptional()
+  is_pos_rounded_payment: boolean;
 }

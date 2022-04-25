@@ -26,7 +26,12 @@ export const editFileName = (req: any, file: any, callback: any) => {
 };
 
 export const imageJpgPngFileFilter = (req: any, file: any, callback) => {
-  if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+  if (
+    !file.originalname.match(/\.(jpg|jpeg|png)$/) &&
+    !file.mimetype.includes('png') &&
+    !file.mimetype.includes('jpg') &&
+    !file.mimetype.includes('jpeg')
+  ) {
     if (!req.fileValidationError) {
       req.fileValidationError = [];
     }
@@ -64,7 +69,13 @@ export const imageFileFilter = (req: any, file: any, callback) => {
 };
 
 export const imageAndPdfFileFilter = (req: any, file: any, callback) => {
-  if (!file.originalname.match(/\.(jpg|jpeg|png|pdf)$/)) {
+  if (
+    !file.originalname.match(/\.(jpg|jpeg|png|pdf)$/) &&
+    !file.mimetype.includes('png') &&
+    !file.mimetype.includes('jpg') &&
+    !file.mimetype.includes('jpeg') &&
+    !file.mimetype.includes('pdf')
+  ) {
     if (!req.fileValidationError) {
       req.fileValidationError = [];
     }
@@ -312,4 +323,9 @@ export const generateSmsResetPassword = async (
     name || 'User'
   }!\n\nUntuk mengubah Kata Sandi Anda, Klik link berikut: ${shortLink} .\nJANGAN BAGIKAN LINK TERSEBUT KE SIAPAPUN termasuk eFOOD.\nWASPADA PENIPUAN!`;
   return message;
+};
+
+export const cleanSearchString = (search: string): string => {
+  if (!search) return search;
+  return search.toLowerCase().replace(/\s\s+/g, ' ');
 };

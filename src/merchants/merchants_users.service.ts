@@ -17,7 +17,6 @@ import { CommonStoresService } from 'src/common/own/stores.service';
 import { RoleDTO } from 'src/common/services/admins/dto/role.dto';
 import { RoleService } from 'src/common/services/admins/role.service';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
-// import { Hash } from 'src/hash/hash.decorator';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
 import { GroupsService } from 'src/groups/groups.service';
 import { HashService } from 'src/hash/hash.service';
@@ -824,6 +823,190 @@ export class MerchantUsersService {
       );
     }
     return merechant_user;
+  }
+
+  async getMerchantUserById(user: any): Promise<MerchantUsersDocument> {
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.group', 'merchant_group')
+      // get data group in merchant
+      .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+      .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+      // get data group in store
+      .leftJoinAndSelect('mu.store', 'merchant_store')
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+      .leftJoinAndSelect(
+        'merchant_store_merchant.group',
+        'merchant_store_merchant_group',
+      )
+      // get data group in stores (many-to-many)
+      .leftJoinAndSelect('mu.stores', 'user_stores')
+      .where('mu.id = :muid', { muid: user.id });
+
+    const merechant_user = await query.getOne();
+    if (!merechant_user) {
+      const errors: RMessage = {
+        value: '',
+        property: `${user.level}_id`,
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return merechant_user;
+  }
+
+  async getMerchantUserByLevelId(user: any): Promise<MerchantUsersDocument> {
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      // get data group in stores (many-to-many)
+      .leftJoinAndSelect('mu.stores', 'user_stores');
+
+    if (user && user.level == 'store') {
+      // get data group in store
+      query
+        .leftJoinAndSelect('mu.store', 'merchant_store')
+        .leftJoinAndSelect('merchant_store.merchant', 'merchant_store_merchant')
+        .leftJoinAndSelect(
+          'merchant_store_merchant.group',
+          'merchant_store_merchant_group',
+        )
+        .where(
+          new Brackets((queryBracket) => {
+            queryBracket.where('mu.store_id = :store_id', {
+              store_id: user.store_id,
+            });
+          }),
+        );
+    } else if (user && user.level == 'merchant') {
+      // get data group in merchant
+      query
+        .leftJoinAndSelect('mu.merchant', 'merchant_merchant')
+        .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
+        .where(
+          new Brackets((queryBracket) => {
+            queryBracket.where('mu.merchant_id = :merchant_id', {
+              merchant_id: user.merchant_id,
+            });
+          }),
+        );
+    } else if (user && user.level == 'group') {
+      query.leftJoinAndSelect('mu.group', 'merchant_group').where(
+        new Brackets((queryBracket) => {
+          queryBracket.where('mu.group_id = :group_id', {
+            group_id: user.group_id,
+          });
+        }),
+      );
+    }
+    const merechant_user = await query.getOne();
+    if (!merechant_user) {
+      const errors: RMessage = {
+        value: '',
+        property: `${user.level}_id`,
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return merechant_user;
+  }
+
+  async getMerchantUserGroupById(
+    user_id: string,
+    user?: any,
+  ): Promise<MerchantUsersDocument> {
+    const stat = 'ACTIVE';
+
+    const query = this.merchantUsersRepository
+      .createQueryBuilder('mu')
+      .leftJoinAndSelect('mu.group', 'group', 'group.status = :stat', {
+        stat,
+      })
+      .leftJoinAndSelect(
+        'group.merchants',
+        'gmerchant',
+        'gmerchant.status = :stat',
+        { stat },
+      )
+      .leftJoinAndSelect(
+        'gmerchant.stores',
+        'gmstore',
+        'gmstore.status = :stat',
+        { stat },
+      )
+      .leftJoinAndSelect('mu.merchant', 'merchant', 'merchant.status = :stat', {
+        stat,
+      })
+      .leftJoinAndSelect('merchant.stores', 'mstore', 'mstore.status = :stat', {
+        stat,
+      })
+      .leftJoinAndSelect('mu.store', 'store', 'store.status = :stat', {
+        stat,
+      })
+      .leftJoinAndSelect('mu.stores', 'user_stores')
+      .where('mu.id = :uid', { uid: user_id });
+
+    const merechant_user = await query.getOne();
+    if (!merechant_user) {
+      const errors: RMessage = {
+        value: user_id,
+        property: 'merchant_user_id',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    const merchantUser: any = JSON.parse(JSON.stringify(merechant_user));
+    if (merchantUser.group && merchantUser.group['__merchants__']) {
+      delete Object.assign(merchantUser.group, {
+        ['merchants']: merchantUser.group['__merchants__'],
+      })['__merchants__'];
+    }
+
+    if (merchantUser.stores.length == 0) {
+      if (merchantUser.group) {
+        if (
+          merchantUser.group.merchants &&
+          merchantUser.group.merchants.length
+        ) {
+          for (const merchant of merchantUser.group.merchants) {
+            if (merchant.stores && merchant.stores.length) {
+              for (const store of merchant.stores) {
+                merchantUser.stores.push(store);
+              }
+            }
+          }
+        }
+      } else if (merchantUser.merchant) {
+        if (
+          merchantUser.merchant.stores &&
+          merchantUser.merchant.stores.length
+        ) {
+          for (const store of merchantUser.merchant.stores) {
+            merchantUser.stores.push(store);
+          }
+        }
+      }
+    }
+
+    return merchantUser;
   }
 
   async resendEmailUser(user_id: string): Promise<RSuccessMessage> {

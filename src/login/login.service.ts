@@ -34,6 +34,7 @@ import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { StoresService } from 'src/stores/stores.service';
+import { MerchantsService } from 'src/merchants/merchants.service';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -58,6 +59,7 @@ export class LoginService {
     private readonly hashService: HashService,
     private readonly commonService: CommonService,
     private readonly storesService: StoresService,
+    private readonly merchantService: MerchantsService,
   ) {}
 
   async postHttp(
@@ -139,6 +141,7 @@ export class LoginService {
       store_id: storeID,
       roles: ['merchant'],
       otp_code: data.otp_code,
+      role_id: existMerchantUser.role_id,
     };
     const url: string =
       process.env.BASEURL_AUTH_SERVICE +
@@ -292,6 +295,7 @@ export class LoginService {
       store_id: storeID,
       roles: ['merchant'],
       otp_code: data.otp_code,
+      role_id: existMerchantUser.role_id,
     };
 
     const url: string =
@@ -375,6 +379,7 @@ export class LoginService {
       level: merchantLevel,
       id: merchantID,
       roles: ['merchant'],
+      role_id: existMerchantUser.role_id,
     };
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-login-phone';
@@ -616,6 +621,7 @@ export class LoginService {
       merchant_id: merchantID,
       store_id: storeID,
       roles: ['merchant'],
+      role_id: existMerchantUser.role_id,
     };
 
     const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/login';
@@ -786,6 +792,7 @@ export class LoginService {
       merchant_id: merchantID,
       store_id: storeID,
       roles: ['merchant'],
+      role_id: existMerchantUser.role_id,
     };
 
     const url = `${process.env.BASEURL_AUTH_SERVICE}/api/v1/auth/login`;
@@ -918,80 +925,6 @@ export class LoginService {
     const updateMerchantUser = await this.merchantUsersRepository.save(
       existUser,
     );
-    // const merchant: Record<string, any> =
-    //   user.level == 'group'
-    //     ? await this.groupRepository.findOne({
-    //         where: { id: existUser.group_id },
-    //       })
-    //     : user.level == 'merchant'
-    //     ? await this.merchantRepository.findOne({
-    //         where: { id: existUser.merchant_id },
-    //       })
-    //     : await this.storeRepository.findOne({
-    //         where: { id: existUser.store_id },
-    //       });
-    // console.log('merchant: ', merchant);
-    // if (merchant) {
-    //   if (user.level == 'group') {
-    //     if (existUser.email == merchant.director_email) {
-    //       await this.groupRepository.update(
-    //         { id: merchant.id },
-    //         {
-    //           director_name: updateMerchantUser.name,
-    //           director_nip: updateMerchantUser.nip,
-    //         },
-    //       );
-    //       existUser.group.director_name = updateMerchantUser.name;
-    //       existUser.group.director_nip = updateMerchantUser.nip;
-    //     } else if (existUser.email == merchant.pic_operational_email) {
-    //       await this.groupRepository.update(
-    //         { id: merchant.id },
-    //         {
-    //           pic_operational_name: updateMerchantUser.name,
-    //           pic_operational_nip: updateMerchantUser.nip,
-    //         },
-    //       );
-    //       existUser.group.pic_operational_name = updateMerchantUser.name;
-    //       existUser.group.pic_operational_nip = updateMerchantUser.nip;
-    //     } else {
-    //       await this.groupRepository.update(
-    //         { id: merchant.id },
-    //         {
-    //           pic_finance_name: updateMerchantUser.name,
-    //           pic_finance_nip: updateMerchantUser.nip,
-    //         },
-    //       );
-    //       existUser.group.pic_finance_name = updateMerchantUser.name;
-    //       existUser.group.pic_finance_nip = updateMerchantUser.nip;
-    //     }
-    //     deleteCredParam(existUser.group);
-    //   } else if (user.level == 'merchant') {
-    //     if (existUser.email == merchant.pic_email) {
-    //       await this.merchantRepository.update(
-    //         { id: merchant.id },
-    //         {
-    //           pic_name: updateMerchantUser.name,
-    //           pic_nip: updateMerchantUser.nip,
-    //         },
-    //       );
-    //       existUser.merchant.pic_name = updateMerchantUser.name;
-    //       existUser.merchant.pic_nip = updateMerchantUser.nip;
-    //     }
-    //     deleteCredParam(existUser.merchant);
-    //   } else if (user.level == 'store') {
-    //     if (existUser.email == merchant.email) {
-    //       const updateStoreData: Partial<StoreDocument> = {
-    //         id: merchant.id,
-    //         name: updateMerchantUser.name,
-    //       };
-    //       await this.storesService.updateStorePartial(updateStoreData);
-    //       existUser.store.name = updateMerchantUser.name;
-    //     }
-    //     deleteCredParam(existUser.store);
-    //   }
-    // }
-    // deleteCredParam(existUser);
-
     return updateMerchantUser;
   }
 

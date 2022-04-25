@@ -508,7 +508,7 @@ export class InternalService {
   }
 
   async findStoreLevel(store_id: string): Promise<StoreDocument> {
-    return this.storeService.findStoreLevel(store_id);
+    return this.storeService.findStoreLevelWithoutStatus(store_id);
   }
 
   async findStoreAutomaticRefund(): Promise<any> {

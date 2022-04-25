@@ -23,34 +23,49 @@ export class MenuOnlineService {
   ) {}
 
   async natsCreateStoreAvailability(data: any) {
+    console.log('natsCreateStoreAvailability:\n', data);
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       try {
-        const menuOnline = await this.menuOnlineRepository.findOne({
+        const menuOnlines = await this.menuOnlineRepository.find({
           where: {
             store_id: data.store_id,
             menu_id: data.menu_price.menu_menu.id,
-            menu_price_id: data.menu_price.id,
+            // menu_price_id: data.menu_price.id,
           },
         });
-        if (menuOnline) {
-          menuOnline.name = data.menu_price.menu_menu.name;
-          menuOnline.photo = data.menu_price.menu_menu.photo;
-          menuOnline.price = data.menu_price.price;
-          menuOnline.menu_store_id = data.id;
-          menuOnline.updated_at = new Date();
+        const menuOnlineData: Partial<MenuOnlineDocument> = {
+          menu_price_id: data.menu_price.id,
+          menu_id: data.menu_price.menu_menu.id,
+          name: data.menu_price.menu_menu.name,
+          photo: data.menu_price.menu_menu.photo,
+          price: data.menu_price.price,
+          store_id: data.store_id,
+        };
+        menuOnlineData.discounted_price = data.discounted_price
+          ? data.discounted_price
+          : null;
+        if (data.id) menuOnlineData.menu_store_id = data.id;
 
-          await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
+        if (menuOnlines) {
+          if (menuOnlines.length == 1) {
+            const menuOnline = menuOnlines[0];
+            menuOnline.name = data.menu_price.menu_menu.name;
+            menuOnline.photo = data.menu_price.menu_menu.photo;
+            menuOnline.price = data.menu_price.price;
+            menuOnline.menu_store_id = data.id;
+            menuOnline.updated_at = new Date();
+
+            await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
+          } else if (menuOnlines.length > 1) {
+            for (const menu_online of menuOnlines) {
+              if (menu_online.discounted_price) {
+                menuOnlineData.discounted_price = menu_online.discounted_price;
+              }
+              await this.menuOnlineRepository.softDelete(menu_online.id);
+            }
+            await this.menuOnlineRepository.save(menuOnlineData);
+          }
         } else {
-          const menuOnlineData: Partial<MenuOnlineDocument> = {
-            menu_store_id: data.id,
-            menu_price_id: data.menu_price.id,
-            menu_id: data.menu_price.menu_menu.id,
-            name: data.menu_price.menu_menu.name,
-            photo: data.menu_price.menu_menu.photo,
-            price: data.menu_price.price,
-            store_id: data.store_id,
-          };
-
           await this.menuOnlineRepository.save(menuOnlineData);
         }
       } catch (e) {
@@ -62,23 +77,37 @@ export class MenuOnlineService {
   }
 
   async natsUpdateStoreAvailabilityy(data: any) {
+    console.log('natsUpdateStoreAvailabilityy:\n', data);
     if (data.menu_price.menu_sales_channel.platform == 'ONLINE') {
       try {
-        const menuOnline = await this.menuOnlineRepository.findOne({
-          menu_store_id: data.id,
+        //Check By Menu
+        const menuOnlines = await this.menuOnlineRepository.find({
+          store_id: data.store_id,
+          menu_id: data.menu_price.menu_menu.id,
         });
 
-        if (menuOnline) {
-          menuOnline.store_id = data.store_id;
-          menuOnline.menu_price_id = data.menu_price.id;
-          menuOnline.menu_id = data.menu_price.menu_menu.id;
-          menuOnline.name = data.menu_price.menu_menu.name;
-          menuOnline.photo = data.menu_price.menu_menu.photo;
-          menuOnline.price = data.menu_price.price;
-          menuOnline.updated_at = new Date();
+        if (!menuOnlines) {
+          await this.natsCreateStoreAvailability(data);
+        } else if (menuOnlines.length == 1) {
+          menuOnlines[0].store_id = data.store_id;
+          menuOnlines[0].menu_price_id = data.menu_price.id;
+          menuOnlines[0].menu_id = data.menu_price.menu_menu.id;
+          menuOnlines[0].name = data.menu_price.menu_menu.name;
+          menuOnlines[0].photo = data.menu_price.menu_menu.photo;
+          menuOnlines[0].price = data.menu_price.price;
+          menuOnlines[0].updated_at = new Date();
 
-          await this.menuOnlineRepository.update(menuOnline.id, menuOnline);
-        } else {
+          await this.menuOnlineRepository.update(
+            menuOnlines[0].id,
+            menuOnlines[0],
+          );
+        } else if (menuOnlines.length > 1) {
+          for (const menu_online of menuOnlines) {
+            if (menu_online.discounted_price) {
+              data.discounted_price = menu_online.discounted_price;
+            }
+            await this.menuOnlineRepository.softDelete(menu_online.id);
+          }
           await this.natsCreateStoreAvailability(data);
         }
       } catch (e) {
