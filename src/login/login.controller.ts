@@ -72,6 +72,7 @@ export class LoginController {
     await this.manipulateMerchantUserUrl(profile);
 
     const user_role = await this.authInternalService.getMerchantUserRoleDetail(
+      // profile.role_id,
       req.user.role_id,
     );
     // parse to new Response with additional attribute
