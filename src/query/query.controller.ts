@@ -56,7 +56,7 @@ export class QueryController {
   async getstores(
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
-    console.log('data:\n', data);
+    console.log(new Date(), 'data:\n', data);
     return this.queryService.getListQueryStore(data, {}, true);
   }
 
