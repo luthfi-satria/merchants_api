@@ -555,6 +555,9 @@ export class QueryService {
       // Apply Price Range query filter
       const [is_filter_price, priceLow, priceHigh] =
         await this.getFilterPricesRange(data.price_range_id);
+      console.log(new Date(), 'is_filter_price: ', is_filter_price);
+      console.log(new Date(), 'priceLow: ', priceLow);
+      console.log(new Date(), 'priceHigh: ', priceHigh);
 
       // Apply Delivery Status filter
       let delivery_only;
@@ -594,6 +597,8 @@ export class QueryService {
       const [isBudgetEnable, budgetMaxValue] = await this.getBudgetMealMaxValue(
         data.budget_meal,
       );
+      console.log(new Date(), 'isBudgetEnable: ', isBudgetEnable);
+      console.log(new Date(), 'budgetMaxValue: ', budgetMaxValue);
 
       // Apply favorite store this week filter
       const favoriteStoreIds = [];
@@ -601,6 +606,7 @@ export class QueryService {
       if (data.favorite_this_week) {
         try {
           favoriteStore = await this.ordersService.getFavoriteStoreThisWeek();
+          console.log(new Date(), 'favoriteStore:\n', favoriteStore);
           for (let i = 0; i < favoriteStore.length; i++) {
             favoriteStoreIds.push(favoriteStore[i].store_id);
           }
@@ -801,6 +807,7 @@ export class QueryService {
             ),
           );
         });
+      console.log(new Date(), 'qlistStore:\n', qlistStore);
       let storeItems = qlistStore[0];
       let totalItems = qlistStore[1];
       if (favoriteStore) {
@@ -935,7 +942,7 @@ export class QueryService {
         }),
       );
       const formattedArr = [];
-
+      console.log(new Date(), 'formattedStoredItems:\n', formattedStoredItems);
       if (data.favorite_this_week) {
         formattedStoredItems.sort((a, b) => {
           if (a.distance_in_km < b.distance_in_km) {
@@ -965,13 +972,14 @@ export class QueryService {
           formattedArr.push(element);
         }
       });
-
+      console.log(new Date(), 'formattedArr:\n', formattedArr);
       const list_result: ListResponse = {
         total_item: totalItems,
         limit: Number(perPage),
         current_page: Number(currentPage),
         items: formattedArr,
       };
+      console.log(new Date(), 'list_result:\n', list_result);
 
       return this.responseService.success(
         true,
