@@ -270,7 +270,7 @@ export class InternalService {
           });
         }
 
-        if (data.options.is_include_city && element.city_id) {
+        if (data?.options?.is_include_city && element.city_id) {
           cityObj[element.city_id] = null;
         }
 
@@ -280,7 +280,7 @@ export class InternalService {
         await this.groupService.manipulateGroupUrl(element.merchant.group);
       }
 
-      if (data.options.is_include_city) {
+      if (data?.options?.is_include_city) {
         const { data: cities } = await this.cityService.getCityBulk(
           Object.keys(cityObj),
         );
