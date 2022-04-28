@@ -673,6 +673,7 @@ export class MerchantUsersService {
     const result: Record<string, any> = await this.merchantUsersRepository.save(
       args,
     );
+    console.log('result:\n', result);
     const url = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${result.token_reset_password}`;
 
     if (process.env.NODE_ENV == 'test') {
