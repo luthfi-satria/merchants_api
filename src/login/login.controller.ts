@@ -71,10 +71,8 @@ export class LoginController {
     }
     await this.manipulateMerchantUserUrl(profile);
 
-    let roleId = profile.role_id;
-    if (req.user.role_id) roleId = req.user.role_id;
     const user_role = await this.authInternalService.getMerchantUserRoleDetail(
-      roleId,
+      req.user.role_id,
     );
     // parse to new Response with additional attribute
     const result = new MerchantProfileResponse({
