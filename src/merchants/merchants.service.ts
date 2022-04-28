@@ -422,7 +422,7 @@ export class MerchantsService {
         existMerchant.pic_is_multilevel_login = data.pic_is_multilevel_login;
       }
 
-      if (!data.pic_is_multilevel_login)
+      if (!data.pic_is_multilevel_login && existMerchant.users.length > 0)
         await this.merchantUserService.checkExistEmailPhone(
           data.pic_email,
           data.pic_phone,
