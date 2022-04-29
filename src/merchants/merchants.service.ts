@@ -456,7 +456,10 @@ export class MerchantsService {
           existMerchant.id,
           enumStoreStatus.active,
         );
-        if (oldStatus == MerchantStatus.Draft) {
+        if (
+          oldStatus == MerchantStatus.Draft ||
+          oldStatus == MerchantStatus.Waiting_for_approval
+        ) {
           if (existMerchant.users[0]) {
             if (!pic_is_multilevel_login) {
               existMerchant.users[0].name = data.pic_name;
