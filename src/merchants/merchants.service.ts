@@ -115,6 +115,7 @@ export class MerchantsService {
     data: CreateMerchantDTO,
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
+    const pic_is_director = data.pic_is_director == 'true' ? true : false;
     const pic_is_multilevel_login =
       data.pic_is_multilevel_login == 'true' ? true : false;
     console.log('data:\n', data);
@@ -123,7 +124,7 @@ export class MerchantsService {
     const cekphone: MerchantDocument = await this.merchantRepository.findOne({
       where: { pic_phone: data.pic_phone },
     });
-    if (cekphone && !pic_is_multilevel_login) {
+    if (cekphone && !pic_is_director) {
       const errors: RMessage = {
         value: data.pic_phone,
         property: 'pic_phone',
@@ -218,8 +219,8 @@ export class MerchantsService {
       );
     }
 
-    console.log('data.pic_is_multilevel_login:\n', pic_is_multilevel_login);
-    if (!pic_is_multilevel_login)
+    console.log('data.pic_is_director:\n', pic_is_director);
+    if (!pic_is_director)
       await this.merchantUserService.checkExistEmailPhone(
         data.pic_email,
         data.pic_phone,
@@ -300,8 +301,8 @@ export class MerchantsService {
           break;
       }
 
-      console.log('data.pic_is_multilevel_login:\n', pic_is_multilevel_login);
-      if (!pic_is_multilevel_login) {
+      console.log('data.pic_is_director:\n', pic_is_director);
+      if (!pic_is_director) {
         const result =
           await this.merchantUserService.createMerchantUsersFromMerchant(
             createMerchantUser,
@@ -348,6 +349,7 @@ export class MerchantsService {
     data: UpdateMerchantDTO,
   ): Promise<RSuccessMessage> {
     try {
+      const pic_is_director = data.pic_is_director == 'true' ? true : false;
       const pic_is_multilevel_login =
         data.pic_is_multilevel_login == 'true' ? true : false;
       await this.validateMerchantUniqueName(data.name, data.id);
@@ -432,7 +434,7 @@ export class MerchantsService {
         existMerchant.pic_is_multilevel_login = pic_is_multilevel_login;
       }
 
-      if (!pic_is_multilevel_login && existMerchant.users.length > 0)
+      if (!pic_is_director && existMerchant.users.length > 0)
         await this.merchantUserService.checkExistEmailPhone(
           data.pic_email,
           data.pic_phone,
@@ -461,7 +463,7 @@ export class MerchantsService {
           oldStatus == MerchantStatus.Waiting_for_approval
         ) {
           if (existMerchant.users[0]) {
-            if (!pic_is_multilevel_login) {
+            if (!pic_is_director) {
               existMerchant.users[0].name = data.pic_name;
               existMerchant.users[0].email = data.pic_email;
               existMerchant.users[0].phone = data.pic_phone;
@@ -474,7 +476,7 @@ export class MerchantsService {
             const specialRoles = await this.roleService.getSpecialRoleByCode(
               SpecialRoleCodes.brand_manager,
             );
-            if (!pic_is_multilevel_login) {
+            if (!pic_is_director) {
               const createMerchantUser: Partial<MerchantUsersDocument> = {
                 merchant_id: existMerchant.id,
                 name: data.pic_name,
@@ -503,7 +505,7 @@ export class MerchantsService {
         );
         if (oldStatus == MerchantStatus.Draft) {
           if (existMerchant.users[0]) {
-            if (!pic_is_multilevel_login) {
+            if (!pic_is_director) {
               existMerchant.users[0].name = data.pic_name;
               existMerchant.users[0].email = data.pic_email;
               existMerchant.users[0].phone = data.pic_phone;
@@ -516,7 +518,7 @@ export class MerchantsService {
             const specialRoles = await this.roleService.getSpecialRoleByCode(
               SpecialRoleCodes.brand_manager,
             );
-            if (!pic_is_multilevel_login) {
+            if (!pic_is_director) {
               const createMerchantUser: Partial<MerchantUsersDocument> = {
                 merchant_id: existMerchant.id,
                 name: data.pic_name,
@@ -557,7 +559,7 @@ export class MerchantsService {
       if (
         oldStatus == MerchantStatus.Draft &&
         oldPhone != data.pic_phone &&
-        !pic_is_multilevel_login
+        !pic_is_director
       ) {
         this.merchantUserService.resendPhoneUser(update.users[0].id);
       }
