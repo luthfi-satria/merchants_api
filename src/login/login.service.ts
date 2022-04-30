@@ -433,6 +433,18 @@ export class LoginService {
       removeAllFieldPassword(merchant_user);
       formatingAllOutputTime(merchant_user);
 
+      //Checking Multilevel
+      if (user.level == 'store' && !merchant_user.store) {
+        merchant_user.store =
+          await this.storesService.findStoreLevelWithoutStatus(user.store_id);
+      }
+      if (user.level == 'merchant' && !merchant_user.merchant) {
+        merchant_user.merchant =
+          await this.merchantService.getMerchantRelationGroupById(
+            user.merchant_id,
+          );
+      }
+
       return merchant_user;
     } catch (err) {
       throw new BadRequestException(
