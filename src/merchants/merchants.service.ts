@@ -562,7 +562,8 @@ export class MerchantsService {
       if (
         oldStatus == MerchantStatus.Draft &&
         oldPhone != data.pic_phone &&
-        !pic_is_director
+        !pic_is_director &&
+        update.users.length > 0
       ) {
         this.merchantUserService.resendPhoneUser(update.users[0].id);
       }
