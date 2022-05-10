@@ -477,6 +477,9 @@ export class MerchantsService {
               SpecialRoleCodes.brand_manager,
             );
             if (!pic_is_director) {
+              console.log(existMerchant, `=> exist merchant`);
+              console.log(data, `=> data`);
+
               const createMerchantUser: Partial<MerchantUsersDocument> = {
                 merchant_id: existMerchant.id,
                 name: data.pic_name,
