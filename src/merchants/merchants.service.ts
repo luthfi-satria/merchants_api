@@ -482,11 +482,11 @@ export class MerchantsService {
 
               const createMerchantUser: Partial<MerchantUsersDocument> = {
                 merchant_id: existMerchant.id,
-                name: data.pic_name,
-                phone: data.pic_phone,
-                email: data.pic_email,
-                password: data.pic_password,
-                nip: data.pic_nip,
+                name: data.pic_name || existMerchant.pic_name,
+                phone: data.pic_phone || existMerchant.pic_phone,
+                email: data.pic_email || existMerchant.pic_email,
+                password: data.pic_password || existMerchant.pic_password,
+                nip: data.pic_nip || existMerchant.pic_nip,
                 role_id: specialRoles.role_id,
               };
 
