@@ -316,6 +316,16 @@ export class InternalService {
     }
   }
 
+  async listGroups(data: any): Promise<any> {
+    try {
+      const ids = data.group_ids?.length ? data.group_ids : null;
+
+      return this.groupService.listGroupsByIds(ids);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async findMerchantbyId(id: string): Promise<MerchantDocument> {
     return this.merchantRepository
       .findOne({
