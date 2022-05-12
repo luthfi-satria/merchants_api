@@ -904,6 +904,8 @@ export class MerchantsService {
         where: { id: merchantId },
         relations: ['users', 'group', 'stores'],
       });
+      console.log(cekMerchantId);
+
       if (!cekMerchantId) {
         throw new BadRequestException(
           this.responseService.error(
