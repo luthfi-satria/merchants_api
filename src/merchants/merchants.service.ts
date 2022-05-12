@@ -605,15 +605,17 @@ export class MerchantsService {
 
     return this.merchantRepository
       .softDelete(merchant.id)
-      .then(() => {
+      .then(async () => {
         this.natsService.clientEmit('merchants.merchant.deleted', merchant);
-        const user = this.merchantUsersRepository.findOne({
+        const user = await this.merchantUsersRepository.findOne({
           merchant_id: data,
         });
         console.log(user, '=> user');
 
         if (user) {
-          return this.merchantUsersRepository.softDelete({ merchant_id: data });
+          return await this.merchantUsersRepository.softDelete({
+            merchant_id: data,
+          });
         }
       })
       .catch((err) => {
