@@ -605,7 +605,7 @@ export class MerchantsService {
 
     return this.merchantRepository
       .softDelete(merchant.id)
-      .then(async () => {
+      .then(async (result) => {
         this.natsService.clientEmit('merchants.merchant.deleted', merchant);
         const user = await this.merchantUsersRepository.findOne({
           merchant_id: data,
@@ -613,10 +613,12 @@ export class MerchantsService {
         console.log(user, '=> user');
 
         if (user) {
-          return await this.merchantUsersRepository.softDelete({
+          await this.merchantUsersRepository.softDelete({
             merchant_id: data,
           });
         }
+
+        return result;
       })
       .catch((err) => {
         console.log(err);
