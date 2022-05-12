@@ -603,7 +603,12 @@ export class MerchantsService {
       .softDelete(merchant.id)
       .then(() => {
         this.natsService.clientEmit('merchants.merchant.deleted', merchant);
-        return this.merchantUsersRepository.softDelete({ merchant_id: data });
+        const user = this.merchantUsersRepository.findOne({
+          merchant_id: data,
+        });
+        if (user) {
+          return this.merchantUsersRepository.softDelete({ merchant_id: data });
+        }
       })
       .catch(() => {
         const errors: RMessage = {
