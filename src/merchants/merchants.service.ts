@@ -598,7 +598,11 @@ export class MerchantsService {
   }
 
   async deleteMerchantMerchantProfile(data: string): Promise<any> {
+    console.log('before here');
+
     const merchant = await this.getAndValidateMerchantById(data);
+    console.log('cek here');
+
     return this.merchantRepository
       .softDelete(merchant.id)
       .then(() => {
@@ -612,7 +616,9 @@ export class MerchantsService {
           return this.merchantUsersRepository.softDelete({ merchant_id: data });
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.log(err);
+
         const errors: RMessage = {
           value: data,
           property: 'id',
