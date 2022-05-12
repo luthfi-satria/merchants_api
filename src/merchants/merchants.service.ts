@@ -606,6 +606,8 @@ export class MerchantsService {
         const user = this.merchantUsersRepository.findOne({
           merchant_id: data,
         });
+        console.log(user, '=> user');
+
         if (user) {
           return this.merchantUsersRepository.softDelete({ merchant_id: data });
         }
