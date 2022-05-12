@@ -921,6 +921,8 @@ export class MerchantsService {
       }
       return cekMerchantId;
     } catch (error) {
+      console.log(error);
+
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
