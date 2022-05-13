@@ -25,6 +25,7 @@ import { isDefined } from 'class-validator';
 import { MerchantStoresDto } from './dto/merchant_stores.dto';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { GroupsService } from 'src/groups/groups.service';
+import { CityService } from 'src/common/services/admins/city.service';
 
 @Injectable()
 export class InternalService {
@@ -46,6 +47,7 @@ export class InternalService {
     private readonly storeCategoryService: StoreCategoriesService,
     private readonly merchantService: MerchantsService,
     private readonly groupService: GroupsService,
+    private readonly cityService: CityService,
   ) {}
 
   async updateRatingStore(id, data) {
@@ -255,6 +257,7 @@ export class InternalService {
         console.error('err ', err);
       });
       const list = await store.getMany();
+      const cityObj = {};
 
       // list.forEach(async (element) => {
       for (const element of list) {
@@ -267,10 +270,28 @@ export class InternalService {
           });
         }
 
+        if (data?.options?.is_include_city && element.city_id) {
+          cityObj[element.city_id] = null;
+        }
+
         // return row;
         await this.storeService.manipulateStoreUrl(element);
         await this.merchantService.manipulateMerchantUrl(element.merchant);
         await this.groupService.manipulateGroupUrl(element.merchant.group);
+      }
+
+      if (data?.options?.is_include_city) {
+        const { data: cities } = await this.cityService.getCityBulk(
+          Object.keys(cityObj),
+        );
+
+        for (const city of cities) {
+          cityObj[city.id] = city;
+        }
+
+        list.forEach((item) => {
+          item.city = cityObj[item.city_id];
+        });
       }
 
       const response = {
@@ -292,6 +313,16 @@ export class InternalService {
         error,
         '\n============================End Database error==================================',
       );
+    }
+  }
+
+  async listGroups(data: any): Promise<any> {
+    try {
+      const ids = data.group_ids?.length ? data.group_ids : null;
+
+      return this.groupService.listGroupsByIds(ids);
+    } catch (error) {
+      throw error;
     }
   }
 
