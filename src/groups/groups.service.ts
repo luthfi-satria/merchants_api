@@ -12,7 +12,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { GroupDocument, GroupStatus } from 'src/database/entities/group.entity';
-import { Brackets, FindOperator, ILike, Like, Not, Repository } from 'typeorm';
+import {
+  Any,
+  Brackets,
+  FindOperator,
+  ILike,
+  Like,
+  Not,
+  Repository,
+} from 'typeorm';
 import { AxiosResponse } from 'axios';
 import { RMessage, RSuccessMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
@@ -67,6 +75,41 @@ export class GroupsService {
 
   async findGroupById(id: string): Promise<GroupDocument> {
     return this.groupRepository.findOne({ id: id });
+  }
+
+  async listGroupsByIds(ids: string[]): Promise<any> {
+    try {
+      if (!ids?.length) {
+        return {
+          total_item: 0,
+          items: [],
+        };
+      }
+      const [groups, count] = await this.groupRepository.findAndCount({
+        where: { id: Any([ids]) },
+      });
+
+      if (!groups) {
+        return {
+          total_item: count,
+          items: [],
+        };
+      }
+
+      for (const element of groups) {
+        deleteCredParam(element);
+
+        await this.manipulateGroupUrl(element);
+      }
+
+      return {
+        total_item: count,
+        items: groups,
+      };
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 
   async findGroupByPhone(phone: string): Promise<GroupDocument> {
@@ -171,7 +214,7 @@ export class GroupsService {
           code: SpecialRoleCodes.corporate_director,
         }).role.id,
         status: MerchantUsersStatus.Active,
-        is_multilevel_login: createGroupDTO.director_is_multilevel_login
+        is_multilevel_login: createGroupDTO.director_is_multilevel_login,
       };
       // role jika pic_operational & pic_finance sama dengan directur
       if (array_phone.includes(createGroupDTO.pic_operational_phone)) {
@@ -196,7 +239,8 @@ export class GroupsService {
             code: SpecialRoleCodes.corporate_operational,
           }).role.id,
           status: MerchantUsersStatus.Active,
-          is_multilevel_login: createGroupDTO.pic_operational_is_multilevel_login
+          is_multilevel_login:
+            createGroupDTO.pic_operational_is_multilevel_login,
         };
         // role jika pic_operational & pic_finance sama tetapi berbeda dengan directur
         if (
@@ -225,7 +269,7 @@ export class GroupsService {
             code: SpecialRoleCodes.corporate_finance,
           }).role.id,
           status: MerchantUsersStatus.Active,
-          is_multilevel_login: createGroupDTO.pic_finance_is_multilevel_login
+          is_multilevel_login: createGroupDTO.pic_finance_is_multilevel_login,
         };
         const pic_finance = await this.groupUserService.createUserPassword(
           create_pic_finance,

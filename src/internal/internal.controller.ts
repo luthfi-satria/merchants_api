@@ -86,6 +86,16 @@ export class InternalController {
     return this.internalService.listStores(data);
   }
 
+  @Get('merchants/groups')
+  @ResponseStatusCode()
+  async listGroups(@Query() data: any): Promise<any> {
+    try {
+      return this.internalService.listGroups(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   @Post('merchants/stores/rating/:id')
   @ResponseStatusCode()
   async updateRatingStore(
