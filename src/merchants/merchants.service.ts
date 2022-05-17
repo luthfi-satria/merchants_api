@@ -115,12 +115,16 @@ export class MerchantsService {
     data: CreateMerchantDTO,
     user: Record<string, any>,
   ): Promise<RSuccessMessage> {
+    const pic_is_director = data.pic_is_director == 'true' ? true : false;
+    const pic_is_multilevel_login =
+      data.pic_is_multilevel_login == 'true' ? true : false;
+    console.log('data:\n', data);
     await this.validateMerchantUniqueName(data.name);
     await this.validateMerchantUniquePhone(data.phone);
     const cekphone: MerchantDocument = await this.merchantRepository.findOne({
       where: { pic_phone: data.pic_phone },
     });
-    if (cekphone && !data.pic_is_multilevel_login) {
+    if (cekphone && !pic_is_director) {
       const errors: RMessage = {
         value: data.pic_phone,
         property: 'pic_phone',
@@ -215,7 +219,8 @@ export class MerchantsService {
       );
     }
 
-    if (!data.pic_is_multilevel_login)
+    console.log('data.pic_is_director:\n', pic_is_director);
+    if (!pic_is_director)
       await this.merchantUserService.checkExistEmailPhone(
         data.pic_email,
         data.pic_phone,
@@ -242,7 +247,7 @@ export class MerchantsService {
       pic_email: data.pic_email,
       pic_password: data.pic_password,
       status: data.status,
-      pic_is_multilevel_login: data.pic_is_multilevel_login,
+      pic_is_multilevel_login: pic_is_multilevel_login,
     };
 
     merchantDTO.logo = data.logo ? data.logo : '';
@@ -296,7 +301,8 @@ export class MerchantsService {
           break;
       }
 
-      if (!data.pic_is_multilevel_login) {
+      console.log('data.pic_is_director:\n', pic_is_director);
+      if (!pic_is_director) {
         const result =
           await this.merchantUserService.createMerchantUsersFromMerchant(
             createMerchantUser,
@@ -305,6 +311,7 @@ export class MerchantsService {
         create.user = result;
         deleteCredParam(create);
       }
+      console.log('after result');
 
       const pclogdata = {
         id: create.id,
@@ -314,6 +321,8 @@ export class MerchantsService {
       await this.manipulateMerchantUrl(create);
       if (create.group)
         await this.groupsService.manipulateGroupUrl(create.group);
+
+      console.log('create:\n', create);
 
       return this.responseService.success(
         true,
@@ -340,6 +349,9 @@ export class MerchantsService {
     data: UpdateMerchantDTO,
   ): Promise<RSuccessMessage> {
     try {
+      const pic_is_director = data.pic_is_director == 'true' ? true : false;
+      const pic_is_multilevel_login =
+        data.pic_is_multilevel_login == 'true' ? true : false;
       await this.validateMerchantUniqueName(data.name, data.id);
       await this.validateMerchantUniquePhone(data.phone, data.id);
       const existMerchant: MerchantDocument =
@@ -351,7 +363,7 @@ export class MerchantsService {
         if (
           cekphone &&
           cekphone.pic_phone != existMerchant.pic_phone &&
-          !data.pic_is_multilevel_login
+          !pic_is_multilevel_login
         ) {
           const errors: RMessage = {
             value: data.pic_phone,
@@ -418,11 +430,11 @@ export class MerchantsService {
       if (data.pb1_tariff) {
         existMerchant.pb1_tariff = data.pb1_tariff;
       }
-      if (typeof data.pic_is_multilevel_login != 'undefined') {
-        existMerchant.pic_is_multilevel_login = data.pic_is_multilevel_login;
+      if (typeof pic_is_multilevel_login != 'undefined') {
+        existMerchant.pic_is_multilevel_login = pic_is_multilevel_login;
       }
 
-      if (!data.pic_is_multilevel_login)
+      if (!pic_is_director && existMerchant.users.length > 0)
         await this.merchantUserService.checkExistEmailPhone(
           data.pic_email,
           data.pic_phone,
@@ -446,9 +458,12 @@ export class MerchantsService {
           existMerchant.id,
           enumStoreStatus.active,
         );
-        if (oldStatus == MerchantStatus.Draft) {
+        if (
+          oldStatus == MerchantStatus.Draft ||
+          oldStatus == MerchantStatus.Waiting_for_approval
+        ) {
           if (existMerchant.users[0]) {
-            if (!data.pic_is_multilevel_login) {
+            if (!pic_is_director) {
               existMerchant.users[0].name = data.pic_name;
               existMerchant.users[0].email = data.pic_email;
               existMerchant.users[0].phone = data.pic_phone;
@@ -461,7 +476,7 @@ export class MerchantsService {
             const specialRoles = await this.roleService.getSpecialRoleByCode(
               SpecialRoleCodes.brand_manager,
             );
-            if (!data.pic_is_multilevel_login) {
+            if (!pic_is_director) {
               const createMerchantUser: Partial<MerchantUsersDocument> = {
                 merchant_id: existMerchant.id,
                 name: data.pic_name,
@@ -490,7 +505,7 @@ export class MerchantsService {
         );
         if (oldStatus == MerchantStatus.Draft) {
           if (existMerchant.users[0]) {
-            if (!data.pic_is_multilevel_login) {
+            if (!pic_is_director) {
               existMerchant.users[0].name = data.pic_name;
               existMerchant.users[0].email = data.pic_email;
               existMerchant.users[0].phone = data.pic_phone;
@@ -503,7 +518,7 @@ export class MerchantsService {
             const specialRoles = await this.roleService.getSpecialRoleByCode(
               SpecialRoleCodes.brand_manager,
             );
-            if (!data.pic_is_multilevel_login) {
+            if (!pic_is_director) {
               const createMerchantUser: Partial<MerchantUsersDocument> = {
                 merchant_id: existMerchant.id,
                 name: data.pic_name,
@@ -544,7 +559,7 @@ export class MerchantsService {
       if (
         oldStatus == MerchantStatus.Draft &&
         oldPhone != data.pic_phone &&
-        !data.pic_is_multilevel_login
+        !pic_is_director
       ) {
         this.merchantUserService.resendPhoneUser(update.users[0].id);
       }
@@ -706,10 +721,12 @@ export class MerchantsService {
               })
               .orWhere('mc_group.name ilike :gname', {
                 gname: '%' + search + '%',
-              })
-              .orWhere('mc_group.category::text ilike :gcat', {
+              });
+            if (!data.group_category) {
+              query.orWhere('mc_group.category::text ilike :gcat', {
                 gcat: '%' + search + '%',
               });
+            }
           }
         }),
       );

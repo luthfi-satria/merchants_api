@@ -106,9 +106,12 @@ export class CreateMerchantDTO {
   pic_password: string;
 
   @IsNotEmpty()
-  @IsBoolean()
-  @Type(() => Boolean)
-  pic_is_multilevel_login: boolean;
+  @IsString()
+  pic_is_multilevel_login: string;
+
+  @IsOptional()
+  @IsString()
+  pic_is_director: string;
 
   @IsNotEmpty()
   @IsIn(Object.values(MerchantStatus))
