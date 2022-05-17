@@ -3,6 +3,9 @@ pipeline {
 
   stages {
     stage('Build & Test') {
+      when {
+        branch "development"
+      }
       agent {
         docker {
           image 'node:14.17.0-alpine'
