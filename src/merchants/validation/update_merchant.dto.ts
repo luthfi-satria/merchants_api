@@ -90,6 +90,10 @@ export class UpdateMerchantDTO {
 
   @IsOptional()
   @IsString()
+  pic_is_director: string;
+
+  @IsOptional()
+  @IsString()
   pic_name: string;
 
   @IsOptional()
