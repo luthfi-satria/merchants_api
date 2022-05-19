@@ -501,8 +501,6 @@ export class StoresService {
       store_document.service_addons = await this.getAddonssBtIds(
         update_merchant_store_validation.service_addons,
       );
-    } else {
-      store_document.service_addons = [];
     }
 
     const cekmerchant: MerchantDocument =
