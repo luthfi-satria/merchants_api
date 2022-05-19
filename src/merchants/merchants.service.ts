@@ -477,13 +477,16 @@ export class MerchantsService {
               SpecialRoleCodes.brand_manager,
             );
             if (!pic_is_director) {
+              console.log(existMerchant, `=> exist merchant`);
+              console.log(data, `=> data`);
+
               const createMerchantUser: Partial<MerchantUsersDocument> = {
                 merchant_id: existMerchant.id,
-                name: data.pic_name,
-                phone: data.pic_phone,
-                email: data.pic_email,
-                password: data.pic_password,
-                nip: data.pic_nip,
+                name: data.pic_name || existMerchant.pic_name,
+                phone: data.pic_phone || existMerchant.pic_phone,
+                email: data.pic_email || existMerchant.pic_email,
+                password: data.pic_password || existMerchant.pic_password,
+                nip: data.pic_nip || existMerchant.pic_nip,
                 role_id: specialRoles.role_id,
               };
 
@@ -559,7 +562,8 @@ export class MerchantsService {
       if (
         oldStatus == MerchantStatus.Draft &&
         oldPhone != data.pic_phone &&
-        !pic_is_director
+        !pic_is_director &&
+        update.users.length > 0
       ) {
         this.merchantUserService.resendPhoneUser(update.users[0].id);
       }
@@ -594,14 +598,31 @@ export class MerchantsService {
   }
 
   async deleteMerchantMerchantProfile(data: string): Promise<any> {
+    console.log('before here');
+
     const merchant = await this.getAndValidateMerchantById(data);
+    console.log('cek here');
+
     return this.merchantRepository
       .softDelete(merchant.id)
-      .then(() => {
+      .then(async (result) => {
         this.natsService.clientEmit('merchants.merchant.deleted', merchant);
-        return this.merchantUsersRepository.softDelete({ merchant_id: data });
+        const user = await this.merchantUsersRepository.findOne({
+          merchant_id: data,
+        });
+        console.log(user, '=> user');
+
+        if (user) {
+          await this.merchantUsersRepository.softDelete({
+            merchant_id: data,
+          });
+        }
+
+        return result;
       })
-      .catch(() => {
+      .catch((err) => {
+        console.log(err);
+
         const errors: RMessage = {
           value: data,
           property: 'id',
@@ -887,6 +908,8 @@ export class MerchantsService {
         where: { id: merchantId },
         relations: ['users', 'group', 'stores'],
       });
+      console.log(cekMerchantId);
+
       if (!cekMerchantId) {
         throw new BadRequestException(
           this.responseService.error(
@@ -904,6 +927,8 @@ export class MerchantsService {
       }
       return cekMerchantId;
     } catch (error) {
+      console.log(error);
+
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,

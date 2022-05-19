@@ -176,6 +176,9 @@ export class MerchantsController {
     try {
       const result: DeleteResult =
         await this.merchantsService.deleteMerchantMerchantProfile(id);
+
+      console.log(result);
+
       if (result.raw.length == 0 && result.affected == 0) {
         const errors: RMessage = {
           value: id,
