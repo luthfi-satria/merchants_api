@@ -53,7 +53,7 @@ import { UsersService } from 'src/users/users.service';
 import { NatsService } from 'src/nats/nats.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
-import { isDefined } from 'class-validator';
+import { isDefined, isUUID } from 'class-validator';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 
 @Injectable()
@@ -258,24 +258,26 @@ export class StoresService {
   async getAddonssBtIds(ids: string[]): Promise<AddonDocument[]> {
     const addons: AddonDocument[] = [];
     for (const addon_id of ids) {
-      const addon = await this.addonService.findAddonById(addon_id);
-      if (!addon) {
-        throw new BadRequestException(
-          this.responseService.error(
-            HttpStatus.BAD_REQUEST,
-            {
-              value: addon_id,
-              property: 'service_addon',
-              constraint: [
-                this.messageService.get('merchant.createstore.addonid_unreg'),
-              ],
-            },
-            'Bad Request',
-          ),
-        );
+      if (isUUID(addon_id)) {
+        const addon = await this.addonService.findAddonById(addon_id);
+        if (!addon) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: addon_id,
+                property: 'service_addon',
+                constraint: [
+                  this.messageService.get('merchant.createstore.addonid_unreg'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        }
+        dbOutputTime(addon);
+        addons.push(addon);
       }
-      dbOutputTime(addon);
-      addons.push(addon);
     }
     return addons;
   }
@@ -492,10 +494,15 @@ export class StoresService {
         update_merchant_store_validation.category_ids,
       );
     }
-    if (update_merchant_store_validation.service_addons) {
+    if (
+      update_merchant_store_validation.service_addons &&
+      update_merchant_store_validation.service_addons.length > 0
+    ) {
       store_document.service_addons = await this.getAddonssBtIds(
         update_merchant_store_validation.service_addons,
       );
+    } else {
+      store_document.service_addons = [];
     }
 
     const cekmerchant: MerchantDocument =

@@ -60,7 +60,6 @@ export class StoresController {
     private readonly storage: CommonStorageService,
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
-    private readonly internalService: InternalService,
   ) {}
 
   @Post('stores')
