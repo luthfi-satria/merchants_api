@@ -9,6 +9,7 @@ import {
   Get,
   Query,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { GroupsService } from 'src/groups/groups.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
@@ -29,13 +30,18 @@ import { AuthInternalService } from 'src/internal/auth-internal.service';
 import { MerchantProfileResponse } from './types';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
-import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+import {
+  MerchantUsersDocument,
+  MerchantUsersStatus,
+} from 'src/database/entities/merchant_users.entity';
+import { MerchantUsersService } from 'src/merchants/merchants_users.service';
 
 @Controller('api/v1/merchants')
 export class LoginController {
   constructor(
     private readonly groupService: GroupsService,
     private readonly merchantService: MerchantsService,
+    private readonly merchantUserService: MerchantUsersService,
     private readonly storeService: StoresService,
     private readonly loginService: LoginService,
     private readonly authInternalService: AuthInternalService,
@@ -44,8 +50,29 @@ export class LoginController {
   ) {}
 
   @Post('login/refresh-token')
-  async refreshToken(@Headers('Authorization') token: string): Promise<any> {
-    return this.loginService.refreshToken(token);
+  @UserType('merchant')
+  @AuthJwtGuard()
+  async refreshToken(
+    @Headers('Authorization') token: string,
+    @Req() req: any,
+  ): Promise<any> {
+    const profile = await this.merchantUserService.findById(req.user.id);
+    if (profile.status != MerchantUsersStatus.Active) {
+      const errors: RMessage = {
+        value: profile.status,
+        property: 'status',
+        constraint: [this.messageService.get('auth.login.unactivedUser')],
+      };
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          errors,
+          'Unauthorized',
+        ),
+      );
+    }
+
+    return this.loginService.refreshToken(token, profile);
   }
 
   @Get('profile')

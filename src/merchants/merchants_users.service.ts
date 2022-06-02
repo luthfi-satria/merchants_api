@@ -81,6 +81,12 @@ export class MerchantUsersService {
     });
   }
 
+  async findById(id: string): Promise<MerchantUsersDocument> {
+    return this.merchantUsersRepository.findOne({
+      where: { id: id },
+    });
+  }
+
   async createMerchantUsers(
     args: CreateMerchantUsersValidation,
     user: any,
