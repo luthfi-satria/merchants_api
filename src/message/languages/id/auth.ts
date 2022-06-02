@@ -3,6 +3,18 @@ export default {
     success: 'Login Success.',
     phoneNotFound: 'Phone Number not found in our system',
     passwordNotMatch: 'Your password not match',
+    unactivedCashier: {
+      code: 'CASHIER_NOT_INUSE',
+      message: 'Cashier Sedang Tidak Bertugas.',
+    },
+    unactivedUser: {
+      code: 'USER_NOT_ACTIVE',
+      message: 'User Tidak Aktif.',
+    },
+    unfoundSpecialRole: {
+      code: 'SPECIAL_ROLE_NOT_FOUND',
+      message: 'Special Role tidak ditemukan.',
+    },
   },
   basicToken: {
     success: 'Login Basci Token Success',
