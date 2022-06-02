@@ -1107,25 +1107,6 @@ export class LoginService {
       );
     }
     const lang = 'id';
-
-    if (existMerchantUser.email_verified_at == null) {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: existMerchantUser.email,
-            property: 'email',
-            constraint: [
-              this.messageService.getLang(
-                `${lang}.merchant.general.unverifiedEmail`,
-              ),
-            ],
-          },
-          'Unauthorized',
-        ),
-      );
-    }
-
     let level = '';
     if (existMerchantUser.store_id != null) {
       if (existMerchantUser.store.status != 'ACTIVE') {
