@@ -49,4 +49,33 @@ export class OrdersService {
       }
     }
   }
+
+  async checkInuseStatus(user: any): Promise<CountOrdersStoresDTO[]> {
+    try {
+      const headerRequest = {
+        'Content-Type': 'application/json',
+      };
+      const url = `${process.env.BASEURL_ORDERS_SERVICE}/api/v1/orders/internal/cashier/inuse-status`;
+      const post_request = this.httpService
+        .post(url, user, { headers: headerRequest })
+        .pipe(
+          map((axiosResponse: AxiosResponse) => {
+            return axiosResponse.data;
+          }),
+        );
+      return await lastValueFrom(post_request);
+    } catch (e) {
+      this.logger.error(
+        `${process.env.BASEURL_ORDERS_SERVICE}/api/v1/orders/internal/cashier/inuse-status`,
+      );
+      if (e.response) {
+        throw new HttpException(
+          e.response.data.message,
+          e.response.data.statusCode,
+        );
+      } else {
+        throw new InternalServerErrorException();
+      }
+    }
+  }
 }

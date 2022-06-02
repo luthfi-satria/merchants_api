@@ -35,6 +35,11 @@ import { StoreDocument } from 'src/database/entities/store.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { StoresService } from 'src/stores/stores.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
+import {
+  RoleService,
+  SpecialRoleCodes,
+} from 'src/common/services/admins/role.service';
+import { OrdersService } from 'src/common/orders/orders.service';
 
 const defaultHeadersReq: Record<string, any> = {
   'Content-Type': 'application/json',
@@ -60,6 +65,8 @@ export class LoginService {
     private readonly commonService: CommonService,
     private readonly storesService: StoresService,
     private readonly merchantService: MerchantsService,
+    private readonly roleService: RoleService,
+    private readonly orderService: OrdersService,
   ) {}
 
   async postHttp(
@@ -940,7 +947,67 @@ export class LoginService {
     return updateMerchantUser;
   }
 
-  async refreshToken(token: string): Promise<any> {
+  async refreshToken(
+    token: string,
+    profile: MerchantUsersDocument,
+  ): Promise<any> {
+    //Compare role cashier
+    const cashierProfile = await this.roleService.getSpecialRoleByCode(
+      SpecialRoleCodes.store_cashier,
+    );
+    if (!cashierProfile) {
+      const errors: RMessage = {
+        value: SpecialRoleCodes.store_cashier,
+        property: 'special_role',
+        constraint: [this.messageService.get('auth.login.unfoundSpecialRole')],
+      };
+      throw new UnauthorizedException(
+        this.responseService.error(
+          HttpStatus.UNAUTHORIZED,
+          errors,
+          'Unauthorized',
+        ),
+      );
+    }
+    if (cashierProfile.role_id == profile.role_id) {
+      const user = {
+        id: profile.id,
+        store_id: profile.store_id,
+      };
+      try {
+        const inuseStatus = await this.orderService.checkInuseStatus(user);
+        if (!inuseStatus) {
+          const errors: RMessage = {
+            value: 'false',
+            property: 'cashier_inuse',
+            constraint: [
+              this.messageService.get('auth.login.unactivedCashier'),
+            ],
+          };
+          throw new UnauthorizedException(
+            this.responseService.error(
+              HttpStatus.UNAUTHORIZED,
+              errors,
+              'Unauthorized',
+            ),
+          );
+        }
+      } catch (e) {
+        const errors: RMessage = {
+          value: 'false',
+          property: 'cashier_inuse',
+          constraint: [this.messageService.get('auth.login.unactivedCashier')],
+        };
+        throw new UnauthorizedException(
+          this.responseService.error(
+            HttpStatus.UNAUTHORIZED,
+            errors,
+            'Unauthorized',
+          ),
+        );
+      }
+    }
+
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/refresh-token';
     const headersRequest: Record<string, any> = {
