@@ -951,62 +951,62 @@ export class LoginService {
     token: string,
     profile: MerchantUsersDocument,
   ): Promise<any> {
-    //Compare role cashier
-    const cashierProfile = await this.roleService.getSpecialRoleByCode(
-      SpecialRoleCodes.store_cashier,
-    );
-    if (!cashierProfile) {
-      const errors: RMessage = {
-        value: SpecialRoleCodes.store_cashier,
-        property: 'special_role',
-        constraint: [this.messageService.get('auth.login.unfoundSpecialRole')],
-      };
-      throw new UnauthorizedException(
-        this.responseService.error(
-          HttpStatus.UNAUTHORIZED,
-          errors,
-          'Unauthorized',
-        ),
-      );
-    }
-    if (cashierProfile.role_id == profile.role_id) {
-      const user = {
-        id: profile.id,
-        store_id: profile.store_id,
-      };
-      try {
-        const inuseStatus = await this.orderService.checkInuseStatus(user);
-        if (!inuseStatus) {
-          const errors: RMessage = {
-            value: 'false',
-            property: 'cashier_inuse',
-            constraint: [
-              this.messageService.get('auth.login.unactivedCashier'),
-            ],
-          };
-          throw new UnauthorizedException(
-            this.responseService.error(
-              HttpStatus.UNAUTHORIZED,
-              errors,
-              'Unauthorized',
-            ),
-          );
-        }
-      } catch (e) {
-        const errors: RMessage = {
-          value: 'false',
-          property: 'cashier_inuse',
-          constraint: [this.messageService.get('auth.login.unactivedCashier')],
-        };
-        throw new UnauthorizedException(
-          this.responseService.error(
-            HttpStatus.UNAUTHORIZED,
-            errors,
-            'Unauthorized',
-          ),
-        );
-      }
-    }
+    // //Compare role cashier
+    // const cashierProfile = await this.roleService.getSpecialRoleByCode(
+    //   SpecialRoleCodes.store_cashier,
+    // );
+    // if (!cashierProfile) {
+    //   const errors: RMessage = {
+    //     value: SpecialRoleCodes.store_cashier,
+    //     property: 'special_role',
+    //     constraint: [this.messageService.get('auth.login.unfoundSpecialRole')],
+    //   };
+    //   throw new UnauthorizedException(
+    //     this.responseService.error(
+    //       HttpStatus.UNAUTHORIZED,
+    //       errors,
+    //       'Unauthorized',
+    //     ),
+    //   );
+    // }
+    // if (cashierProfile.role_id == profile.role_id) {
+    //   const user = {
+    //     id: profile.id,
+    //     store_id: profile.store_id,
+    //   };
+    //   try {
+    //     const inuseStatus = await this.orderService.checkInuseStatus(user);
+    //     if (!inuseStatus) {
+    //       const errors: RMessage = {
+    //         value: 'false',
+    //         property: 'cashier_inuse',
+    //         constraint: [
+    //           this.messageService.get('auth.login.unactivedCashier'),
+    //         ],
+    //       };
+    //       throw new UnauthorizedException(
+    //         this.responseService.error(
+    //           HttpStatus.UNAUTHORIZED,
+    //           errors,
+    //           'Unauthorized',
+    //         ),
+    //       );
+    //     }
+    //   } catch (e) {
+    //     const errors: RMessage = {
+    //       value: 'false',
+    //       property: 'cashier_inuse',
+    //       constraint: [this.messageService.get('auth.login.unactivedCashier')],
+    //     };
+    //     throw new UnauthorizedException(
+    //       this.responseService.error(
+    //         HttpStatus.UNAUTHORIZED,
+    //         errors,
+    //         'Unauthorized',
+    //       ),
+    //     );
+    //   }
+    // }
 
     const url: string =
       process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/refresh-token';
