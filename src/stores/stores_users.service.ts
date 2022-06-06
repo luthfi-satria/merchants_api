@@ -183,6 +183,14 @@ export class StoreUsersService {
     createMerchantUser.token_reset_password = token;
 
     try {
+      //Cheking Env Bypass Verification
+      const bypassEnv = process.env.HERMES_USER_REGISTER_BYPASS;
+      const bypassUser = bypassEnv && bypassEnv == 'true' ? true : false;
+      if (bypassUser) {
+        createMerchantUser.email_verified_at = new Date();
+        createMerchantUser.phone_verified_at = new Date();
+      }
+
       const result: Record<string, any> =
         await this.merchantUsersRepository.save(createMerchantUser);
 
@@ -192,12 +200,14 @@ export class StoreUsersService {
         result.url = urlVerification;
       }
 
-      const smsMessage = await generateSmsUrlVerification(
-        createMerchantUser.name,
-        urlVerification,
-      );
+      if (!bypassUser) {
+        const smsMessage = await generateSmsUrlVerification(
+          createMerchantUser.name,
+          urlVerification,
+        );
 
-      this.notificationService.sendSms(createMerchantUser.phone, smsMessage);
+        this.notificationService.sendSms(createMerchantUser.phone, smsMessage);
+      }
 
       dbOutputTime(result);
       dbOutputTime(result.store);
