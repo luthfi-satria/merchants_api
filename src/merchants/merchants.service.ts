@@ -118,7 +118,6 @@ export class MerchantsService {
     const pic_is_director = data.pic_is_director == 'true' ? true : false;
     const pic_is_multilevel_login =
       data.pic_is_multilevel_login == 'true' ? true : false;
-    console.log('data:\n', data);
     await this.validateMerchantUniqueName(data.name);
     await this.validateMerchantUniquePhone(data.phone);
     const cekphone: MerchantDocument = await this.merchantRepository.findOne({
@@ -311,7 +310,6 @@ export class MerchantsService {
         create.user = result;
         deleteCredParam(create);
       }
-      console.log('after result');
 
       const pclogdata = {
         id: create.id,
@@ -321,8 +319,6 @@ export class MerchantsService {
       await this.manipulateMerchantUrl(create);
       if (create.group)
         await this.groupsService.manipulateGroupUrl(create.group);
-
-      console.log('create:\n', create);
 
       return this.responseService.success(
         true,
