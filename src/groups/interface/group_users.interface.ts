@@ -20,4 +20,8 @@ export interface GroupUser {
   status: MerchantUsersStatus;
 
   is_multilevel_login: boolean;
+
+  email_verified_at: Date;
+
+  phone_verified_at: Date;
 }

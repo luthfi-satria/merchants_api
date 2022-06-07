@@ -84,6 +84,14 @@ export class GroupUsersService {
 
   async createUserPassword(groupUser: Partial<GroupUser>) {
     groupUser.token_reset_password = randomUUID();
+
+    //Cheking Env Bypass Verification
+    const bypassEnv = process.env.HERMES_USER_REGISTER_BYPASS;
+    const bypassUser = bypassEnv && bypassEnv == 'true' ? true : false;
+    if (bypassUser) {
+      groupUser.email_verified_at = new Date();
+      groupUser.phone_verified_at = new Date();
+    }
     const result = await this.merchantUsersRepository.save(groupUser);
     delete result.password;
 
@@ -95,12 +103,14 @@ export class GroupUsersService {
       // result.url = urlVerification;
     }
 
-    const smsMessage = await generateSmsUrlVerification(
-      groupUser.name,
-      urlVerification,
-    );
+    if (!bypassUser) {
+      const smsMessage = await generateSmsUrlVerification(
+        groupUser.name,
+        urlVerification,
+      );
 
-    this.notificationService.sendSms(groupUser.phone, smsMessage);
+      this.notificationService.sendSms(groupUser.phone, smsMessage);
+    }
     return result;
   }
 
@@ -220,6 +230,13 @@ export class GroupUsersService {
     createGroupUser.token_reset_password = token;
 
     try {
+      //Cheking Env Bypass Verification
+      const bypassEnv = process.env.HERMES_USER_REGISTER_BYPASS;
+      const bypassUser = bypassEnv && bypassEnv == 'true' ? true : false;
+      if (bypassUser) {
+        createGroupUser.email_verified_at = new Date();
+        createGroupUser.phone_verified_at = new Date();
+      }
       const resultCreate: Record<string, any> =
         await this.merchantUsersRepository.save(createGroupUser);
 
@@ -233,13 +250,14 @@ export class GroupUsersService {
         resultCreate.url = urlVerification;
       }
 
-      const smsMessage = await generateSmsUrlVerification(
-        args.name,
-        urlVerification,
-      );
+      if (!bypassUser) {
+        const smsMessage = await generateSmsUrlVerification(
+          args.name,
+          urlVerification,
+        );
 
-      this.notificationService.sendSms(args.phone, smsMessage);
-
+        this.notificationService.sendSms(args.phone, smsMessage);
+      }
       return resultCreate;
     } catch (err) {
       Logger.error(err);

@@ -127,6 +127,14 @@ export class MerchantUsersService {
     createMerchantUser.token_reset_password = token;
 
     try {
+      //Cheking Env Bypass Verification
+      const bypassEnv = process.env.HERMES_USER_REGISTER_BYPASS;
+      const bypassUser = bypassEnv && bypassEnv == 'true' ? true : false;
+      if (bypassUser) {
+        createMerchantUser.email_verified_at = new Date();
+        createMerchantUser.phone_verified_at = new Date();
+      }
+
       const createMerchant: Record<string, any> =
         await this.merchantUsersRepository.save(createMerchantUser);
 
@@ -141,13 +149,14 @@ export class MerchantUsersService {
         createMerchant.token_reset_password = token;
       }
 
-      const smsMessage = await generateSmsUrlVerification(
-        createMerchant.name,
-        url,
-      );
+      if (!bypassUser) {
+        const smsMessage = await generateSmsUrlVerification(
+          createMerchant.name,
+          url,
+        );
 
-      this.notificationService.sendSms(createMerchant.phone, smsMessage);
-
+        this.notificationService.sendSms(createMerchant.phone, smsMessage);
+      }
       return createMerchant;
     } catch (err) {
       throw new BadRequestException(
@@ -676,19 +685,28 @@ export class MerchantUsersService {
   ): Promise<any> {
     args.token_reset_password = randomUUID();
 
+    //Cheking Env Bypass Verification
+    const bypassEnv = process.env.HERMES_USER_REGISTER_BYPASS;
+    const bypassUser = bypassEnv && bypassEnv == 'true' ? true : false;
+    if (bypassUser) {
+      args.email_verified_at = new Date();
+      args.phone_verified_at = new Date();
+    }
+
     const result: Record<string, any> = await this.merchantUsersRepository.save(
       args,
     );
-    console.log('result:\n', result);
     const url = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${result.token_reset_password}`;
 
     if (process.env.NODE_ENV == 'test') {
       result.url = url;
     }
 
-    const smsMessage = await generateSmsUrlVerification(args.name, url);
+    if (!bypassUser) {
+      const smsMessage = await generateSmsUrlVerification(args.name, url);
 
-    this.notificationService.sendSms(args.phone, smsMessage);
+      this.notificationService.sendSms(args.phone, smsMessage);
+    }
 
     return result;
   }
