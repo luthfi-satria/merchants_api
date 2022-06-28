@@ -1056,6 +1056,7 @@ export class LoginService {
           ),
         );
       });
+      console.log(existMerchantUser);
     if (!existMerchantUser) {
       const errors: RMessage = {
         value: data.user_id,
@@ -1092,6 +1093,7 @@ export class LoginService {
     }
 
     if (existMerchantUser.status === 'WAITING_FOR_APPROVAL') {
+      console.log('waiting approval')
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
@@ -1109,7 +1111,9 @@ export class LoginService {
     const lang = 'id';
     let level = '';
     if (existMerchantUser.store_id != null) {
+      console.log('check store')
       if (existMerchantUser.store.status != 'ACTIVE') {
+        console.log('check store status')
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
@@ -1131,6 +1135,7 @@ export class LoginService {
         existMerchantUser.status != 'ACTIVE' ||
         existMerchantUser.merchant.status != 'ACTIVE'
       ) {
+        console.log('check merchant status')
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
@@ -1149,6 +1154,7 @@ export class LoginService {
     }
     if (existMerchantUser.group_id != null) {
       if (existMerchantUser.group.status != 'ACTIVE') {
+        console.log('mechant group status')
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
