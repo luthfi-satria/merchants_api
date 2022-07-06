@@ -784,7 +784,7 @@ export class MerchantsService {
 
     try {
       const totalItems = await merchant.getCount();
-      const list = await merchant.getMany();
+      let list = await merchant.getMany();
 
       for (const element of list) {
         deleteCredParam(element);
@@ -793,6 +793,18 @@ export class MerchantsService {
         await this.manipulateMerchantUrl(element);
         await this.groupsService.manipulateGroupUrl(element.group);
       }
+
+      const sortStatus = {};
+      sortStatus[MerchantStatus.Waiting_for_approval] = 1;
+      sortStatus[MerchantStatus.Active] = 2;
+      sortStatus[MerchantStatus.Banned] = 3;
+      sortStatus[MerchantStatus.Draft] = 4;
+      sortStatus[MerchantStatus.Inactive] = 5;
+      sortStatus[MerchantStatus.Rejected] = 6;
+
+      list = list.sort((a, b) => {
+        return sortStatus[a.status] - sortStatus[b.status];
+      });
 
       return {
         total_item: totalItems,
