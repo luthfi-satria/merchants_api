@@ -42,7 +42,15 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, FindOperator, ILike, Like, Not, Repository } from 'typeorm';
+import {
+  Brackets,
+  FindOperator,
+  ILike,
+  Like,
+  Not,
+  Raw,
+  Repository,
+} from 'typeorm';
 import { MerchantUsersService } from './merchants_users.service';
 import { CreateMerchantDTO } from './validation/create_merchant.dto';
 import {
@@ -778,13 +786,13 @@ export class MerchantsService {
       merchant.andWhere('mc_group.id = :group_id', { group_id: user.group_id });
     }
     merchant
-      .orderBy('merchant_merchant.created_at', 'ASC')
+      .orderBy('merchant_merchant.status', 'ASC')
       .skip((Number(currentPage) - 1) * perPage)
       .take(perPage);
 
     try {
       const totalItems = await merchant.getCount();
-      let list = await merchant.getMany();
+      const list = await merchant.getMany();
 
       for (const element of list) {
         deleteCredParam(element);
@@ -793,18 +801,6 @@ export class MerchantsService {
         await this.manipulateMerchantUrl(element);
         await this.groupsService.manipulateGroupUrl(element.group);
       }
-
-      const sortStatus = {};
-      sortStatus[MerchantStatus.Waiting_for_approval] = 1;
-      sortStatus[MerchantStatus.Active] = 2;
-      sortStatus[MerchantStatus.Banned] = 3;
-      sortStatus[MerchantStatus.Draft] = 4;
-      sortStatus[MerchantStatus.Inactive] = 5;
-      sortStatus[MerchantStatus.Rejected] = 6;
-
-      list = list.sort((a, b) => {
-        return sortStatus[a.status] - sortStatus[b.status];
-      });
 
       return {
         total_item: totalItems,
