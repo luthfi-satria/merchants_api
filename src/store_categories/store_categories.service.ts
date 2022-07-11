@@ -26,6 +26,7 @@ import { CommonStorageService } from 'src/common/storage/storage.service';
 import { LanguageDocument } from 'src/database/entities/language.entity';
 import _ from 'lodash';
 import { isDefined } from 'class-validator';
+import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
 
 @Injectable()
 export class StoreCategoriesService {
@@ -223,6 +224,11 @@ export class StoreCategoriesService {
     if (data.sequence != null && typeof data.sequence != 'undefined') {
       stoCatExist.sequence = +data.sequence;
     }
+
+    Object.assign(
+      stoCatExist,
+      new SetFieldEmptyUtils().apply(stoCatExist, data.delete_files),
+    );
 
     return this.storeCategoriesRepository
       .save(stoCatExist)
