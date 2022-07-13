@@ -1,13 +1,18 @@
+import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   HttpStatus,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
+import { isDefined } from 'class-validator';
+import _ from 'lodash';
 import { catchError, map, Observable } from 'rxjs';
+import { CommonStorageService } from 'src/common/storage/storage.service';
+import { LanguageDocument } from 'src/database/entities/language.entity';
+import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { MessageService } from 'src/message/message.service';
 import {
   ListResponse,
@@ -21,11 +26,6 @@ import {
   StoreCategoriesValidation,
   StoreCategoryStatus,
 } from './validation/store_categories.validation.dto';
-import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
-import { CommonStorageService } from 'src/common/storage/storage.service';
-import { LanguageDocument } from 'src/database/entities/language.entity';
-import _ from 'lodash';
-import { isDefined } from 'class-validator';
 
 @Injectable()
 export class StoreCategoriesService {
@@ -338,19 +338,10 @@ export class StoreCategoriesService {
         actives: actives,
       });
     }
-    if (data.search) {
-      qCount.andWhere('mscl.name  ilike :sname', {
-        sname: '%' + search + '%',
-      });
-    }
 
-    qCount
-      .orderBy('sc.sequence')
-      .skip((currentPage - 1) * perPage)
-      .take(perPage);
+    qCount.orderBy('sc.sequence');
 
     const storeCategories = await qCount.getManyAndCount();
-    const totalItems = storeCategories[1];
 
     for (const result of storeCategories[0]) {
       dbOutputTime(result);
@@ -370,11 +361,27 @@ export class StoreCategoriesService {
       }
     }
 
+    if (data.search) {
+      storeCategories[0] = storeCategories[0].filter((storeCategory) => {
+        console.log(storeCategory);
+        return storeCategory.languages.some((language) => {
+          console.log(language);
+          return language.name.toLowerCase().includes(search.toLowerCase());
+        });
+      });
+    }
+
     const listResult: ListResponse = {
-      total_item: totalItems,
+      total_item: storeCategories[0].slice(
+        (currentPage - 1) * perPage,
+        currentPage * perPage,
+      ).length,
       limit: Number(perPage),
       current_page: Number(currentPage),
-      items: storeCategories[0],
+      items: storeCategories[0].slice(
+        (currentPage - 1) * perPage,
+        currentPage * perPage,
+      ),
     };
     return this.responseService.success(
       true,
