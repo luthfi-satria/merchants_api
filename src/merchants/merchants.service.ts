@@ -58,6 +58,7 @@ import {
   SearchFields,
 } from './validation/list-merchant.validation';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
+import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
 @Injectable()
 export class MerchantsService {
   constructor(
@@ -552,9 +553,15 @@ export class MerchantsService {
         existMerchant.rejection_reason = data.rejection_reason;
 
       // try {
+      Object.assign(
+        existMerchant,
+        new SetFieldEmptyUtils().apply(existMerchant, data.delete_files),
+      );
+
       const update: MerchantDocument = await this.merchantRepository.save(
         existMerchant,
       );
+
       if (!update) {
         throw new Error('failed insert to merchant_group');
       }
