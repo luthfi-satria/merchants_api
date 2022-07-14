@@ -73,7 +73,7 @@ export class StoresController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 2000000, //2MB
+        fileSize: 5000000, //5MB
       },
       fileFilter: imageJpgPngFileFilter,
     }),
@@ -133,7 +133,7 @@ export class StoresController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 2000000, //2MB
+        fileSize: 5000000, //5MB
       },
       fileFilter: imageFileFilter,
     }),
