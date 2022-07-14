@@ -1,5 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsEmail,
   IsIn,
@@ -156,4 +157,8 @@ export class UpdateGroupDTO {
 
   @IsOptional()
   pic_finance_password: string;
+
+  @IsOptional()
+  @IsArray()
+  delete_files?: string[];
 }

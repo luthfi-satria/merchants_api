@@ -9,6 +9,7 @@ import {
   ArrayMaxSize,
   IsBooleanString,
   ValidateIf,
+  IsArray,
 } from 'class-validator';
 import { CityDTO } from 'src/common/services/admins/dto/city.dto';
 import {
@@ -87,4 +88,8 @@ export class UpdateMerchantStoreValidation {
 
   @IsOptional()
   rejection_reason: string;
+
+  @IsOptional()
+  @IsArray()
+  delete_files?: string[];
 }

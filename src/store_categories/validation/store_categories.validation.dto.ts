@@ -58,4 +58,8 @@ export class StoreCategoriesValidation {
   @IsArray()
   @IsIn(Object.values(StoreCategoryStatus), { each: true })
   statuses: StoreCategoryStatus[];
+
+  @IsOptional()
+  @IsArray()
+  delete_files?: string[];
 }

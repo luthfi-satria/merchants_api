@@ -24,6 +24,7 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { editFileName, imageJpgPngFileFilter } from 'src/utils/general-utils';
 import { StoresService } from 'src/stores/stores.service';
+import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
 
 @Controller('/api/v1/merchants/banners')
 export class BannersController {
@@ -45,7 +46,7 @@ export class BannersController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 2000000, //2MB
+        fileSize: 5000000, //5MB
       },
       fileFilter: imageJpgPngFileFilter,
     }),
@@ -67,6 +68,12 @@ export class BannersController {
         const updateBannerDto = new UpdateBannerByMerchantIdDto();
         updateBannerDto.banner = data.banner;
         updateBannerDto.merchant_id = data.merchant_id;
+
+        Object.assign(
+          updateBannerDto,
+          new SetFieldEmptyUtils().apply(updateBannerDto, data.delete_files),
+        );
+
         const results = await this.bannersService.updateBannerByMerchantId(
           updateBannerDto,
         );
@@ -98,6 +105,12 @@ export class BannersController {
       const collection = [];
       const updateBannerDto = new UpdateBannerByStoreIdDto();
       updateBannerDto.banner = data.banner;
+
+      Object.assign(
+        updateBannerDto,
+        new SetFieldEmptyUtils().apply(updateBannerDto, data.delete_files),
+      );
+
       for (const item of data.store_ids) {
         updateBannerDto.store_id = item;
         const result = await this.bannersService.updateBannerByStoreId(
