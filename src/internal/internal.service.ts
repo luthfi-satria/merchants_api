@@ -26,6 +26,7 @@ import { MerchantStoresDto } from './dto/merchant_stores.dto';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { GroupsService } from 'src/groups/groups.service';
 import { CityService } from 'src/common/services/admins/city.service';
+import { GetMerchantBulkDataDTO } from './dto/get-merchant-bulk-data.dto';
 
 @Injectable()
 export class InternalService {
@@ -49,6 +50,34 @@ export class InternalService {
     private readonly groupService: GroupsService,
     private readonly cityService: CityService,
   ) {}
+
+  async findMerchantUsers(data: GetMerchantBulkDataDTO[]): Promise<any[]> {
+    const results = [];
+
+    try {
+      for (const item of data) {
+        const merchantUser = await this.findMerchantUser(item);
+
+        if (merchantUser) {
+          results.push(merchantUser);
+        }
+      }
+    } catch (e) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: null,
+            property: null,
+            constraint: e?.message,
+          },
+          'Bad Request',
+        ),
+      );
+    }
+
+    return results;
+  }
 
   async updateRatingStore(id, data) {
     try {
@@ -496,23 +525,23 @@ export class InternalService {
     try {
       const result = await this.loginService.getProfile(user);
 
-      if (result.merchant) {
+      if (result?.merchant) {
         await this.merchantService.manipulateMerchantUrl(result.merchant);
         await this.groupService.manipulateGroupUrl(result.merchant.group);
         delete result.merchant.pic_password;
       }
-      if (result.group) {
+      if (result?.group) {
         delete result.group.director_password;
         delete result.group.pic_operational_password;
         delete result.group.pic_finance_password;
         await this.groupService.manipulateGroupUrl(result.group);
       }
-      if (result.store) {
+      if (result?.store) {
         delete result.store.store_categories;
         await this.storeService.manipulateStoreUrl(result.store);
         await this.merchantService.manipulateMerchantUrl(result.store.merchant);
 
-        if (result.store.merchant) {
+        if (result?.store?.merchant) {
           await this.groupService.manipulateGroupUrl(
             result.store.merchant.group,
           );
