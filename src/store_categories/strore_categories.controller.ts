@@ -54,7 +54,7 @@ export class StoreCategoriesController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 5000000, //5MB
+        fileSize: 5242880,//5MB
       },
       fileFilter: imageFileFilter,
     }),
@@ -100,7 +100,7 @@ export class StoreCategoriesController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 5000000, //5MB
+        fileSize: 5242880,//5MB
       },
       fileFilter: imageFileFilter,
     }),
