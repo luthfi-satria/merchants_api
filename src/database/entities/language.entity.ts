@@ -23,6 +23,9 @@ export class LanguageDocument {
   @Column()
   name: string;
 
+  @Column('uuid')
+  storeCategoriesId: string;
+
   @ManyToOne(() => StoreCategoriesDocument, (stocat) => stocat.languages)
   store_categories: StoreCategoriesDocument;
 
