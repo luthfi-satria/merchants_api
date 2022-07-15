@@ -146,13 +146,14 @@ export class StoreCategoriesController {
   }
 
   @Get('store/categories')
-  @UserType('admin', 'merchant')
-  @AuthJwtGuard()
+  // @UserType('admin', 'merchant')
+  // @AuthJwtGuard()
   @ResponseStatusCode()
   async getStoreCategories(
     @Req() req: any,
     @Query() data: Partial<StoreCategoriesValidation>,
   ): Promise<any> {
+    console.log('masuk')
     return this.storeCategoriesService.listStoreCategories(data);
   }
 
