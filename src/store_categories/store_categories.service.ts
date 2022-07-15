@@ -316,6 +316,7 @@ export class StoreCategoriesService {
   async listStoreCategories(
     data: Partial<StoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
+    try {
     const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
@@ -351,8 +352,28 @@ export class StoreCategoriesService {
 
     const storeCategories = await qCount.getManyAndCount();
     const totalItems = storeCategories[1];
+    console.log(storeCategories[0][0].languages)
 
-    for (const result of storeCategories[0]) {
+    const categoryIds: string[] = [];
+    await storeCategories[0].map(item => categoryIds.push(item.id));
+
+    const categories = await this.storeCategoriesRepository
+    .createQueryBuilder('sc')
+    .leftJoinAndSelect('sc.languages', 'mscl')
+    .where('mscl.storeCategoriesId IN (:...categoryIds)', {
+      categoryIds
+    })
+    .orWhere('mscl.name ilike :cname', {
+      cname: '%' + search + '%',
+    })
+    .skip((currentPage - 1) * perPage)
+    .take(perPage)
+    .orderBy('sc.sequence')
+    .getMany();
+    console.log(categories);
+      // console.lo
+
+    for (const result of categories) {
       dbOutputTime(result);
       if (result.active) {
         result.status = StoreCategoryStatus.ACTIVE;
@@ -371,16 +392,19 @@ export class StoreCategoriesService {
     }
 
     const listResult: ListResponse = {
-      total_item: totalItems,
+      total_item: categories.length,
       limit: Number(perPage),
       current_page: Number(currentPage),
-      items: storeCategories[0],
+      items: categories,
     };
     return this.responseService.success(
       true,
       this.messageService.get('merchant.general.success'),
       listResult,
     );
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async viewDetailStoreCategory(
