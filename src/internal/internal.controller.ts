@@ -24,6 +24,7 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { MerchantStoresDto } from './dto/merchant_stores.dto';
 import { GroupsService } from 'src/groups/groups.service';
 import { StoresService } from 'src/stores/stores.service';
+import { GetMerchantBulkDTO } from './dto/get-merchant-bulk.dto';
 
 @Controller('api/v1/internal')
 export class InternalController {
@@ -252,6 +253,23 @@ export class InternalController {
     const result = await this.internalService.getStoreByCategoryBulk(
       storeCategoryBatchDTO.store_category_ids,
     );
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      result,
+    );
+  }
+
+  @Post('merchants/merchants/bulk')
+  @ResponseStatusCode()
+  async getMerchantBulk(
+    @Body()
+    getMerchantBulkDTO: GetMerchantBulkDTO,
+  ): Promise<RSuccessMessage> {
+    const result = await this.internalService.findMerchantUsers(
+      getMerchantBulkDTO.data,
+    );
+
     return this.responseService.success(
       true,
       this.messageService.get('merchant.general.success'),
