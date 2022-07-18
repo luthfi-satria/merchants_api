@@ -50,6 +50,7 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { isDefined } from 'class-validator';
+import {SetFieldEmptyUtils} from "../utils/set-field-empty-utils";
 
 @Injectable()
 export class GroupsService {
@@ -312,6 +313,12 @@ export class GroupsService {
     if (updateGroupDTO.status == 'REJECTED') group.rejected_at = new Date();
 
     Object.assign(group, updateGroupDTO);
+
+    Object.assign(
+      group,
+      new SetFieldEmptyUtils().apply(group, updateGroupDTO.delete_files),
+    );
+
     const update_group = await this.groupRepository.save(group);
     if (!update_group) {
       throw new Error('Update Failed');

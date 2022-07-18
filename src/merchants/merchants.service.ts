@@ -42,7 +42,15 @@ import {
   formatingAllOutputTime,
   removeAllFieldPassword,
 } from 'src/utils/general-utils';
-import { Brackets, FindOperator, ILike, Like, Not, Repository } from 'typeorm';
+import {
+  Brackets,
+  FindOperator,
+  ILike,
+  Like,
+  Not,
+  Raw,
+  Repository,
+} from 'typeorm';
 import { MerchantUsersService } from './merchants_users.service';
 import { CreateMerchantDTO } from './validation/create_merchant.dto';
 import {
@@ -50,6 +58,7 @@ import {
   SearchFields,
 } from './validation/list-merchant.validation';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
+import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
 @Injectable()
 export class MerchantsService {
   constructor(
@@ -544,9 +553,15 @@ export class MerchantsService {
         existMerchant.rejection_reason = data.rejection_reason;
 
       // try {
+      Object.assign(
+        existMerchant,
+        new SetFieldEmptyUtils().apply(existMerchant, data.delete_files),
+      );
+
       const update: MerchantDocument = await this.merchantRepository.save(
         existMerchant,
       );
+
       if (!update) {
         throw new Error('failed insert to merchant_group');
       }
@@ -778,7 +793,7 @@ export class MerchantsService {
       merchant.andWhere('mc_group.id = :group_id', { group_id: user.group_id });
     }
     merchant
-      .orderBy('merchant_merchant.created_at', 'ASC')
+      .orderBy('merchant_merchant.status', 'ASC')
       .skip((Number(currentPage) - 1) * perPage)
       .take(perPage);
 

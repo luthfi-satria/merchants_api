@@ -54,7 +54,7 @@ export class StoreCategoriesController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 2000000, //2MB
+        fileSize: 5242880,//5MB
       },
       fileFilter: imageFileFilter,
     }),
@@ -100,7 +100,7 @@ export class StoreCategoriesController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 2000000, //2MB
+        fileSize: 5242880,//5MB
       },
       fileFilter: imageFileFilter,
     }),
@@ -146,13 +146,14 @@ export class StoreCategoriesController {
   }
 
   @Get('store/categories')
-  @UserType('admin', 'merchant')
-  @AuthJwtGuard()
+  // @UserType('admin', 'merchant')
+  // @AuthJwtGuard()
   @ResponseStatusCode()
   async getStoreCategories(
     @Req() req: any,
     @Query() data: Partial<StoreCategoriesValidation>,
   ): Promise<any> {
+    console.log('masuk')
     return this.storeCategoriesService.listStoreCategories(data);
   }
 

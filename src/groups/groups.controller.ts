@@ -63,7 +63,7 @@ export class GroupsController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 2000000, //2MB
+        fileSize: 5242880,//5MB
       },
       fileFilter: imageAndPdfFileFilter,
     }),
@@ -141,7 +141,7 @@ export class GroupsController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 2000000, //2MB
+        fileSize: 5242880,//5MB
       },
       fileFilter: imageAndPdfFileFilter,
     }),

@@ -55,6 +55,7 @@ import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { isDefined, isUUID } from 'class-validator';
 import { CommonStorageService } from 'src/common/storage/storage.service';
+import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
 
 @Injectable()
 export class StoresService {
@@ -555,13 +556,23 @@ export class StoresService {
           ? true
           : false;
     }
+
     if (update_merchant_store_validation.rejection_reason)
       store_document.rejection_reason =
         update_merchant_store_validation.rejection_reason;
 
+    Object.assign(
+      store_document,
+      new SetFieldEmptyUtils().apply(
+        store_document,
+        update_merchant_store_validation.delete_files,
+      ),
+    );
+
     const updateStore = await this.storeRepository.save(store_document);
 
     this.publishNatsUpdateStore(updateStore, oldStatus);
+
     return updateStore;
   }
 

@@ -7,7 +7,12 @@ import {
 import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
+import { isDefined } from 'class-validator';
+import _ from 'lodash';
 import { catchError, map, Observable } from 'rxjs';
+import { CommonStorageService } from 'src/common/storage/storage.service';
+import { LanguageDocument } from 'src/database/entities/language.entity';
+import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import { MessageService } from 'src/message/message.service';
 import {
   ListResponse,
@@ -21,11 +26,7 @@ import {
   StoreCategoriesValidation,
   StoreCategoryStatus,
 } from './validation/store_categories.validation.dto';
-import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
-import { CommonStorageService } from 'src/common/storage/storage.service';
-import { LanguageDocument } from 'src/database/entities/language.entity';
-import _ from 'lodash';
-import { isDefined } from 'class-validator';
+import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
 
 @Injectable()
 export class StoreCategoriesService {
@@ -224,6 +225,11 @@ export class StoreCategoriesService {
       stoCatExist.sequence = +data.sequence;
     }
 
+    Object.assign(
+      stoCatExist,
+      new SetFieldEmptyUtils().apply(stoCatExist, data.delete_files),
+    );
+
     return this.storeCategoriesRepository
       .save(stoCatExist)
       .then(async (result) => {
@@ -316,6 +322,7 @@ export class StoreCategoriesService {
   async listStoreCategories(
     data: Partial<StoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
+    try {
     const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = Number(data.limit) || 10;
@@ -351,8 +358,28 @@ export class StoreCategoriesService {
 
     const storeCategories = await qCount.getManyAndCount();
     const totalItems = storeCategories[1];
+    console.log(storeCategories[0][0].languages)
 
-    for (const result of storeCategories[0]) {
+    const categoryIds: string[] = [];
+    await storeCategories[0].map(item => categoryIds.push(item.id));
+
+    const categories = await this.storeCategoriesRepository
+    .createQueryBuilder('sc')
+    .leftJoinAndSelect('sc.languages', 'mscl')
+    .where('mscl.storeCategoriesId IN (:...categoryIds)', {
+      categoryIds
+    })
+    .orWhere('mscl.name ilike :cname', {
+      cname: '%' + search + '%',
+    })
+    .skip((currentPage - 1) * perPage)
+    .take(perPage)
+    .orderBy('sc.sequence')
+    .getMany();
+    console.log(categories);
+      // console.lo
+
+    for (const result of categories) {
       dbOutputTime(result);
       if (result.active) {
         result.status = StoreCategoryStatus.ACTIVE;
@@ -371,16 +398,19 @@ export class StoreCategoriesService {
     }
 
     const listResult: ListResponse = {
-      total_item: totalItems,
+      total_item: categories.length,
       limit: Number(perPage),
       current_page: Number(currentPage),
-      items: storeCategories[0],
+      items: categories,
     };
     return this.responseService.success(
       true,
       this.messageService.get('merchant.general.success'),
       listResult,
     );
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async viewDetailStoreCategory(

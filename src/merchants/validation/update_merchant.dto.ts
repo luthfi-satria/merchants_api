@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsBooleanString,
   IsEmail,
@@ -121,6 +122,10 @@ export class UpdateMerchantDTO {
 
   @IsOptional()
   rejection_reason: string;
+
+  @IsOptional()
+  @IsArray()
+  delete_files?: string[];
 }
 
 export class UpdateStoreSettingsDTO {

@@ -433,8 +433,7 @@ export class LoginService {
         .leftJoinAndSelect('merchant_merchant.group', 'merchant_merchant_group')
         .leftJoinAndSelect('mu.group', 'merchant_group')
         .where('mu.id = :id', { id: user.id })
-        .andWhere('mu.role_id is not null')
-        .andWhere("mu.status = 'ACTIVE'");
+        .andWhere('mu.role_id is not null');
 
       const merchant_user = await query.getOne();
       removeAllFieldPassword(merchant_user);
@@ -1056,7 +1055,7 @@ export class LoginService {
           ),
         );
       });
-      console.log(existMerchantUser);
+    console.log(existMerchantUser);
     if (!existMerchantUser) {
       const errors: RMessage = {
         value: data.user_id,
@@ -1093,7 +1092,7 @@ export class LoginService {
     }
 
     if (existMerchantUser.status === 'WAITING_FOR_APPROVAL') {
-      console.log('waiting approval')
+      console.log('waiting approval');
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
@@ -1111,9 +1110,9 @@ export class LoginService {
     const lang = 'id';
     let level = '';
     if (existMerchantUser.store_id != null) {
-      console.log('check store')
+      console.log('check store');
       if (existMerchantUser.store.status != 'ACTIVE') {
-        console.log('check store status')
+        console.log('check store status');
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
@@ -1135,7 +1134,7 @@ export class LoginService {
         existMerchantUser.status != 'ACTIVE' ||
         existMerchantUser.merchant.status != 'ACTIVE'
       ) {
-        console.log('check merchant status')
+        console.log('check merchant status');
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
@@ -1154,7 +1153,7 @@ export class LoginService {
     }
     if (existMerchantUser.group_id != null) {
       if (existMerchantUser.group.status != 'ACTIVE') {
-        console.log('mechant group status')
+        console.log('mechant group status');
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
