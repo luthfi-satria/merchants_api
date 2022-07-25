@@ -46,7 +46,7 @@ export class MenuOnlineService {
           : null;
         if (data.id) menuOnlineData.menu_store_id = data.id;
 
-        if (menuOnlines) {
+        if (menuOnlines.length > 0) {
           if (menuOnlines.length == 1) {
             const menuOnline = menuOnlines[0];
             menuOnline.name = data.menu_price.menu_menu.name;
