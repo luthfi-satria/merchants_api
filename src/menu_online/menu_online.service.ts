@@ -124,6 +124,19 @@ export class MenuOnlineService {
     });
   }
 
+  async natsCreateMenuOnline(data: any) {
+    const menu = await this.menuOnlineRepository.findOne({ menu_id: data.id });
+    if (!menu.id) {
+      const menuOnlineData: Partial<MenuOnlineDocument> = {
+        menu_id: data.id,
+        name: data.name,
+        photo: data.photo,
+      };
+
+      await this.menuOnlineRepository.save(menuOnlineData);
+    }
+  }
+
   async natsUpdateMenuOnline(data: any) {
     const menus = await this.menuOnlineRepository.find({ menu_id: data.id });
     for (const menu of menus) {
