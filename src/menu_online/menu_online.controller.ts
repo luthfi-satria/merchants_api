@@ -15,7 +15,7 @@ import { MenuOnlineService } from './menu_online.service';
 export class MenuOnlineController {
   constructor(private readonly menuOnlineService: MenuOnlineService) {}
 
-  @Get(':id/image')
+  @Get(':id/image/:name')
   async streamFile(
     @Param('id') id: string,
     @Res() res: Response,
