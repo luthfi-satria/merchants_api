@@ -23,11 +23,11 @@ spec:
         image: ghcr.io/wofood/efood_merchants
         resources:
           requests:
-            memory: "500Mi"
+            memory: "1G"
             cpu: "250m"
           limits:
-            memory: "1G"
-            cpu: "500m"
+            memory: "4G"
+            cpu: "1000m"
         ports:
           - name: merchants
             protocol: TCP
