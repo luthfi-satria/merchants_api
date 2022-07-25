@@ -25,6 +25,7 @@ import { MenuOnlineModule } from './menu_online/menu_online.module';
 import { SeederModule } from './database/seeders/seeder.module';
 import { NatsModule } from './nats/nats.module';
 import { LoginMultilevelModule } from './login-multilevel/login-multilevel.module';
+import { RegistersModule } from './register/register.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { LoginMultilevelModule } from './login-multilevel/login-multilevel.modul
     SeederModule,
     NatsModule,
     LoginMultilevelModule,
+    RegistersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
