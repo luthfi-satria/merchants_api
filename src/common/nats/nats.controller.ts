@@ -69,12 +69,6 @@ export class CommonNatsController {
       });
   }
 
-  @EventPattern('catalogs.menu.created')
-  async createMenuOnline(@Payload() data: any) {
-    this.logger.log('catalogs.menu.created');
-    this.menuOnlineService.natsCreateMenuOnline(data);
-  }
-
   @EventPattern('catalogs.menu.updated')
   async updateMenuOnline(@Payload() data: any) {
     this.logger.log('catalogs.menu.updated');
