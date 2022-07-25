@@ -125,14 +125,17 @@ export class MenuOnlineService {
   }
 
   async natsCreateMenuOnline(data: any) {
+    console.log(
+      '🚀 ~ file: menu_online.service.ts ~ line 128 ~ MenuOnlineService ~ natsCreateMenuOnline ~ data',
+      data,
+    );
     const menu = await this.menuOnlineRepository.findOne({ menu_id: data.id });
     if (!menu) {
       const menuOnlineData: Partial<MenuOnlineDocument> = {
         menu_id: data.id,
         name: data.name,
         photo: data.photo,
-        price: data.menu_price.price,
-        menu_price_id: data.menu_price.id,
+        price: 0,
         store_id: data.store_id,
       };
 
