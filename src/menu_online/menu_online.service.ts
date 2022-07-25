@@ -46,7 +46,7 @@ export class MenuOnlineService {
           : null;
         if (data.id) menuOnlineData.menu_store_id = data.id;
 
-        if (menuOnlines) {
+        if (menuOnlines.length > 0) {
           if (menuOnlines.length == 1) {
             const menuOnline = menuOnlines[0];
             menuOnline.name = data.menu_price.menu_menu.name;
@@ -124,39 +124,16 @@ export class MenuOnlineService {
     });
   }
 
-  async natsCreateMenuOnline(data: any) {
-    console.log(
-      '🚀 ~ file: menu_online.service.ts ~ line 128 ~ MenuOnlineService ~ natsCreateMenuOnline ~ data',
-      data,
-    );
-    const menu = await this.menuOnlineRepository.findOne({ menu_id: data.id });
-    if (!menu) {
-      const menuOnlineData: Partial<MenuOnlineDocument> = {
-        menu_id: data.id,
-        name: data.name,
-        photo: data.photo,
-        price: 0,
-        store_id: data.store_id,
-      };
-
-      await this.menuOnlineRepository.save(menuOnlineData);
-    }
-  }
-
   async natsUpdateMenuOnline(data: any) {
     const menus = await this.menuOnlineRepository.find({ menu_id: data.id });
-    if (menus.length > 0) {
-      for (const menu of menus) {
-        const menuData = {
-          id: menu.id,
-          name: data.name ? data.name : menu.name,
-          photo: data.photo ? data.photo : menu.photo,
-        };
+    for (const menu of menus) {
+      const menuData = {
+        id: menu.id,
+        name: data.name ? data.name : menu.name,
+        photo: data.photo ? data.photo : menu.photo,
+      };
 
-        await this.menuOnlineRepository.save(menuData);
-      }
-    } else {
-      await this.natsCreateMenuOnline(data);
+      await this.menuOnlineRepository.save(menuData);
     }
   }
 
