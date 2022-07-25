@@ -359,27 +359,31 @@ export class StoresService {
      *  - untuk user corporate(group) bisa membuat dengan merchant.status 'ACTIVE' dan 'WAITING APPROVAL'
      *  - untuk user brand(merchant) bisa membuat dengan merchant.status 'ACTIVE', untuk brand ini pake brand dia sendiri jadi logikanya sudah 'ACTIVE'
      **/
-    if (
-      // untuk user corporate(group) bisa membuat dengan merchant.status 'ACTIVE' dan 'WAITING APPROVAL'
-      (user.level == 'group' &&
-        ['ACTIVE', 'WAITING_FOR_APPROVAL'].indexOf(merchant.status) < 0) ||
-      // untuk user brand(merchant) bisa membuat dengan merchant.status 'ACTIVE', untuk brand ini pake brand dia sendiri jadi logikanya sudah 'ACTIVE'
-      (user.level == 'merchant' && merchant.status != 'ACTIVE')
-    ) {
-      const errors: RMessage = {
-        value: create_merchant_store_validation.merchant_id,
-        property: 'merchant_id',
-        constraint: [
-          this.messageService.get('merchant.createstore.merchantid_notactive'),
-        ],
-      };
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
+    if (user) {
+      if (
+        // untuk user corporate(group) bisa membuat dengan merchant.status 'ACTIVE' dan 'WAITING APPROVAL'
+        (user.level == 'group' &&
+          ['ACTIVE', 'WAITING_FOR_APPROVAL'].indexOf(merchant.status) < 0) ||
+        // untuk user brand(merchant) bisa membuat dengan merchant.status 'ACTIVE', untuk brand ini pake brand dia sendiri jadi logikanya sudah 'ACTIVE'
+        (user.level == 'merchant' && merchant.status != 'ACTIVE')
+      ) {
+        const errors: RMessage = {
+          value: create_merchant_store_validation.merchant_id,
+          property: 'merchant_id',
+          constraint: [
+            this.messageService.get(
+              'merchant.createstore.merchantid_notactive',
+            ),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
     }
 
     store_document.store_categories = await this.getCategoriesByIds(
@@ -401,6 +405,7 @@ export class StoresService {
       create_merchant_store_validation.auto_accept_order == 'true'
         ? true
         : false;
+    console.log(store_document);
     const create_store = await this.storeRepository.save(store_document);
     this.publishNatsCreateStore(create_store);
     const operational_hours = await this.storeOperationalService

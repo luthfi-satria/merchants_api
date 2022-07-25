@@ -37,7 +37,7 @@ export class CreateMerchantStoreValidation {
   @IsUUID()
   city_id: string;
 
-  city: CityDTO;
+  // city: CityDTO;
 
   @IsNotEmpty()
   address: string;
