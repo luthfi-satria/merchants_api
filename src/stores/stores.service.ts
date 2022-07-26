@@ -1056,11 +1056,11 @@ export class StoresService {
       return operational.day_of_week === dayNowNumber;
     });
 
-    if (!findOperational.is_open) {
+    if (!findOperational?.is_open) {
       return 'CLOSE';
     }
 
-    if (findOperational.is_open_24h) {
+    if (findOperational?.is_open_24h) {
       return 'OPEN';
     }
 
