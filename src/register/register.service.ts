@@ -656,6 +656,10 @@ export class RegistersService {
         store_document.platform = true;
       }
 
+      store_document.location_latitude =
+        registerCorporateData.location_latitude;
+      store_document.location_longitude =
+        registerCorporateData.location_longitude;
       store_document.merchant_id = createMerchantUser.merchant_id;
       store_document.store_categories =
         await this.storeService.getCategoriesByIds(
