@@ -56,6 +56,8 @@ import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { isDefined, isUUID } from 'class-validator';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
+import { StoreOperationalHoursDocument } from '../database/entities/store_operational_hours.entity';
+import moment from 'moment';
 
 @Injectable()
 export class StoresService {
@@ -942,7 +944,16 @@ export class StoresService {
       const totalItems = await store.getCount().catch((err) => {
         console.error('err ', err);
       });
-      const list: any = await store.getMany();
+
+      const list: any = (await store.getMany()).map((store: StoreDocument) => {
+        return {
+          ...store,
+          operational_hour_status: this.getStoreStatusOpenOrNot(
+            store,
+            store.operational_hours,
+          ),
+        };
+      });
 
       for (const element of list) {
         // list.forEach(async (element) => {
@@ -1017,6 +1028,45 @@ export class StoresService {
         '\n============================End Database error==================================',
       );
     }
+  }
+
+  getStoreStatusOpenOrNot(
+    store: StoreDocument,
+    operationalHours: StoreOperationalHoursDocument[],
+  ): string {
+    if (!store.is_store_open) {
+      return 'CLOSE';
+    }
+
+    const dayNowNumber = moment().day() - 1;
+
+    const currentHour = moment().format('HH:mm');
+
+    const findOperational = operationalHours.find((operational) => {
+      return operational.day_of_week === dayNowNumber;
+    });
+
+    if (!findOperational.is_open) {
+      return 'CLOSE';
+    }
+
+    if (findOperational.is_open_24h) {
+      return 'OPEN';
+    }
+
+    const shifts =
+      findOperational.shifts?.length > 0 ? findOperational.shifts : [];
+
+    if (
+      shifts.find(
+        (shift) =>
+          shift.open_hour <= currentHour && shift.close_hour >= currentHour,
+      )
+    ) {
+      return 'OPEN';
+    }
+
+    return 'CLOSE';
   }
 
   async updateStoreCategories(
