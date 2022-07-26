@@ -688,7 +688,13 @@ export class StoresService {
       return this.responseService.success(
         true,
         this.messageService.get('merchant.liststore.success'),
-        list,
+        {
+          ...list,
+          operational_hour_status: this.getStoreStatusOpenOrNot(
+            list,
+            list.operational_hours,
+          ),
+        },
       );
     } catch (error) {
       const errors: RMessage = {
