@@ -86,7 +86,7 @@ export class MenuOnlineService {
           menu_id: data.menu_price.menu_menu.id,
         });
 
-        if (!menuOnlines) {
+        if (menuOnlines.length < 0) {
           await this.natsCreateStoreAvailability(data);
         } else if (menuOnlines.length == 1) {
           menuOnlines[0].store_id = data.store_id;
