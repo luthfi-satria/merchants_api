@@ -720,7 +720,10 @@ export class StoresService {
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.service_addons', 'merchant_addons')
       .leftJoinAndSelect('ms.merchant', 'merchant')
-      .leftJoinAndSelect('merchant.group', 'group');
+      .leftJoinAndSelect('merchant.group', 'group')
+      .leftJoinAndSelect('ms.operational_hours', 'operational_hours')
+      .leftJoinAndSelect('operational_hours.shifts', 'shifts');
+
     if (search) {
       store.andWhere(
         new Brackets((qb) => {
@@ -948,6 +951,7 @@ export class StoresService {
       const list: any = (await store.getMany()).map((store: StoreDocument) => {
         return {
           ...store,
+          operational_hours: undefined,
           operational_hour_status: this.getStoreStatusOpenOrNot(
             store,
             store.operational_hours,
