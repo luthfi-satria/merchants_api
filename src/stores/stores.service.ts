@@ -671,6 +671,14 @@ export class StoresService {
           element.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${element.id}/image/${fileName}`;
         }
       });
+
+      Object.assign(list, {
+        operational_hour_status: this.getStoreStatusOpenOrNot(
+          list,
+          list.operational_hours,
+        ),
+      });
+
       list.operational_hours.forEach((element) => {
         element.day_of_week = DateTimeUtils.convertToDayOfWeek(
           Number(element.day_of_week),
@@ -688,13 +696,7 @@ export class StoresService {
       return this.responseService.success(
         true,
         this.messageService.get('merchant.liststore.success'),
-        {
-          ...list,
-          operational_hour_status: this.getStoreStatusOpenOrNot(
-            list,
-            list.operational_hours,
-          ),
-        },
+        list,
       );
     } catch (error) {
       const errors: RMessage = {
@@ -1053,7 +1055,7 @@ export class StoresService {
     const currentHour = moment().format('HH:mm');
 
     const findOperational = operationalHours.find((operational) => {
-      return operational.day_of_week === dayNowNumber;
+      return operational.day_of_week == dayNowNumber;
     });
 
     if (!findOperational?.is_open) {
