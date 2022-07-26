@@ -186,32 +186,31 @@ export class MerchantsService {
         ),
       );
     }
-    if (user) {
-      if (
-        user.user_type != 'admin' ||
-        (user.user_type == 'admin' && cekgroup.status != 'DRAFT')
-      ) {
-        console.log('masuk');
-        if (cekgroup.status != 'ACTIVE') {
-          const errors: RMessage = {
-            value: data.group_id,
-            property: 'group_id',
-            constraint: [
-              this.messageService.get(
-                'merchant.createmerchant.groupid_notactive',
-              ),
-            ],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
+    if (
+      user.user_type != 'admin' ||
+      (user.user_type == 'admin' && cekgroup.status != 'DRAFT')
+    ) {
+      console.log('masuk');
+      if (cekgroup.status != 'ACTIVE') {
+        const errors: RMessage = {
+          value: data.group_id,
+          property: 'group_id',
+          constraint: [
+            this.messageService.get(
+              'merchant.createmerchant.groupid_notactive',
             ),
-          );
-        }
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
       }
     }
+
     const ceklob: LobDocument = await this.lobService.findLobById(data.lob_id);
     if (!ceklob) {
       console.log('ceklob');
