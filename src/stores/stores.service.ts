@@ -958,10 +958,10 @@ export class StoresService {
         return {
           ...store,
           operational_hours: undefined,
-          operational_hour_status: this.getStoreStatusOpenOrNot(
-            store,
-            store.operational_hours,
-          ),
+          // operational_hour_status: this.getStoreStatusOpenOrNot(
+          //   store,
+          //   store.operational_hours,
+          // ),
         };
       });
 
