@@ -1439,7 +1439,7 @@ export class QueryService {
             weekOfDay,
             row.operational_hours,
           );
-          if (!include_inactive_stores && !store_operational_status) {
+          if (!include_closed_stores && !store_operational_status) {
             row.priority = 4;
           }
           this.storeService.manipulateStoreUrl(row);
