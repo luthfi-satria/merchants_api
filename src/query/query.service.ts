@@ -1244,10 +1244,15 @@ export class QueryService {
           '(6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius',
           { radius: distance, lat: lat, long: long },
         );
-      if (include_inactive_stores)
+      if (include_inactive_stores) {
         query.andWhere('merchant_store.status IN (:...status)', {
           status: [enumStoreStatus.active, enumStoreStatus.inactive],
         });
+      } else {
+        query.andWhere('merchant_store.status = :status', {
+          status: enumStoreStatus.active,
+        });
+      }
       if (is24hrs)
         query.andWhere('merchant_store.is_open_24h = :is_open_24h', {
           is_open_24h: open_24_hour,
