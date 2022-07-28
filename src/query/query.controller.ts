@@ -99,7 +99,8 @@ export class QueryController {
     @Req() req: any,
     @Query() query: QuerySearchValidation,
   ) {
-    return this.queryService.searchStoreMenu(query, null);
+    // return this.queryService.searchStoreMenu(query, null);
+    return this.queryService.optimationSearchStoreMenu(query, null);
   }
 
   @Get('query/search/histories/keywords')
