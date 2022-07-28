@@ -1438,6 +1438,9 @@ export class QueryService {
             weekOfDay,
             row.operational_hours,
           );
+          if (!include_inactive_stores && !store_operational_status) {
+            row.priority = 4;
+          }
           this.storeService.manipulateStoreUrl(row);
           this.merchantService.manipulateMerchantUrl(row.merchant);
 
