@@ -1359,11 +1359,11 @@ export class QueryService {
           }
         }),
       );
-      const storeItems = await query
+      const result = await query
         .skip((page - 1) * limit)
         .take(limit)
         .orderBy(OrderFilter)
-        .getMany()
+        .getManyAndCount()
         .catch((e) => {
           Logger.error(e.message, '', 'QueryListStore');
           throw new BadRequestException(
@@ -1380,7 +1380,8 @@ export class QueryService {
             ),
           );
         });
-
+      const storeItems = result[0];
+      const totalItems = result[1];
       const storeIds = [];
       const paramsDiscount = [];
       let stores_with_menus: any[] = [];
@@ -1518,7 +1519,7 @@ export class QueryService {
         );
       }
       const list_result: ListResponse = {
-        total_item: stores_with_menus.length,
+        total_item: totalItems,
         limit: Number(limit),
         current_page: Number(page),
         items: stores_with_menus,
