@@ -1251,9 +1251,7 @@ export class MerchantsService {
     }
   }
 
-  async manipulateMerchantUrl(
-    merchant: MerchantDocument,
-  ): Promise<MerchantDocument> {
+  manipulateMerchantUrl(merchant: MerchantDocument): MerchantDocument {
     if (isDefined(merchant)) {
       if (isDefined(merchant.logo) && merchant.logo) {
         const fileNameLogo =

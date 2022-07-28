@@ -1134,6 +1134,407 @@ export class QueryService {
       });
   }
 
+  async optimationSearchStoreMenu(data: QuerySearchValidation, user: any) {
+    const lang = data.lang ? data.lang : 'id';
+    const lat = data.location_latitude;
+    const long = data.location_longitude;
+    const page = data.page || 1;
+    const limit = data.limit || 10;
+    const store_category_id = data.store_category_id || null;
+    const merchant_id = data.merchant_id || null;
+    const order = data.order || null;
+    const sort = data.sort || null;
+    const price_range_id = data.price_range_id || null; //HANDLE ARRAY!
+    const pickup = data.pickup || false;
+    const is_24hrs = data.is_24hrs || false;
+    const include_closed_stores = data.include_closed_stores || false;
+    const new_this_week = data.new_this_week || false;
+    const budget_meal = data.budget_meal || false;
+    const include_inactive_stores = data.include_inactive_stores || false;
+    const minimum_rating = data.minimum_rating || 0;
+    const promo = data.promo || null;
+
+    let search = data.search || null;
+    search = search === '' ? null : search;
+
+    const OrderFilter = this.applySortFilter(order, sort);
+
+    const [
+      [is_filter_price, priceLow, priceHigh], // Filter Price Range
+      settingRadius, // Setting Radius
+      [isBudgetEnable, budgetMaxValue], // Budget
+    ] = await Promise.all([
+      await this.getFilterPricesRange(price_range_id),
+      await this.settingService.findByName('store_radius'),
+      await this.getBudgetMealMaxValue(budget_meal),
+    ]);
+
+    // Default Radius
+    const defaultRadius = Number(settingRadius.value);
+    const distance = data.distance || defaultRadius;
+
+    // Apply Delivery Status filter
+    let delivery_only;
+    if (pickup) {
+      delivery_only =
+        pickup == true
+          ? [enumDeliveryType.delivery_and_pickup, enumDeliveryType.pickup_only]
+          : [enumDeliveryType.delivery_only];
+    } else {
+      delivery_only = [
+        enumDeliveryType.delivery_and_pickup,
+        enumDeliveryType.pickup_only,
+        enumDeliveryType.delivery_only,
+      ];
+    }
+
+    // Apply store is open 24-hours filter
+    const is24hrs = is_24hrs ? true : false;
+    const open_24_hour = is_24hrs;
+
+    const currTime = DateTimeUtils.DateTimeToUTC(new Date());
+    const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
+
+    // Apply 'new_this_week' query filter
+    const newThisWeek = new_this_week || false;
+    const lastWeek = DateTimeUtils.getNewThisWeekDate(new Date());
+
+    const query = this.storeRepository
+      .createQueryBuilder('merchant_store')
+      .addSelect(
+        '(6371 * ACOS(COS(RADIANS(' +
+          lat +
+          ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
+          long +
+          ')) + SIN(RADIANS(' +
+          lat +
+          ')) * SIN(RADIANS(merchant_store.location_latitude))))',
+        'distance_in_km',
+      )
+      .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
+      .leftJoinAndSelect(
+        'merchant_store.operational_hours',
+        'operational_hours',
+        'operational_hours.merchant_store_id = merchant_store.id',
+      )
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant')
+      .leftJoinAndSelect(
+        'operational_hours.shifts',
+        'operational_shifts',
+        'operational_shifts.store_operational_id = operational_hours.id',
+      )
+      .leftJoinAndSelect(
+        'merchant_store.store_categories',
+        'merchant_store_categories',
+      )
+      .leftJoinAndSelect(
+        'merchant_store_categories.languages',
+        'merchant_store_categories_languages',
+      )
+      .leftJoinAndSelect(
+        'merchant_store.menus',
+        'menus',
+        promo === 'DISKON_MENU' ? 'menus.discounted_price is not null' : '',
+      )
+      .where(
+        '(6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius',
+        { radius: distance, lat: lat, long: long },
+      );
+    if (include_inactive_stores)
+      query.andWhere('merchant_store.status IN (:...status)', {
+        status: [enumStoreStatus.active, enumStoreStatus.inactive],
+      });
+    if (is24hrs)
+      query.andWhere('merchant_store.is_open_24h = :is_open_24h', {
+        is_open_24h: open_24_hour,
+      });
+
+    if (delivery_only)
+      query.andWhere('merchant_store.delivery_type IN (:...delivery_only)', {
+        delivery_only: delivery_only,
+      });
+
+    if (store_category_id)
+      query.andWhere('merchant_store_categories.id = :store_category_id', {
+        store_category_id: store_category_id,
+      });
+
+    if (merchant_id)
+      query.andWhere('merchant_store.merchant_id = :merchant_id', {
+        merchant_id: merchant_id,
+      });
+    if (isBudgetEnable)
+      query.andWhere('merchant_store.average_price <= :budgetMaxValue', {
+        budgetMaxValue: budgetMaxValue,
+      });
+
+    if (newThisWeek)
+      query.andWhere(
+        'merchant_store.approved_at >= :newThisWeekDate AND merchant_store.approved_at <= :today',
+        {
+          lastWeek: lastWeek,
+          today: moment(new Date()),
+        },
+      );
+
+    if (minimum_rating)
+      query.andWhere('merchant_store.rating >= :minimum_rating', {
+        minimum_rating: minimum_rating,
+      });
+
+    if (is_filter_price) {
+      query.andWhere('merchant_store.price >= :priceLow', {
+        priceLow: priceLow,
+      });
+      if (!priceHigh.includes(0)) {
+        query.andWhere('merchant_store.price <= :priceHigh', {
+          priceHigh: priceHigh,
+        });
+      }
+    }
+    if (search) {
+      query.andWhere(
+        'merchant_store.name ILIKE :search OR menus.name ILIKE :search',
+        {
+          search: `%${search}%`,
+        },
+      );
+    }
+    if (promo) {
+      switch (promo) {
+        case 'DISKON_BUAT_KAMU':
+          query.andWhere('merchant.recommended_promo_type is not null');
+          break;
+        case 'PROMO_SPESIAL':
+          query.andWhere(
+            'merchant.recommended_shopping_discount_type is not null',
+          );
+          break;
+        case 'HEMAT_ONGKIR':
+          query.andWhere(
+            'merchant.recommended_delivery_discount_type is not null',
+          );
+          break;
+        case 'DISKON_MENU':
+          query.andWhere('merchant_store.numdiscounts > 0');
+          break;
+      }
+    }
+    query.andWhere(
+      new Brackets((qb) => {
+        if (include_closed_stores) {
+          // Tampilkan semua stores, tanpa memperhatikan jadwal operasional store
+          qb.where(`operational_hours.day_of_week = :weekOfDay`, {
+            weekOfDay: weekOfDay,
+          });
+        } else {
+          qb.where(
+            `operational_hours.day_of_week = :weekOfDay
+              AND merchant_store.is_store_open = :is_open
+              AND operational_hours.merchant_store_id IS NOT NULL
+              AND operational_hours.is_open = :isOpenOperational
+            ${
+              // jika params 'is24hrs' is 'false' / tidak di define, query list store include dgn store yg buka 24jam
+              is24hrs == false
+                ? `AND (((:currTime >= operational_shifts.open_hour AND :currTime < operational_shifts.close_hour) OR (operational_shifts.open_hour > operational_shifts.close_hour AND ((operational_shifts.open_hour > :currTime AND operational_shifts.close_hour > :currTime) OR (operational_shifts.open_hour < :currTime AND operational_shifts.close_hour < :currTime)) )) OR operational_hours.is_open_24h = :all24h)`
+                : ''
+            }`,
+            {
+              is_open: true,
+              weekOfDay: weekOfDay,
+              currTime: currTime,
+              all24h: true, //niel true for query all stores
+              isOpenOperational: true,
+            },
+          );
+        }
+      }),
+    );
+    const storeItems = await query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy(OrderFilter)
+      .getMany()
+      .catch((e) => {
+        Logger.error(e.message, '', 'QueryListStore');
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: '',
+              property: '',
+              constraint: [
+                this.messageService.get('merchant.liststore.not_found'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+
+    const storeIds = [];
+    const paramsDiscount = [];
+    let stores_with_menus: any[] = [];
+    stores_with_menus = await Promise.all(
+      storeItems.map(async (row: any) => {
+        const filter = new RegExp(`${search}`, 'i');
+        row.priority = 4;
+        if (filter.test(row.name)) {
+          row.priority = 2;
+        }
+        for (const menu of row.menus) {
+          paramsDiscount.push({
+            menu_price_id: menu.menu_price_id,
+            store_id: row.id,
+          });
+          if (filter.test(menu.name)) {
+            if (row.priority === 2 || row.priority === 1) {
+              row.priority = 1;
+            } else {
+              row.priority = 3;
+            }
+          }
+        }
+        storeIds.push(row.id);
+        // Add 'distance_in_km' attribute
+        const distance_in_km = getDistanceInKilometers(
+          parseFloat(lat),
+          parseFloat(long),
+          row.location_latitude,
+          row.location_longitude,
+        );
+        // Parse Store Categories with localization category language name
+        const store_categories = row.store_categories.map((item) => {
+          const ctg_language = item.languages.find((e) => e.lang === lang);
+
+          const x = new StoreCategoriesDocument({ ...item });
+
+          if (
+            isDefined(x.image) &&
+            x.image &&
+            !x.image.includes('dummyimage')
+          ) {
+            const fileName = x.image.split('/')[x.image.split('/').length - 1];
+            x.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${x.id}/image/${fileName}`;
+          }
+
+          delete x.languages;
+          return { ...x, name: ctg_language.name };
+        });
+        // filter logic store operational status
+        const store_operational_status = this.getStoreOperationalStatus(
+          row.is_store_open,
+          currTime,
+          weekOfDay,
+          row.operational_hours,
+        );
+        this.storeService.manipulateStoreUrl(row);
+        this.merchantService.manipulateMerchantUrl(row.merchant);
+
+        // Get Price Symbol
+        const priceRange = await this.priceRangeService.getPriceRangeByPrice(
+          row.average_price,
+        );
+        const price_symbol = priceRange ? priceRange.symbol : null;
+
+        //Manipulate Menu Photo Url
+        if (row.menus && row.menus.length > 0) {
+          for (const menu of row.menus) {
+            if (
+              isDefined(menu.photo) &&
+              menu.photo &&
+              !menu.photo.includes('dummyimage')
+            ) {
+              const fileName =
+                menu.photo.split('/')[menu.photo.split('/').length - 1];
+              menu.photo = `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image/${fileName}`;
+            }
+          }
+        }
+        return {
+          ...row,
+          distance_in_km: distance_in_km,
+          store_operational_status,
+          operational_hours: opt_hours,
+          store_categories: store_categories,
+          price_symbol,
+          price_range: priceRange,
+        };
+      }),
+    );
+
+    stores_with_menus = stores_with_menus.filter((item) => item.priority !== 4);
+
+    const [discountData, opt_hours] = await Promise.all([
+      this.catalogsService.getDiscount(paramsDiscount),
+      this.storeOperationalService
+        .getAllStoreScheduleByStoreIdBulk(storeIds)
+        .then((res) => {
+          return res.map((e) => {
+            const dayOfWeekToWord = DateTimeUtils.convertToDayOfWeek(
+              Number(e.day_of_week),
+            );
+            const x = new StoreOperationalHoursDocument({ ...e });
+            x.day_of_week = dayOfWeekToWord;
+            return x;
+          });
+        }),
+    ]);
+    stores_with_menus = stores_with_menus.map((store: any) => {
+      for (const menu of store.menus) {
+        const discount = discountData.find(
+          (o) => o.menu_price_id === menu.menu_price_id,
+        );
+
+        if (discount) menu.discounted_price = discount.discounted_price;
+      }
+      store.operational_hours = opt_hours.filter(
+        (e) => e.merchant_store_id === store.id,
+      );
+      return store;
+    });
+    if (sort === 'price') {
+      stores_with_menus.sort((a, b) => a.average_price - b.average_price);
+    } else {
+      stores_with_menus.sort(
+        (a, b) =>
+          a.priority * 100 +
+          a.distance_in_km -
+          (b.priority * 100 + b.distance_in_km),
+      );
+    }
+    const list_result: ListResponse = {
+      total_item: stores_with_menus.length,
+      limit: Number(limit),
+      current_page: Number(page),
+      items: stores_with_menus,
+    };
+    if (user) {
+      const historyKeyword: Partial<SearchHistoryKeywordDocument> = {
+        customer_id: user.id,
+        keyword: cleanSearchString(data.search),
+        lang: lang,
+      };
+      await this.searchHistoryKeywordDocument.save(historyKeyword);
+    }
+    if (user && list_result.items.length) {
+      if (list_result.total_item) {
+        const historyStore: Partial<SearchHistoryStoreDocument> = {
+          store_id: stores_with_menus[0].id,
+          customer_id: user.id,
+          lang: lang,
+        };
+
+        await this.searchHistoryStoreDocument.save(historyStore);
+      }
+    }
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.liststore.success'),
+      list_result,
+    );
+  }
+
   async searchStoreMenu(
     data: QuerySearchValidation,
     user: any,
