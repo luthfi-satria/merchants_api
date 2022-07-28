@@ -1514,7 +1514,7 @@ export class StoresService {
     }
   }
 
-  async manipulateStoreUrl(store: StoreDocument): Promise<StoreDocument> {
+  manipulateStoreUrl(store: StoreDocument): StoreDocument {
     if (isDefined(store)) {
       if (
         isDefined(store.photo) &&

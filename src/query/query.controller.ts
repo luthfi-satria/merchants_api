@@ -89,7 +89,8 @@ export class QueryController {
     @Req() req: any,
     @Query() query: QuerySearchValidation,
   ) {
-    return this.queryService.searchStoreMenu(query, req.user);
+    // return this.queryService.searchStoreMenu(query, req.user);
+    return this.queryService.optimationSearchStoreMenu(query, req.user);
   }
 
   @Get('query/search')
@@ -98,7 +99,8 @@ export class QueryController {
     @Req() req: any,
     @Query() query: QuerySearchValidation,
   ) {
-    return this.queryService.searchStoreMenu(query, null);
+    // return this.queryService.searchStoreMenu(query, null);
+    return this.queryService.optimationSearchStoreMenu(query, null);
   }
 
   @Get('query/search/histories/keywords')
