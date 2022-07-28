@@ -1303,7 +1303,7 @@ export class QueryService {
       }
       if (search) {
         query.andWhere(
-          'merchant_store.name ILIKE :search OR menus.name ILIKE :search',
+          '( merchant_store.name ILIKE :search OR menus.name ILIKE :search  )',
           {
             search: `%${search}%`,
           },
