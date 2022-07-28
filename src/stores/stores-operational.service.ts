@@ -9,7 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { StoreOperationalHoursDocument } from 'src/database/entities/store_operational_hours.entity';
-import { Repository, UpdateResult } from 'typeorm';
+import { In, Repository, UpdateResult } from 'typeorm';
 import { StoreOperationalShiftDocument } from 'src/database/entities/store_operational_shift.entity';
 import _ from 'lodash';
 import { StoresService } from './stores.service';
@@ -100,6 +100,33 @@ export class StoreOperationalService {
         });
     } catch (e) {
       Logger.error(e.message, '', 'Update schedule 24 hours');
+      throw e;
+    }
+  }
+
+  public async getAllStoreScheduleByStoreIdBulk(
+    store_ids: string[],
+  ): Promise<StoreOperationalHoursDocument[]> {
+    try {
+      return await this.storeOperationalRepository
+        .find({
+          where: { merchant_store_id: In(store_ids) },
+          select: [
+            'id',
+            'day_of_week',
+            'gmt_offset',
+            'merchant_store_id',
+            'is_open_24h',
+            'is_open',
+          ],
+          relations: ['shifts'],
+          order: { day_of_week: 'ASC' },
+        })
+        .catch((e) => {
+          throw e;
+        });
+    } catch (e) {
+      Logger.error(e.message, '', 'Query Get Operational Hours');
       throw e;
     }
   }
