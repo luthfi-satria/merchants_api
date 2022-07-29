@@ -21,10 +21,13 @@ spec:
       containers:
       - name: merchants
         image: ghcr.io/wofood/efood_merchants
-        # resources:
-        #   limits:
-        #     memory: "128Mi"
-        #     cpu: "500m"
+        resources:
+          requests:
+            memory: "1G"
+            cpu: "250m"
+          limits:
+            memory: "8G"
+            cpu: "2000m"
         ports:
           - name: merchants
             protocol: TCP
