@@ -1253,31 +1253,37 @@ export class QueryService {
           status: enumStoreStatus.active,
         });
       }
-      if (is24hrs)
+      if (is24hrs) {
         query.andWhere('merchant_store.is_open_24h = :is_open_24h', {
           is_open_24h: open_24_hour,
         });
+      }
 
-      if (delivery_only)
+      if (delivery_only) {
         query.andWhere('merchant_store.delivery_type IN (:...delivery_only)', {
           delivery_only: delivery_only,
         });
+      }
 
-      if (store_category_id)
+      if (store_category_id) {
         query.andWhere('merchant_store_categories.id = :store_category_id', {
           store_category_id: store_category_id,
         });
+      }
 
-      if (merchant_id)
+      if (merchant_id) {
         query.andWhere('merchant_store.merchant_id = :merchant_id', {
           merchant_id: merchant_id,
         });
-      if (isBudgetEnable)
+      }
+
+      if (isBudgetEnable) {
         query.andWhere('merchant_store.average_price <= :budgetMaxValue', {
           budgetMaxValue: budgetMaxValue,
         });
+      }
 
-      if (newThisWeek)
+      if (newThisWeek) {
         query.andWhere(
           'merchant_store.approved_at >= :newThisWeekDate AND merchant_store.approved_at <= :today',
           {
@@ -1285,11 +1291,13 @@ export class QueryService {
             today: moment(new Date()),
           },
         );
+      }
 
-      if (minimum_rating)
+      if (minimum_rating) {
         query.andWhere('merchant_store.rating >= :minimum_rating', {
           minimum_rating: minimum_rating,
         });
+      }
 
       if (is_filter_price) {
         query.andWhere('merchant_store.price >= :priceLow', {
@@ -1388,6 +1396,7 @@ export class QueryService {
       stores_with_menus = await Promise.all(
         storeItems.map(async (row: any) => {
           const filter = new RegExp(`${search}`, 'i');
+          const filter_menus = [];
           row.priority = 4;
           if (filter.test(row.name)) {
             row.priority = 2;
@@ -1403,8 +1412,20 @@ export class QueryService {
               } else {
                 row.priority = 3;
               }
+              filter_menus.push(menu);
+            }
+            //Manipulate Menu Photo Url
+            if (
+              isDefined(menu.photo) &&
+              menu.photo &&
+              !menu.photo.includes('dummyimage')
+            ) {
+              const fileName =
+                menu.photo.split('/')[menu.photo.split('/').length - 1];
+              menu.photo = `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image/${fileName}`;
             }
           }
+          row.menus = filter_menus;
           storeIds.push(row.id);
           // Add 'distance_in_km' attribute
           const distance_in_km = getDistanceInKilometers(
@@ -1451,20 +1472,6 @@ export class QueryService {
           );
           const price_symbol = priceRange ? priceRange.symbol : null;
 
-          //Manipulate Menu Photo Url
-          if (row.menus && row.menus.length > 0) {
-            for (const menu of row.menus) {
-              if (
-                isDefined(menu.photo) &&
-                menu.photo &&
-                !menu.photo.includes('dummyimage')
-              ) {
-                const fileName =
-                  menu.photo.split('/')[menu.photo.split('/').length - 1];
-                menu.photo = `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image/${fileName}`;
-              }
-            }
-          }
           return {
             ...row,
             distance_in_km: distance_in_km,
