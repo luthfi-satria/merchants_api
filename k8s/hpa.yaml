@@ -1,0 +1,12 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: merchants-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: merchants-depl
+  minReplicas: 10
+  maxReplicas: 40
+  targetCPUUtilizationPercentage: 40
