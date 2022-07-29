@@ -23,8 +23,8 @@ spec:
         image: ghcr.io/wofood/efood_merchants
         resources:
           requests:
-            memory: "1G"
-            cpu: "250m"
+            memory: "4G"
+            cpu: "1000m"
           limits:
             memory: "8G"
             cpu: "2000m"
