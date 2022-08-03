@@ -54,6 +54,7 @@ import { isDefined } from 'class-validator';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
 import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
+import { GetStoreFilter } from './filter/get-store.filter';
 // import { SearchHistoryKeywordDocument } from 'src/database/entities/search_history_keyword.entity';
 
 @Injectable()
@@ -803,6 +804,7 @@ export class QueryService {
         });
       let storeItems = qlistStore[0];
       let totalItems = qlistStore[1];
+      console.log(totalItems, 'totalItems');
       if (favoriteStore) {
         const storeItemFavoriteSorted: StoreDocument[] = [];
         for (let i = 0; i < favoriteStore.length; i++) {
@@ -1561,6 +1563,235 @@ export class QueryService {
     }
   }
 
+  async getStoreList(params: QueryListStoreDto) {
+    const [
+      [is_filter_price, priceLow, priceHigh], // Filter Price Range
+      [isBudgetEnable, budgetMaxValue], // Budget
+    ] = await Promise.all([
+      await this.getFilterPricesRange(params.price_range_id),
+      await this.getBudgetMealMaxValue(params.budget_meal),
+    ]);
+
+    const priceParams = {
+      is_filter_price,
+      priceLow,
+      priceHigh,
+      isBudgetEnable,
+      budgetMaxValue,
+    };
+
+    const filter: GetStoreFilter = new GetStoreFilter(
+      params,
+      this.settingService,
+      this.ordersService,
+      priceParams,
+    );
+
+    const currentPage = params.page ?? 1;
+
+    const perPage = params.limit ?? 10;
+
+    const query = this.storeRepository.createQueryBuilder('model');
+
+    const orderBy = params.order || null;
+
+    const sort = params.sort || null;
+
+    const result = await (
+      await filter.apply(query)
+    )
+      .skip((currentPage - 1) * perPage)
+      .take(perPage)
+      .orderBy(this.applySortFilter(orderBy, sort))
+      .getManyAndCount();
+
+    let storeItems = result[0];
+
+    let totalItems = result[1];
+
+    console.log(totalItems, 'totalItem');
+
+    const favoriteStore = params.favorite_this_week
+      ? await this.ordersService.getFavoriteStoreThisWeek()
+      : [];
+
+    if (favoriteStore?.length > 0) {
+      const storeItemFavoriteSorted: StoreDocument[] = [];
+      for (let i = 0; i < favoriteStore.length; i++) {
+        const store = _.find(storeItems, { id: favoriteStore[i].store_id });
+        if (store) {
+          storeItemFavoriteSorted.push(store);
+        }
+      }
+      storeItems = storeItemFavoriteSorted;
+    }
+
+    let is_online_platform = true;
+
+    if (params.platform) is_online_platform = params.platform == 'ONLINE';
+
+    console.log(storeItems, 'storeItem');
+
+    const formattedStoredItems = await Promise.all(
+      storeItems.map(async (row) => {
+        if (row.platform == is_online_platform) {
+          // Add 'distance_in_km' attribute
+          const distance_in_km = getDistanceInKilometers(
+            parseFloat(params.location_latitude),
+            parseFloat(params.location_longitude),
+            row.location_latitude,
+            row.location_longitude,
+          );
+
+          // Get relation of operational store & operational shift,
+          const opt_hours = await this.storeOperationalService
+            .getAllStoreScheduleByStoreId(row.id)
+            .then((res) => {
+              return res.map((e) => {
+                const dayOfWeekToWord = DateTimeUtils.convertToDayOfWeek(
+                  Number(e.day_of_week),
+                );
+                const x = new StoreOperationalHoursDocument({ ...e });
+                delete x.day_of_week;
+                return {
+                  ...x,
+                  day_of_week: dayOfWeekToWord,
+                };
+              });
+            });
+
+          // Parse Store Categories with localization category language name
+          const store_categories = row.store_categories.map((item) => {
+            const ctg_language = item.languages.find(
+              (e) => e.lang === (params.lang ?? 'id'),
+            );
+
+            const x = new StoreCategoriesDocument({ ...item });
+
+            if (
+              isDefined(x.image) &&
+              x.image &&
+              !x.image.includes('dummyimage')
+            ) {
+              const fileName =
+                x.image.split('/')[x.image.split('/').length - 1];
+              x.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${x.id}/image/${fileName}`;
+            }
+
+            delete x.languages;
+
+            return { ...x, name: ctg_language.name };
+          });
+
+          const currTime = DateTimeUtils.DateTimeToUTC(new Date());
+
+          const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
+
+          const store_operational_status = this.getStoreOperationalStatus(
+            row.is_store_open,
+            currTime,
+            weekOfDay,
+            row.operational_hours,
+          );
+
+          const merchant = await this.merchantRepository
+            .findOne(row.merchant_id)
+            .then((result) => {
+              delete result.pic_password;
+              delete result.approved_at;
+              delete result.created_at;
+              delete result.updated_at;
+              delete result.deleted_at;
+              return result;
+            });
+
+          await this.storeService.manipulateStoreUrl(row);
+
+          await this.merchantService.manipulateMerchantUrl(merchant);
+
+          const priceRange = await this.priceRangeService.getPriceRangeByPrice(
+            row.average_price,
+          );
+          const price_symbol = priceRange ? priceRange.symbol : null;
+
+          if (row.menus && row.menus.length > 0) {
+            for (const menu of row.menus) {
+              if (
+                isDefined(menu.photo) &&
+                menu.photo &&
+                !menu.photo.includes('dummyimage')
+              ) {
+                const fileName =
+                  menu.photo.split('/')[menu.photo.split('/').length - 1];
+                menu.photo = `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image/${fileName}`;
+              }
+            }
+          }
+
+          return {
+            ...row,
+            distance_in_km: distance_in_km,
+            store_operational_status,
+            operational_hours: opt_hours,
+            store_categories: store_categories,
+            merchant,
+            price_symbol,
+            price_range: priceRange,
+          };
+        } else {
+          totalItems -= 1;
+        }
+      }),
+    );
+
+    console.log(formattedStoredItems, 'formatted');
+
+    const formattedArr = [];
+
+    if (params.favorite_this_week) {
+      formattedStoredItems.sort((a, b) => {
+        if (a.distance_in_km < b.distance_in_km) {
+          return -1;
+        }
+        if (a.distance_in_km > b.distance_in_km) {
+          return 1;
+        }
+        return 0;
+      });
+    }
+
+    if (params.favorite_this_week && params.sort === 'price') {
+      formattedStoredItems.sort((a, b) => {
+        if (a.average_price < b.average_price) {
+          return -1;
+        }
+        if (a.average_price > b.average_price) {
+          return 1;
+        }
+        return 0;
+      });
+    }
+
+    formattedStoredItems.forEach((element) => {
+      if (element) {
+        formattedArr.push(element);
+      }
+    });
+
+    const list_result: ListResponse = {
+      total_item: totalItems,
+      limit: Number(perPage),
+      current_page: Number(currentPage),
+      items: formattedArr,
+    };
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.liststore.success'),
+      list_result,
+    );
+  }
+
   async searchStoreMenu(
     data: QuerySearchValidation,
     user: any,
@@ -1758,6 +1989,7 @@ export class QueryService {
   ): Promise<RSuccessMessage> {
     try {
       const currentPage = data.page || 1;
+
       const perPage = Number(data.limit) || 10;
 
       const query = this.searchHistoryKeywordDocument

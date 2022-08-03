@@ -323,91 +323,91 @@ export class StoreCategoriesService {
     data: Partial<StoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
     try {
-    const search = data.search || '';
-    const currentPage = data.page || 1;
-    const perPage = Number(data.limit) || 10;
-    const actives = [];
+      const search = data.search || '';
+      const currentPage = data.page || 1;
+      const perPage = Number(data.limit) || 10;
+      const actives = [];
 
-    if (data.active == 'true') actives.push(true);
-    if (data.active == 'false') actives.push(false);
-    if (data.statuses && data.statuses.length > 0) {
-      for (const status of data.statuses) {
-        if (status == StoreCategoryStatus.ACTIVE) actives.push(true);
-        if (status == StoreCategoryStatus.INACTIVE) actives.push(false);
+      if (data.active == 'true') actives.push(true);
+      if (data.active == 'false') actives.push(false);
+      if (data.statuses && data.statuses.length > 0) {
+        for (const status of data.statuses) {
+          if (status == StoreCategoryStatus.ACTIVE) actives.push(true);
+          if (status == StoreCategoryStatus.INACTIVE) actives.push(false);
+        }
       }
-    }
-    const qCount = this.storeCategoriesRepository
-      .createQueryBuilder('sc')
-      .leftJoinAndSelect('sc.languages', 'mscl');
+      const qCount = this.storeCategoriesRepository
+        .createQueryBuilder('sc')
+        .leftJoinAndSelect('sc.languages', 'mscl');
 
-    if (actives.length > 0) {
-      qCount.andWhere('sc.active in (:...actives)', {
-        actives: actives,
-      });
-    }
-    if (data.search) {
-      qCount.andWhere('mscl.name  ilike :sname', {
-        sname: '%' + search + '%',
-      });
-    }
+      if (actives.length > 0) {
+        qCount.andWhere('sc.active in (:...actives)', {
+          actives: actives,
+        });
+      }
+      if (data.search) {
+        qCount.andWhere('mscl.name  ilike :sname', {
+          sname: '%' + search + '%',
+        });
+      }
 
-    qCount
-      .orderBy('sc.sequence')
-      .skip((currentPage - 1) * perPage)
-      .take(perPage);
+      qCount
+        .orderBy('sc.sequence')
+        .skip((currentPage - 1) * perPage)
+        .take(perPage);
 
-    const storeCategories = await qCount.getManyAndCount();
-    const totalItems = storeCategories[1];
-    console.log(storeCategories[0][0].languages)
+      const storeCategories = await qCount.getManyAndCount();
+      const totalItems = storeCategories[1];
+      console.log(storeCategories[0][0].languages);
 
-    const categoryIds: string[] = [];
-    await storeCategories[0].map(item => categoryIds.push(item.id));
+      const categoryIds: string[] = [];
+      await storeCategories[0].map((item) => categoryIds.push(item.id));
 
-    const categories = await this.storeCategoriesRepository
-    .createQueryBuilder('sc')
-    .leftJoinAndSelect('sc.languages', 'mscl')
-    .where('mscl.storeCategoriesId IN (:...categoryIds)', {
-      categoryIds
-    })
-    .orWhere('mscl.name ilike :cname', {
-      cname: '%' + search + '%',
-    })
-    .skip((currentPage - 1) * perPage)
-    .take(perPage)
-    .orderBy('sc.sequence')
-    .getMany();
-    console.log(categories);
+      const categories = await this.storeCategoriesRepository
+        .createQueryBuilder('sc')
+        .leftJoinAndSelect('sc.languages', 'mscl')
+        .where('mscl.storeCategoriesId IN (:...categoryIds)', {
+          categoryIds,
+        })
+        .orWhere('mscl.name ilike :cname', {
+          cname: '%' + search + '%',
+        })
+        .skip((currentPage - 1) * perPage)
+        .take(perPage)
+        .orderBy('sc.sequence')
+        .getMany();
+      console.log(categories);
       // console.lo
 
-    for (const result of categories) {
-      dbOutputTime(result);
-      if (result.active) {
-        result.status = StoreCategoryStatus.ACTIVE;
-      } else if (!result.active) {
-        result.status = StoreCategoryStatus.INACTIVE;
+      for (const result of categories) {
+        dbOutputTime(result);
+        if (result.active) {
+          result.status = StoreCategoryStatus.ACTIVE;
+        } else if (!result.active) {
+          result.status = StoreCategoryStatus.INACTIVE;
+        }
+        if (
+          isDefined(result.image) &&
+          result.image &&
+          !result.image.includes('dummyimage')
+        ) {
+          const fileNameImage =
+            result.image.split('/')[result.image.split('/').length - 1];
+          result.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image/${fileNameImage}`;
+        }
       }
-      if (
-        isDefined(result.image) &&
-        result.image &&
-        !result.image.includes('dummyimage')
-      ) {
-        const fileNameImage =
-          result.image.split('/')[result.image.split('/').length - 1];
-        result.image = `${process.env.BASEURL_API}/api/v1/merchants/store/categories/${result.id}/image/${fileNameImage}`;
-      }
-    }
 
-    const listResult: ListResponse = {
-      total_item: categories.length,
-      limit: Number(perPage),
-      current_page: Number(currentPage),
-      items: categories,
-    };
-    return this.responseService.success(
-      true,
-      this.messageService.get('merchant.general.success'),
-      listResult,
-    );
+      const listResult: ListResponse = {
+        total_item: categories.length,
+        limit: Number(perPage),
+        current_page: Number(currentPage),
+        items: categories,
+      };
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        listResult,
+      );
     } catch (error) {
       console.log(error);
     }

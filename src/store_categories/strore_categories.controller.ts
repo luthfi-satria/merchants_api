@@ -54,7 +54,7 @@ export class StoreCategoriesController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 5242880,//5MB
+        fileSize: 5242880, //5MB
       },
       fileFilter: imageFileFilter,
     }),
@@ -100,7 +100,7 @@ export class StoreCategoriesController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 5242880,//5MB
+        fileSize: 5242880, //5MB
       },
       fileFilter: imageFileFilter,
     }),
@@ -153,7 +153,7 @@ export class StoreCategoriesController {
     @Req() req: any,
     @Query() data: Partial<StoreCategoriesValidation>,
   ): Promise<any> {
-    console.log('masuk')
+    console.log('masuk');
     return this.storeCategoriesService.listStoreCategories(data);
   }
 
