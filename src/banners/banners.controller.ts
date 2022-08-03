@@ -46,7 +46,7 @@ export class BannersController {
         filename: editFileName,
       }),
       limits: {
-        fileSize: 5242880,//5MB
+        fileSize: 5242880, //5MB
       },
       fileFilter: imageJpgPngFileFilter,
     }),

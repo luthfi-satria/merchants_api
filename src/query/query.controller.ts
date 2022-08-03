@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   ClassSerializerInterceptor,
   Controller,
   Get,
   Header,
+  InternalServerErrorException,
   Param,
   Query,
   Req,
@@ -56,7 +58,7 @@ export class QueryController {
   async getstores(
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
-    return this.queryService.getListQueryStore(data, {}, true);
+    return await this.queryService.getStoreList(data);
   }
 
   @Get('query/stores/detail/:id')
