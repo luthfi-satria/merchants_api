@@ -47,7 +47,6 @@ export class ListStoreDTO {
 
   @IsOptional()
   @IsArray()
-  @IsUUID('all', { message: 'Merchant ID yang diisi bukan format UUID' })
   merchant_ids: string[];
 
   @IsOptional()
