@@ -795,8 +795,14 @@ export class StoresService {
         gstat: statuses,
       });
     }
-
     if (
+      (user.user_type == 'admin' || user.level == 'group') &&
+      data.merchant_ids.length > 0
+    ) {
+      store.andWhere('merchant.id IN (:...mid)', {
+        mid: data.merchant_ids,
+      });
+    } else if (
       (user.user_type == 'admin' || user.level == 'group') &&
       data.merchant_id
     ) {
@@ -853,6 +859,11 @@ export class StoresService {
       } else if (user.level == 'group') {
         if (data.merchant_id) {
           pricingTemplateData.merchant_ids.push(data.merchant_id);
+        } else if (data.merchant_ids.length > 0) {
+          pricingTemplateData.merchant_ids = [
+            ...pricingTemplateData.merchant_ids,
+            ...data.merchant_ids,
+          ];
         } else {
           const merchants = await this.merchantService.findMerchantsByGroup(
             user.group_id,
@@ -864,6 +875,11 @@ export class StoresService {
       } else {
         if (data.merchant_id) {
           pricingTemplateData.merchant_ids.push(data.merchant_id);
+        } else if (data.merchant_ids.length > 0) {
+          pricingTemplateData.merchant_ids = [
+            ...pricingTemplateData.merchant_ids,
+            ...data.merchant_ids,
+          ];
         } else if (data.group_id) {
           const merchants = await this.merchantService.findMerchantsByGroup(
             data.group_id,
@@ -906,6 +922,11 @@ export class StoresService {
         } else if (user.level == 'group') {
           if (data.merchant_id) {
             postData.merchant_ids.push(data.merchant_id);
+          } else if (data.merchant_ids.length > 0) {
+            postData.merchant_ids = [
+              ...postData.merchant_ids,
+              ...data.merchant_ids,
+            ];
           } else {
             const merchants = await this.merchantService.findMerchantsByGroup(
               user.group_id,
