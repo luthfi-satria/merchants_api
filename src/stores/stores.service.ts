@@ -792,7 +792,7 @@ export class StoresService {
     }
     if (
       (user.user_type == 'admin' || user.level == 'group') &&
-      data.merchant_ids.length > 0
+      data.merchant_ids
     ) {
       store.andWhere('merchant.id IN (:...mid)', {
         mid: data.merchant_ids,
@@ -854,7 +854,7 @@ export class StoresService {
       } else if (user.level == 'group') {
         if (data.merchant_id) {
           pricingTemplateData.merchant_ids.push(data.merchant_id);
-        } else if (data.merchant_ids.length > 0) {
+        } else if (data.merchant_ids) {
           pricingTemplateData.merchant_ids = [
             ...pricingTemplateData.merchant_ids,
             ...data.merchant_ids,
@@ -870,7 +870,7 @@ export class StoresService {
       } else {
         if (data.merchant_id) {
           pricingTemplateData.merchant_ids.push(data.merchant_id);
-        } else if (data.merchant_ids.length > 0) {
+        } else if (data.merchant_ids) {
           pricingTemplateData.merchant_ids = [
             ...pricingTemplateData.merchant_ids,
             ...data.merchant_ids,
