@@ -40,6 +40,7 @@ import { ListGroupDTO } from './validation/list-group.validation';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { Response } from 'express';
 import etag from 'etag';
+import { CountGroupDto } from './validation/count-group.dto';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -249,6 +250,39 @@ export class GroupsController {
       true,
       this.messageService.get('merchant.deletegroup.success'),
     );
+  }
+
+  @Get('groups/count-corporate')
+  @UserTypeAndLevel('admin.*', 'merchant.group')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async countCorporate(
+    @Req() req: any,
+    @Query() query: CountGroupDto,
+  ): Promise<any> {
+    try {
+      const result = await this.groupsService.countCorporate(req.user, query);
+      if (result) {
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.count_group.success'),
+          result,
+        );
+      }
+    } catch (error) {
+      const errors: RMessage = {
+        value: '',
+        property: 'count_group',
+        constraint: [this.messageService.get('merchant.count_group.fail')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 
   @Get('groups/:id')
