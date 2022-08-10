@@ -45,51 +45,35 @@ export class StoreCategoriesService {
     data: Partial<StoreCategoriesValidation>,
   ): Promise<RSuccessMessage> {
     const createStocat: Partial<StoreCategoriesDocument> = {};
+
     try {
-      const url = await this.storage.store(data.image);
-      createStocat.image = url;
+      createStocat.image = await this.storage.store(data.image);
     } catch (e) {
-      console.error(e);
       throw new InternalServerErrorException(e.message);
     }
+
     if (data.sequence != null && typeof data.sequence != 'undefined') {
       createStocat.sequence = data.sequence;
     }
+
     if (typeof data.active != 'undefined') {
       if (data.active == 'true') createStocat.active = true;
+
       if (data.active == 'false') createStocat.active = false;
     }
 
-    const keys = [];
-    for (const k in data) keys.push(k);
     createStocat.languages = [];
-    for (const key of keys) {
+
+    for (const key in data) {
       if (key.substring(0, 5) == 'name_') {
-        await this.languageRepository
-          .save({
-            lang: key.substring(5),
-            name: data[key],
-          })
-          .then((result) => {
-            createStocat.languages.push(result);
-          })
-          .catch((err) => {
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                {
-                  value: data[key],
-                  property: key,
-                  constraint: [err.message],
-                },
-                'Bad Request',
-              ),
-            );
-          });
+        createStocat.languages.push({
+          lang: key.substring(5),
+          name: data[key],
+        });
       }
     }
 
-    return this.storeCategoriesRepository
+    return await this.storeCategoriesRepository
       .save(createStocat)
       .then(async (result) => {
         dbOutputTime(result);
