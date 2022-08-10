@@ -184,44 +184,6 @@ export class RegistersService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      // create group process
-      await this.groupsService.validateGroupUniqueName(
-        registerCorporateData.name,
-      );
-      await this.groupsService.validateGroupUniquePhone(
-        registerCorporateData.phone,
-      );
-      await this.groupUserService.validateGroupUserUniqueEmail(
-        registerCorporateData.director_email,
-        null,
-        'director_email',
-      );
-      await this.groupUserService.validateGroupUserUniqueEmail(
-        registerCorporateData.pic_finance_email,
-        null,
-        'pic_finance_email',
-      );
-      await this.groupUserService.validateGroupUserUniqueEmail(
-        registerCorporateData.pic_operational_email,
-        null,
-        'pic_operational_email',
-      );
-      await this.groupUserService.validateGroupUserUniquePhone(
-        registerCorporateData.director_phone,
-        null,
-        'director_phone',
-      );
-      await this.groupUserService.validateGroupUserUniquePhone(
-        registerCorporateData.pic_finance_phone,
-        null,
-        'pic_finance_phone',
-      );
-      await this.groupUserService.validateGroupUserUniquePhone(
-        registerCorporateData.pic_operational_phone,
-        null,
-        'pic_operational_phone',
-      );
-
       const salt: string = await this.hashService.randomSalt();
       registerCorporateData.director_password =
         await this.hashService.hashPassword(
@@ -656,6 +618,10 @@ export class RegistersService {
         store_document.platform = true;
       }
 
+      store_document.location_latitude =
+        registerCorporateData.location_latitude;
+      store_document.location_longitude =
+        registerCorporateData.location_longitude;
       store_document.merchant_id = createMerchantUser.merchant_id;
       store_document.store_categories =
         await this.storeService.getCategoriesByIds(

@@ -5,6 +5,8 @@ import {
   IsBooleanString,
   IsEmail,
   IsIn,
+  IsLatitude,
+  IsLongitude,
   IsNotEmpty,
   IsNumber,
   IsNumberString,
@@ -19,20 +21,8 @@ import {
   DirectorIdentityType,
   GroupStatus,
 } from 'src/database/entities/group.entity';
-import {
-  MerchantStatus,
-  MerchantType,
-} from 'src/database/entities/merchant.entity';
+import { MerchantType } from 'src/database/entities/merchant.entity';
 import { enumDeliveryType } from 'src/database/entities/store.entity';
-
-enum Status {
-  Draft = 'DRAFT',
-  Waiting_approval = 'WAITING_FOR_APPROVAL',
-  Active = 'ACTIVE',
-  Inactive = 'INACTIVE',
-  Banned = 'BANNED',
-  Rejected = 'REJECTED',
-}
 
 export class RegisterCorporateDto {
   @IsNotEmpty()
@@ -275,4 +265,10 @@ export class RegisterCorporateDto {
   @IsOptional()
   @IsBooleanString({ message: 'auto_accept_order bukan format Boolean' })
   auto_accept_order: string;
+
+  @IsOptional()
+  location_latitude: number;
+
+  @IsOptional()
+  location_longitude: number;
 }
