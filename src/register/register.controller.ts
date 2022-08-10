@@ -3,7 +3,6 @@ import {
   Post,
   Body,
   Controller,
-  HttpException,
   HttpStatus,
   Req,
   UploadedFiles,
@@ -19,18 +18,18 @@ import { editFileName, imageAndPdfFileFilter } from 'src/utils/general-utils';
 import { RegisterCorporateDto } from './dto/register-corporate.dto';
 import {
   CategoryGroup,
-  GroupDocument,
 } from 'src/database/entities/group.entity';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { RMessage } from 'src/response/response.interface';
-import { CreateGroupDTO } from 'src/groups/validation/create_groups.dto';
+import { GroupUsersService } from 'src/groups/group_users.service';
 
 @Controller('api/v1/merchants')
 export class RegistersController {
   constructor(
     private readonly groupsService: GroupsService,
+    private readonly groupsUsersService: GroupUsersService,
     private readonly registersService: RegistersService,
     private readonly imageValidationService: ImageValidationService,
     private readonly responseService: ResponseService,
@@ -102,6 +101,47 @@ export class RegistersController {
           ),
         );
       }
+
+      // create group process
+      await this.groupsService.validateGroupUniqueName(
+        registerCorporateDto.name,
+      );
+
+      await this.groupsService.validateGroupUniquePhone(
+        registerCorporateDto.phone,
+      );
+
+      await this.groupsUsersService.validateGroupUserUniqueEmail(
+        registerCorporateDto.director_email,
+        null,
+        'director_email',
+      );
+
+      await this.groupsUsersService.validateGroupUserUniqueEmail(
+        registerCorporateDto.pic_finance_email,
+        null,
+        'pic_finance_email',
+      );
+      await this.groupsUsersService.validateGroupUserUniqueEmail(
+        registerCorporateDto.pic_operational_email,
+        null,
+        'pic_operational_email',
+      );
+      await this.groupsUsersService.validateGroupUserUniquePhone(
+        registerCorporateDto.director_phone,
+        null,
+        'director_phone',
+      );
+      await this.groupsUsersService.validateGroupUserUniquePhone(
+        registerCorporateDto.pic_finance_phone,
+        null,
+        'pic_finance_phone',
+      );
+      await this.groupsUsersService.validateGroupUserUniquePhone(
+        registerCorporateDto.pic_operational_phone,
+        null,
+        'pic_operational_phone',
+      );
 
       for (const file of files) {
         const file_name = '/upload_registers/' + file.filename;
