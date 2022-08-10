@@ -20,14 +20,10 @@ export class StoreCategoriesDocument {
   })
   image: string;
 
-  @OneToMany(() => LanguageDocument, (lang) => lang.store_categories)
+  @OneToMany(() => LanguageDocument, (lang) => lang.store_categories, {
+    cascade: ['insert', 'update'],
+  })
   languages: Partial<LanguageDocument>[];
-
-  // @Column()
-  // name_id: string;
-
-  // @Column()
-  // name_en: string;
 
   @Column({ default: true })
   active: boolean;
