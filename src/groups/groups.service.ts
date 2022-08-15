@@ -789,7 +789,11 @@ export class GroupsService {
       }
 
       return null;
-
+    } catch (error) {
+      throw error;
+    }
+  }
+  
   async countCorporate(user: any, params: CountGroupDto): Promise<any> {
     try {
       const status = params.status || ['WAITING_FOR_APPROVAL'];
