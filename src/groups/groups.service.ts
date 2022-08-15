@@ -784,6 +784,7 @@ export class GroupsService {
 
       if (findGroup) {
         findGroup.status = GroupStatus.Active;
+        findGroup.approved_at = new Date();
         const updateCorporate = await this.groupRepository.save(findGroup)
         return updateCorporate;
       }
@@ -793,7 +794,7 @@ export class GroupsService {
       throw error;
     }
   }
-  
+
   async countCorporate(user: any, params: CountGroupDto): Promise<any> {
     try {
       const status = params.status || ['WAITING_FOR_APPROVAL'];
