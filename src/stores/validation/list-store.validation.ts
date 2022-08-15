@@ -46,6 +46,10 @@ export class ListStoreDTO {
   merchant_id: string;
 
   @IsOptional()
+  @IsArray()
+  merchant_ids: string[];
+
+  @IsOptional()
   @ValidateIf((o) => o.group_id !== '')
   @IsUUID('all', { message: 'Group ID yang diisi bukan format UUID' })
   group_id: string;

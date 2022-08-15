@@ -52,6 +52,7 @@ import { CommonStorageService } from 'src/common/storage/storage.service';
 import { isDefined } from 'class-validator';
 import {SetFieldEmptyUtils} from "../utils/set-field-empty-utils";
 import { RejectCorporateDto } from './validation/reject-corporate.dto';
+import { CountGroupDto } from './validation/count-group.dto';
 
 @Injectable()
 export class GroupsService {
@@ -490,6 +491,7 @@ export class GroupsService {
         id: user.group_id,
       });
     }
+    console.log('user', user);
 
     query
       .orderBy('created_at', 'DESC')
@@ -787,6 +789,26 @@ export class GroupsService {
       }
 
       return null;
+
+  async countCorporate(user: any, params: CountGroupDto): Promise<any> {
+    try {
+      const status = params.status || ['WAITING_FOR_APPROVAL'];
+      const query = this.groupRepository.createQueryBuilder('');
+      query.where('status IN (:...status)', {
+        status: status,
+      });
+
+      if (user.level == 'group') {
+        query.andWhere('id = :id', {
+          id: user.group_id,
+        });
+      }
+
+      const count = await query.getCount();
+      console.log(count);
+      return {
+        total_groups: count,
+      };
     } catch (error) {
       throw error;
     }
