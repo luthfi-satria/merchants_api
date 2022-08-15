@@ -162,6 +162,18 @@ export class GroupDocument {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   rejected_at: Date;
 
+  @Column({ nullable: true })
+  cancellation_reason_of_information: string;
+
+  @Column({ nullable: true })
+  cancellation_reason_of_document: string;
+
+  @Column({ nullable: true })
+  cancellation_reason_of_type_and_service: string;
+
+  @Column({ nullable: true })
+  cancellation_reason_of_responsible_person: string;
+
   @OneToMany(() => MerchantDocument, (merchant) => merchant.group)
   merchants: Promise<MerchantDocument[]>;
 

@@ -40,6 +40,7 @@ import { ListGroupDTO } from './validation/list-group.validation';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { Response } from 'express';
 import etag from 'etag';
+import { RejectCorporateDto } from './validation/reject-corporate.dto';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -318,5 +319,84 @@ export class GroupsController {
     });
 
     images.stream.pipe(res);
+  }
+
+  @Put('group/:group_id/rejected')
+  @UserTypeAndLevel('admin.*')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async rejectedCorporate(
+    @Param('group_id') group_id: string,
+    @Body() rejectDto: RejectCorporateDto,
+  ) {
+    try {
+      const result: any = await this.groupsService.rejectedCorporate(group_id, rejectDto);
+      
+      if (!result) {
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.updategroup.fail'),
+          result,
+        );
+      }
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.updategroup.success'),
+        result,
+      );
+    } catch (error) {
+      const errors: RMessage = {
+        value: '',
+        property: 'updategroup',
+        constraint: [this.messageService.get('merchant.updategroup.fail')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
+  @Put('group/:group_id/accepted')
+  @UserTypeAndLevel('admin.*')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async acceptedCorporate(
+    @Param('group_id') group_id: string
+  ) {
+    try {
+      const result: any = await this.groupsService.acceptedCorporate(group_id);
+      
+      if (!result) {
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.updategroup.fail'),
+          result,
+        );
+      }
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.updategroup.success'),
+        result,
+      );
+    } catch (error) {
+      const errors: RMessage = {
+        value: '',
+        property: 'updategroup',
+        constraint: [this.messageService.get('merchant.updategroup.fail')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
   }
 }

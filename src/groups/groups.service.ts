@@ -51,6 +51,7 @@ import { StoresService } from 'src/stores/stores.service';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { isDefined } from 'class-validator';
 import {SetFieldEmptyUtils} from "../utils/set-field-empty-utils";
+import { RejectCorporateDto } from './validation/reject-corporate.dto';
 
 @Injectable()
 export class GroupsService {
@@ -734,6 +735,60 @@ export class GroupsService {
       }
 
       return group;
+    }
+  }
+
+  async rejectedCorporate(group_id: string, rejectDto: RejectCorporateDto): Promise<GroupDocument> {
+    try {
+      const corporate: GroupDocument = await this.groupRepository.findOne(group_id);
+
+      if (
+        !rejectDto.cancellation_reason_of_document &&
+        !rejectDto.cancellation_reason_of_information &&
+        !rejectDto.cancellation_reason_of_responsible_person &&
+        !rejectDto.cancellation_reason_of_type_and_service
+      ) {
+        return null
+      }
+      
+      if (rejectDto.cancellation_reason_of_document) {
+        corporate.cancellation_reason_of_document = rejectDto.cancellation_reason_of_document;
+      }
+
+      if (rejectDto.cancellation_reason_of_information) {
+        corporate.cancellation_reason_of_information = rejectDto.cancellation_reason_of_information;
+      }
+
+      if (rejectDto.cancellation_reason_of_responsible_person) {
+        corporate.cancellation_reason_of_responsible_person = rejectDto.cancellation_reason_of_responsible_person;
+      }
+      
+      if (rejectDto.cancellation_reason_of_type_and_service) {
+        corporate.cancellation_reason_of_type_and_service = rejectDto.cancellation_reason_of_type_and_service;
+      }
+
+      corporate.status = GroupStatus.Rejected;
+
+      const updateCorporate = await this.groupRepository.save(corporate);
+      return updateCorporate
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async acceptedCorporate(group_id: string): Promise<any> {
+    try {
+      const findGroup: GroupDocument = await this.groupRepository.findOne(group_id);
+
+      if (findGroup) {
+        findGroup.status = GroupStatus.Active;
+        const updateCorporate = await this.groupRepository.save(findGroup)
+        return updateCorporate;
+      }
+
+      return null;
+    } catch (error) {
+      throw error;
     }
   }
 }
