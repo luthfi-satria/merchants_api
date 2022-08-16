@@ -403,6 +403,7 @@ export class StoresService {
       create_merchant_store_validation.auto_accept_order == 'true'
         ? true
         : false;
+    console.log(store_document);
     const create_store = await this.storeRepository.save(store_document);
     this.publishNatsCreateStore(create_store);
     const operational_hours = await this.storeOperationalService
