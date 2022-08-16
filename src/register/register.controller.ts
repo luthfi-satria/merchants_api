@@ -37,7 +37,7 @@ export class RegistersController {
     private readonly storageService: CommonStorageService,
   ) {}
 
-  @Post('register')
+  @Post('/group/register')
   @ResponseStatusCode()
   @UseInterceptors(
     AnyFilesInterceptor({
