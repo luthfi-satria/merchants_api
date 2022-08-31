@@ -40,6 +40,7 @@ import { ListGroupDTO } from './validation/list-group.validation';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { Response } from 'express';
 import etag from 'etag';
+import { UpdateCorporateDto } from './validation/update-corporate.dto';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -318,5 +319,33 @@ export class GroupsController {
     });
 
     images.stream.pipe(res);
+  }
+
+  @Put('group')
+  @UserTypeAndLevel('merchant.group')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  @UseInterceptors(
+    AnyFilesInterceptor({
+      storage: diskStorage({
+        destination: './upload_groups',
+        filename: editFileName
+      }),
+      limits: {
+        fileSize: 5242880, //5MB
+      },
+      fileFilter: imageAndPdfFileFilter,
+    })
+  )
+  async updateCorporate(
+    @Req() req: any,
+    @Body() body: UpdateCorporateDto,
+    @UploadedFiles() files: Array<Express.Multer.File>
+  ) {
+    console.log(req.user)
+    console.log('masuk')
+
+    const checkGroup = await this.groupsService.viewGroupDetail(req.user.group_id, req.user);
+    console.log(checkGroup)
   }
 }

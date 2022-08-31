@@ -51,6 +51,7 @@ import { StoresService } from 'src/stores/stores.service';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { isDefined } from 'class-validator';
 import {SetFieldEmptyUtils} from "../utils/set-field-empty-utils";
+import { UpdateCorporateDto } from './validation/update-corporate.dto';
 
 @Injectable()
 export class GroupsService {
@@ -734,6 +735,15 @@ export class GroupsService {
       }
 
       return group;
+    }
+  }
+
+  async updateCorporate(
+    user: any,
+    body: UpdateCorporateDto
+  ) {
+    return {
+      "masuk": "pakeko"
     }
   }
 }
