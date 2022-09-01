@@ -276,4 +276,11 @@ export class InternalController {
       result,
     );
   }
+
+  @Post('merchants/stores/byids')
+  @ResponseStatusCode()
+  async getMerchantStoreByIds(@Body() body: any): Promise<any> {
+    const store_ids = body.store_ids;
+    return await this.storeService.findMerchantStoresByIds(store_ids);
+  }
 }
