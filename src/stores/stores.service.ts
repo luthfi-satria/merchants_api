@@ -30,6 +30,7 @@ import {
   Brackets,
   FindOperator,
   ILike,
+  In,
   Like,
   Not,
   Repository,
@@ -1618,6 +1619,75 @@ export class StoresService {
         store.banner = `${process.env.BASEURL_API}/api/v1/merchants/stores/banner/${store.id}/image/${fileNameBanner}`;
       }
       return store;
+    }
+  }
+
+  async findStoresByMultiCriteria(data: any) {
+    try {
+      const page = data.page || 1;
+      const limit = data.limit || 10;
+      const offset = (page - 1) * limit;
+
+      const query = this.storeRepository.createQueryBuilder();
+
+      if (data.merchant_id) {
+        query.where('merchant_id = :merchant_id', {
+          merchant_id: data.merchant_id,
+        });
+      }
+
+      if (data.search != '') {
+        query.andWhere('name like :src', { src: `%${data.search}%` });
+      }
+
+      if (data.status != '') {
+        query.andWhere('status = :status', { status: data.status });
+      }
+
+      if (
+        data.store_id &&
+        data.store_id.length > 0 &&
+        data.target == 'assigned'
+      ) {
+        query.andWhere('id IN (:...ids)', { ids: data.store_id });
+      }
+
+      if (
+        data.store_id &&
+        data.store_id.length > 0 &&
+        data.target == 'unassigned'
+      ) {
+        query.andWhere('id NOT IN (:...ids)', { ids: data.store_id });
+      }
+
+      query.orderBy('name', 'DESC').take(limit).skip(offset);
+
+      const items = await query.getMany();
+      const count = await query.getCount();
+
+      const listItems = {
+        current_page: parseInt(page),
+        total_item: count,
+        limit: parseInt(limit),
+        items: items,
+      };
+
+      return listItems;
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: 'status',
+            property: 'status',
+            constraint: [
+              this.messageService.get('general.list.fail'),
+              error.message,
+            ],
+          },
+          'Bad Request',
+        ),
+      );
     }
   }
 }
