@@ -15,10 +15,12 @@ import { GroupDocument, GroupStatus } from 'src/database/entities/group.entity';
 import {
   Any,
   Brackets,
+  Connection,
   FindOperator,
   ILike,
   Like,
   Not,
+  QueryRunner,
   Repository,
 } from 'typeorm';
 import { AxiosResponse } from 'axios';
@@ -46,12 +48,18 @@ import {
   MerchantDocument,
   MerchantStatus,
 } from 'src/database/entities/merchant.entity';
+import { LobDocument } from 'src/database/entities/lob.entity';
+import { LobService } from 'src/lob/lob.service';
 import { MerchantsService } from 'src/merchants/merchants.service';
 import { StoresService } from 'src/stores/stores.service';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { isDefined } from 'class-validator';
 import {SetFieldEmptyUtils} from "../utils/set-field-empty-utils";
 import { UpdateCorporateDto } from './validation/update-corporate.dto';
+import { randomUUID } from 'crypto';
+import { generateSmsUrlVerification } from './../utils/general-utils';
+import { NotificationService } from 'src/common/notification/notification.service';
+
 
 @Injectable()
 export class GroupsService {
@@ -60,6 +68,8 @@ export class GroupsService {
     private readonly groupRepository: Repository<GroupDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
+    @InjectRepository(MerchantDocument)
+    private readonly merchantRepository: Repository<MerchantDocument>,
     private readonly groupUserService: GroupUsersService,
     private httpService: HttpService,
     private readonly responseService: ResponseService,
@@ -73,6 +83,9 @@ export class GroupsService {
     @Inject(forwardRef(() => StoresService))
     private readonly storeService: StoresService,
     private readonly storage: CommonStorageService,
+    private readonly connection: Connection,
+    private readonly notificationService: NotificationService,
+    private readonly lobService: LobService,
   ) {}
 
   async findGroupById(id: string): Promise<GroupDocument> {
@@ -738,12 +751,388 @@ export class GroupsService {
     }
   }
 
-  async updateCorporate(
-    user: any,
-    body: UpdateCorporateDto
+  async updateUser(
+    group: GroupDocument,
+    groupUser: Partial<GroupUser>,
+    queryRunner: QueryRunner,
+    type: string
   ) {
-    return {
-      "masuk": "pakeko"
+    try {
+      console.log(group)
+      groupUser.token_reset_password = randomUUID();
+
+    //Cheking Env Bypass Verification
+    const bypassEnv = process.env.HERMES_USER_REGISTER_BYPASS;
+    const bypassUser = bypassEnv && bypassEnv == 'true' ? true : false;
+    if (bypassUser) {
+      groupUser.email_verified_at = new Date();
+      groupUser.phone_verified_at = new Date();
+    }
+    // const result = await this.merchantUsersRepository.save(groupUser);
+    let phone: string = '';
+    if (type === 'director') {
+      phone = group.director_phone;
+    } else if (type === 'pic_operational') {
+      phone = group.pic_operational_phone;
+    } else {
+      phone = group.pic_finance_phone
+    }
+    console.log(phone);
+    await queryRunner.manager
+      .getRepository(MerchantUsersDocument)
+      .createQueryBuilder()
+      .update()
+      .set(groupUser)
+      .where('group_id = :group_id', { group_id: group.id })
+      .andWhere('phone = :phone', { phone: phone })
+      .execute();
+
+    delete groupUser.password;
+
+    const token = groupUser.token_reset_password;
+
+    const urlVerification = `${process.env.BASEURL_HERMES}/auth/phone-verification?t=${token}`;
+    if (process.env.NODE_ENV == 'test') {
+      groupUser.token_reset_password = token;
+      // result.url = urlVerification;
+    }
+
+    // if (!bypassUser) {
+    //   const smsMessage = await generateSmsUrlVerification(
+    //     groupUser.name,
+    //     urlVerification,
+    //   );
+
+    //   this.notificationService.sendSms(groupUser.phone, smsMessage);
+    // }
+    return groupUser;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async updateCorporate(
+    group: GroupDocument,
+    updateCorporateDto: UpdateCorporateDto
+  ) {
+    const queryRunner: QueryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      if(
+        updateCorporateDto.director_password ||
+        updateCorporateDto.pic_operational_password ||
+        updateCorporateDto.pic_finance_password ||
+        updateCorporateDto.pic_password
+      ) {
+        const salt: string = await this.hashService.randomSalt();
+        updateCorporateDto.director_password = await this.hashService.hashPassword(
+          updateCorporateDto.director_password,
+          salt
+        );
+
+        updateCorporateDto.pic_operational_password = await this.hashService.hashPassword(
+          updateCorporateDto.pic_operational_password,
+          salt
+        );
+
+        updateCorporateDto.pic_finance_password = await this.hashService.hashPassword(
+          updateCorporateDto.pic_finance_password,
+          salt
+        );
+
+        updateCorporateDto.pic_password = await this.hashService.hashPassword(
+          updateCorporateDto.pic_password,
+          salt
+        );
+      }
+      
+      const groupData: Partial<GroupDocument> = {
+        category: updateCorporateDto.category || group.category,
+        name: updateCorporateDto.name || group.name,
+        phone: updateCorporateDto.phone || group.phone,
+        address: updateCorporateDto.address || group.address,
+        siup_no: updateCorporateDto.siup_no || group.siup_no,
+        siup_file: updateCorporateDto.siup_file || group.siup_file,
+        akta_pendirian_file: updateCorporateDto.akta_pendirian_file || group.akta_pendirian_file,
+        npwp_no: updateCorporateDto.npwp_no || group.npwp_no,
+        npwp_file: updateCorporateDto.npwp_file || group.npwp_file,
+        director_name: updateCorporateDto.director_name || group.director_name,
+        director_nip: updateCorporateDto.director_nip || group.director_nip,
+        director_phone: updateCorporateDto.director_phone || group.director_phone,
+        director_email: updateCorporateDto.director_email || group.director_email,
+        director_identity_type: updateCorporateDto.director_identity_type || group.director_identity_type,
+        director_id_no: updateCorporateDto.director_id_no || group.director_id_no,
+        director_id_file: updateCorporateDto.director_id_file || group.director_id_file,
+        director_id_face_file: updateCorporateDto.director_id_face_file || group.director_id_face_file,
+        director_is_multilevel_login: updateCorporateDto.director_is_multilevel_login || group.director_is_multilevel_login,
+        pic_operational_name: updateCorporateDto.pic_operational_name || group.pic_operational_name,
+        pic_operational_nip: updateCorporateDto.pic_operational_nip || group.pic_operational_nip,
+        pic_operational_email: updateCorporateDto.pic_operational_email || group.pic_operational_email,
+        pic_operational_phone: updateCorporateDto.pic_operational_phone || group.pic_operational_phone,
+        pic_operational_password: updateCorporateDto.pic_operational_password || group.pic_operational_password,
+        pic_operational_is_multilevel_login: updateCorporateDto.pic_operational_is_multilevel_login || group.pic_operational_is_multilevel_login,
+        pic_finance_name: updateCorporateDto.pic_finance_name || group.pic_finance_name,
+        pic_finance_nip: updateCorporateDto.pic_finance_nip || group.pic_finance_nip,
+        pic_finance_email: updateCorporateDto.pic_finance_email || group.pic_finance_email,
+        pic_finance_phone: updateCorporateDto.pic_finance_phone || group.pic_finance_phone,
+        pic_finance_password: updateCorporateDto.pic_finance_password || group.pic_finance_password,
+        pic_finance_is_multilevel_login: updateCorporateDto.pic_finance_is_multilevel_login || group.pic_finance_is_multilevel_login,
+        updated_at: new Date(),
+      }
+
+      const executionUpdateGroup = await queryRunner.manager
+          .getRepository(GroupDocument)
+          .createQueryBuilder()
+          .update()
+          .set(groupData)
+          .where('id = :id', { id: group.id })
+          .execute()
+      // console.log('id', grou)
+      console.log('exec', executionUpdateGroup.affected)
+      
+      const resultGroup: GroupDocument = executionUpdateGroup.raw[0]
+      console.log('resultGroup', resultGroup)
+
+      if (executionUpdateGroup.affected) {
+        this.natsService.clientEmit('merchants.group.updated', groupData)
+      }
+
+      deleteCredParam(groupData);
+
+      // update director
+      if (
+        updateCorporateDto.director_name ||
+        updateCorporateDto.director_email || 
+        updateCorporateDto.director_phone ||
+        updateCorporateDto.director_is_multilevel_login ||
+        updateCorporateDto.director_password
+      ) {
+        const directorData: Partial<GroupUser> = {
+          group_id: group.id,
+          name: updateCorporateDto.director_name,
+          phone: updateCorporateDto.director_phone,
+          email: updateCorporateDto.director_email,
+          password: updateCorporateDto.director_email,
+          status: MerchantUsersStatus.Active,
+          is_multilevel_login: updateCorporateDto.director_is_multilevel_login
+        }
+        await this.updateUser(
+          group,
+          directorData,
+          queryRunner,
+          'director'
+        )
+      }
+
+      // update pic operational
+      if (
+        updateCorporateDto.pic_operational_name ||
+        updateCorporateDto.pic_operational_phone || 
+        updateCorporateDto.pic_operational_email ||
+        updateCorporateDto.pic_operational_is_multilevel_login ||
+        updateCorporateDto.pic_operational_password
+      ) {
+        console.log(updateCorporateDto.pic_operational_name,
+          // updateCorporateDto.pic_operational_phone,
+          // updateCorporateDto.pic_operational_email,
+          // updateCorporateDto.pic_operational_is_multilevel_login,
+          // updateCorporateDto.pic_operational_password
+          )
+        const picOperational: Partial<GroupUser> = {
+          group_id: group.id,
+          name: updateCorporateDto.pic_operational_name,
+          phone: updateCorporateDto.pic_operational_phone,
+          email: updateCorporateDto.pic_operational_email,
+          password: updateCorporateDto.pic_operational_password,
+          status: MerchantUsersStatus.Active,
+          is_multilevel_login: updateCorporateDto.pic_operational_is_multilevel_login
+        }
+        console.log('ops', picOperational)
+  
+        await this.updateUser(
+          group,
+          picOperational,
+          queryRunner,
+          'pic_operational'
+        )
+      }
+
+      // update pic finance
+      if (
+        updateCorporateDto.pic_finance_name ||
+        updateCorporateDto.pic_finance_phone || 
+        updateCorporateDto.pic_finance_email ||
+        updateCorporateDto.pic_finance_is_multilevel_login ||
+        updateCorporateDto.pic_finance_password
+      ) {
+        console.log('masuk')
+        const picFinance: Partial<GroupUser> = {
+          group_id: group.id,
+          name: updateCorporateDto.pic_finance_name,
+          phone: updateCorporateDto.pic_finance_phone,
+          email: updateCorporateDto.pic_finance_email,
+          password: updateCorporateDto.pic_finance_password,
+          status: MerchantUsersStatus.Active,
+          is_multilevel_login: updateCorporateDto.pic_finance_is_multilevel_login
+        }
+  
+        await this.updateUser(
+          group,
+          picFinance,
+          queryRunner,
+          'pic_finance'
+        )
+      }
+
+      if (
+        updateCorporateDto.name !==
+        group.name
+      ) {
+        await this.merchantService.validateMerchantUniqueName(
+          updateCorporateDto.name,
+        );
+      }
+
+      if (
+        updateCorporateDto.phone !==
+        group.phone
+      ) {
+        await this.merchantService.validateMerchantUniquePhone(
+          updateCorporateDto.phone,
+        );
+      }
+
+      const checkphone: MerchantDocument = await this.merchantRepository.findOne({
+        where: { pic_phone: updateCorporateDto.pic_phone }
+      })
+
+      if (updateCorporateDto.pic_phone !== checkphone.pic_phone) {
+        const errors: RMessage = {
+          value: updateCorporateDto.pic_phone,
+          property: 'pic_phone',
+          constraint: [
+            this.messageService.get('merchant.createmerchant.phoneExist'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+
+      if (updateCorporateDto.pic_email) {
+        const checkMerchantByEmail: MerchantDocument = await this.merchantRepository.findOne({
+          where: { pic_email: updateCorporateDto.pic_email },
+        });
+        console.log('checkmail', checkMerchantByEmail);
+        console.log('pic_email', updateCorporateDto.pic_email)
+        const checkPicEmail = checkMerchantByEmail?.pic_email;
+        console.log('checkpic', checkPicEmail);
+  
+        if (
+          checkMerchantByEmail &&
+          checkMerchantByEmail.pic_email !== updateCorporateDto.pic_email
+        ) {
+          const errors: RMessage = {
+            value: updateCorporateDto.pic_email,
+            property: 'pic_email',
+            constraint: [
+              this.messageService.get('merchant.createmerchant.emailExist'),
+            ],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+      }
+
+      const ceklob: LobDocument = await this.lobService.findLobById(
+        updateCorporateDto.lob_id,
+      );
+      if (!ceklob) {
+        console.log('ceklob');
+        const errors: RMessage = {
+          value: updateCorporateDto.lob_id,
+          property: 'lob_id',
+          constraint: [
+            this.messageService.get('merchant.createmerchant.lobid_notfound'),
+          ],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      }
+
+      const pb1 = updateCorporateDto.pb1 == 'true' ? true : false;
+      const pic_is_director = updateCorporateDto.pic_is_director == 'true' ? true : false;
+      const pic_is_multilevel_login = updateCorporateDto.pic_is_multilevel_login == 'true' ? true : false;
+      const updateMerchantData = {
+        ...(updateCorporateDto.type && { type: updateCorporateDto.type}),
+        ...(updateCorporateDto.name && { name: updateCorporateDto.name}),
+        ...(updateCorporateDto.phone && { phone: updateCorporateDto.phone}),
+        ...(updateCorporateDto.logo && { logo: updateCorporateDto.logo}),
+        ...(updateCorporateDto.profile_store_photo && { profile_store_logo: updateCorporateDto.profile_store_photo}),
+        ...(updateCorporateDto.address && { address: updateCorporateDto.address}),
+        ...(updateCorporateDto.lob_id && { lob_id: updateCorporateDto.lob_id}),
+        ...(updateCorporateDto.pb1 && { pb1: pb1}),
+        ...(updateCorporateDto.pb1_tariff && { pb1_tariff: updateCorporateDto.pb1_tariff}),
+        ...(updateCorporateDto.npwp_no && { npwp_no: updateCorporateDto.npwp_no}),
+        ...(updateCorporateDto.npwp_name && { npwp_name: updateCorporateDto.npwp_name}),
+        ...(updateCorporateDto.npwp_file && { npwp_file: updateCorporateDto.npwp_file}),
+        ...(updateCorporateDto.is_pos_checkin_enabled && { is_pos_checkin_enabled: updateCorporateDto.is_pos_checkin_enabled}),
+        ...(updateCorporateDto.is_pos_endofday_enabled && { is_pos_endofday_enabled: updateCorporateDto.is_pos_endofday_enabled}),
+        ...(updateCorporateDto.is_pos_printer_enabled && { is_pos_printer_enabled: updateCorporateDto.is_pos_printer_enabled}),
+        ...(updateCorporateDto.is_manual_refund_enabled && { is_manual_refund_enabled: updateCorporateDto.is_manual_refund_enabled}),
+        ...(updateCorporateDto.is_pos_rounded_payment && { is_pos_rounded_payment: updateCorporateDto.is_pos_rounded_payment}),
+        ...(updateCorporateDto.pic_name && { pic_name: updateCorporateDto.pic_name}),
+        ...(updateCorporateDto.pic_nip && { pic_nip: updateCorporateDto.pic_nip}),
+        ...(updateCorporateDto.pic_phone && { pic_phone: updateCorporateDto.pic_phone}),
+        ...(updateCorporateDto.pic_email && { pic_email: updateCorporateDto.pic_email}),
+        ...(updateCorporateDto.pic_password && { pic_password: updateCorporateDto.pic_password}),
+        ...(updateCorporateDto.pic_is_multilevel_login && { pic_is_multilevel_login: pic_is_multilevel_login}),
+        ...(updateCorporateDto.pic_is_director && { pic_is_director: pic_is_director}),
+      }
+
+      const executionUpdateMerchant = await queryRunner.manager
+        .getRepository(MerchantDocument)
+        .createQueryBuilder()
+        .update()
+        .set(updateMerchantData)
+        .where('group_id = :groupId', { groupId: group.id })
+        .execute()
+
+      await queryRunner.commitTransaction();
+
+      return groupData;
+
+    } catch (error) {
+      console.log(error);
+      await queryRunner.rollbackTransaction();
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: error.column,
+            constraint: [error.message],
+          },
+          'Bad Request',
+        ),
+      );
+    } finally {
+      await queryRunner.release();
     }
   }
 }
