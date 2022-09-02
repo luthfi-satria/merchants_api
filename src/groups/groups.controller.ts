@@ -40,10 +40,10 @@ import { ListGroupDTO } from './validation/list-group.validation';
 import { UpdateGroupDTO } from './validation/update_groups.dto';
 import { Response } from 'express';
 import etag from 'etag';
-import { UpdateCorporateDto } from './validation/update-corporate.dto';
-import { GroupUsersService } from './group_users.service';
 import { RejectCorporateDto } from './validation/reject-corporate.dto';
 import { CountGroupDto } from './validation/count-group.dto';
+import { UpdateCorporateDto } from './validation/update-corporate.dto';
+import { GroupUsersService } from './group_users.service';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -358,7 +358,7 @@ export class GroupsController {
     images.stream.pipe(res);
   }
 
-  @Put('group/:group_id/rejected')
+@Put('group/:group_id/rejected')
   @UserTypeAndLevel('admin.*')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -437,7 +437,7 @@ export class GroupsController {
     }
   }
 
-  @Put('group')
+@Put('group')
   @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -505,7 +505,7 @@ export class GroupsController {
         'director_email',
       )
     }
-
+    
 
     if (
       updateCorporateDto.pic_finance_email !==
