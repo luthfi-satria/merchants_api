@@ -740,6 +740,7 @@ export class GroupsService {
     }
   }
 
+  // reject corporate
   async rejectedCorporate(group_id: string, rejectDto: RejectCorporateDto): Promise<GroupDocument> {
     try {
       const corporate: GroupDocument = await this.groupRepository.findOne(group_id);
