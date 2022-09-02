@@ -59,6 +59,7 @@ import { UpdateCorporateDto } from './validation/update-corporate.dto';
 import { randomUUID } from 'crypto';
 import { generateSmsUrlVerification } from './../utils/general-utils';
 import { NotificationService } from 'src/common/notification/notification.service';
+import { StoreDocument } from 'src/database/entities/store.entity';
 
 
 @Injectable()
@@ -910,12 +911,12 @@ export class GroupsService {
       ) {
         const directorData: Partial<GroupUser> = {
           group_id: group.id,
-          name: updateCorporateDto.director_name,
-          phone: updateCorporateDto.director_phone,
-          email: updateCorporateDto.director_email,
-          password: updateCorporateDto.director_email,
+          ...(updateCorporateDto.director_name && { director_name: updateCorporateDto.director_name}),
+          ...(updateCorporateDto.director_phone && { director_phone: updateCorporateDto.director_phone}),
+          ...(updateCorporateDto.director_email && { director_email: updateCorporateDto.director_email}),
+          ...(updateCorporateDto.director_password && { director_password: updateCorporateDto.director_password}),
           status: MerchantUsersStatus.Active,
-          is_multilevel_login: updateCorporateDto.director_is_multilevel_login
+          ...(updateCorporateDto.director_is_multilevel_login && { director_is_multilevel_login: updateCorporateDto.director_is_multilevel_login}),
         }
         await this.updateUser(
           group,
@@ -933,20 +934,14 @@ export class GroupsService {
         updateCorporateDto.pic_operational_is_multilevel_login ||
         updateCorporateDto.pic_operational_password
       ) {
-        console.log(updateCorporateDto.pic_operational_name,
-          // updateCorporateDto.pic_operational_phone,
-          // updateCorporateDto.pic_operational_email,
-          // updateCorporateDto.pic_operational_is_multilevel_login,
-          // updateCorporateDto.pic_operational_password
-          )
         const picOperational: Partial<GroupUser> = {
           group_id: group.id,
-          name: updateCorporateDto.pic_operational_name,
-          phone: updateCorporateDto.pic_operational_phone,
-          email: updateCorporateDto.pic_operational_email,
-          password: updateCorporateDto.pic_operational_password,
+          ...(updateCorporateDto.pic_operational_name && { pic_operational_name: updateCorporateDto.pic_operational_name}),
+          ...(updateCorporateDto.pic_operational_phone && { pic_operational_phone: updateCorporateDto.pic_operational_phone}),
+          ...(updateCorporateDto.pic_operational_email && { pic_operational_email: updateCorporateDto.pic_operational_email}),
+          ...(updateCorporateDto.pic_operational_password && { pic_operational_password: updateCorporateDto.pic_operational_password}),
           status: MerchantUsersStatus.Active,
-          is_multilevel_login: updateCorporateDto.pic_operational_is_multilevel_login
+          ...(updateCorporateDto.pic_operational_is_multilevel_login && { pic_operational_is_multilevel_login: updateCorporateDto.pic_operational_is_multilevel_login}),
         }
         console.log('ops', picOperational)
   
@@ -969,12 +964,12 @@ export class GroupsService {
         console.log('masuk')
         const picFinance: Partial<GroupUser> = {
           group_id: group.id,
-          name: updateCorporateDto.pic_finance_name,
-          phone: updateCorporateDto.pic_finance_phone,
-          email: updateCorporateDto.pic_finance_email,
-          password: updateCorporateDto.pic_finance_password,
+          ...(updateCorporateDto.pic_finance_name && {name: updateCorporateDto.pic_finance_name}),
+          ...(updateCorporateDto.phone && { phone: updateCorporateDto.pic_finance_phone}),
+          ...(updateCorporateDto.pic_finance_email && { pic_finance_email: updateCorporateDto.pic_finance_email}),
+          ...(updateCorporateDto.pic_finance_password && { pic_finance_password: updateCorporateDto.pic_finance_password}),
           status: MerchantUsersStatus.Active,
-          is_multilevel_login: updateCorporateDto.pic_finance_is_multilevel_login
+          ...(updateCorporateDto.pic_finance_is_multilevel_login && { pic_finance_is_multilevel_login: updateCorporateDto.pic_finance_is_multilevel_login}),
         }
   
         await this.updateUser(
@@ -1111,6 +1106,34 @@ export class GroupsService {
         .update()
         .set(updateMerchantData)
         .where('group_id = :groupId', { groupId: group.id })
+        .execute()
+
+      const getMerchant = await this.merchantService.findMerchantsByGroup(group.id);
+      const getMerchantStore = await this.storeService.findMerchantStoreByCriteria({
+        merchant_id: getMerchant[0].id
+      });
+      console.log(getMerchantStore)
+      const auto_accept_order = updateCorporateDto.auto_accept_order == 'true' ? true : false;
+      const updateStoreData = {
+        merchant_id: getMerchant[0].id,
+        ...(updateCorporateDto.address && { address: updateCorporateDto.address }),
+        ...(updateCorporateDto.city_id && { city_id: updateCorporateDto.city_id }),
+        ...(updateCorporateDto.gmt_offset && { gmt_offset: updateCorporateDto.gmt_offset }),
+        ...(updateCorporateDto.delivery_type && { delivery_type: updateCorporateDto.delivery_type }),
+        ...(updateCorporateDto.bank_id && { bank_id: updateCorporateDto.bank_id }),
+        ...(updateCorporateDto.bank_account_no && { bank_account_no: updateCorporateDto.bank_account_no }),
+        ...(updateCorporateDto.bank_account_name && { bank_account_name: updateCorporateDto.bank_account_name }),
+        ...(updateCorporateDto.auto_accept_order && { auto_accept_order: auto_accept_order }),
+        ...(updateCorporateDto.location_latitude && { location_latitude: updateCorporateDto.location_latitude }),
+        ...(updateCorporateDto.location_longitude && { location_longitude: updateCorporateDto.location_longitude }),
+      }
+      
+      const executionUpdateStore = await queryRunner.manager
+        .getRepository(StoreDocument)
+        .createQueryBuilder()
+        .update()
+        .set(updateStoreData)
+        .where('id = :storeId', { storeId: getMerchantStore[0].id })
         .execute()
 
       await queryRunner.commitTransaction();
