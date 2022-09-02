@@ -284,7 +284,7 @@ export class InternalController {
     return await this.storeService.findMerchantStoresByIds(store_ids);
   }
 
-  @Post('merchants/stores/multi_criteria')
+  @Post('merchants/stores/multi-criteria')
   @ResponseStatusCode()
   async findStoresByMultiCriteria(@Body() body: any): Promise<any> {
     try {
