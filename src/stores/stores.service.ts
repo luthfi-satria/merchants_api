@@ -1636,16 +1636,16 @@ export class StoresService {
         });
       }
 
-      if (data.search != '') {
+      if (typeof data.search != 'undefined' && data.search != '') {
         query.andWhere('name like :src', { src: `%${data.search}%` });
       }
 
-      if (data.status != '') {
+      if (typeof data.status != 'undefined' && data.status != '') {
         query.andWhere('status = :status', { status: data.status });
       }
 
       if (
-        data.store_id &&
+        typeof data.store_id != 'undefined' &&
         data.store_id.length > 0 &&
         data.target == 'assigned'
       ) {
@@ -1653,7 +1653,7 @@ export class StoresService {
       }
 
       if (
-        data.store_id &&
+        typeof data.store_id != 'undefined' &&
         data.store_id.length > 0 &&
         data.target == 'unassigned'
       ) {
