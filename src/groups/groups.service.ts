@@ -54,12 +54,13 @@ import { StoresService } from 'src/stores/stores.service';
 import { CommonStorageService } from 'src/common/storage/storage.service';
 import { isDefined } from 'class-validator';
 import {SetFieldEmptyUtils} from "../utils/set-field-empty-utils";
+import { RejectCorporateDto } from './validation/reject-corporate.dto';
+import { CountGroupDto } from './validation/count-group.dto';
 import { UpdateCorporateDto } from './validation/update-corporate.dto';
 import { randomUUID } from 'crypto';
 import { generateSmsUrlVerification } from './../utils/general-utils';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { StoreDocument } from 'src/database/entities/store.entity';
-
 
 @Injectable()
 export class GroupsService {
@@ -503,6 +504,7 @@ export class GroupsService {
         id: user.group_id,
       });
     }
+    console.log('user', user);
 
     query
       .orderBy('created_at', 'DESC')
@@ -748,6 +750,85 @@ export class GroupsService {
       }
 
       return group;
+    }
+  }
+
+async rejectedCorporate(group_id: string, rejectDto: RejectCorporateDto): Promise<GroupDocument> {
+    try {
+      const corporate: GroupDocument = await this.groupRepository.findOne(group_id);
+
+      if (
+        !rejectDto.cancellation_reason_of_document &&
+        !rejectDto.cancellation_reason_of_information &&
+        !rejectDto.cancellation_reason_of_responsible_person &&
+        !rejectDto.cancellation_reason_of_type_and_service
+      ) {
+        return null
+      }
+      
+      if (rejectDto.cancellation_reason_of_document) {
+        corporate.cancellation_reason_of_document = rejectDto.cancellation_reason_of_document;
+      }
+
+      if (rejectDto.cancellation_reason_of_information) {
+        corporate.cancellation_reason_of_information = rejectDto.cancellation_reason_of_information;
+      }
+
+      if (rejectDto.cancellation_reason_of_responsible_person) {
+        corporate.cancellation_reason_of_responsible_person = rejectDto.cancellation_reason_of_responsible_person;
+      }
+      
+      if (rejectDto.cancellation_reason_of_type_and_service) {
+        corporate.cancellation_reason_of_type_and_service = rejectDto.cancellation_reason_of_type_and_service;
+      }
+
+      corporate.status = GroupStatus.Rejected;
+
+      const updateCorporate = await this.groupRepository.save(corporate);
+      return updateCorporate
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async acceptedCorporate(group_id: string): Promise<any> {
+    try {
+      const findGroup: GroupDocument = await this.groupRepository.findOne(group_id);
+
+      if (findGroup) {
+        findGroup.status = GroupStatus.Active;
+        findGroup.approved_at = new Date();
+        const updateCorporate = await this.groupRepository.save(findGroup)
+        return updateCorporate;
+      }
+
+      return null;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async countCorporate(user: any, params: CountGroupDto): Promise<any> {
+    try {
+      const status = params.status || ['WAITING_FOR_APPROVAL'];
+      const query = this.groupRepository.createQueryBuilder('');
+      query.where('status IN (:...status)', {
+        status: status,
+      });
+
+      if (user.level == 'group') {
+        query.andWhere('id = :id', {
+          id: user.group_id,
+        });
+      }
+
+      const count = await query.getCount();
+      console.log(count);
+      return {
+        total_groups: count,
+      };
+    } catch (error) {
+      throw error;
     }
   }
 
