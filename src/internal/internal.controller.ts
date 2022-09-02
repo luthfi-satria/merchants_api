@@ -276,4 +276,23 @@ export class InternalController {
       result,
     );
   }
+
+  @Post('merchants/stores/byids')
+  @ResponseStatusCode()
+  async getMerchantStoreByIds(@Body() body: any): Promise<any> {
+    const store_ids = body.store_ids;
+    return await this.storeService.findMerchantStoresByIds(store_ids);
+  }
+
+  @Post('merchants/stores/multi-criteria')
+  @ResponseStatusCode()
+  async findStoresByMultiCriteria(@Body() body: any): Promise<any> {
+    try {
+      const result = await this.storeService.findStoresByMultiCriteria(body);
+      return result;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }
