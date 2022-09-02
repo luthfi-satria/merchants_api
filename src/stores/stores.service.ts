@@ -1072,7 +1072,7 @@ export class StoresService {
       return 'CLOSE';
     }
 
-    const dayNowNumber = moment().day() - 1;
+    const dayNowNumber = moment().day();
 
     const currentHour = moment().format('HH:mm');
 
