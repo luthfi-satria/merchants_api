@@ -42,17 +42,21 @@ export class RegistersController {
   @Post('/group/register/otp')
   @ResponseStatusCode()
   async registerCorporateOtp(@Body() otpDto: RegisterCorporateOTPDto) {
-    await this.authInternalService.generateOtp({
-      phone: otpDto.phone,
-      group_id: otpDto.group_id,
-      user_type: 'registration',
-    });
+    try {
+      await this.authInternalService.generateOtp({
+        phone: otpDto.phone,
+        group_id: otpDto.group_id,
+        user_type: 'registration',
+      });
 
-    return this.responseService.success(
-      true,
-      this.messageService.get('merchant.general.success'),
-      null,
-    );
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        null,
+      );
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Post('/group/registerVerify/otp')
@@ -60,19 +64,23 @@ export class RegistersController {
   async registerCorporateVerifyOtp(
     @Body() otpDto: RegisterCorporateVerifyOtpDto,
   ) {
-    await this.authInternalService.verifyOtp({
-      otp_code: otpDto?.otp_code,
-      phone: otpDto?.phone,
-      user_type: 'registration',
-      roles: null,
-      created_at: new Date(),
-    });
+    try {
+      await this.authInternalService.verifyOtp({
+        otp_code: otpDto?.otp_code,
+        phone: otpDto?.phone,
+        user_type: 'registration',
+        roles: null,
+        created_at: new Date(),
+      });
 
-    return this.responseService.success(
-      true,
-      this.messageService.get('merchant.general.success'),
-      null,
-    );
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.general.success'),
+        null,
+      );
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Post('/group/register')
