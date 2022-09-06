@@ -84,9 +84,7 @@ export class AuthInternalService {
           })
           .pipe(
             map((response) => {
-              const rsp: Record<string, any> = response;
-
-              console.log(response);
+              const rsp: Record<string, any> = response.data;
 
               if (rsp.statusCode) {
                 throw new BadRequestException(
@@ -121,7 +119,7 @@ export class AuthInternalService {
       return await firstValueFrom(
         this.httpService.post(url, data, { headers: headerRequest }).pipe(
           map(async (response) => {
-            const rsp: Record<string, any> = response;
+            const rsp: Record<string, any> = response.data;
 
             if (rsp.statusCode) {
               throw new BadRequestException(

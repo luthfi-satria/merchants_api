@@ -59,7 +59,7 @@ export class RegistersController {
     }
   }
 
-  @Post('/group/registerVerify/otp')
+  @Post('/group/register/verify/otp')
   @ResponseStatusCode()
   async registerCorporateVerifyOtp(
     @Body() otpDto: RegisterCorporateVerifyOtpDto,
