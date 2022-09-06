@@ -16,14 +16,15 @@ import { GroupsService } from 'src/groups/groups.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { editFileName, imageAndPdfFileFilter } from 'src/utils/general-utils';
 import { RegisterCorporateDto } from './dto/register-corporate.dto';
-import {
-  CategoryGroup,
-} from 'src/database/entities/group.entity';
+import { CategoryGroup } from 'src/database/entities/group.entity';
 import { ImageValidationService } from 'src/utils/image-validation.service';
 import { ResponseService } from 'src/response/response.service';
 import { MessageService } from 'src/message/message.service';
 import { RMessage } from 'src/response/response.interface';
 import { GroupUsersService } from 'src/groups/group_users.service';
+import { RegisterCorporateOTPDto } from './dto/register-corporate-otp.dto';
+import { AuthInternalService } from '../internal/auth-internal.service';
+import { RegisterCorporateVerifyOtpDto } from './dto/register-corporate-verify-otp.dto';
 
 @Controller('api/v1/merchants')
 export class RegistersController {
@@ -35,7 +36,44 @@ export class RegistersController {
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
     private readonly storageService: CommonStorageService,
+    private readonly authInternalService: AuthInternalService,
   ) {}
+
+  @Post('/group/register/otp')
+  @ResponseStatusCode()
+  async registerCorporateOtp(@Body() otpDto: RegisterCorporateOTPDto) {
+    await this.authInternalService.generateOtp({
+      phone: otpDto.phone,
+      group_id: otpDto.group_id,
+      user_type: 'registration',
+    });
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      null,
+    );
+  }
+
+  @Post('/group/registerVerify/otp')
+  @ResponseStatusCode()
+  async registerCorporateVerifyOtp(
+    @Body() otpDto: RegisterCorporateVerifyOtpDto,
+  ) {
+    await this.authInternalService.verifyOtp({
+      otp_code: otpDto?.otp_code,
+      phone: otpDto?.phone,
+      user_type: 'registration',
+      roles: null,
+      created_at: new Date(),
+    });
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      null,
+    );
+  }
 
   @Post('/group/register')
   @ResponseStatusCode()
@@ -142,6 +180,14 @@ export class RegistersController {
         null,
         'pic_operational_phone',
       );
+
+      await this.authInternalService.verifyOtp({
+        otp_code: registerCorporateDto.otp_code,
+        phone: registerCorporateDto.phone,
+        user_type: 'registration',
+        roles: null,
+        created_at: new Date(),
+      });
 
       for (const file of files) {
         const file_name = '/upload_registers/' + file.filename;
