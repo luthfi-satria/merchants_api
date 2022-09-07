@@ -75,7 +75,8 @@ export class AuthInternalService {
         'Content-Type': 'Application/json',
       };
 
-      const url: string = process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp';
+      const url: string =
+        process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp/corporate';
 
       return firstValueFrom(
         this.httpService
@@ -114,7 +115,8 @@ export class AuthInternalService {
       };
 
       const url: string =
-        process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp-validation';
+        process.env.BASEURL_AUTH_SERVICE +
+        '/api/v1/auth/otp-validation/corporate';
 
       return await firstValueFrom(
         this.httpService.post(url, data, { headers: headerRequest }).pipe(

@@ -43,10 +43,12 @@ export class RegistersController {
   @ResponseStatusCode()
   async registerCorporateOtp(@Body() otpDto: RegisterCorporateOTPDto) {
     try {
+      await this.validation(otpDto);
+
       await this.authInternalService.generateOtp({
-        phone: otpDto.phone,
+        phone: otpDto.director_phone,
         group_id: otpDto.group_id,
-        user_type: 'registration',
+        user_type: otpDto.group_id ? 'registration' : 'update_corporate',
       });
 
       return this.responseService.success(
@@ -149,52 +151,26 @@ export class RegistersController {
       }
 
       // create group process
-      await this.groupsService.validateGroupUniqueName(
-        registerCorporateDto.name,
-      );
 
-      await this.groupsService.validateGroupUniquePhone(
-        registerCorporateDto.phone,
-      );
-
-      await this.groupsUsersService.validateGroupUserUniqueEmail(
-        registerCorporateDto.director_email,
-        null,
-        'director_email',
-      );
-
-      await this.groupsUsersService.validateGroupUserUniqueEmail(
-        registerCorporateDto.pic_finance_email,
-        null,
-        'pic_finance_email',
-      );
-      await this.groupsUsersService.validateGroupUserUniqueEmail(
-        registerCorporateDto.pic_operational_email,
-        null,
-        'pic_operational_email',
-      );
-      await this.groupsUsersService.validateGroupUserUniquePhone(
-        registerCorporateDto.director_phone,
-        null,
-        'director_phone',
-      );
-      await this.groupsUsersService.validateGroupUserUniquePhone(
-        registerCorporateDto.pic_finance_phone,
-        null,
-        'pic_finance_phone',
-      );
-      await this.groupsUsersService.validateGroupUserUniquePhone(
-        registerCorporateDto.pic_operational_phone,
-        null,
-        'pic_operational_phone',
-      );
+      await this.validation({
+        group_id: undefined,
+        phone: registerCorporateDto.phone,
+        name: registerCorporateDto.name,
+        director_email: registerCorporateDto.director_email,
+        pic_finance_email: registerCorporateDto.pic_finance_email,
+        pic_operational_email: registerCorporateDto.pic_operational_email,
+        director_phone: registerCorporateDto.director_phone,
+        pic_finance_phone: registerCorporateDto.pic_finance_phone,
+        pic_operational_phone: registerCorporateDto.pic_operational_phone,
+      });
 
       await this.authInternalService.verifyOtp({
         otp_code: registerCorporateDto.otp_code,
-        phone: registerCorporateDto.phone,
+        phone: registerCorporateDto.director_phone,
         user_type: 'registration',
         roles: null,
         created_at: new Date(),
+        group_id: null,
       });
 
       for (const file of files) {
@@ -256,5 +232,47 @@ export class RegistersController {
       // console.log(error);
       throw error;
     }
+  }
+
+  async validation(data: RegisterCorporateOTPDto) {
+    await this.groupsService.validateGroupUniqueName(data.name);
+
+    await this.groupsService.validateGroupUniquePhone(data.phone);
+
+    await this.groupsUsersService.validateGroupUserUniqueEmail(
+      data.director_email,
+      null,
+      'director_email',
+    );
+
+    await this.groupsUsersService.validateGroupUserUniqueEmail(
+      data.pic_finance_email,
+      null,
+      'pic_finance_email',
+    );
+
+    await this.groupsUsersService.validateGroupUserUniqueEmail(
+      data.pic_operational_email,
+      null,
+      'pic_operational_email',
+    );
+
+    await this.groupsUsersService.validateGroupUserUniquePhone(
+      data.director_phone,
+      null,
+      'director_phone',
+    );
+
+    await this.groupsUsersService.validateGroupUserUniquePhone(
+      data.pic_finance_phone,
+      null,
+      'pic_finance_phone',
+    );
+
+    await this.groupsUsersService.validateGroupUserUniquePhone(
+      data.pic_operational_phone,
+      null,
+      'pic_operational_phone',
+    );
   }
 }

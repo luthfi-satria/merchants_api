@@ -44,6 +44,7 @@ import { RejectCorporateDto } from './validation/reject-corporate.dto';
 import { CountGroupDto } from './validation/count-group.dto';
 import { UpdateCorporateDto } from './validation/update-corporate.dto';
 import { GroupUsersService } from './group_users.service';
+import { AuthInternalService } from '../internal/auth-internal.service';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -55,6 +56,7 @@ export class GroupsController {
     private readonly messageService: MessageService,
     private readonly notificationService: NotificationService,
     private readonly groupsUsersService: GroupUsersService,
+    private readonly authInternalService: AuthInternalService,
   ) {}
 
   @Post('groups')
@@ -358,7 +360,7 @@ export class GroupsController {
     images.stream.pipe(res);
   }
 
-@Put('group/:group_id/rejected')
+  @Put('group/:group_id/rejected')
   @UserTypeAndLevel('admin.*')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -367,8 +369,11 @@ export class GroupsController {
     @Body() rejectDto: RejectCorporateDto,
   ) {
     try {
-      const result: any = await this.groupsService.rejectedCorporate(group_id, rejectDto);
-      
+      const result: any = await this.groupsService.rejectedCorporate(
+        group_id,
+        rejectDto,
+      );
+
       if (!result) {
         return this.responseService.success(
           true,
@@ -402,12 +407,10 @@ export class GroupsController {
   @UserTypeAndLevel('admin.*')
   @AuthJwtGuard()
   @ResponseStatusCode()
-  async acceptedCorporate(
-    @Param('group_id') group_id: string
-  ) {
+  async acceptedCorporate(@Param('group_id') group_id: string) {
     try {
       const result: any = await this.groupsService.acceptedCorporate(group_id);
-      
+
       if (!result) {
         return this.responseService.success(
           true,
@@ -437,7 +440,7 @@ export class GroupsController {
     }
   }
 
-@Put('group')
+  @Put('group/register/update')
   @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -445,28 +448,31 @@ export class GroupsController {
     AnyFilesInterceptor({
       storage: diskStorage({
         destination: './upload_groups',
-        filename: editFileName
+        filename: editFileName,
       }),
       limits: {
         fileSize: 5242880, //5MB
       },
       fileFilter: imageAndPdfFileFilter,
-    })
+    }),
   )
   async updateCorporate(
     @Req() req: any,
     @Body() updateCorporateDto: UpdateCorporateDto,
-    @UploadedFiles() files: Array<Express.Multer.File>
+    @UploadedFiles() files: Array<Express.Multer.File>,
   ) {
-    const checkGroup = await this.groupsService.viewGroupDetail(req.user.group_id, req.user);
+    const checkGroup = await this.groupsService.viewGroupDetail(
+      req.user.group_id,
+      req.user,
+    );
+
     if (!checkGroup) {
       const errors: RMessage = {
         value: '',
         property: 'phone',
-        constraint: [
-          this.messageService.get('merchant.general.dataNotFound'),
-        ],
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
       };
+
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
@@ -475,41 +481,27 @@ export class GroupsController {
         ),
       );
     }
-    console.log(checkGroup)
 
-    if (
-      updateCorporateDto.name !==
-      checkGroup.data.name
-    ) {
-      await this.groupsService.validateGroupUniqueName(
-        updateCorporateDto.name
-      )
+    if (updateCorporateDto.name !== checkGroup.data.name) {
+      await this.groupsService.validateGroupUniqueName(updateCorporateDto.name);
     }
 
-    if (
-      updateCorporateDto.phone !==
-      checkGroup.data.phone
-    ) {
+    if (updateCorporateDto.phone !== checkGroup.data.phone) {
       await this.groupsService.validateGroupUniquePhone(
-        updateCorporateDto.phone
-      )
+        updateCorporateDto.phone,
+      );
     }
 
-    if (
-      updateCorporateDto.director_email !==
-      checkGroup.data.director_email
-    ) {
+    if (updateCorporateDto.director_email !== checkGroup.data.director_email) {
       await this.groupsUsersService.validateGroupUserUniqueEmail(
         updateCorporateDto.director_email,
         null,
         'director_email',
-      )
+      );
     }
-    
 
     if (
-      updateCorporateDto.pic_finance_email !==
-      checkGroup.data.pic_finance_email
+      updateCorporateDto.pic_finance_email !== checkGroup.data.pic_finance_email
     ) {
       await this.groupsUsersService.validateGroupUserUniqueEmail(
         updateCorporateDto.pic_finance_email,
@@ -529,10 +521,7 @@ export class GroupsController {
       );
     }
 
-    if (
-      updateCorporateDto.director_phone !==
-      checkGroup.data.director_phone
-    ) {
+    if (updateCorporateDto.director_phone !== checkGroup.data.director_phone) {
       await this.groupsUsersService.validateGroupUserUniquePhone(
         updateCorporateDto.director_phone,
         null,
@@ -541,8 +530,7 @@ export class GroupsController {
     }
 
     if (
-      updateCorporateDto.pic_finance_phone !==
-      checkGroup.data.pic_finance_phone
+      updateCorporateDto.pic_finance_phone !== checkGroup.data.pic_finance_phone
     ) {
       await this.groupsUsersService.validateGroupUserUniquePhone(
         updateCorporateDto.pic_finance_phone,
@@ -562,7 +550,7 @@ export class GroupsController {
       );
     }
 
-    if(files) {
+    if (files) {
       for (const file of files) {
         const file_name = '/upload_groups/' + file.filename;
         const url = await this.storage.store(file_name);
@@ -570,13 +558,24 @@ export class GroupsController {
       }
     }
 
+    await this.authInternalService.verifyOtp({
+      otp_code: updateCorporateDto.otp_code,
+      phone: updateCorporateDto.director_phone,
+      user_type: 'registration',
+      roles: null,
+      created_at: new Date(),
+      group_id: updateCorporateDto.id,
+    });
+
     await this.groupsService.updateCorporate(
       checkGroup.data,
-      updateCorporateDto
-    )
+      updateCorporateDto,
+    );
 
-    const viewGroupDetail = await this.groupsService.viewGroupDetail(checkGroup.data.id, req.user);
-    // console.log('updatecor', updateCorporate)
+    const viewGroupDetail = await this.groupsService.viewGroupDetail(
+      checkGroup.data.id,
+      req.user,
+    );
 
     return this.responseService.success(
       true,

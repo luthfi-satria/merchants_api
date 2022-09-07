@@ -32,6 +32,7 @@ import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
+import { InternalModule } from '../internal/internal.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
       limits: { fileSize: 2 * 1000 * 1000 },
     }),
     HttpModule,
+    InternalModule,
   ],
   controllers: [GroupUsersController, GroupsController],
   providers: [
