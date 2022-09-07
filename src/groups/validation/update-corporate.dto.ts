@@ -5,6 +5,7 @@ import {
   IsBooleanString,
   IsEmail,
   IsIn,
+  IsNotEmpty,
   IsNumber,
   IsNumberString,
   IsOptional,
@@ -266,4 +267,9 @@ export class UpdateCorporateDto {
 
   @IsOptional()
   location_longitude: number;
+
+  @IsNotEmpty()
+  @Length(4, 4)
+  @IsNumberString()
+  otp_code: string;
 }
