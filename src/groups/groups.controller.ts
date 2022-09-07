@@ -440,7 +440,7 @@ export class GroupsController {
     }
   }
 
-  @Put('group')
+  @Put('group/register/update')
   @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
