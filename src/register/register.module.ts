@@ -32,6 +32,7 @@ import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { RegistersController } from './register.controller';
 import { RegistersService } from './register.service';
 import { GroupUsersService } from 'src/groups/group_users.service';
+import { InternalModule } from '../internal/internal.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { GroupUsersService } from 'src/groups/group_users.service';
       limits: { fileSize: 2 * 1000 * 1000 },
     }),
     HttpModule,
+    InternalModule,
   ],
   controllers: [RegistersController],
   providers: [

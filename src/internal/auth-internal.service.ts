@@ -68,4 +68,81 @@ export class AuthInternalService {
       throw e;
     }
   }
+
+  async generateOtp(data: any): Promise<any> {
+    try {
+      const headerRequest = {
+        'Content-Type': 'Application/json',
+      };
+
+      const url: string =
+        process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp/corporate';
+
+      return firstValueFrom(
+        this.httpService
+          .post(url, data, {
+            headers: headerRequest,
+          })
+          .pipe(
+            map((response) => {
+              const rsp: Record<string, any> = response.data;
+
+              if (rsp.statusCode) {
+                throw new BadRequestException(
+                  this.responseService.error(
+                    HttpStatus.BAD_REQUEST,
+                    rsp.message[0],
+                    'Bad Request',
+                  ),
+                );
+              }
+
+              return response;
+            }),
+          ),
+      );
+    } catch (e) {
+      Logger.error(`ERROR ${e.message}`, '', 'GENERATE OTP');
+
+      throw e;
+    }
+  }
+
+  async verifyOtp(data: any): Promise<any> {
+    try {
+      const headerRequest = {
+        'Content-Type': 'Application/json',
+      };
+
+      const url: string =
+        process.env.BASEURL_AUTH_SERVICE +
+        '/api/v1/auth/otp-validation/corporate';
+
+      return await firstValueFrom(
+        this.httpService.post(url, data, { headers: headerRequest }).pipe(
+          map(async (response) => {
+            const rsp: Record<string, any> = response.data;
+
+            if (rsp.statusCode) {
+              throw new BadRequestException(
+                this.responseService.error(
+                  HttpStatus.BAD_REQUEST,
+                  rsp.message[0],
+                  'Bad Request',
+                ),
+              );
+            }
+            return response;
+          }),
+          catchError((err) => {
+            throw err.response.data;
+          }),
+        ),
+      );
+    } catch (e) {
+      Logger.error(`ERROR ${e.message}`, '', 'VERIFY OTP');
+
+      throw e;
+    }
+  }
 }

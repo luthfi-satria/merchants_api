@@ -271,4 +271,9 @@ export class RegisterCorporateDto {
 
   @IsOptional()
   location_longitude: number;
+
+  @IsNotEmpty()
+  @Length(4, 4)
+  @IsNumberString()
+  otp_code: string;
 }

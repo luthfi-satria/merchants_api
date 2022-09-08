@@ -44,6 +44,7 @@ import { RejectCorporateDto } from './validation/reject-corporate.dto';
 import { CountGroupDto } from './validation/count-group.dto';
 import { UpdateCorporateDto } from './validation/update-corporate.dto';
 import { GroupUsersService } from './group_users.service';
+import { AuthInternalService } from '../internal/auth-internal.service';
 
 @Controller('api/v1/merchants')
 export class GroupsController {
@@ -55,6 +56,7 @@ export class GroupsController {
     private readonly messageService: MessageService,
     private readonly notificationService: NotificationService,
     private readonly groupsUsersService: GroupUsersService,
+    private readonly authInternalService: AuthInternalService,
   ) {}
 
   @Post('groups')
@@ -438,7 +440,7 @@ export class GroupsController {
     }
   }
 
-  @Put('group')
+  @Put('group/register/update')
   @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()
@@ -463,12 +465,14 @@ export class GroupsController {
       req.user.group_id,
       req.user,
     );
+
     if (!checkGroup) {
       const errors: RMessage = {
         value: '',
         property: 'phone',
         constraint: [this.messageService.get('merchant.general.dataNotFound')],
       };
+
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
@@ -477,7 +481,6 @@ export class GroupsController {
         ),
       );
     }
-    console.log(checkGroup);
 
     if (updateCorporateDto.name !== checkGroup.data.name) {
       await this.groupsService.validateGroupUniqueName(updateCorporateDto.name);
@@ -555,6 +558,15 @@ export class GroupsController {
       }
     }
 
+    await this.authInternalService.verifyOtp({
+      otp_code: updateCorporateDto.otp_code,
+      phone: updateCorporateDto.director_phone,
+      user_type: 'registration',
+      roles: null,
+      created_at: new Date(),
+      group_id: updateCorporateDto.id,
+    });
+
     await this.groupsService.updateCorporate(
       checkGroup.data,
       updateCorporateDto,
@@ -564,7 +576,6 @@ export class GroupsController {
       checkGroup.data.id,
       req.user,
     );
-    // console.log('updatecor', updateCorporate)
 
     return this.responseService.success(
       true,
