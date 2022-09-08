@@ -27,7 +27,10 @@ import {
   MerchantUsersDocument,
   MerchantUsersStatus,
 } from 'src/database/entities/merchant_users.entity';
-import {deleteCredParam, generateMessageRegistrationInProgress} from 'src/utils/general-utils';
+import {
+  deleteCredParam,
+  generateMessageRegistrationInProgress,
+} from 'src/utils/general-utils';
 import { CityService } from 'src/common/services/admins/city.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RMessage } from 'src/response/response.interface';
