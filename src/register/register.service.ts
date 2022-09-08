@@ -27,7 +27,10 @@ import {
   MerchantUsersDocument,
   MerchantUsersStatus,
 } from 'src/database/entities/merchant_users.entity';
-import { deleteCredParam } from 'src/utils/general-utils';
+import {
+  deleteCredParam,
+  generateMessageRegistrationInProgress,
+} from 'src/utils/general-utils';
 import { CityService } from 'src/common/services/admins/city.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RMessage } from 'src/response/response.interface';
@@ -71,7 +74,7 @@ export class RegistersService {
     queryRunner: QueryRunner,
   ) {
     try {
-      let operationalHours = [];
+      const operationalHours = [];
 
       for (let index = 0; index < 6; index++) {
         operationalHours.push({
@@ -713,6 +716,13 @@ export class RegistersService {
       // );
 
       await queryRunner.commitTransaction();
+
+      this.notificationService.sendEmail(
+        resultGroup.director_email,
+        'Registrasi sedang dalam verifikasi',
+        '',
+        generateMessageRegistrationInProgress(),
+      );
 
       return {
         group: resultGroup,
