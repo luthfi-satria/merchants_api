@@ -6,6 +6,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Logger,
   Param,
   Post,
   Put,
@@ -375,10 +376,20 @@ export class GroupsController {
       );
 
       if (!result) {
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.updategroup.fail'),
-          result,
+        const errors: RMessage = {
+          value: '',
+          property: 'updategroup',
+          constraint: [
+            this.messageService.get('merchant.updategroup.already_rejected'),
+          ],
+        };
+
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
         );
       }
 
@@ -388,11 +399,16 @@ export class GroupsController {
         result,
       );
     } catch (error) {
+      const logger: Logger = new Logger();
+
+      logger.error(error.message);
+
       const errors: RMessage = {
         value: '',
         property: 'updategroup',
         constraint: [this.messageService.get('merchant.updategroup.fail')],
       };
+
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
@@ -440,7 +456,7 @@ export class GroupsController {
     }
   }
 
-  @Put('group/register/update')
+  @Put('group')
   @UserTypeAndLevel('merchant.group')
   @AuthJwtGuard()
   @ResponseStatusCode()

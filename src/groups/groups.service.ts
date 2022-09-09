@@ -441,6 +441,35 @@ export class GroupsService {
     }
   }
 
+  async viewGroupDetailNoUser(id: string): Promise<RSuccessMessage> {
+    try {
+      const result = await this.groupRepository.findOne(id);
+
+      deleteCredParam(result);
+
+      await this.manipulateGroupUrl(result);
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.listgroup.success'),
+        result,
+      );
+    } catch (error) {
+      const errors: RMessage = {
+        value: '',
+        property: 'listgroup',
+        constraint: [this.messageService.get('merchant.listgroup.fail')],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+  }
+
   async listGroup(
     data: ListGroupDTO,
     user: Record<string, any>,
@@ -799,12 +828,14 @@ export class GroupsService {
 
       const result: GroupDocument = await this.groupRepository.save(corporate);
 
-      this.notificationService.sendEmail(
-        corporate.director_email,
-        'Registrasi ditolak',
-        '',
-        await generateMessageRegistrationRejected(corporate.id),
-      );
+      if (result) {
+        this.notificationService.sendEmail(
+          result.director_email,
+          'Registrasi ditolak',
+          '',
+          await generateMessageRegistrationRejected(result.id),
+        );
+      }
 
       return result;
     } catch (error) {
