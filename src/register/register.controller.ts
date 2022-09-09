@@ -7,6 +7,8 @@ import {
   Req,
   UploadedFiles,
   UseInterceptors,
+  Put,
+  Param,
 } from '@nestjs/common';
 import { RegistersService } from './register.service';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
@@ -25,6 +27,10 @@ import { GroupUsersService } from 'src/groups/group_users.service';
 import { RegisterCorporateOTPDto } from './dto/register-corporate-otp.dto';
 import { AuthInternalService } from '../internal/auth-internal.service';
 import { RegisterCorporateVerifyOtpDto } from './dto/register-corporate-verify-otp.dto';
+import { UserTypeAndLevel } from '../auth/guard/user-type-and-level.decorator';
+import { AuthJwtGuard } from '../auth/auth.decorators';
+import { UpdateCorporateDto } from '../groups/validation/update-corporate.dto';
+import { MerchantStatus } from '../database/entities/merchant.entity';
 
 @Controller('api/v1/merchants')
 export class RegistersController {
@@ -273,6 +279,164 @@ export class RegistersController {
       data.pic_operational_phone,
       null,
       'pic_operational_phone',
+    );
+  }
+
+  @Put('group/register/update/{groupId}')
+  @ResponseStatusCode()
+  @UseInterceptors(
+    AnyFilesInterceptor({
+      storage: diskStorage({
+        destination: './upload_groups',
+        filename: editFileName,
+      }),
+      limits: {
+        fileSize: 5242880, //5MB
+      },
+      fileFilter: imageAndPdfFileFilter,
+    }),
+  )
+  async updateCorporate(
+    @Req() req: any,
+    @Param('groupId') groupId: string,
+    @Body() updateCorporateDto: UpdateCorporateDto,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ) {
+    const checkGroup = await this.groupsService.viewGroupDetailNoUser(groupId);
+
+    if (!checkGroup) {
+      const errors: RMessage = {
+        value: '',
+        property: 'phone',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    if (checkGroup.data.status !== MerchantStatus.Rejected) {
+      const errors: RMessage = {
+        value: '',
+        property: 'phone',
+        constraint: [
+          this.messageService.get('merchant.updategroup.status_not_rejected'),
+        ],
+      };
+
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    if (updateCorporateDto.name !== checkGroup.data.name) {
+      await this.groupsService.validateGroupUniqueName(updateCorporateDto.name);
+    }
+
+    if (updateCorporateDto.phone !== checkGroup.data.phone) {
+      await this.groupsService.validateGroupUniquePhone(
+        updateCorporateDto.phone,
+      );
+    }
+
+    if (updateCorporateDto.director_email !== checkGroup.data.director_email) {
+      await this.groupsUsersService.validateGroupUserUniqueEmail(
+        updateCorporateDto.director_email,
+        null,
+        'director_email',
+      );
+    }
+
+    if (
+      updateCorporateDto.pic_finance_email !== checkGroup.data.pic_finance_email
+    ) {
+      await this.groupsUsersService.validateGroupUserUniqueEmail(
+        updateCorporateDto.pic_finance_email,
+        null,
+        'pic_finance_email',
+      );
+    }
+
+    if (
+      updateCorporateDto.pic_operational_email !==
+      checkGroup.data.pic_operational_email
+    ) {
+      await this.groupsUsersService.validateGroupUserUniqueEmail(
+        updateCorporateDto.pic_operational_email,
+        null,
+        'pic_operational_email',
+      );
+    }
+
+    if (updateCorporateDto.director_phone !== checkGroup.data.director_phone) {
+      await this.groupsUsersService.validateGroupUserUniquePhone(
+        updateCorporateDto.director_phone,
+        null,
+        'director_phone',
+      );
+    }
+
+    if (
+      updateCorporateDto.pic_finance_phone !== checkGroup.data.pic_finance_phone
+    ) {
+      await this.groupsUsersService.validateGroupUserUniquePhone(
+        updateCorporateDto.pic_finance_phone,
+        null,
+        'pic_finance_phone',
+      );
+    }
+
+    if (
+      updateCorporateDto.pic_operational_phone !==
+      checkGroup.data.pic_operational_phone
+    ) {
+      await this.groupsUsersService.validateGroupUserUniquePhone(
+        updateCorporateDto.pic_operational_phone,
+        null,
+        'pic_operational_phone',
+      );
+    }
+
+    if (files) {
+      for (const file of files) {
+        const file_name = '/upload_groups/' + file.filename;
+        const url = await this.storageService.store(file_name);
+        updateCorporateDto[file.fieldname] = url;
+      }
+    }
+
+    await this.authInternalService.verifyOtp({
+      otp_code: updateCorporateDto.otp_code,
+      phone: updateCorporateDto.director_phone,
+      user_type: 'registration',
+      roles: null,
+      created_at: new Date(),
+      group_id: updateCorporateDto.id,
+    });
+
+    await this.groupsService.updateCorporate(
+      checkGroup.data,
+      updateCorporateDto,
+    );
+
+    const viewGroupDetail = await this.groupsService.viewGroupDetail(
+      checkGroup.data.id,
+      req.user,
+    );
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.updategroup.success'),
+      viewGroupDetail.data,
     );
   }
 }
