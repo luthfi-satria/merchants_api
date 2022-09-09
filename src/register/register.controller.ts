@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   Put,
   Param,
+  Get,
 } from '@nestjs/common';
 import { RegistersService } from './register.service';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
@@ -27,8 +28,6 @@ import { GroupUsersService } from 'src/groups/group_users.service';
 import { RegisterCorporateOTPDto } from './dto/register-corporate-otp.dto';
 import { AuthInternalService } from '../internal/auth-internal.service';
 import { RegisterCorporateVerifyOtpDto } from './dto/register-corporate-verify-otp.dto';
-import { UserTypeAndLevel } from '../auth/guard/user-type-and-level.decorator';
-import { AuthJwtGuard } from '../auth/auth.decorators';
 import { UpdateCorporateDto } from '../groups/validation/update-corporate.dto';
 import { MerchantStatus } from '../database/entities/merchant.entity';
 
@@ -437,6 +436,34 @@ export class RegistersController {
       true,
       this.messageService.get('merchant.updategroup.success'),
       viewGroupDetail.data,
+    );
+  }
+
+  @Get('group/register/update/{groupId}')
+  @ResponseStatusCode()
+  async getDetailCorporate(@Param('groupId') groupId: string) {
+    const checkGroup = await this.groupsService.viewGroupDetailNoUser(groupId);
+
+    if (!checkGroup) {
+      const errors: RMessage = {
+        value: '',
+        property: 'phone',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      checkGroup.data,
     );
   }
 }
