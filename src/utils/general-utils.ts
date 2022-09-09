@@ -268,13 +268,24 @@ export const generateMessageRegistrationRejected = async (
 
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
-      domainUriPrefix: 'https://s.efood.co.id',
-      link: `https://partner.efood.co.id/merchants_group_register?group_id=${groupId}`,
+      domainUriPrefix: 'https://efooddev.page.link',
+      link: `https://stg-hermes-efood.akarinti.tech/merchants_group_register?group_id=${groupId}`,
       androidInfo: {
-        androidPackageName: 'com.efood.partner',
+        androidPackageName: 'com.efood.partnerStaging',
       },
     },
   });
+
+  // TODO : move this to env
+  // const { shortLink } = await fbLink.createLink({
+  //   dynamicLinkInfo: {
+  //     domainUriPrefix: 'https://s.efood.co.id',
+  //     link: `https://partner.efood.co.id/merchants_group_register?group_id=${groupId}`,
+  //     androidInfo: {
+  //       androidPackageName: 'com.efood.partner',
+  //     },
+  //   },
+  // });
 
   return `
     <p style="${STYLE_HEADER}">Dear eFOOD Partner.</p>
