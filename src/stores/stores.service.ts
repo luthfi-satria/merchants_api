@@ -63,7 +63,7 @@ import moment from 'moment';
 export class StoresService {
   constructor(
     @InjectRepository(StoreDocument)
-    private readonly storeRepository: Repository<StoreDocument>,
+    public readonly storeRepository: Repository<StoreDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private readonly messageService: MessageService,
