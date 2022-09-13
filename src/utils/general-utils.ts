@@ -266,6 +266,8 @@ export const generateMessageRegistrationRejected = async (
 ): Promise<string> => {
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
 
+  console.log('TEST EMAIL');
+
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
       domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
@@ -275,6 +277,8 @@ export const generateMessageRegistrationRejected = async (
       },
     },
   });
+
+  console.log('TEST SHORT LINK');
 
   return `
     <p style="${STYLE_HEADER}">Dear eFOOD Partner.</p>
