@@ -403,9 +403,11 @@ export class GroupsController {
 
       logger.error(error.message);
 
+      const message: string = error.message;
+
       const errors: RMessage = {
         value: '',
-        property: 'updategroup',
+        property: message,
         constraint: [this.messageService.get('merchant.updategroup.fail')],
       };
 
