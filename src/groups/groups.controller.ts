@@ -407,7 +407,7 @@ export class GroupsController {
 
       const errors: RMessage = {
         value: '',
-        property: message,
+        property: JSON.stringify(error),
         constraint: [this.messageService.get('merchant.updategroup.fail')],
       };
 
