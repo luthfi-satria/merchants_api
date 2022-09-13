@@ -826,11 +826,17 @@ export class GroupsService {
       const result: GroupDocument = await this.groupRepository.save(corporate);
 
       if (result) {
+        console.info('SEND EMAIL -> REJECTED');
+
+        const message: string = await generateMessageRegistrationRejected(
+          group_id,
+        );
+
         this.notificationService.sendEmail(
           result.director_email,
           'Registrasi ditolak',
           '',
-          await generateMessageRegistrationRejected(result.id),
+          message,
         );
       }
 
