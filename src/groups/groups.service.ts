@@ -65,6 +65,7 @@ import { randomUUID } from 'crypto';
 import { generateSmsUrlVerification } from './../utils/general-utils';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { StoreDocument } from 'src/database/entities/store.entity';
+import { CityService } from '../common/services/admins/city.service';
 
 @Injectable()
 export class GroupsService {
@@ -91,6 +92,7 @@ export class GroupsService {
     private readonly connection: Connection,
     private readonly notificationService: NotificationService,
     private readonly lobService: LobService,
+    private readonly cityService: CityService,
   ) {}
 
   async findGroupById(id: string): Promise<GroupDocument> {
@@ -445,6 +447,25 @@ export class GroupsService {
     try {
       const result = await this.groupRepository.findOne(id);
 
+      const merchant = await this.merchantRepository
+        .createQueryBuilder('merchant')
+        .leftJoin('merchant.group', 'group')
+        .where('group.id = :groupId', {
+          groupId: id,
+        })
+        .getOneOrFail();
+
+      const store = await this.storeService.storeRepository
+        .createQueryBuilder('store')
+        .leftJoin('store.merchant', 'merchant')
+        .leftJoinAndSelect('store.store_categories', 'categories')
+        .where('merchant.id = :merchantId', {
+          merchantId: merchant.id ?? null,
+        })
+        .getOneOrFail();
+
+      const city = await this.cityService.getCity(store.city_id);
+
       deleteCredParam(result);
 
       await this.manipulateGroupUrl(result);
@@ -452,7 +473,27 @@ export class GroupsService {
       return this.responseService.success(
         true,
         this.messageService.get('merchant.general.success'),
-        result,
+        {
+          ...result,
+          pb1: merchant.pb1,
+          pb1_tariff: merchant.pb1_tariff,
+          npwp_name: merchant.npwp_name,
+          country_id: city.province.country_id,
+          province_id: city.province_id,
+          city_id: store.city_id,
+          gmt_offset: store.gmt_offset,
+          category_ids: store.store_categories.map((item) => item.id),
+          delivery_type: store.delivery_type,
+          bank_id: store.bank_id,
+          bank_account_no: store.bank_account_no,
+          bank_account_name: store.bank_account_name,
+          location_longitude: store.location_longitude,
+          location_latitude: store.location_latitude,
+          director_id_face_file: result.director_id_face_file,
+          logo: merchant.logo,
+          profile_store_photo: merchant.profile_store_photo,
+          banner: store.banner,
+        },
       );
     } catch (error) {
       const errors: RMessage = {

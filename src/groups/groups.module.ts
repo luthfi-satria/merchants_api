@@ -33,6 +33,7 @@ import { NatsService } from 'src/nats/nats.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { InternalModule } from '../internal/internal.module';
+import {CityService} from "../common/services/admins/city.service";
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { InternalModule } from '../internal/internal.module';
     UsersService,
     NatsService,
     MenuOnlineService,
+    CityService,
   ],
 })
 export class GroupsModule {}
