@@ -451,21 +451,18 @@ export class GroupsService {
 
       return this.responseService.success(
         true,
-        this.messageService.get('merchant.listgroup.success'),
+        this.messageService.get('merchant.general.success'),
         result,
       );
     } catch (error) {
       const errors: RMessage = {
         value: '',
-        property: 'listgroup',
-        constraint: [this.messageService.get('merchant.listgroup.fail')],
+        property: '',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
       };
+
       throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
+        this.responseService.error(HttpStatus.NOT_FOUND, errors, 'Bad Request'),
       );
     }
   }

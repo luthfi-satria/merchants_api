@@ -44,6 +44,30 @@ export class RegistersController {
     private readonly authInternalService: AuthInternalService,
   ) {}
 
+  @Get('group/register/update/:id')
+  @ResponseStatusCode()
+  async getDetailCorporate(@Param('id') groupId: string) {
+    const checkGroup = await this.groupsService.viewGroupDetailNoUser(groupId);
+
+    if (!checkGroup) {
+      const errors: RMessage = {
+        value: '',
+        property: '',
+        constraint: [this.messageService.get('merchant.general.dataNotFound')],
+      };
+
+      throw new BadRequestException(
+        this.responseService.error(HttpStatus.NOT_FOUND, errors, 'Bad Request'),
+      );
+    }
+
+    return this.responseService.success(
+      true,
+      this.messageService.get('merchant.general.success'),
+      checkGroup.data,
+    );
+  }
+
   @Post('/group/register/otp')
   @ResponseStatusCode()
   async registerCorporateOtp(@Body() otpDto: RegisterCorporateOTPDto) {
@@ -436,34 +460,6 @@ export class RegistersController {
       true,
       this.messageService.get('merchant.updategroup.success'),
       viewGroupDetail.data,
-    );
-  }
-
-  @Get('group/register/update/{groupId}')
-  @ResponseStatusCode()
-  async getDetailCorporate(@Param('groupId') groupId: string) {
-    const checkGroup = await this.groupsService.viewGroupDetailNoUser(groupId);
-
-    if (!checkGroup) {
-      const errors: RMessage = {
-        value: '',
-        property: 'phone',
-        constraint: [this.messageService.get('merchant.general.dataNotFound')],
-      };
-
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-
-    return this.responseService.success(
-      true,
-      this.messageService.get('merchant.general.success'),
-      checkGroup.data,
     );
   }
 }
