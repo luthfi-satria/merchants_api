@@ -73,10 +73,10 @@ export class RegistersController {
   async registerCorporateOtp(@Body() otpDto: RegisterCorporateOTPDto) {
     console.log('GENERATE OTP');
 
+    await this.validation(otpDto, otpDto.group_id);
+
     try {
       console.log('VALIDATION');
-
-      await this.validation(otpDto);
 
       await this.authInternalService.generateOtp({
         phone: otpDto.director_phone,
@@ -269,44 +269,44 @@ export class RegistersController {
     }
   }
 
-  async validation(data: RegisterCorporateOTPDto) {
-    await this.groupsService.validateGroupUniqueName(data.name);
+  async validation(data: RegisterCorporateOTPDto, groupId: string = null) {
+    await this.groupsService.validateGroupUniqueName(data.name, groupId);
 
-    await this.groupsService.validateGroupUniquePhone(data.phone);
+    await this.groupsService.validateGroupUniquePhone(data.phone, groupId);
 
     await this.groupsUsersService.validateGroupUserUniqueEmail(
       data.director_email,
-      null,
+      groupId,
       'director_email',
     );
 
     await this.groupsUsersService.validateGroupUserUniqueEmail(
       data.pic_finance_email,
-      null,
+      groupId,
       'pic_finance_email',
     );
 
     await this.groupsUsersService.validateGroupUserUniqueEmail(
       data.pic_operational_email,
-      null,
+      groupId,
       'pic_operational_email',
     );
 
     await this.groupsUsersService.validateGroupUserUniquePhone(
       data.director_phone,
-      null,
+      groupId,
       'director_phone',
     );
 
     await this.groupsUsersService.validateGroupUserUniquePhone(
       data.pic_finance_phone,
-      null,
+      groupId,
       'pic_finance_phone',
     );
 
     await this.groupsUsersService.validateGroupUserUniquePhone(
       data.pic_operational_phone,
-      null,
+      groupId,
       'pic_operational_phone',
     );
   }
