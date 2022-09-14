@@ -1,12 +1,12 @@
 import {
-  Logger,
-  HttpStatus,
   BadRequestException,
-  NotFoundException,
+  HttpStatus,
   Injectable,
+  Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom, map, catchError, EMPTY } from 'rxjs';
+import { catchError, EMPTY, firstValueFrom, map } from 'rxjs';
 import { ResponseService } from 'src/response/response.service';
 
 /**
@@ -91,7 +91,9 @@ export class AuthInternalService {
 
               console.log(response);
 
-              if (rsp.statusCode !== HttpStatus.OK) {
+              if (
+                ![HttpStatus.OK, HttpStatus.CREATED].includes(rsp.statusCode)
+              ) {
                 throw new BadRequestException(
                   this.responseService.error(
                     HttpStatus.BAD_REQUEST,
@@ -127,7 +129,7 @@ export class AuthInternalService {
           map(async (response) => {
             const rsp: Record<string, any> = response.data;
 
-            if (rsp.statusCode !== HttpStatus.OK) {
+            if (![HttpStatus.OK, HttpStatus.CREATED].includes(rsp.statusCode)) {
               throw new BadRequestException(
                 this.responseService.error(
                   HttpStatus.BAD_REQUEST,
