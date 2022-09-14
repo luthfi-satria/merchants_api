@@ -305,7 +305,7 @@ export class RegistersController {
     );
   }
 
-  @Put('group/register/update/{groupId}')
+  @Put('group/register/update/:groupId')
   @ResponseStatusCode()
   @UseInterceptors(
     AnyFilesInterceptor({

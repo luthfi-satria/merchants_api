@@ -459,6 +459,7 @@ export class GroupsService {
         .createQueryBuilder('store')
         .leftJoin('store.merchant', 'merchant')
         .leftJoinAndSelect('store.store_categories', 'categories')
+        .leftJoinAndSelect('store.service_addons', 'service_addons')
         .where('merchant.id = :merchantId', {
           merchantId: merchant.id ?? null,
         })
@@ -475,6 +476,7 @@ export class GroupsService {
         this.messageService.get('merchant.general.success'),
         {
           ...result,
+          lob_id: merchant.lob_id,
           pb1: merchant.pb1,
           pb1_tariff: merchant.pb1_tariff,
           npwp_name: merchant.npwp_name,
@@ -482,8 +484,9 @@ export class GroupsService {
           province_id: city.province_id,
           city_id: store.city_id,
           gmt_offset: store.gmt_offset,
-          category_ids: store.store_categories.map((item) => item.id),
+          category_ids: store.store_categories.map((item) => item.id) ?? [],
           delivery_type: store.delivery_type,
+          service_addons: store.service_addons,
           bank_id: store.bank_id,
           bank_account_no: store.bank_account_no,
           bank_account_name: store.bank_account_name,
