@@ -71,7 +71,11 @@ export class RegistersController {
   @Post('/group/register/otp')
   @ResponseStatusCode()
   async registerCorporateOtp(@Body() otpDto: RegisterCorporateOTPDto) {
+    console.log('GENERATE OTP');
+
     try {
+      console.log('VALIDATION');
+
       await this.validation(otpDto);
 
       await this.authInternalService.generateOtp({

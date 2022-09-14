@@ -78,7 +78,7 @@ export class AuthInternalService {
       const url: string =
         process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp/corporate';
 
-      return firstValueFrom(
+      return await firstValueFrom(
         this.httpService
           .post(url, data, {
             headers: headerRequest,
@@ -87,7 +87,11 @@ export class AuthInternalService {
             map((response) => {
               const rsp: Record<string, any> = response.data;
 
-              if (rsp.statusCode) {
+              console.log('GENERATE_OTP_RESPONSE');
+
+              console.log(response);
+
+              if (rsp.statusCode !== HttpStatus.OK) {
                 throw new BadRequestException(
                   this.responseService.error(
                     HttpStatus.BAD_REQUEST,
@@ -123,7 +127,7 @@ export class AuthInternalService {
           map(async (response) => {
             const rsp: Record<string, any> = response.data;
 
-            if (rsp.statusCode) {
+            if (rsp.statusCode !== HttpStatus.OK) {
               throw new BadRequestException(
                 this.responseService.error(
                   HttpStatus.BAD_REQUEST,
