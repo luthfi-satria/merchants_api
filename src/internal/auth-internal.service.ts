@@ -70,6 +70,8 @@ export class AuthInternalService {
   }
 
   async generateOtp(data: any): Promise<any> {
+    console.info('GENERATE OTP');
+
     try {
       const headerRequest = {
         'Content-Type': 'Application/json',
@@ -78,6 +80,8 @@ export class AuthInternalService {
       const url: string =
         process.env.BASEURL_AUTH_SERVICE + '/api/v1/auth/otp/corporate';
 
+      console.info('URL OTP ->', url);
+
       return await firstValueFrom(
         this.httpService
           .post(url, data, {
@@ -85,8 +89,6 @@ export class AuthInternalService {
           })
           .pipe(
             map((response) => {
-              Logger.log(response);
-
               console.info(response);
 
               console.info(
@@ -110,6 +112,8 @@ export class AuthInternalService {
           ),
       );
     } catch (e) {
+      console.log(e);
+
       Logger.error(`ERROR ${e.message}`, '', 'GENERATE OTP');
 
       throw e;
