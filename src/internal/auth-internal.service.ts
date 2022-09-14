@@ -85,6 +85,14 @@ export class AuthInternalService {
           })
           .pipe(
             map((response) => {
+              Logger.log(response);
+
+              console.info(response);
+
+              console.info(
+                ![HttpStatus.OK, HttpStatus.CREATED].includes(response.status),
+              );
+
               if (
                 ![HttpStatus.OK, HttpStatus.CREATED].includes(response.status)
               ) {
