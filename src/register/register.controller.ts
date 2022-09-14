@@ -270,73 +270,71 @@ export class RegistersController {
   }
 
   async validation(data: RegisterCorporateOTPDto, groupId: string = null) {
-    let merchantId = null;
-
-    let merchantUserId = null;
+    let checkGroup = null;
 
     if (groupId) {
-      merchantId = (
-        await this.groupsService.merchantRepository
-          .createQueryBuilder('merchant')
-          .leftJoin('merchant.group', 'group')
-          .where('group.id = :groupId', {
-            groupId: groupId,
-          })
-          .getOneOrFail()
-      ).id;
-
-      merchantUserId = (
-        await this.groupsService.merchantUsersRepository
-          .createQueryBuilder('merchant_user')
-          .where('merchant_user.merchant_id = :merchantId', {
-            merchantId,
-          })
-          .orWhere('merchant_user.group_id = :groupId', {
-            groupId,
-          })
-          .getOneOrFail()
-      ).id;
+      checkGroup = await this.groupsService.viewGroupDetailNoUser(groupId);
     }
 
-    await this.groupsService.validateGroupUniqueName(data.name, groupId);
+    if (data.name !== checkGroup?.data?.name) {
+      await this.groupsService.validateGroupUniqueName(data.name);
+    }
 
-    await this.groupsService.validateGroupUniquePhone(data.phone, groupId);
+    if (data.phone !== checkGroup?.data?.phone) {
+      await this.groupsService.validateGroupUniquePhone(data.phone);
+    }
 
-    await this.groupsUsersService.validateGroupUserUniqueEmail(
-      data.director_email,
-      merchantUserId,
-      'director_email',
-    );
+    if (data.director_email !== checkGroup?.data?.director_email) {
+      await this.groupsUsersService.validateGroupUserUniqueEmail(
+        data.director_email,
+        null,
+        'director_email',
+      );
+    }
 
-    await this.groupsUsersService.validateGroupUserUniqueEmail(
-      data.pic_finance_email,
-      merchantUserId,
-      'pic_finance_email',
-    );
+    if (data.pic_finance_email !== checkGroup?.data?.pic_finance_email) {
+      await this.groupsUsersService.validateGroupUserUniqueEmail(
+        data.pic_finance_email,
+        null,
+        'pic_finance_email',
+      );
+    }
 
-    await this.groupsUsersService.validateGroupUserUniqueEmail(
-      data.pic_operational_email,
-      merchantUserId,
-      'pic_operational_email',
-    );
+    if (
+      data.pic_operational_email !== checkGroup?.data?.pic_operational_email
+    ) {
+      await this.groupsUsersService.validateGroupUserUniqueEmail(
+        data.pic_operational_email,
+        null,
+        'pic_operational_email',
+      );
+    }
 
-    await this.groupsUsersService.validateGroupUserUniquePhone(
-      data.director_phone,
-      merchantUserId,
-      'director_phone',
-    );
+    if (data.director_phone !== checkGroup?.data?.director_phone) {
+      await this.groupsUsersService.validateGroupUserUniquePhone(
+        data.director_phone,
+        null,
+        'director_phone',
+      );
+    }
 
-    await this.groupsUsersService.validateGroupUserUniquePhone(
-      data.pic_finance_phone,
-      merchantUserId,
-      'pic_finance_phone',
-    );
+    if (data.pic_finance_phone !== checkGroup?.data?.pic_finance_phone) {
+      await this.groupsUsersService.validateGroupUserUniquePhone(
+        data.pic_finance_phone,
+        null,
+        'pic_finance_phone',
+      );
+    }
 
-    await this.groupsUsersService.validateGroupUserUniquePhone(
-      data.pic_operational_phone,
-      merchantUserId,
-      'pic_operational_phone',
-    );
+    if (
+      data.pic_operational_phone !== checkGroup?.data?.pic_operational_phone
+    ) {
+      await this.groupsUsersService.validateGroupUserUniquePhone(
+        data.pic_operational_phone,
+        null,
+        'pic_operational_phone',
+      );
+    }
   }
 
   @Put('group/register/update/:groupId')

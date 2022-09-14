@@ -453,6 +453,7 @@ export class GroupsService {
         .where('group.id = :groupId', {
           groupId: id,
         })
+        .orderBy('merchant.created_at', 'DESC')
         .getOneOrFail();
 
       const store = await this.storeService.storeRepository
@@ -463,6 +464,7 @@ export class GroupsService {
         .where('merchant.id = :merchantId', {
           merchantId: merchant.id ?? null,
         })
+        .orderBy('store.created_at', 'DESC')
         .getOneOrFail();
 
       const city = await this.cityService.getCity(store.city_id);
