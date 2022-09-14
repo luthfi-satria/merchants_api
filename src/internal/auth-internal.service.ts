@@ -85,19 +85,13 @@ export class AuthInternalService {
           })
           .pipe(
             map((response) => {
-              const rsp: Record<string, any> = response.data;
-
-              console.log('GENERATE_OTP_RESPONSE');
-
-              console.log(response);
-
               if (
-                ![HttpStatus.OK, HttpStatus.CREATED].includes(rsp.statusCode)
+                ![HttpStatus.OK, HttpStatus.CREATED].includes(response.status)
               ) {
                 throw new BadRequestException(
                   this.responseService.error(
                     HttpStatus.BAD_REQUEST,
-                    rsp.message[0],
+                    null,
                     'Bad Request',
                   ),
                 );
@@ -127,13 +121,13 @@ export class AuthInternalService {
       return await firstValueFrom(
         this.httpService.post(url, data, { headers: headerRequest }).pipe(
           map(async (response) => {
-            const rsp: Record<string, any> = response.data;
-
-            if (![HttpStatus.OK, HttpStatus.CREATED].includes(rsp.statusCode)) {
+            if (
+              ![HttpStatus.OK, HttpStatus.CREATED].includes(response.status)
+            ) {
               throw new BadRequestException(
                 this.responseService.error(
                   HttpStatus.BAD_REQUEST,
-                  rsp.message[0],
+                  null,
                   'Bad Request',
                 ),
               );
