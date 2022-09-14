@@ -270,43 +270,71 @@ export class RegistersController {
   }
 
   async validation(data: RegisterCorporateOTPDto, groupId: string = null) {
+    let merchantId = null;
+
+    let merchantUserId = null;
+
+    if (groupId) {
+      merchantId = (
+        await this.groupsService.merchantRepository
+          .createQueryBuilder('merchant')
+          .leftJoin('merchant.group', 'group')
+          .where('group.id = :groupId', {
+            groupId: groupId,
+          })
+          .getOneOrFail()
+      ).id;
+
+      merchantUserId = (
+        await this.groupsService.merchantUsersRepository
+          .createQueryBuilder('merchant_user')
+          .where('merchant_user.merchant_id = :merchantId', {
+            merchantId,
+          })
+          .orWhere('merchant_user.group_id = :groupId', {
+            groupId,
+          })
+          .getOneOrFail()
+      ).id;
+    }
+
     await this.groupsService.validateGroupUniqueName(data.name, groupId);
 
     await this.groupsService.validateGroupUniquePhone(data.phone, groupId);
 
     await this.groupsUsersService.validateGroupUserUniqueEmail(
       data.director_email,
-      groupId,
+      merchantUserId,
       'director_email',
     );
 
     await this.groupsUsersService.validateGroupUserUniqueEmail(
       data.pic_finance_email,
-      groupId,
+      merchantUserId,
       'pic_finance_email',
     );
 
     await this.groupsUsersService.validateGroupUserUniqueEmail(
       data.pic_operational_email,
-      groupId,
+      merchantUserId,
       'pic_operational_email',
     );
 
     await this.groupsUsersService.validateGroupUserUniquePhone(
       data.director_phone,
-      groupId,
+      merchantUserId,
       'director_phone',
     );
 
     await this.groupsUsersService.validateGroupUserUniquePhone(
       data.pic_finance_phone,
-      groupId,
+      merchantUserId,
       'pic_finance_phone',
     );
 
     await this.groupsUsersService.validateGroupUserUniquePhone(
       data.pic_operational_phone,
-      groupId,
+      merchantUserId,
       'pic_operational_phone',
     );
   }
