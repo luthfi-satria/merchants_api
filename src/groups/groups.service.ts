@@ -73,9 +73,9 @@ export class GroupsService {
     @InjectRepository(GroupDocument)
     private readonly groupRepository: Repository<GroupDocument>,
     @InjectRepository(MerchantUsersDocument)
-    private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
+    public readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     @InjectRepository(MerchantDocument)
-    private readonly merchantRepository: Repository<MerchantDocument>,
+    public readonly merchantRepository: Repository<MerchantDocument>,
     private readonly groupUserService: GroupUsersService,
     private httpService: HttpService,
     private readonly responseService: ResponseService,
@@ -87,7 +87,7 @@ export class GroupsService {
     @Inject(forwardRef(() => MerchantsService))
     private readonly merchantService: MerchantsService,
     @Inject(forwardRef(() => StoresService))
-    private readonly storeService: StoresService,
+    public readonly storeService: StoresService,
     private readonly storage: CommonStorageService,
     private readonly connection: Connection,
     private readonly notificationService: NotificationService,
