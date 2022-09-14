@@ -90,6 +90,8 @@ export class RegistersController {
         null,
       );
     } catch (e) {
+      console.log(e);
+
       throw new BadRequestException(e.message);
     }
   }
