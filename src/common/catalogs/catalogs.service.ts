@@ -166,4 +166,23 @@ export class CatalogsService {
       }
     }
   }
+
+  async getMenuIds(menuIds: string[]): Promise<any> {
+    if (!(menuIds?.length > 0)) {
+      return [];
+    }
+
+    const response = await firstValueFrom(
+      this.httpService.get(
+        `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu/by/ids`,
+        {
+          params: {
+            ids: menuIds,
+          },
+        },
+      ),
+    );
+
+    return response?.data?.data;
+  }
 }
