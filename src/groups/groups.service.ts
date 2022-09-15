@@ -412,11 +412,10 @@ export class GroupsService {
 
   async viewGroupDetail(
     id: string,
-    user: Record<string, any>,
+    groupId: string,
   ): Promise<RSuccessMessage> {
     try {
-      const gid = user.user_type == 'admin' ? id : user.group_id;
-      const result = await this.groupRepository.findOne(gid);
+      const result = await this.groupRepository.findOne(groupId);
 
       deleteCredParam(result);
 
@@ -1381,6 +1380,15 @@ export class GroupsService {
         }),
         ...(updateCorporateDto.pic_is_director && {
           pic_is_director: pic_is_director,
+        }),
+        ...(updateCorporateDto.brand_npwp_no && {
+          npwp_no: updateCorporateDto.brand_npwp_no,
+        }),
+        ...(updateCorporateDto.brand_npwp_name && {
+          npwp_name: updateCorporateDto.brand_npwp_name,
+        }),
+        ...(updateCorporateDto.brand_npwp_file && {
+          npwp_file: updateCorporateDto.brand_npwp_file,
         }),
       };
 

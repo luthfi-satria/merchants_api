@@ -182,6 +182,15 @@ export class UpdateCorporateDto {
   npwp_name: string;
 
   @IsOptional()
+  brand_npwp_no: string;
+
+  @IsOptional()
+  brand_npwp_name: string;
+
+  @IsOptional()
+  brand_npwp_file: string;
+
+  @IsOptional()
   is_pos_checkin_enabled: boolean;
 
   @IsOptional()

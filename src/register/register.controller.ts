@@ -487,7 +487,7 @@ export class RegistersController {
 
     const viewGroupDetail = await this.groupsService.viewGroupDetail(
       checkGroup.data.id,
-      req.user,
+      groupId,
     );
 
     return this.responseService.success(
