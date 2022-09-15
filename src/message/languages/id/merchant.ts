@@ -310,6 +310,10 @@ export default {
       message: 'User belum mendapatkan approval',
     },
   },
+  count_group: {
+    success: 'Get Total Group Success.',
+    fail: 'Get List Group Failed.',
+  },
   user: {
     success: 'Ambil data Sukses.',
     unregistered_user: {
