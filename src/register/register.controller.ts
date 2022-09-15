@@ -377,10 +377,12 @@ export class RegistersController {
       );
     }
 
-    if (checkGroup.data.status !== MerchantStatus.Rejected) {
+    if (
+      updateCorporateDto.status !== 'REJECTED'
+    ) {
       const errors: RMessage = {
         value: '',
-        property: 'phone',
+        property: 'status',
         constraint: [
           this.messageService.get('merchant.updategroup.status_not_rejected'),
         ],
@@ -485,8 +487,7 @@ export class RegistersController {
       updateCorporateDto,
     );
 
-    const viewGroupDetail = await this.groupsService.viewGroupDetail(
-      checkGroup.data.id,
+    const viewGroupDetail = await this.groupsService.viewGroupDetailNoUser(
       groupId,
     );
 
