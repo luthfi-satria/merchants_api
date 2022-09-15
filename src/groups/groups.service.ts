@@ -1106,6 +1106,7 @@ export class GroupsService {
       }
 
       const groupData: Partial<GroupDocument> = {
+        status: GroupStatus.Waiting_approval,
         category: updateCorporateDto.category || group.category,
         name: updateCorporateDto.name || group.name,
         phone: updateCorporateDto.phone || group.phone,
