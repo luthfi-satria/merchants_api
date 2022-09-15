@@ -1,9 +1,12 @@
 import { Injectable, BadRequestException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MessageService } from 'src/message/message.service';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ResponseService } from 'src/response/response.service';
 import { Repository } from 'typeorm';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { HashService } from 'src/hash/hash.service';
 @Injectable()
 export class UsersValidationService {
