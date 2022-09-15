@@ -1390,7 +1390,7 @@ export class QueryService {
             ),
           );
         });
-      const storeItems = result[0];
+      const storeItems: any[] = result[0];
       const totalItems = result[1];
       const storeIds = [];
       const paramsDiscount = [];
@@ -1403,28 +1403,39 @@ export class QueryService {
           if (filter.test(row.name)) {
             row.priority = 2;
           }
+
+          const menuIds: string[] = row.menus.map((item) => item.menu_id);
+
+          const menus: any[] = await this.catalogsService.getMenuIds(menuIds);
+
           for (const menu of row.menus) {
-            paramsDiscount.push({
-              menu_price_id: menu.menu_price_id,
-              store_id: row.id,
-            });
-            if (filter.test(menu.name)) {
-              if (row.priority === 2 || row.priority === 1) {
-                row.priority = 1;
-              } else {
-                row.priority = 3;
+            const findMenu = menus?.find((item) => item.id === menu.menu_id);
+
+            if (findMenu.status === 'ACTIVE') {
+              paramsDiscount.push({
+                menu_price_id: menu.menu_price_id,
+                store_id: row.id,
+              });
+
+              if (filter.test(menu.name)) {
+                if (row.priority === 2 || row.priority === 1) {
+                  row.priority = 1;
+                } else {
+                  row.priority = 3;
+                }
+                filter_menus.push(menu);
               }
-              filter_menus.push(menu);
-            }
-            //Manipulate Menu Photo Url
-            if (
-              isDefined(menu.photo) &&
-              menu.photo &&
-              !menu.photo.includes('dummyimage')
-            ) {
-              const fileName =
-                menu.photo.split('/')[menu.photo.split('/').length - 1];
-              menu.photo = `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image/${fileName}`;
+
+              //Manipulate Menu Photo Url
+              if (
+                isDefined(menu.photo) &&
+                menu.photo &&
+                !menu.photo.includes('dummyimage')
+              ) {
+                const fileName =
+                  menu.photo.split('/')[menu.photo.split('/').length - 1];
+                menu.photo = `${process.env.BASEURL_API}/api/v1/merchants/menu-onlines/${menu.id}/image/${fileName}`;
+              }
             }
           }
           row.menus = filter_menus;

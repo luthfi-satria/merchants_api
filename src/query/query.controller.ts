@@ -91,8 +91,11 @@ export class QueryController {
     @Req() req: any,
     @Query() query: QuerySearchValidation,
   ) {
-    // return this.queryService.searchStoreMenu(query, req.user);
-    return this.queryService.optimationSearchStoreMenu(query, req.user);
+    try {
+      return this.queryService.optimationSearchStoreMenu(query, req.user);
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
   @Get('query/search')

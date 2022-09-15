@@ -261,6 +261,82 @@ export const generateMessageChangeActiveEmail = (name: string): string => {
   return message;
 };
 
+export const generateMessageRegistrationRejected = async (
+  groupId: string,
+): Promise<string> => {
+  const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
+
+  console.log('TEST EMAIL');
+
+  const { shortLink } = await fbLink.createLink({
+    dynamicLinkInfo: {
+      domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
+      link: `${process.env.SHORT_LINK_CORPORATE_REGISTER}?group_id=${groupId}`,
+      androidInfo: {
+        androidPackageName: process.env.SHORT_LINK_ANDROID_PACKAGE,
+      },
+    },
+  });
+
+  console.log('TEST SHORT LINK');
+
+  return `
+    <p style="${STYLE_HEADER}">Dear eFOOD Partner.</p>
+    <p style="${CONTENT}">
+      Melalui email ini, kami menginformasikan bahwa data-data yang anda telah berikan belum lengkap.
+      Sehingga kami belum bisa untuk melanjutkan proses permintaan anda sebagai eFOOD Partner. Untuk
+      untuk lengkapi Kembali persyaratan yang telah kami informasikan.
+      Anda bisa Kembali untuk mengisi data sebagai calon eFOOD Parner. Mohon segera dilakukan
+      pengisian data ulang agar kami bisa memproses kembali untuk menjadi eFOOD Partner.
+      Mohon di ingat, Proses pendaftaran eFOOD Partner GRATIS tidak di pungut biaya apapun.
+    </p>
+    <p style="${CONTENT}"></p>
+    <p style="${CONTENT}"></p>
+    <p style="${CONTENT}">*Note : Silahkan lakukan pengisian data ulang melalui Link dibawah ini*</p>
+    <p style="${CONTENT}"> Klik link berikut: <a href="${shortLink}">${shortLink}</a> . </p>
+    <p style="${CONTENT}">Salam Hangat</p>
+    <p style="${CONTENT}">eFOOD</p>
+  `;
+};
+
+export const generateMessageRegistrationAccepted = (): string => {
+  return `
+    <p style="${STYLE_HEADER}">Dear eFOOD Partner.</p>
+    <p style="${CONTENT}">Terima Kasih atas ketertarikan anda untuk bergabung dengan eFOOD!</p>
+    <p style="${CONTENT}">
+        Melalui email ini, kami memberitahukan bahwa akun merchant anda akan segera aktif. Kami harap
+        anda bisa terus mengembangkan resto anda lebih baik kedepannya bersama kami.
+        PERHATIAN Proses pendaftaran eFOOD Partner GRATIS tidak di pungut biaya apapun. Hati-hati jika
+        anda menemukan beberapa oknum mengatasnamakan eFOOD dan meminta sejumlah uang itu
+        dipastikan penipuan. Jika anda menemui hal tersebut bisa segera hubungi pusat bantuan eFOOD.
+    </p>
+    <p style="${CONTENT}">Terima kasih dan keep healthy!</p>
+    <p style="${CONTENT}"></p>
+    <p style="${CONTENT}"></p>
+    <p style="${CONTENT}">Salam Hangat</p>
+    <p style="${CONTENT}">eFOOD</p>
+  `;
+};
+
+export const generateMessageRegistrationInProgress = (): string => {
+  return `
+    <p style="${STYLE_HEADER}">Dear eFOOD Partner.</p>
+    <p style="${CONTENT}">Terima Kasih atas ketertarikan anda untuk bergabung dengan eFOOD!</p>
+    <p style="${CONTENT}">
+        Semua data yang anda telah kirimkan sudah kami terima. Data tersebut sedang dalam
+        proses verifikasi oleh Tim Kami. Kami menyampaikan Proses verfikikasi akan membutuhkan waktu
+        sekitar 1-7 Hari kerja. Dan Semua informasi mengenai proses tersebut akan kami kirimkan melalui
+        email, jadi, pastikan alamat email yang anda gunakan aktif. Mohon bersedia untuk menunggu selama
+        proses verifikasi berlangsung.
+    </p>
+    <p style="${CONTENT}">Terima kasih dan keep healthy!</p>
+    <p style="${CONTENT}"></p>
+    <p style="${CONTENT}"></p>
+    <p style="${CONTENT}">Salam Hangat</p>
+    <p style="${CONTENT}">eFOOD</p>
+  `;
+};
+
 export const generateMessageResetPassword = async (
   name: string,
   link: string,
