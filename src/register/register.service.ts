@@ -633,10 +633,11 @@ export class RegistersService {
         await this.storeService.getCategoriesByIds(
           registerCorporateData.category_ids,
         );
+      console.log(registerCorporateData.category_ids);
       store_document.service_addons = await this.storeService.getAddonssBtIds(
         registerCorporateData.service_addons,
       );
-
+      console.log(registerCorporateData.service_addons);
       if (createMerchantUser.status == 'WAITING_FOR_APPROVAL') {
         store_document.status = enumStoreStatus.waiting_for_brand_approval;
       }
