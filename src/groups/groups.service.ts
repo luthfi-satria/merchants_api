@@ -1,44 +1,73 @@
-import {BadRequestException, forwardRef, HttpStatus, Inject, Injectable, Logger,} from '@nestjs/common';
-import {HttpService} from '@nestjs/axios';
-import {InjectRepository} from '@nestjs/typeorm';
-import {Observable} from 'rxjs';
-import {catchError, map} from 'rxjs/operators';
-import {GroupDocument, GroupStatus} from 'src/database/entities/group.entity';
-import {Any, Brackets, Connection, FindOperator, ILike, Like, Not, QueryRunner, Repository,} from 'typeorm';
-import {AxiosResponse} from 'axios';
-import {RMessage, RSuccessMessage} from 'src/response/response.interface';
-import {ResponseService} from 'src/response/response.service';
-import {MessageService} from 'src/message/message.service';
+import {
+  BadRequestException,
+  forwardRef,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Observable } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { GroupDocument, GroupStatus } from 'src/database/entities/group.entity';
+import {
+  Any,
+  Brackets,
+  Connection,
+  FindOperator,
+  ILike,
+  Like,
+  Not,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
+import { AxiosResponse } from 'axios';
+import { RMessage, RSuccessMessage } from 'src/response/response.interface';
+import { ResponseService } from 'src/response/response.service';
+import { MessageService } from 'src/message/message.service';
 import {
   deleteCredParam,
   generateMessageRegistrationAccepted,
   generateMessageRegistrationRejected,
 } from 'src/utils/general-utils';
-import {HashService} from 'src/hash/hash.service';
-import {MerchantUsersDocument, MerchantUsersStatus,} from 'src/database/entities/merchant_users.entity';
-import {CreateGroupDTO} from './validation/create_groups.dto';
-import {GroupUsersService} from './group_users.service';
-import {GroupUser} from './interface/group_users.interface';
-import {UpdateGroupDTO} from './validation/update_groups.dto';
-import {ListGroupDTO, SearchFields} from './validation/list-group.validation';
-import {RoleService, SpecialRoleCodes,} from 'src/common/services/admins/role.service';
-import {NatsService} from 'src/nats/nats.service';
+import { HashService } from 'src/hash/hash.service';
+import {
+  MerchantUsersDocument,
+  MerchantUsersStatus,
+} from 'src/database/entities/merchant_users.entity';
+import { CreateGroupDTO } from './validation/create_groups.dto';
+import { GroupUsersService } from './group_users.service';
+import { GroupUser } from './interface/group_users.interface';
+import { UpdateGroupDTO } from './validation/update_groups.dto';
+import { ListGroupDTO, SearchFields } from './validation/list-group.validation';
+import {
+  RoleService,
+  SpecialRoleCodes,
+} from 'src/common/services/admins/role.service';
+import { NatsService } from 'src/nats/nats.service';
 import _ from 'lodash';
-import {MerchantDocument, MerchantStatus,} from 'src/database/entities/merchant.entity';
-import {LobDocument} from 'src/database/entities/lob.entity';
-import {LobService} from 'src/lob/lob.service';
-import {MerchantsService} from 'src/merchants/merchants.service';
-import {StoresService} from 'src/stores/stores.service';
-import {CommonStorageService} from 'src/common/storage/storage.service';
-import {isDefined} from 'class-validator';
-import {SetFieldEmptyUtils} from '../utils/set-field-empty-utils';
-import {RejectCorporateDto} from './validation/reject-corporate.dto';
-import {CountGroupDto} from './validation/count-group.dto';
-import {UpdateCorporateDto} from './validation/update-corporate.dto';
-import {randomUUID} from 'crypto';
-import {NotificationService} from 'src/common/notification/notification.service';
-import {enumStoreStatus, StoreDocument,} from 'src/database/entities/store.entity';
-import {CityService} from '../common/services/admins/city.service';
+import {
+  MerchantDocument,
+  MerchantStatus,
+} from 'src/database/entities/merchant.entity';
+import { LobDocument } from 'src/database/entities/lob.entity';
+import { LobService } from 'src/lob/lob.service';
+import { MerchantsService } from 'src/merchants/merchants.service';
+import { StoresService } from 'src/stores/stores.service';
+import { CommonStorageService } from 'src/common/storage/storage.service';
+import { isDefined } from 'class-validator';
+import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
+import { RejectCorporateDto } from './validation/reject-corporate.dto';
+import { CountGroupDto } from './validation/count-group.dto';
+import { UpdateCorporateDto } from './validation/update-corporate.dto';
+import { randomUUID } from 'crypto';
+import { NotificationService } from 'src/common/notification/notification.service';
+import {
+  enumStoreStatus,
+  StoreDocument,
+} from 'src/database/entities/store.entity';
+import { CityService } from '../common/services/admins/city.service';
 
 @Injectable()
 export class GroupsService {
