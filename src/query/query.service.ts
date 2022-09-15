@@ -1137,6 +1137,8 @@ export class QueryService {
   }
 
   async optimationSearchStoreMenu(data: QuerySearchValidation, user: any) {
+    console.info('GET QUERY SEARCH AS CUSTOMER');
+
     try {
       const lang = data.lang ? data.lang : 'id';
       const lat = data.location_latitude;
@@ -1406,6 +1408,10 @@ export class QueryService {
 
           const menuIds: string[] = row.menus.map((item) => item.menu_id);
 
+          console.log(menuIds);
+
+          console.log('MENU IDS ABOVE ^');
+
           const menus: any[] = await this.catalogsService.getMenuIds(menuIds);
 
           for (const menu of row.menus) {
@@ -1569,7 +1575,10 @@ export class QueryService {
         list_result,
       );
     } catch (e) {
+      console.log(e);
+
       Logger.error(e.message, '', 'QUERY LIST STORE');
+
       throw e;
     }
   }

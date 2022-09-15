@@ -62,9 +62,11 @@ import { RejectCorporateDto } from './validation/reject-corporate.dto';
 import { CountGroupDto } from './validation/count-group.dto';
 import { UpdateCorporateDto } from './validation/update-corporate.dto';
 import { randomUUID } from 'crypto';
-import { generateSmsUrlVerification } from './../utils/general-utils';
 import { NotificationService } from 'src/common/notification/notification.service';
-import { StoreDocument } from 'src/database/entities/store.entity';
+import {
+  enumStoreStatus,
+  StoreDocument,
+} from 'src/database/entities/store.entity';
 import { CityService } from '../common/services/admins/city.service';
 
 @Injectable()
@@ -409,6 +411,7 @@ export class GroupsService {
         );
       });
   }
+
 
   async viewGroupDetail(
     id: string,
@@ -913,6 +916,62 @@ export class GroupsService {
           '',
           generateMessageRegistrationAccepted(),
         );
+
+        const merchant = await this.merchantRepository
+          .createQueryBuilder('merchant')
+          .where('merchant.group_id = :groupId', {
+            groupId: group_id,
+          })
+          .andWhere('merchant.status = :status', {
+            status: MerchantStatus.Waiting_for_approval,
+          })
+          .getOneOrFail();
+
+        await this.merchantRepository.save({
+          ...merchant,
+          status: MerchantStatus.Active,
+        });
+
+        const store = await this.storeService.storeRepository
+          .createQueryBuilder('store')
+          .where('store.merchant_id = :merchantId', {
+            merchantId: merchant.id,
+          })
+          .andWhere('store.status = :status', {
+            status: enumStoreStatus.waiting_for_brand_approval,
+          })
+          .getOneOrFail();
+
+        await this.storeService.storeRepository.save({
+          ...store,
+          status: enumStoreStatus.active,
+        });
+
+        const user = await this.merchantUsersRepository
+          .createQueryBuilder('merchant_user')
+          .where(
+            new Brackets((query) => {
+              query
+                .where('merchant_user.group_id = :groupId', {
+                  groupId: group_id,
+                })
+                .orWhere('merchant_user.merchant_id = :merchantId', {
+                  merchantId: merchant.id,
+                })
+                .orWhere('merchant_user.store_id = :storeId', {
+                  storeId: store.id,
+                });
+            }),
+          )
+          .andWhere('merchant_user.status = :status', {
+            status: MerchantUsersStatus.Waiting_for_approval,
+          })
+          .getOneOrFail();
+
+        await this.merchantUsersRepository.save({
+          ...user,
+          status: MerchantUsersStatus.Active,
+        });
 
         return updateCorporate;
       }
