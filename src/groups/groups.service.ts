@@ -412,10 +412,7 @@ export class GroupsService {
       });
   }
 
-  async viewGroupDetail(
-    id: string,
-    groupId: string,
-  ): Promise<RSuccessMessage> {
+  async viewGroupDetail(id: string, groupId: string): Promise<RSuccessMessage> {
     try {
       const result = await this.groupRepository.findOne(groupId);
 
@@ -943,6 +940,32 @@ export class GroupsService {
         await this.storeService.storeRepository.save({
           ...store,
           status: enumStoreStatus.active,
+        });
+
+        const user = await this.merchantUsersRepository
+          .createQueryBuilder('merchant_user')
+          .where(
+            new Brackets((query) => {
+              query
+                .where('merchant_user.group_id = :groupId', {
+                  groupId: group_id,
+                })
+                .orWhere('merchant_user.merchant_id = :merchantId', {
+                  merchantId: merchant.id,
+                })
+                .orWhere('merchant_user.store_id = :storeId', {
+                  storeId: store.id,
+                });
+            }),
+          )
+          .andWhere('merchant_user.status = :status', {
+            status: MerchantUsersStatus.Waiting_for_approval,
+          })
+          .getOneOrFail();
+
+        await this.merchantUsersRepository.save({
+          ...user,
+          status: MerchantUsersStatus.Active,
         });
 
         return updateCorporate;
