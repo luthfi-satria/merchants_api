@@ -62,9 +62,11 @@ import { RejectCorporateDto } from './validation/reject-corporate.dto';
 import { CountGroupDto } from './validation/count-group.dto';
 import { UpdateCorporateDto } from './validation/update-corporate.dto';
 import { randomUUID } from 'crypto';
-import { generateSmsUrlVerification } from './../utils/general-utils';
 import { NotificationService } from 'src/common/notification/notification.service';
-import { StoreDocument } from 'src/database/entities/store.entity';
+import {
+  enumStoreStatus,
+  StoreDocument,
+} from 'src/database/entities/store.entity';
 import { CityService } from '../common/services/admins/city.service';
 
 @Injectable()
@@ -912,6 +914,36 @@ export class GroupsService {
           '',
           generateMessageRegistrationAccepted(),
         );
+
+        const merchant = await this.merchantRepository
+          .createQueryBuilder('merchant')
+          .where('merchant.group_id = :groupId', {
+            groupId: group_id,
+          })
+          .andWhere('merchant.status = :status', {
+            status: MerchantStatus.Waiting_for_approval,
+          })
+          .getOneOrFail();
+
+        await this.merchantRepository.save({
+          ...merchant,
+          status: MerchantStatus.Active,
+        });
+
+        const store = await this.storeService.storeRepository
+          .createQueryBuilder('store')
+          .where('store.merchant_id = :merchantId', {
+            merchantId: merchant.id,
+          })
+          .andWhere('store.status = :status', {
+            status: enumStoreStatus.waiting_for_brand_approval,
+          })
+          .getOneOrFail();
+
+        await this.storeService.storeRepository.save({
+          ...store,
+          status: enumStoreStatus.active,
+        });
 
         return updateCorporate;
       }
