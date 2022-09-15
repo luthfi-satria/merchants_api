@@ -386,24 +386,6 @@ export class RegistersController {
       );
     }
 
-    if (updateCorporateDto.status !== 'REJECTED') {
-      const errors: RMessage = {
-        value: '',
-        property: 'status',
-        constraint: [
-          this.messageService.get('merchant.updategroup.status_not_rejected'),
-        ],
-      };
-
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-
     if (updateCorporateDto.name !== checkGroup.data.name) {
       await this.groupsService.validateGroupUniqueName(updateCorporateDto.name);
     }
