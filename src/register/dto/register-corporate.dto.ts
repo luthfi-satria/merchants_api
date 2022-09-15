@@ -185,6 +185,18 @@ export class RegisterCorporateDto {
   @IsNotEmpty()
   npwp_name: string;
 
+  @ValidateIf((o) => o.pb1 === 'true')
+  @IsNotEmpty()
+  brand_npwp_no: string;
+
+  @ValidateIf((o) => o.pb1 === 'true')
+  @IsNotEmpty()
+  brand_npwp_name: string;
+
+  @ValidateIf((o) => o.pb1 === 'true')
+  @IsOptional()
+  brand_npwp_file: string;
+
   @IsOptional()
   is_pos_checkin_enabled: boolean;
 

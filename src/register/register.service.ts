@@ -341,9 +341,9 @@ export class RegistersService {
         lob_id: registerCorporateData.lob_id,
         pb1: registerCorporateData.pb1,
         pb1_tariff: registerCorporateData.pb1_tariff,
-        npwp_no: registerCorporateData.npwp_no,
-        npwp_name: registerCorporateData.npwp_name,
-        npwp_file: registerCorporateData.npwp_file,
+        npwp_no: registerCorporateData.brand_npwp_no,
+        npwp_name: registerCorporateData.brand_npwp_name,
+        npwp_file: registerCorporateData.brand_npwp_file,
         is_pos_checkin_enabled: registerCorporateData.is_pos_checkin_enabled,
         is_pos_endofday_enabled: registerCorporateData.is_pos_endofday_enabled,
         is_pos_printer_enabled: registerCorporateData.is_pos_printer_enabled,
@@ -492,6 +492,9 @@ export class RegistersService {
         pic_password: createMerchantData.pic_password,
         status: createMerchantData.status,
         pic_is_multilevel_login: pic_is_multilevel_login,
+        npwp_no: createMerchantData.npwp_no,
+        npwp_name: createMerchantData.npwp_name,
+        npwp_file: createMerchantData.npwp_file,
       };
 
       merchantDTO.logo = createMerchantData.logo ? createMerchantData.logo : '';

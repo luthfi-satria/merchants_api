@@ -161,8 +161,10 @@ export class RegistersController {
       this.imageValidationService
         .setFilter('logo', '')
         .setFilter('profile_store_photo', '');
-      if (registerCorporateDto.pb1 == 'true')
+      if (registerCorporateDto.pb1 == 'true') {
         this.imageValidationService.setFilter('npwp_file', 'required');
+        this.imageValidationService.setFilter('brand_npwp_file', 'required');
+      }
       await this.imageValidationService.validate(req);
 
       const group = await this.groupsService.findGroupByPhone(
@@ -485,7 +487,7 @@ export class RegistersController {
 
     const viewGroupDetail = await this.groupsService.viewGroupDetail(
       checkGroup.data.id,
-      req.user,
+      groupId,
     );
 
     return this.responseService.success(
