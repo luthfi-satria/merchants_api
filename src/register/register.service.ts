@@ -329,7 +329,7 @@ export class RegistersService {
       }
       console.log(resultGroup);
       // create brand or merchant process
-      const status: MerchantStatus = MerchantStatus.Waiting_for_approval;
+      const status: MerchantStatus = MerchantStatus.Waiting_for_corporate_approval;
       const createMerchantData = {
         group_id: resultGroup.id,
         type: registerCorporateData.type,

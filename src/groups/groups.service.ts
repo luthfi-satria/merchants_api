@@ -922,9 +922,18 @@ export class GroupsService {
           .where('merchant.group_id = :groupId', {
             groupId: group_id,
           })
-          .andWhere('merchant.status = :status', {
-            status: MerchantStatus.Waiting_for_approval,
-          })
+          .andWhere(
+            new Brackets((query) => {
+              query
+                .where('merchant.status = :statusWaitCorporate', {
+                  statusWaitCorporate:
+                    MerchantStatus.Waiting_for_corporate_approval,
+                })
+                .orWhere('merchant.status = :statusWait', {
+                  statusWait: MerchantStatus.Waiting_for_approval,
+                });
+            }),
+          )
           .getOneOrFail();
 
         await this.merchantRepository.save({

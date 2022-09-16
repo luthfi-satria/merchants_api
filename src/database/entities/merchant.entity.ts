@@ -17,6 +17,7 @@ import { StoreDocument } from './store.entity';
 export enum MerchantStatus {
   Draft = 'DRAFT',
   Waiting_for_approval = 'WAITING_FOR_APPROVAL',
+  Waiting_for_corporate_approval = 'WAITING_FOR_CORPORATE_APPROVAL',
   Active = 'ACTIVE',
   Inactive = 'INACTIVE',
   Banned = 'BANNED',
