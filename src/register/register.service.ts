@@ -634,11 +634,10 @@ export class RegistersService {
       await this.storeService.getCategoriesByIds(
         registerCorporateData.category_ids,
       );
-      const store_addons =  await this.storeService.getAddonssBtIds(
-      store_document.store_categories =
-        await this.storeService.getCategoriesByIds(
-          registerCorporateData.category_ids,
-        );
+      const store_addons =  
+      await this.storeService.getCategoriesByIds(
+        registerCorporateData.category_ids,
+      );
       
       if (createMerchantUser.status == 'WAITING_FOR_APPROVAL') {
         store_document.status = enumStoreStatus.waiting_for_brand_approval;
