@@ -635,8 +635,8 @@ export class RegistersService {
         registerCorporateData.category_ids,
       );
       const store_addons =  
-      await this.storeService.getCategoriesByIds(
-        registerCorporateData.category_ids,
+      await this.storeService.getAddonssBtIds(
+        registerCorporateData.service_addons,
       );
       
       if (createMerchantUser.status == 'WAITING_FOR_APPROVAL') {
