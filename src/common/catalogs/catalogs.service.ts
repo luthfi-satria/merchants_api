@@ -183,6 +183,8 @@ export class CatalogsService {
       ),
     );
 
+    console.log(response, 'RESPONSE GET MENU BY ID');
+
     return response?.data?.data;
   }
 }
