@@ -592,6 +592,7 @@ export class RegistersService {
         registerCorporateData.city_id,
       );
       console.log('normal77');
+      console.log('storedocs',store_document)
 
       // const merchant: MerchantDocument =
       //   await this.merchantService.findMerchantById(createMerchantUser.id);
@@ -629,15 +630,16 @@ export class RegistersService {
       store_document.location_longitude =
         registerCorporateData.location_longitude;
       store_document.merchant_id = createMerchantUser.merchant_id;
+      const store_categories =
+      await this.storeService.getCategoriesByIds(
+        registerCorporateData.category_ids,
+      );
+      const store_addons =  await this.storeService.getAddonssBtIds(
       store_document.store_categories =
         await this.storeService.getCategoriesByIds(
           registerCorporateData.category_ids,
         );
-      console.log(registerCorporateData.category_ids);
-      store_document.service_addons = await this.storeService.getAddonssBtIds(
-        registerCorporateData.service_addons,
-      );
-      console.log(registerCorporateData.service_addons);
+      
       if (createMerchantUser.status == 'WAITING_FOR_APPROVAL') {
         store_document.status = enumStoreStatus.waiting_for_brand_approval;
       }
@@ -650,12 +652,26 @@ export class RegistersService {
         registerCorporateData.auto_accept_order == 'true' ? true : false;
       console.log('store_doc', store_document);
 
+
       const execInsertStore = await queryRunner.manager
         .createQueryBuilder()
         .insert()
         .into(StoreDocument)
         .values(store_document)
         .execute();
+      console.log('execInsertstore', execInsertStore)
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .relation(StoreDocument, 'store_categories')
+        .of({ id: execInsertStore.raw[0].id})
+        .add(store_categories)
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .relation(StoreDocument, 'service_addons')
+        .of({ id: execInsertStore.raw[0].id})
+        .add(store_addons)
 
       const resultInsertStore: StoreDocument = execInsertStore.raw[0];
       this.storeService.publishNatsCreateStore(resultInsertStore);
