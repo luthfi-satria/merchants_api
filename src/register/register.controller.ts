@@ -274,8 +274,17 @@ export class RegistersController {
   async validation(data: RegisterCorporateOTPDto, groupId: string = null) {
     let checkGroup = null;
 
+    let user = null;
+
     if (groupId) {
       checkGroup = await this.groupsService.viewGroupDetailNoUser(groupId);
+
+      user = await this.groupsService.merchantUsersRepository
+        .createQueryBuilder('merchantUser')
+        .where('merchantUser.group_id = :groupId', {
+          groupId: groupId,
+        })
+        .getOne();
     }
 
     if (data.name !== checkGroup?.data?.name) {
@@ -289,7 +298,7 @@ export class RegistersController {
     if (data.director_email !== checkGroup?.data?.director_email) {
       await this.groupsUsersService.validateGroupUserUniqueEmail(
         data.director_email,
-        null,
+        user?.id,
         'director_email',
       );
     }
@@ -297,7 +306,7 @@ export class RegistersController {
     if (data.pic_finance_email !== checkGroup?.data?.pic_finance_email) {
       await this.groupsUsersService.validateGroupUserUniqueEmail(
         data.pic_finance_email,
-        null,
+        user?.id,
         'pic_finance_email',
       );
     }
@@ -307,7 +316,7 @@ export class RegistersController {
     ) {
       await this.groupsUsersService.validateGroupUserUniqueEmail(
         data.pic_operational_email,
-        null,
+        user?.id,
         'pic_operational_email',
       );
     }
@@ -315,7 +324,7 @@ export class RegistersController {
     if (data.director_phone !== checkGroup?.data?.director_phone) {
       await this.groupsUsersService.validateGroupUserUniquePhone(
         data.director_phone,
-        null,
+        user?.id,
         'director_phone',
       );
     }
@@ -323,7 +332,7 @@ export class RegistersController {
     if (data.pic_finance_phone !== checkGroup?.data?.pic_finance_phone) {
       await this.groupsUsersService.validateGroupUserUniquePhone(
         data.pic_finance_phone,
-        null,
+        user?.id,
         'pic_finance_phone',
       );
     }
@@ -333,7 +342,7 @@ export class RegistersController {
     ) {
       await this.groupsUsersService.validateGroupUserUniquePhone(
         data.pic_operational_phone,
-        null,
+        user?.id,
         'pic_operational_phone',
       );
     }
@@ -366,26 +375,6 @@ export class RegistersController {
         value: '',
         property: 'phone',
         constraint: [this.messageService.get('merchant.general.dataNotFound')],
-      };
-
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          errors,
-          'Bad Request',
-        ),
-      );
-    }
-
-    if (
-      updateCorporateDto.status !== 'REJECTED'
-    ) {
-      const errors: RMessage = {
-        value: '',
-        property: 'status',
-        constraint: [
-          this.messageService.get('merchant.updategroup.status_not_rejected'),
-        ],
       };
 
       throw new BadRequestException(

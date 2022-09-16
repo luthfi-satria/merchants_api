@@ -18,7 +18,7 @@ export enum CategoryGroup {
 export enum GroupStatus {
   Draft = 'DRAFT',
   Waiting_approval = 'WAITING_FOR_APPROVAL',
-  Waiting_for_corporate_approval = ' WAITING_FOR_CORPORATE_APPROVAL',
+  Waiting_for_corporate_approval = 'WAITING_FOR_CORPORATE_APPROVAL',
   Active = 'ACTIVE',
   Inactive = 'INACTIVE',
   Banned = 'BANNED',

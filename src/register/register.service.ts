@@ -329,7 +329,7 @@ export class RegistersService {
       }
       console.log(resultGroup);
       // create brand or merchant process
-      const status: MerchantStatus = MerchantStatus.Waiting_for_approval;
+      const status: MerchantStatus = MerchantStatus.Waiting_for_corporate_approval;
       const createMerchantData = {
         group_id: resultGroup.id,
         type: registerCorporateData.type,
@@ -630,15 +630,16 @@ export class RegistersService {
       store_document.location_longitude =
         registerCorporateData.location_longitude;
       store_document.merchant_id = createMerchantUser.merchant_id;
-      
       const store_categories =
       await this.storeService.getCategoriesByIds(
         registerCorporateData.category_ids,
       );
       const store_addons =  await this.storeService.getAddonssBtIds(
-        registerCorporateData.service_addons,
-      );
-
+      store_document.store_categories =
+        await this.storeService.getCategoriesByIds(
+          registerCorporateData.category_ids,
+        );
+      
       if (createMerchantUser.status == 'WAITING_FOR_APPROVAL') {
         store_document.status = enumStoreStatus.waiting_for_brand_approval;
       }
@@ -650,7 +651,6 @@ export class RegistersService {
       store_document.auto_accept_order =
         registerCorporateData.auto_accept_order == 'true' ? true : false;
       console.log('store_doc', store_document);
-
 
 
       const execInsertStore = await queryRunner.manager
