@@ -240,7 +240,7 @@ export const generateMessageUrlVerification = async (
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
-      domainUriPrefix: 'https://s.efood.co.id',
+      domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
       link,
     },
   });
@@ -343,7 +343,7 @@ export const generateMessageResetPassword = async (
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
-      domainUriPrefix: 'https://s.efood.co.id',
+      domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
       link,
     },
   });
@@ -364,7 +364,7 @@ export const generateSmsUrlVerification = async (
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
-      domainUriPrefix: 'https://s.efood.co.id',
+      domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
       link,
     },
   });
@@ -389,7 +389,7 @@ export const generateSmsResetPassword = async (
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
-      domainUriPrefix: 'https://s.efood.co.id',
+      domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
       link,
     },
   });
