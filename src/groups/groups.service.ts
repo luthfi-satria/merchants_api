@@ -470,6 +470,8 @@ export class GroupsService {
       deleteCredParam(result);
 
       await this.manipulateGroupUrl(result);
+      await this.merchantService.manipulateMerchantUrl(merchant);
+      await this.storeService.manipulateStoreUrl(store);
 
       return this.responseService.success(
         true,
