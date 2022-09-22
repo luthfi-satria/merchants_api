@@ -183,6 +183,13 @@ export class RegistersService {
   }
 
   async registerCorporate(registerCorporateData: RegisterCorporateDto) {
+    console.log(
+      '===========================Start Debug registerCorporateData1=================================\n',
+      new Date(Date.now()).toLocaleString(),
+      '\n',
+      registerCorporateData,
+      '\n============================End Debug registerCorporateData1==================================',
+    );
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -329,7 +336,8 @@ export class RegistersService {
       }
       console.log(resultGroup);
       // create brand or merchant process
-      const status: MerchantStatus = MerchantStatus.Waiting_for_corporate_approval;
+      const status: MerchantStatus =
+        MerchantStatus.Waiting_for_corporate_approval;
       const createMerchantData = {
         group_id: resultGroup.id,
         type: registerCorporateData.type,
@@ -588,6 +596,14 @@ export class RegistersService {
       const store_document: Partial<StoreDocument> = {};
       Object.assign(store_document, registerCorporateData);
 
+      console.log(
+        '===========================Start Debug registerCorporateData2=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        registerCorporateData,
+        '\n============================End Debug registerCorporateData2==================================',
+      );
+
       store_document.city = await this.cityService.getCity(
         registerCorporateData.city_id,
       );
@@ -649,6 +665,14 @@ export class RegistersService {
       store_document.auto_accept_order =
         registerCorporateData.auto_accept_order == 'true' ? true : false;
       console.log('store_doc', store_document);
+
+      console.log(
+        '===========================Start Debug registerCorporateData3=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        registerCorporateData,
+        '\n============================End Debug registerCorporateData3==================================',
+      );
 
       const execInsertStore = await queryRunner.manager
         .createQueryBuilder()
@@ -722,7 +746,7 @@ export class RegistersService {
       await queryRunner.commitTransaction();
 
       this.notificationService.sendEmail(
-        resultGroup.director_email,
+        registerCorporateData.director_email,
         'Registrasi sedang dalam verifikasi',
         '',
         generateMessageRegistrationInProgress(),
