@@ -412,7 +412,6 @@ export class GroupsService {
       });
   }
 
-
   async viewGroupDetail(
     id: string,
     user: Record<string, any>,
