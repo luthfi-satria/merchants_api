@@ -595,6 +595,7 @@ export class RegistersService {
       );
       const store_document: Partial<StoreDocument> = {};
       Object.assign(store_document, registerCorporateData);
+      store_document.photo = createMerchantData.profile_store_photo;
 
       console.log(
         '===========================Start Debug registerCorporateData2=================================\n',
