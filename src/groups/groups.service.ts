@@ -412,9 +412,13 @@ export class GroupsService {
       });
   }
 
-  async viewGroupDetail(id: string, groupId: string): Promise<RSuccessMessage> {
+  async viewGroupDetail(
+    id: string,
+    user: Record<string, any>,
+  ): Promise<RSuccessMessage> {
     try {
-      const result = await this.groupRepository.findOne(groupId);
+      const gid = user.user_type == 'admin' ? id : user.group_id;
+      const result = await this.groupRepository.findOne(gid);
 
       deleteCredParam(result);
 
