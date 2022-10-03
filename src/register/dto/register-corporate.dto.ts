@@ -177,23 +177,23 @@ export class RegisterCorporateDto {
   @IsBooleanString({ message: 'Pb1 bukan format Boolean' })
   pb1: string;
 
-  @ValidateIf((o) => o.pb1 === 'true')
+  // @ValidateIf((o) => o.pb1 === 'true')
   @IsNotEmpty()
   pb1_tariff: number;
 
-  @ValidateIf((o) => o.pb1 === 'true')
+  // @ValidateIf((o) => o.pb1 === 'true')
   @IsNotEmpty()
   npwp_name: string;
 
-  @ValidateIf((o) => o.pb1 === 'true')
+  // @ValidateIf((o) => o.pb1 === 'true')
   @IsNotEmpty()
   brand_npwp_no: string;
 
-  @ValidateIf((o) => o.pb1 === 'true')
+  // @ValidateIf((o) => o.pb1 === 'true')
   @IsNotEmpty()
   brand_npwp_name: string;
 
-  @ValidateIf((o) => o.pb1 === 'true')
+  // @ValidateIf((o) => o.pb1 === 'true')
   @IsOptional()
   brand_npwp_file: string;
 
