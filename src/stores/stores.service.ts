@@ -31,6 +31,7 @@ import {
   Brackets,
   FindOperator,
   ILike,
+  In,
   Like,
   Not,
   Repository,
@@ -66,6 +67,8 @@ export class StoresService {
   constructor(
     @InjectRepository(StoreDocument)
     public readonly storeRepository: Repository<StoreDocument>,
+    @InjectRepository(MerchantDocument)
+    private readonly merchantRepository: Repository<MerchantDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private readonly messageService: MessageService,
@@ -1717,16 +1720,16 @@ export class StoresService {
   }
 
   //** Get Merchants ID By Names */
-  async findMerchantsIdByNames(merchant_name: string): Promise<StoreDocument> {
-    return this.storeRepository
+  async findMerchantsIdByNames(merchant_name: string): Promise<MerchantDocument> {
+    return this.merchantRepository
       .findOne({
-        where: { name: merchant_name },
-        select: ['merchant_id']
+        where: { name: In([merchant_name]) },
+        select: ['id']
       })
       .catch((err) => {
         const errors: RMessage = {
-          value: '',
-          property: '',
+          value: merchant_name,
+          property: 'Nama merchant tidak tersedia mohon di periksa kembali!',
           constraint: [err.message],
         };
         throw new BadRequestException(
@@ -1743,13 +1746,13 @@ export class StoresService {
   async findStoreNameByName(store_name: string): Promise<StoreDocument> {
     return this.storeRepository
       .findOne({
-        where: { name: store_name },
+        where: { name: In([store_name]) },
         select: ['name']
       })
       .catch((err) => {
         const errors: RMessage = {
-          value: '',
-          property: '',
+          value: store_name,
+          property: 'Nama store tidak tersedia mohon di periksa kembali!',
           constraint: [err.message],
         };
         throw new BadRequestException(
@@ -1807,7 +1810,7 @@ export class StoresService {
               this.responseService.error(
                 HttpStatus.BAD_REQUEST,
                 {
-                  value: '',
+                  value: merchant_id,
                   property: 'Nama merchant tidak dapat di temukan!.',
                   constraint: [
                     this.messageService.get('merchant.createstore.merchantid_notactive'),
@@ -1826,7 +1829,7 @@ export class StoresService {
               this.responseService.error(
                 HttpStatus.BAD_REQUEST,
                 {
-                  value: '',
+                  value: value['store_name'],
                   property: 'Nama store sudah di gunakan!.',
                   constraint: [
                     this.messageService.get(
