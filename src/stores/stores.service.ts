@@ -1777,6 +1777,7 @@ export class StoresService {
           // check store name by name
           const checkStoreNameExits = await this.findStoreNameByName(value['store_name']);
 
+          // create array from excel value
           const storeData: Partial<StoreDocument>[] = [];
           storeData.push({
             merchant_id: merchant_id,
@@ -1805,6 +1806,7 @@ export class StoresService {
             status: enumStoreStatus.active,
           });
 
+          // check merchant id existing
           if (isGetMerchantsId == undefined) {
             throw new BadRequestException(
               this.responseService.error(
@@ -1819,12 +1821,14 @@ export class StoresService {
                 'Bad Request',
               ),
             );
-          } 
+          }
 
+          // execute insert db store
           if (checkStoreNameExits == undefined) {
             const create_bulk_stores = await this.storeRepository.save(storeData);
             create_bulk_stores.push();
-          } else {
+          } else if (checkStoreNameExits != value['store_name']) {
+            // check store name existing
             throw new BadRequestException(
               this.responseService.error(
                 HttpStatus.BAD_REQUEST,
