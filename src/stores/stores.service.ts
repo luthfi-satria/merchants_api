@@ -68,7 +68,7 @@ export class StoresService {
     @InjectRepository(StoreDocument)
     public readonly storeRepository: Repository<StoreDocument>,
     @InjectRepository(MerchantDocument)
-    private readonly merchantRepository: Repository<MerchantDocument>,
+    public readonly merchantRepository: Repository<MerchantDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private readonly messageService: MessageService,
