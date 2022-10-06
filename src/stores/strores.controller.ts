@@ -360,40 +360,40 @@ export class StoresController {
   @ResponseStatusCode()
   @UseInterceptors(FileInterceptor('file'))
   async uploadBulkStore(
-    @UploadedFile()file: Express.Multer.File): Promise<any>{
-      try {
-        const workbook: XLSX.WorkBook = XLSX.read(file.buffer);
-        const sheetname = workbook?.SheetNames[0];
-        const sheet: XLSX.WorkSheet = workbook.Sheets[sheetname];
-        const jsonData = XLSX.utils.sheet_to_json(sheet, {
-          dateNF: 'YYYY-MM-DD',
-        });
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<any> {
+    try {
+      const workbook: XLSX.WorkBook = XLSX.read(file.buffer);
+      const sheetname = workbook?.SheetNames[0];
+      const sheet: XLSX.WorkSheet = workbook.Sheets[sheetname];
+      const jsonData = XLSX.utils.sheet_to_json(sheet, {
+        dateNF: 'YYYY-MM-DD',
+      });
 
-        const objectExcel = JSON.parse(JSON.stringify(jsonData));
-        await this.storesService.bulkinsertStores(objectExcel);
+      const objectExcel = JSON.parse(JSON.stringify(jsonData));
+      await this.storesService.bulkinsertStores(objectExcel);
 
-        if (!objectExcel) {
-          const errors: RMessage = {
-            value: '',
-            property: 'objectExcel',
-            constraint: [this.messageService.get('merchant.createstore.fail')],
-          };
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              errors,
-              'Bad Request',
-            ),
-          );
-        }
-        return this.responseService.success(
-          true,
-          this.messageService.get('merchant.createstore.success'),
-          objectExcel,
+      if (!objectExcel) {
+        const errors: RMessage = {
+          value: '',
+          property: 'objectExcel',
+          constraint: [this.messageService.get('merchant.createstore.fail')],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
         );
-      } catch (error) {
-        throw error;
       }
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.createstore.success'),
+        objectExcel,
+      );
+    } catch (error) {
+      throw error;
+    }
   }
-
 }

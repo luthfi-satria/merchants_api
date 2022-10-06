@@ -1720,11 +1720,13 @@ export class StoresService {
   }
 
   //** Get Merchants ID By Names */
-  async findMerchantsIdByNames(merchant_name: string): Promise<MerchantDocument> {
+  async findMerchantsIdByNames(
+    merchant_name: string,
+  ): Promise<MerchantDocument> {
     return this.merchantRepository
       .findOne({
         where: { name: In([merchant_name]) },
-        select: ['id']
+        select: ['id'],
       })
       .catch((err) => {
         const errors: RMessage = {
@@ -1747,7 +1749,7 @@ export class StoresService {
     return this.storeRepository
       .findOne({
         where: { name: In([store_name]) },
-        select: ['name']
+        select: ['name'],
       })
       .catch((err) => {
         const errors: RMessage = {
@@ -1766,88 +1768,93 @@ export class StoresService {
   }
 
   //** Bulk Insert Stores */
-  async bulkinsertStores(
-    objectExcel: string): Promise<any>{  
-      try {
-        for (let value of Object.values(objectExcel)) {
-          // get merchant id by name
-          const isGetMerchantsId = await this.findMerchantsIdByNames(value['merchant_name']);
-          const merchant_id = Object.values(isGetMerchantsId).shift();
+  async bulkinsertStores(objectExcel: string): Promise<any> {
+    try {
+      for (const value of Object.values(objectExcel)) {
+        // get merchant id by name
+        const isGetMerchantsId = await this.findMerchantsIdByNames(
+          value['merchant_name'],
+        );
+        const merchant_id = Object.values(isGetMerchantsId).shift();
 
-          // check store name by name
-          const checkStoreNameExits = await this.findStoreNameByName(value['store_name']);
+        // check store name by name
+        const checkStoreNameExits = await this.findStoreNameByName(
+          value['store_name'],
+        );
 
-          // create array from excel value
-          const storeData: Partial<StoreDocument>[] = [];
-          storeData.push({
-            merchant_id: merchant_id,
-            name: value['store_name'],
-            phone: value['phone'],
-            email: value['email'],
-            city_id: value['city'].slice(0, 36),
-            address: value['address'],
-            location_longitude: value['location_longitude'],
-            location_latitude: value['location_latitude'],
-            gmt_offset: 0,
-            is_store_open: false,
-            is_open_24h: false,
-            average_price: 0,
-            platform: true,
-            photo: 'https://dummyimage.com/600x400/968a96/ffffff&text=Photo+Image',
-            banner: 'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
-            delivery_type: enumDeliveryType.delivery_and_pickup,
-            bank_id: value['bank_name'].slice(0, 36),
-            bank_account_no: value['bank_account_no'],
-            rating: 0,
-            numrating: 0,
-            numorders: 0,
-            bank_account_name: value['bank_account_name'],
-            auto_accept_order: false,
-            status: enumStoreStatus.active,
-          });
+        // create array from excel value
+        const storeData: Partial<StoreDocument>[] = [];
+        storeData.push({
+          merchant_id: merchant_id,
+          name: value['store_name'],
+          phone: value['phone'],
+          email: value['email'],
+          city_id: value['city'].slice(0, 36),
+          address: value['address'],
+          location_longitude: value['location_longitude'],
+          location_latitude: value['location_latitude'],
+          gmt_offset: 0,
+          is_store_open: false,
+          is_open_24h: false,
+          average_price: 0,
+          platform: true,
+          photo:
+            'https://dummyimage.com/600x400/968a96/ffffff&text=Photo+Image',
+          banner:
+            'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
+          delivery_type: enumDeliveryType.delivery_and_pickup,
+          bank_id: value['bank_name'].slice(0, 36),
+          bank_account_no: value['bank_account_no'],
+          rating: 0,
+          numrating: 0,
+          numorders: 0,
+          bank_account_name: value['bank_account_name'],
+          auto_accept_order: false,
+          status: enumStoreStatus.active,
+        });
 
-          // check merchant id existing
-          if (isGetMerchantsId == undefined) {
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                {
-                  value: merchant_id,
-                  property: 'Nama merchant tidak dapat di temukan!.',
-                  constraint: [
-                    this.messageService.get('merchant.createstore.merchantid_notactive'),
-                  ],
-                },
-                'Bad Request',
-              ),
-            );
-          }
-
-          // execute insert db store
-          if (checkStoreNameExits == undefined) {
-            const create_bulk_stores = await this.storeRepository.save(storeData);
-            create_bulk_stores.push();
-          } else if (checkStoreNameExits != value['store_name']) {
-            // check store name existing
-            throw new BadRequestException(
-              this.responseService.error(
-                HttpStatus.BAD_REQUEST,
-                {
-                  value: value['store_name'],
-                  property: 'Nama store sudah di gunakan!.',
-                  constraint: [
-                    this.messageService.get(
-                      'merchant.createstore.fail',
-                    ),
-                  ],
-                },
-                'Bad Request',
-              ),
-            );
-          }
+        // check merchant id existing
+        if (isGetMerchantsId == undefined) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: merchant_id,
+                property: 'Nama merchant tidak dapat di temukan!.',
+                constraint: [
+                  this.messageService.get(
+                    'merchant.createstore.merchantid_notactive',
+                  ),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
         }
-      } catch (error) {
-        throw error;
+
+        // execute insert db store
+        if (checkStoreNameExits == undefined) {
+          const create_bulk_stores = await this.storeRepository.save(storeData);
+          create_bulk_stores.push();
+        } else if (checkStoreNameExits != value['store_name']) {
+          // check store name existing
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: value['store_name'],
+                property: 'Nama store sudah di gunakan!.',
+                constraint: [
+                  this.messageService.get('merchant.createstore.fail'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        }
       }
+    } catch (error) {
+      throw error;
     }
+  }
 }
