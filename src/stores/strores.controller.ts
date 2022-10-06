@@ -17,12 +17,14 @@ import {
   NotFoundException,
   Res,
   HttpException,
+  UploadedFile,
 } from '@nestjs/common';
+import * as XLSX from 'xlsx';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { RMessage } from 'src/response/response.interface';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { CreateMerchantStoreValidation } from './validation/create-merchant-stores.validation';
 import {
@@ -350,5 +352,46 @@ export class StoresController {
     });
 
     images.stream.pipe(res);
+  }
+
+  //** Bulk Insert Stores */
+  @Post('bulk')
+  @ResponseStatusCode()
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadBulkStore(
+    @UploadedFile()file: Express.Multer.File): Promise<any>{
+      try {
+        const workbook: XLSX.WorkBook = XLSX.read(file.buffer);
+        const sheetname = workbook?.SheetNames[0];
+        const sheet: XLSX.WorkSheet = workbook.Sheets[sheetname];
+        const jsonData = XLSX.utils.sheet_to_json(sheet, {
+          dateNF: 'YYYY-MM-DD',
+        });
+
+        const objectExcel = JSON.parse(JSON.stringify(jsonData));
+        await this.storesService.bulkinsertStores(objectExcel);
+
+        if (!objectExcel) {
+          const errors: RMessage = {
+            value: '',
+            property: 'objectExcel',
+            constraint: [this.messageService.get('merchant.createstore.fail')],
+          };
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              errors,
+              'Bad Request',
+            ),
+          );
+        }
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.createstore.success'),
+          objectExcel,
+        );
+      } catch (error) {
+        throw error;
+      }
   }
 }
