@@ -287,8 +287,8 @@ export class AddonsController {
   }
 
   @Get('addons')
-  @UserType('admin', 'merchant')
-  @AuthJwtGuard()
+  // @UserType('admin', 'merchant') : kebutuhan register di mobile 
+  // @AuthJwtGuard()
   @ResponseStatusCode()
   async getgroups(@Query() data: string[]): Promise<any> {
     const listgroup: any = await this.addonService.listGroup(data);

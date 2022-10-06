@@ -49,7 +49,6 @@ import { ListStoreDTO } from './validation/list-store.validation';
 import { ResponseExcludeParam } from 'src/response/response_exclude_param.decorator';
 import { ResponseExcludeData } from 'src/response/response_exclude_param.interceptor';
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
-import { InternalService } from 'src/internal/internal.service';
 import { Response } from 'express';
 import etag from 'etag';
 @Controller('api/v1/merchants')

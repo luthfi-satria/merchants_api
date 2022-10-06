@@ -23,17 +23,16 @@ import { StoreOperationalService } from 'src/stores/stores-operational.service';
 import { StoresService } from 'src/stores/stores.service';
 import { UsersService } from 'src/users/users.service';
 import { ImageValidationService } from 'src/utils/image-validation.service';
-import { GroupsController } from './groups.controller';
-import { GroupsService } from './groups.service';
-import { GroupUsersController } from './group_users.controller';
-import { GroupUsersService } from './group_users.service';
+import { GroupsService } from '../groups/groups.service';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { NatsService } from 'src/nats/nats.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
+import { RegistersController } from './register.controller';
+import { RegistersService } from './register.service';
+import { GroupUsersService } from 'src/groups/group_users.service';
 import { InternalModule } from '../internal/internal.module';
-import {CityService} from "../common/services/admins/city.service";
 
 @Module({
   imports: [
@@ -55,8 +54,10 @@ import {CityService} from "../common/services/admins/city.service";
     HttpModule,
     InternalModule,
   ],
-  controllers: [GroupUsersController, GroupsController],
+  controllers: [RegistersController],
   providers: [
+    GroupsService,
+    RegistersService,
     GroupUsersService,
     GroupsService,
     MerchantsService,
@@ -75,7 +76,6 @@ import {CityService} from "../common/services/admins/city.service";
     UsersService,
     NatsService,
     MenuOnlineService,
-    CityService,
   ],
 })
-export class GroupsModule {}
+export class RegistersModule {}

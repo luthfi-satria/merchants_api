@@ -63,7 +63,7 @@ import moment from 'moment';
 export class StoresService {
   constructor(
     @InjectRepository(StoreDocument)
-    private readonly storeRepository: Repository<StoreDocument>,
+    public readonly storeRepository: Repository<StoreDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private readonly messageService: MessageService,
@@ -403,6 +403,7 @@ export class StoresService {
       create_merchant_store_validation.auto_accept_order == 'true'
         ? true
         : false;
+    console.log(store_document);
     const create_store = await this.storeRepository.save(store_document);
     this.publishNatsCreateStore(create_store);
     const operational_hours = await this.storeOperationalService
@@ -790,8 +791,14 @@ export class StoresService {
         gstat: statuses,
       });
     }
-
     if (
+      (user.user_type == 'admin' || user.level == 'group') &&
+      data.merchant_ids
+    ) {
+      store.andWhere('merchant.id IN (:...mid)', {
+        mid: data.merchant_ids,
+      });
+    } else if (
       (user.user_type == 'admin' || user.level == 'group') &&
       data.merchant_id
     ) {
@@ -848,6 +855,11 @@ export class StoresService {
       } else if (user.level == 'group') {
         if (data.merchant_id) {
           pricingTemplateData.merchant_ids.push(data.merchant_id);
+        } else if (data.merchant_ids) {
+          pricingTemplateData.merchant_ids = [
+            ...pricingTemplateData.merchant_ids,
+            ...data.merchant_ids,
+          ];
         } else {
           const merchants = await this.merchantService.findMerchantsByGroup(
             user.group_id,
@@ -859,6 +871,11 @@ export class StoresService {
       } else {
         if (data.merchant_id) {
           pricingTemplateData.merchant_ids.push(data.merchant_id);
+        } else if (data.merchant_ids) {
+          pricingTemplateData.merchant_ids = [
+            ...pricingTemplateData.merchant_ids,
+            ...data.merchant_ids,
+          ];
         } else if (data.group_id) {
           const merchants = await this.merchantService.findMerchantsByGroup(
             data.group_id,
@@ -901,6 +918,11 @@ export class StoresService {
         } else if (user.level == 'group') {
           if (data.merchant_id) {
             postData.merchant_ids.push(data.merchant_id);
+          } else if (data.merchant_ids.length > 0) {
+            postData.merchant_ids = [
+              ...postData.merchant_ids,
+              ...data.merchant_ids,
+            ];
           } else {
             const merchants = await this.merchantService.findMerchantsByGroup(
               user.group_id,
@@ -1596,6 +1618,75 @@ export class StoresService {
         store.banner = `${process.env.BASEURL_API}/api/v1/merchants/stores/banner/${store.id}/image/${fileNameBanner}`;
       }
       return store;
+    }
+  }
+
+  async findStoresByMultiCriteria(data: any) {
+    try {
+      const page = data.page || 1;
+      const limit = data.limit || 10;
+      const offset = (page - 1) * limit;
+
+      const query = this.storeRepository.createQueryBuilder();
+
+      if (data.merchant_id) {
+        query.where('merchant_id = :merchant_id', {
+          merchant_id: data.merchant_id,
+        });
+      }
+
+      if (typeof data.search != 'undefined' && data.search != '') {
+        query.andWhere('name like :src', { src: `%${data.search}%` });
+      }
+
+      if (typeof data.status != 'undefined' && data.status != '') {
+        query.andWhere('status = :status', { status: data.status });
+      }
+
+      if (
+        typeof data.store_id != 'undefined' &&
+        data.store_id.length > 0 &&
+        data.target == 'assigned'
+      ) {
+        query.andWhere('id IN (:...ids)', { ids: data.store_id });
+      }
+
+      if (
+        typeof data.store_id != 'undefined' &&
+        data.store_id.length > 0 &&
+        data.target == 'unassigned'
+      ) {
+        query.andWhere('id NOT IN (:...ids)', { ids: data.store_id });
+      }
+
+      query.orderBy('name', 'DESC').take(limit).skip(offset);
+
+      const items = await query.getMany();
+      const count = await query.getCount();
+
+      const listItems = {
+        current_page: parseInt(page),
+        total_item: count,
+        limit: parseInt(limit),
+        items: items,
+      };
+
+      return listItems;
+    } catch (error) {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: 'status',
+            property: 'status',
+            constraint: [
+              this.messageService.get('general.list.fail'),
+              error.message,
+            ],
+          },
+          'Bad Request',
+        ),
+      );
     }
   }
 }

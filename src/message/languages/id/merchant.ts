@@ -130,6 +130,8 @@ export default {
     phoneUnreg: 'Nomor Telepon Pemilik tidak terdaftar',
     unreg: 'ID Group tidak valid.',
     empty_token: 'Kode Token tidak ada.',
+    already_rejected: 'Tidak bisa reject data',
+    status_not_rejected: 'Tidak bisa update selain status reject',
   },
   deletegroup: {
     success: 'Delete Group Success.',
@@ -309,6 +311,10 @@ export default {
       code: 'WAITING_APPROVAL',
       message: 'User belum mendapatkan approval',
     },
+  },
+  count_group: {
+    success: 'Get Total Group Success.',
+    fail: 'Get List Group Failed.',
   },
   user: {
     success: 'Ambil data Sukses.',

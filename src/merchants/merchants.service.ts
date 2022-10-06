@@ -190,6 +190,7 @@ export class MerchantsService {
       user.user_type != 'admin' ||
       (user.user_type == 'admin' && cekgroup.status != 'DRAFT')
     ) {
+      console.log('masuk');
       if (cekgroup.status != 'ACTIVE') {
         const errors: RMessage = {
           value: data.group_id,
@@ -209,8 +210,10 @@ export class MerchantsService {
         );
       }
     }
+
     const ceklob: LobDocument = await this.lobService.findLobById(data.lob_id);
     if (!ceklob) {
+      console.log('ceklob');
       const errors: RMessage = {
         value: data.lob_id,
         property: 'lob_id',
@@ -335,6 +338,7 @@ export class MerchantsService {
         create,
       );
     } catch (error) {
+      console.log(error);
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
