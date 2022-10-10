@@ -56,7 +56,6 @@ import { UsersValidationModule } from './users_validation/users_validation.modul
     NatsModule,
     LoginMultilevelModule,
     RegistersModule,
-    UsersValidationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
