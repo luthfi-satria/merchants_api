@@ -229,9 +229,9 @@ export const removeAllFieldPassword = function removeAllFieldPassword(
 };
 
 const STYLE_HEADER =
-  "font-weight:700;min-height: 10px;left: 0px;top: 40px;font-family: 'Lato';font-style: normal;font-size: 20px;line-height: 24px;font-feature-settings: 'pnum'on, 'lnum'on;color: #26272A;align-self: stretch;";
+  "font-weight:700;min-height: 10px;left: 0px;top: 40px;font-family: 'Lato';font-style: normal;font-size: 20px;line-height: 30px;font-feature-settings: 'pnum'on, 'lnum'on;color: #26272A;align-self: stretch;";
 const CONTENT =
-  "min-height: 10px;left: 0px;top: 40px;font-family: 'Lato';font-style: normal;font-size: 20px;line-height: 24px;font-feature-settings: 'pnum'on, 'lnum'on;color: #26272A;flex: none;order: 1;align-self: stretch;flex-grow: 0;";
+  "min-height: 10px;left: 0px;top: 40px;font-family: 'Lato';font-style: normal;font-size: 20px;line-height: 30px;font-feature-settings: 'pnum'on, 'lnum'on;color: #26272A;flex: none;order: 1;align-self: stretch;flex-grow: 0;";
 
 export const generateMessageUrlVerification = async (
   name: string,
@@ -240,7 +240,7 @@ export const generateMessageUrlVerification = async (
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
-      domainUriPrefix: 'https://s.efood.co.id',
+      domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
       link,
     },
   });
@@ -266,8 +266,6 @@ export const generateMessageRegistrationRejected = async (
 ): Promise<string> => {
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
 
-  console.log('TEST EMAIL');
-
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
       domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
@@ -278,61 +276,62 @@ export const generateMessageRegistrationRejected = async (
     },
   });
 
-  console.log('TEST SHORT LINK');
-
   return `
     <p style="${STYLE_HEADER}">Dear eFOOD Partner.</p>
+    <p style="${STYLE_HEADER}">Terima kasih atas ketertarikan anda untuk bergabung dengan eFOOD!</p>
     <p style="${CONTENT}">
-      Melalui email ini, kami menginformasikan bahwa data-data yang anda telah berikan belum lengkap.
-      Sehingga kami belum bisa untuk melanjutkan proses permintaan anda sebagai eFOOD Partner. Untuk
-      untuk lengkapi Kembali persyaratan yang telah kami informasikan.
-      Anda bisa Kembali untuk mengisi data sebagai calon eFOOD Parner. Mohon segera dilakukan
-      pengisian data ulang agar kami bisa memproses kembali untuk menjadi eFOOD Partner.
-      Mohon di ingat, Proses pendaftaran eFOOD Partner GRATIS tidak di pungut biaya apapun.
+      Kami memberitahukan melalui email ini bahwa data yang telah diberikan belum lengkap sehingga kami belum bisa melanjutkan proses permintaan Anda sebagai eFOOD Partner.
+      Kami menghimbau untuk melengkapi kembali persyaratan yang telah diinformasikan sebelumnya.
     </p>
-    <p style="${CONTENT}"></p>
-    <p style="${CONTENT}"></p>
+    <p style="${CONTENT}">
+      Anda bisa mencoba kembali untuk mengisi data sebagai calon eFOOD Partner.
+      Mohon segera melakukan pengisian ulang data Anda agar dapat kami proses kembali untuk menjadi eFOOD Partner.
+    </p>
+    <p style="${CONTENT}">
+      Proses pendaftaran eFOOD Partner GRATIS tidak dipungut biaya apapun.
+    </p>
+    <br>
     <p style="${CONTENT}">*Note : Silahkan lakukan pengisian data ulang melalui Link dibawah ini*</p>
-    <p style="${CONTENT}"> Klik link berikut: <a href="${shortLink}">${shortLink}</a> . </p>
-    <p style="${CONTENT}">Salam Hangat</p>
+    <p style="${CONTENT}"><a href="${shortLink}">${shortLink}</a> . </p>
+    <br>
+    <p style="${CONTENT}">Salam Hangat,</p>
+    <br>
     <p style="${CONTENT}">eFOOD</p>
   `;
 };
 
 export const generateMessageRegistrationAccepted = (): string => {
   return `
-    <p style="${STYLE_HEADER}">Dear eFOOD Partner.</p>
+    <p style="${STYLE_HEADER}">Dear eFOOD Partner,</p>
     <p style="${CONTENT}">Terima Kasih atas ketertarikan anda untuk bergabung dengan eFOOD!</p>
     <p style="${CONTENT}">
-        Melalui email ini, kami memberitahukan bahwa akun merchant anda akan segera aktif. Kami harap
-        anda bisa terus mengembangkan resto anda lebih baik kedepannya bersama kami.
-        PERHATIAN Proses pendaftaran eFOOD Partner GRATIS tidak di pungut biaya apapun. Hati-hati jika
-        anda menemukan beberapa oknum mengatasnamakan eFOOD dan meminta sejumlah uang itu
-        dipastikan penipuan. Jika anda menemui hal tersebut bisa segera hubungi pusat bantuan eFOOD.
+        Kami memberitahukan melalui email ini bahwa akun merchant Anda akan segera aktif.
+        Kami harap Anda dapat terus mengembangkan resto Anda lebih baik ke depannya bersama kami.
+    </p>
+    <p style="${CONTENT}">
+        PERHATIAN proses pendaftaran eFOOD Partner GRATIS tidak dipungut biaya apapun.
+        Hati-hati jika Anda menemukan beberapa oknum mengatasnamakan eFOOD dan meminta sejumlah uang yang dapat dipastikan penipuan.
+        Jika Anda menemui hal tersebut, mohon segera hubungi pusat bantuan eFOOD.
     </p>
     <p style="${CONTENT}">Terima kasih dan keep healthy!</p>
-    <p style="${CONTENT}"></p>
-    <p style="${CONTENT}"></p>
-    <p style="${CONTENT}">Salam Hangat</p>
+    <br>
+    <p style="${CONTENT}">Salam Hangat,</p>
     <p style="${CONTENT}">eFOOD</p>
   `;
 };
 
 export const generateMessageRegistrationInProgress = (): string => {
   return `
-    <p style="${STYLE_HEADER}">Dear eFOOD Partner.</p>
+    <p style="${STYLE_HEADER}">Dear eFOOD Partner,</p>
     <p style="${CONTENT}">Terima Kasih atas ketertarikan anda untuk bergabung dengan eFOOD!</p>
     <p style="${CONTENT}">
-        Semua data yang anda telah kirimkan sudah kami terima. Data tersebut sedang dalam
-        proses verifikasi oleh Tim Kami. Kami menyampaikan Proses verfikikasi akan membutuhkan waktu
-        sekitar 1-7 Hari kerja. Dan Semua informasi mengenai proses tersebut akan kami kirimkan melalui
-        email, jadi, pastikan alamat email yang anda gunakan aktif. Mohon bersedia untuk menunggu selama
-        proses verifikasi berlangsung.
+        Data anda sudah kami terima dan data sedang dalam proses verifikasi tim kami yang membutuhkan waktu sekitar 1-7 hari kerja.
+        Semua informasi terkait proses tersebut akan kami kirimkan melalui email.
+        Pastikan alamat email yang Anda gunakan benar dan aktif.
+        Mohon bersabar selama proses verifikasi berlangsung. Terima kasih!
     </p>
-    <p style="${CONTENT}">Terima kasih dan keep healthy!</p>
-    <p style="${CONTENT}"></p>
-    <p style="${CONTENT}"></p>
-    <p style="${CONTENT}">Salam Hangat</p>
+    <br>
+    <p style="${CONTENT}">Salam Hangat,</p>
     <p style="${CONTENT}">eFOOD</p>
   `;
 };
@@ -344,7 +343,7 @@ export const generateMessageResetPassword = async (
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
-      domainUriPrefix: 'https://s.efood.co.id',
+      domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
       link,
     },
   });
@@ -365,7 +364,7 @@ export const generateSmsUrlVerification = async (
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
-      domainUriPrefix: 'https://s.efood.co.id',
+      domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
       link,
     },
   });
@@ -390,7 +389,7 @@ export const generateSmsResetPassword = async (
   const fbLink = new FirebaseDynamicLinks(process.env.FIREBASE_API_KEY);
   const { shortLink } = await fbLink.createLink({
     dynamicLinkInfo: {
-      domainUriPrefix: 'https://s.efood.co.id',
+      domainUriPrefix: process.env.SHORT_LINK_DOMAIN_URI_PREFIX,
       link,
     },
   });

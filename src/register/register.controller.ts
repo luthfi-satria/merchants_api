@@ -143,10 +143,12 @@ export class RegistersController {
       // create groups/corporate
       if (registerCorporateDto.category == CategoryGroup.COMPANY) {
         this.imageValidationService.setFilter('siup_file', 'required');
+
         this.imageValidationService.setFilter(
           'akta_pendirian_file',
           'required',
         );
+
         this.imageValidationService.setFilter('npwp_file', 'required');
       } else if (registerCorporateDto.category == CategoryGroup.PERSONAL) {
         this.imageValidationService.setFilter(
@@ -156,15 +158,17 @@ export class RegistersController {
       }
 
       this.imageValidationService.setFilter('director_id_file', 'required');
+
       await this.imageValidationService.validate(req);
 
       this.imageValidationService
         .setFilter('logo', '')
         .setFilter('profile_store_photo', '');
+
       if (registerCorporateDto.pb1 == 'true') {
-        this.imageValidationService.setFilter('npwp_file', 'required');
         this.imageValidationService.setFilter('brand_npwp_file', 'required');
       }
+
       await this.imageValidationService.validate(req);
 
       const group = await this.groupsService.findGroupByPhone(

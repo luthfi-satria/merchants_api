@@ -412,7 +412,6 @@ export class GroupsService {
       });
   }
 
-
   async viewGroupDetail(
     id: string,
     user: Record<string, any>,
@@ -475,6 +474,8 @@ export class GroupsService {
       deleteCredParam(result);
 
       await this.manipulateGroupUrl(result);
+      await this.merchantService.manipulateMerchantUrl(merchant);
+      await this.storeService.manipulateStoreUrl(store);
 
       return this.responseService.success(
         true,
@@ -1186,6 +1187,13 @@ export class GroupsService {
         .execute();
       // console.log('id', grou)
       console.log('exec', executionUpdateGroup.affected);
+      console.log(
+        '===========================Start Debug executionUpdateGroup=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        executionUpdateGroup,
+        '\n============================End Debug executionUpdateGroup==================================',
+      );
 
       const resultGroup: GroupDocument = executionUpdateGroup.raw[0];
       console.log('resultGroup', resultGroup);
@@ -1396,7 +1404,7 @@ export class GroupsService {
         ...(updateCorporateDto.phone && { phone: updateCorporateDto.phone }),
         ...(updateCorporateDto.logo && { logo: updateCorporateDto.logo }),
         ...(updateCorporateDto.profile_store_photo && {
-          profile_store_logo: updateCorporateDto.profile_store_photo,
+          profile_store_photo: updateCorporateDto.profile_store_photo,
         }),
         ...(updateCorporateDto.address && {
           address: updateCorporateDto.address,
@@ -1513,6 +1521,7 @@ export class GroupsService {
           location_longitude: updateCorporateDto.location_longitude,
         }),
       };
+      // updateStoreData.photo = updateMerchantData.profile_store_logo;
 
       const executionUpdateStore = await queryRunner.manager
         .getRepository(StoreDocument)

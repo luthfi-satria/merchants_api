@@ -15,6 +15,13 @@ export class NotificationService {
     html = '',
   ): Promise<void> {
     const url = `${process.env.BASEURL_NOTIFICATIONS_SERVICE}/api/v1/email`;
+    console.log(
+      '===========================Start Debug send Email=================================\n',
+      new Date(Date.now()).toLocaleString(),
+      '\n',
+      { to, subject, text, html },
+      '\n============================End Debug send Email==================================',
+    );
 
     try {
       await firstValueFrom(

@@ -64,6 +64,10 @@ export class RegisterCorporateDto {
 
   npwp_file: string;
 
+  @ValidateIf((o) => o.category === CategoryGroup.COMPANY)
+  @IsNotEmpty()
+  npwp_name: string;
+
   // Direktur
   @IsNotEmpty()
   @IsString()
@@ -180,10 +184,6 @@ export class RegisterCorporateDto {
   @ValidateIf((o) => o.pb1 === 'true')
   @IsNotEmpty()
   pb1_tariff: number;
-
-  @ValidateIf((o) => o.pb1 === 'true')
-  @IsNotEmpty()
-  npwp_name: string;
 
   @ValidateIf((o) => o.pb1 === 'true')
   @IsNotEmpty()
