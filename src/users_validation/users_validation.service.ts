@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { HashService } from 'src/hash/hash.service';
 @Injectable()
+// service user validation
 export class UsersValidationService {
   constructor(
     @InjectRepository(MerchantUsersDocument)

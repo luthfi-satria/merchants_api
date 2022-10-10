@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { HashService } from 'src/hash/hash.service';
+// module user validation
 @Module({
   imports: [TypeOrmModule.forFeature([MerchantUsersDocument])],
   controllers: [UsersValidationController],

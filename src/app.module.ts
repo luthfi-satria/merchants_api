@@ -26,7 +26,7 @@ import { SeederModule } from './database/seeders/seeder.module';
 import { NatsModule } from './nats/nats.module';
 import { LoginMultilevelModule } from './login-multilevel/login-multilevel.module';
 import { RegistersModule } from './register/register.module';
-import { UsersValidationModule } from './users_validation/users_validation.module';
+import { UsersValidationModule } from './users_validation/users_validation.module'; // user validation
 @Module({
   imports: [
     ConfigModule.forRoot(),
