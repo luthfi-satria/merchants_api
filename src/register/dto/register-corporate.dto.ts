@@ -64,6 +64,10 @@ export class RegisterCorporateDto {
 
   npwp_file: string;
 
+  @ValidateIf((o) => o.category === CategoryGroup.COMPANY)
+  @IsNotEmpty()
+  npwp_name: string;
+
   // Direktur
   @IsNotEmpty()
   @IsString()
@@ -177,14 +181,20 @@ export class RegisterCorporateDto {
   @IsBooleanString({ message: 'Pb1 bukan format Boolean' })
   pb1: string;
 
+  @ValidateIf((o) => o.pb1 === 'true')
+  @IsNotEmpty()
   pb1_tariff: number;
 
-  npwp_name: string;
-
+  @ValidateIf((o) => o.pb1 === 'true')
+  @IsNotEmpty()
   brand_npwp_no: string;
 
+  @ValidateIf((o) => o.pb1 === 'true')
+  @IsNotEmpty()
   brand_npwp_name: string;
 
+  @ValidateIf((o) => o.pb1 === 'true')
+  @IsOptional()
   brand_npwp_file: string;
 
   @IsOptional()

@@ -417,6 +417,7 @@ export class LoginService {
         .leftJoinAndSelect('mu.store', 'merchant_store');
       if (user.level == 'store') {
         query
+          .leftJoinAndSelect('merchant_store.service_addon', 'service_addon')
           .leftJoinAndSelect('merchant_store.merchant', 'merchant')
           .leftJoinAndSelect('merchant.group', 'group');
       }
