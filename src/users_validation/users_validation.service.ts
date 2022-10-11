@@ -1,21 +1,18 @@
 import { Injectable, BadRequestException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MerchantUsersDocument } from 'src/database/entities/merchant_users.entity';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MessageService } from 'src/message/message.service';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ResponseService } from 'src/response/response.service';
 import { Repository } from 'typeorm';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { HashService } from 'src/hash/hash.service';
 @Injectable()
 export class UsersValidationService {
   constructor(
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
-    private readonly HashService: HashService,
-    private readonly MessageService: MessageService,
-    private readonly ResponseService: ResponseService,
+    private readonly hashService: HashService,
+    private readonly messageService: MessageService,
+    private readonly responseService: ResponseService,
   ) {}
   async validateUser(id: string, password: string): Promise<any> {
     const userData: any = await this.merchantUsersRepository.findOne({
@@ -23,24 +20,24 @@ export class UsersValidationService {
     });
     if (!userData) {
       throw new BadRequestException(
-        this.ResponseService.error(
+        this.responseService.error(
           HttpStatus.BAD_REQUEST,
           {
             value: id,
             property: 'id',
-            constraint: [this.MessageService.get('merchant.users.idNotFound')],
+            constraint: [this.messageService.get('merchant.users.idNotFound')],
           },
           'Bad Request',
         ),
       );
     }
-    const cekPassword = await this.HashService.validatePassword(
+    const cekPassword = await this.hashService.validatePassword(
       password,
       userData.password,
     );
     if (!cekPassword) {
       throw new BadRequestException(
-        this.ResponseService.error(
+        this.responseService.error(
           HttpStatus.BAD_REQUEST,
           {
             value: '',
@@ -51,9 +48,9 @@ export class UsersValidationService {
         ),
       );
     } else {
-      return this.ResponseService.success(
+      return this.responseService.success(
         true,
-        this.MessageService.get('merchant.general.success'),
+        this.messageService.get('merchant.general.success'),
       );
     }
   }
