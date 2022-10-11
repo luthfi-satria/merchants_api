@@ -26,12 +26,8 @@ import { SeederModule } from './database/seeders/seeder.module';
 import { NatsModule } from './nats/nats.module';
 import { LoginMultilevelModule } from './login-multilevel/login-multilevel.module';
 import { RegistersModule } from './register/register.module';
-<<<<<<< HEAD
-import { UsersValidationModule } from './users_validation/users_validation.module';
-=======
 import { UsersValidationService } from './users_validation/users_validation.service';
 
->>>>>>> efood/feat-from-main/EF-194-1-Voucher-POS-Manager-validation
 @Module({
   imports: [
     ConfigModule.forRoot(),
