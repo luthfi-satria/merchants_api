@@ -278,7 +278,7 @@ export const generateMessageRegistrationRejected = async (
 
   return `
     <p style="${STYLE_HEADER}">Dear eFOOD Partner.</p>
-    <p style="${STYLE_HEADER}">Terima kasih atas ketertarikan anda untuk bergabung dengan eFOOD!</p>
+    <p style="${STYLE_HEADER}">Terima kasih atas ketertarikan Anda untuk bergabung dengan eFOOD!</p>
     <p style="${CONTENT}">
       Kami memberitahukan melalui email ini bahwa data yang telah diberikan belum lengkap sehingga kami belum bisa melanjutkan proses permintaan Anda sebagai eFOOD Partner.
       Kami menghimbau untuk melengkapi kembali persyaratan yang telah diinformasikan sebelumnya.
@@ -303,7 +303,7 @@ export const generateMessageRegistrationRejected = async (
 export const generateMessageRegistrationAccepted = (): string => {
   return `
     <p style="${STYLE_HEADER}">Dear eFOOD Partner,</p>
-    <p style="${CONTENT}">Terima Kasih atas ketertarikan anda untuk bergabung dengan eFOOD!</p>
+    <p style="${CONTENT}">Terima Kasih atas ketertarikan Anda untuk bergabung dengan eFOOD!</p>
     <p style="${CONTENT}">
         Kami memberitahukan melalui email ini bahwa akun merchant Anda akan segera aktif.
         Kami harap Anda dapat terus mengembangkan resto Anda lebih baik ke depannya bersama kami.
@@ -323,9 +323,9 @@ export const generateMessageRegistrationAccepted = (): string => {
 export const generateMessageRegistrationInProgress = (): string => {
   return `
     <p style="${STYLE_HEADER}">Dear eFOOD Partner,</p>
-    <p style="${CONTENT}">Terima Kasih atas ketertarikan anda untuk bergabung dengan eFOOD!</p>
+    <p style="${CONTENT}">Terima Kasih atas ketertarikan Anda untuk bergabung dengan eFOOD!</p>
     <p style="${CONTENT}">
-        Data anda sudah kami terima dan data sedang dalam proses verifikasi tim kami yang membutuhkan waktu sekitar 1-7 hari kerja.
+        Data Anda sudah kami terima dan data sedang dalam proses verifikasi tim kami yang membutuhkan waktu sekitar 1-7 hari kerja.
         Semua informasi terkait proses tersebut akan kami kirimkan melalui email.
         Pastikan alamat email yang Anda gunakan benar dan aktif.
         Mohon bersabar selama proses verifikasi berlangsung. Terima kasih!
