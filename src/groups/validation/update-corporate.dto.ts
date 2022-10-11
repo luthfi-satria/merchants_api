@@ -5,6 +5,7 @@ import {
   IsBooleanString,
   IsEmail,
   IsIn,
+  IsNotEmpty,
   IsNumber,
   IsNumberString,
   IsOptional,
@@ -181,6 +182,15 @@ export class UpdateCorporateDto {
   npwp_name: string;
 
   @IsOptional()
+  brand_npwp_no: string;
+
+  @IsOptional()
+  brand_npwp_name: string;
+
+  @IsOptional()
+  brand_npwp_file: string;
+
+  @IsOptional()
   is_pos_checkin_enabled: boolean;
 
   @IsOptional()
@@ -266,4 +276,9 @@ export class UpdateCorporateDto {
 
   @IsOptional()
   location_longitude: number;
+
+  @IsNotEmpty()
+  @Length(4, 4)
+  @IsNumberString()
+  otp_code: string;
 }

@@ -27,7 +27,10 @@ import {
   MerchantUsersDocument,
   MerchantUsersStatus,
 } from 'src/database/entities/merchant_users.entity';
-import { deleteCredParam } from 'src/utils/general-utils';
+import {
+  deleteCredParam,
+  generateMessageRegistrationInProgress,
+} from 'src/utils/general-utils';
 import { CityService } from 'src/common/services/admins/city.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RMessage } from 'src/response/response.interface';
@@ -71,7 +74,7 @@ export class RegistersService {
     queryRunner: QueryRunner,
   ) {
     try {
-      let operationalHours = [];
+      const operationalHours = [];
 
       for (let index = 0; index < 6; index++) {
         operationalHours.push({
@@ -180,6 +183,13 @@ export class RegistersService {
   }
 
   async registerCorporate(registerCorporateData: RegisterCorporateDto) {
+    console.log(
+      '===========================Start Debug registerCorporateData1=================================\n',
+      new Date(Date.now()).toLocaleString(),
+      '\n',
+      registerCorporateData,
+      '\n============================End Debug registerCorporateData1==================================',
+    );
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -326,7 +336,8 @@ export class RegistersService {
       }
       console.log(resultGroup);
       // create brand or merchant process
-      const status: MerchantStatus = MerchantStatus.Waiting_for_approval;
+      const status: MerchantStatus =
+        MerchantStatus.Waiting_for_corporate_approval;
       const createMerchantData = {
         group_id: resultGroup.id,
         type: registerCorporateData.type,
@@ -338,9 +349,9 @@ export class RegistersService {
         lob_id: registerCorporateData.lob_id,
         pb1: registerCorporateData.pb1,
         pb1_tariff: registerCorporateData.pb1_tariff,
-        npwp_no: registerCorporateData.npwp_no,
-        npwp_name: registerCorporateData.npwp_name,
-        npwp_file: registerCorporateData.npwp_file,
+        npwp_no: registerCorporateData.brand_npwp_no,
+        npwp_name: registerCorporateData.brand_npwp_name,
+        npwp_file: registerCorporateData.brand_npwp_file,
         is_pos_checkin_enabled: registerCorporateData.is_pos_checkin_enabled,
         is_pos_endofday_enabled: registerCorporateData.is_pos_endofday_enabled,
         is_pos_printer_enabled: registerCorporateData.is_pos_printer_enabled,
@@ -489,6 +500,9 @@ export class RegistersService {
         pic_password: createMerchantData.pic_password,
         status: createMerchantData.status,
         pic_is_multilevel_login: pic_is_multilevel_login,
+        npwp_no: createMerchantData.npwp_no,
+        npwp_name: createMerchantData.npwp_name,
+        npwp_file: createMerchantData.npwp_file,
       };
 
       merchantDTO.logo = createMerchantData.logo ? createMerchantData.logo : '';
@@ -581,11 +595,21 @@ export class RegistersService {
       );
       const store_document: Partial<StoreDocument> = {};
       Object.assign(store_document, registerCorporateData);
+      store_document.photo = createMerchantData.profile_store_photo;
+
+      console.log(
+        '===========================Start Debug registerCorporateData2=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        registerCorporateData,
+        '\n============================End Debug registerCorporateData2==================================',
+      );
 
       store_document.city = await this.cityService.getCity(
         registerCorporateData.city_id,
       );
       console.log('normal77');
+      console.log('storedocs', store_document);
 
       // const merchant: MerchantDocument =
       //   await this.merchantService.findMerchantById(createMerchantUser.id);
@@ -623,11 +647,10 @@ export class RegistersService {
       store_document.location_longitude =
         registerCorporateData.location_longitude;
       store_document.merchant_id = createMerchantUser.merchant_id;
-      store_document.store_categories =
-        await this.storeService.getCategoriesByIds(
-          registerCorporateData.category_ids,
-        );
-      store_document.service_addons = await this.storeService.getAddonssBtIds(
+      const store_categories = await this.storeService.getCategoriesByIds(
+        registerCorporateData.category_ids,
+      );
+      const store_addons = await this.storeService.getAddonssBtIds(
         registerCorporateData.service_addons,
       );
 
@@ -643,12 +666,33 @@ export class RegistersService {
         registerCorporateData.auto_accept_order == 'true' ? true : false;
       console.log('store_doc', store_document);
 
+      console.log(
+        '===========================Start Debug registerCorporateData3=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        registerCorporateData,
+        '\n============================End Debug registerCorporateData3==================================',
+      );
+
       const execInsertStore = await queryRunner.manager
         .createQueryBuilder()
         .insert()
         .into(StoreDocument)
         .values(store_document)
         .execute();
+      console.log('execInsertstore', execInsertStore);
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .relation(StoreDocument, 'store_categories')
+        .of({ id: execInsertStore.raw[0].id })
+        .add(store_categories);
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .relation(StoreDocument, 'service_addons')
+        .of({ id: execInsertStore.raw[0].id })
+        .add(store_addons);
 
       const resultInsertStore: StoreDocument = execInsertStore.raw[0];
       this.storeService.publishNatsCreateStore(resultInsertStore);
@@ -713,6 +757,13 @@ export class RegistersService {
       // );
 
       await queryRunner.commitTransaction();
+
+      this.notificationService.sendEmail(
+        registerCorporateData.director_email,
+        'Registrasi sedang dalam verifikasi',
+        '',
+        generateMessageRegistrationInProgress(),
+      );
 
       return {
         group: resultGroup,

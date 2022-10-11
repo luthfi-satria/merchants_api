@@ -64,6 +64,10 @@ export class RegisterCorporateDto {
 
   npwp_file: string;
 
+  @ValidateIf((o) => o.category === CategoryGroup.COMPANY)
+  @IsNotEmpty()
+  npwp_name: string;
+
   // Direktur
   @IsNotEmpty()
   @IsString()
@@ -183,7 +187,15 @@ export class RegisterCorporateDto {
 
   @ValidateIf((o) => o.pb1 === 'true')
   @IsNotEmpty()
-  npwp_name: string;
+  brand_npwp_no: string;
+
+  @ValidateIf((o) => o.pb1 === 'true')
+  @IsNotEmpty()
+  brand_npwp_name: string;
+
+  @ValidateIf((o) => o.pb1 === 'true')
+  @IsOptional()
+  brand_npwp_file: string;
 
   @IsOptional()
   is_pos_checkin_enabled: boolean;
@@ -271,4 +283,9 @@ export class RegisterCorporateDto {
 
   @IsOptional()
   location_longitude: number;
+
+  @IsNotEmpty()
+  @Length(4, 4)
+  @IsNumberString()
+  otp_code: string;
 }

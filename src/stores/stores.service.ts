@@ -9,11 +9,12 @@ import {
 import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
-import { catchError, map, Observable } from 'rxjs';
+import { catchError, firstValueFrom, map, Observable } from 'rxjs';
 import { AddonsService } from 'src/addons/addons.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import {
+  enumDeliveryType,
   enumStoreStatus,
   StoreDocument,
 } from 'src/database/entities/store.entity';
@@ -30,6 +31,7 @@ import {
   Brackets,
   FindOperator,
   ILike,
+  In,
   Like,
   Not,
   Repository,
@@ -58,12 +60,15 @@ import { CommonStorageService } from 'src/common/storage/storage.service';
 import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
 import { StoreOperationalHoursDocument } from '../database/entities/store_operational_hours.entity';
 import moment from 'moment';
+import { stringify } from 'querystring';
 
 @Injectable()
 export class StoresService {
   constructor(
     @InjectRepository(StoreDocument)
-    private readonly storeRepository: Repository<StoreDocument>,
+    public readonly storeRepository: Repository<StoreDocument>,
+    @InjectRepository(MerchantDocument)
+    public readonly merchantRepository: Repository<MerchantDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
     private readonly messageService: MessageService,
@@ -1711,6 +1716,145 @@ export class StoresService {
           'Bad Request',
         ),
       );
+    }
+  }
+
+  //** Get Merchants ID By Names */
+  async findMerchantsIdByNames(
+    merchant_name: string,
+  ): Promise<MerchantDocument> {
+    return this.merchantRepository
+      .findOne({
+        where: { name: In([merchant_name]) },
+        select: ['id'],
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: merchant_name,
+          property: 'Nama merchant tidak tersedia mohon di periksa kembali!',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  //** Check Exists Name Store */
+  async findStoreNameByName(store_name: string): Promise<StoreDocument> {
+    return this.storeRepository
+      .findOne({
+        where: { name: In([store_name]) },
+        select: ['name'],
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: store_name,
+          property: 'Nama store tidak tersedia mohon di periksa kembali!',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  //** Bulk Insert Stores */
+  async bulkinsertStores(objectExcel: string): Promise<any> {
+    try {
+      for (const value of Object.values(objectExcel)) {
+        // get merchant id by name
+        const isGetMerchantsId = await this.findMerchantsIdByNames(
+          value['merchant_name'],
+        );
+        const merchant_id = Object.values(isGetMerchantsId).shift();
+
+        // check store name by name
+        const checkStoreNameExits = await this.findStoreNameByName(
+          value['store_name'],
+        );
+
+        // create array from excel value
+        const storeData: Partial<StoreDocument>[] = [];
+        storeData.push({
+          merchant_id: merchant_id,
+          name: value['store_name'],
+          phone: value['phone'],
+          email: value['email'],
+          city_id: value['city'].slice(0, 36),
+          address: value['address'],
+          location_longitude: value['location_longitude'],
+          location_latitude: value['location_latitude'],
+          gmt_offset: 0,
+          is_store_open: false,
+          is_open_24h: false,
+          average_price: 0,
+          platform: true,
+          photo:
+            'https://dummyimage.com/600x400/968a96/ffffff&text=Photo+Image',
+          banner:
+            'https://dummyimage.com/600x400/968a96/ffffff&text=Banner+Image',
+          delivery_type: enumDeliveryType.delivery_and_pickup,
+          bank_id: value['bank_name'].slice(0, 36),
+          bank_account_no: value['bank_account_no'],
+          rating: 0,
+          numrating: 0,
+          numorders: 0,
+          bank_account_name: value['bank_account_name'],
+          auto_accept_order: false,
+          status: enumStoreStatus.active,
+        });
+
+        // check merchant id existing
+        if (isGetMerchantsId == undefined) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: merchant_id,
+                property: 'Nama merchant tidak dapat di temukan!.',
+                constraint: [
+                  this.messageService.get(
+                    'merchant.createstore.merchantid_notactive',
+                  ),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        }
+
+        // execute insert db store
+        if (checkStoreNameExits == undefined) {
+          const create_bulk_stores = await this.storeRepository.save(storeData);
+          create_bulk_stores.push();
+        } else if (checkStoreNameExits != value['store_name']) {
+          // check store name existing
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: value['store_name'],
+                property: 'Nama store sudah di gunakan!.',
+                constraint: [
+                  this.messageService.get('merchant.createstore.fail'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      throw error;
     }
   }
 }
