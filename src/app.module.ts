@@ -27,6 +27,7 @@ import { NatsModule } from './nats/nats.module';
 import { LoginMultilevelModule } from './login-multilevel/login-multilevel.module';
 import { RegistersModule } from './register/register.module';
 import { UsersValidationService } from './users_validation/users_validation.service';
+import { UsersValidationModule } from './users_validation/users_validation.module';
 
 @Module({
   imports: [
@@ -57,7 +58,7 @@ import { UsersValidationService } from './users_validation/users_validation.serv
     NatsModule,
     LoginMultilevelModule,
     RegistersModule,
-    UsersValidationService,
+    UsersValidationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
