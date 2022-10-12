@@ -14,6 +14,7 @@ import { AddonsService } from 'src/addons/addons.service';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { MerchantDocument } from 'src/database/entities/merchant.entity';
 import {
+  enumDeliveryType,
   enumStoreStatus,
   StoreDocument,
 } from 'src/database/entities/store.entity';
@@ -30,6 +31,7 @@ import {
   Brackets,
   FindOperator,
   ILike,
+  In,
   Like,
   Not,
   Repository,
@@ -58,6 +60,7 @@ import { CommonStorageService } from 'src/common/storage/storage.service';
 import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
 import { StoreOperationalHoursDocument } from '../database/entities/store_operational_hours.entity';
 import moment from 'moment';
+import ExcelJS from 'exceljs';
 
 @Injectable()
 export class StoresService {
@@ -66,6 +69,8 @@ export class StoresService {
     public readonly storeRepository: Repository<StoreDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
+    @InjectRepository(MerchantDocument)
+    private readonly merchantRepository: Repository<MerchantDocument>,
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
     private readonly addonService: AddonsService,
@@ -1689,4 +1694,398 @@ export class StoresService {
       );
     }
   }
+
+  //** Get Merchants ID By Names */
+  async findMerchantsIdByNames(
+    merchant_name: string,
+  ): Promise<MerchantDocument> {
+    return this.merchantRepository
+      .findOne({
+        where: { name: In([merchant_name]) },
+        select: ['id'],
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: merchant_name,
+          property: 'Nama merchant tidak tersedia mohon di periksa kembali!',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  //** Get Merchants ID By Names */
+  async findDefaultPhotoByMerchantName(
+    merchant_name: string,
+  ): Promise<MerchantDocument> {
+    return this.merchantRepository
+      .findOne({
+        where: { name: In([merchant_name]) },
+        select: ['profile_store_photo'],
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: merchant_name,
+          property: 'Nama merchant tidak tersedia mohon di periksa kembali!',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  //** Check Exists Name Store */
+  async findStoreNameByName(store_name: string): Promise<StoreDocument> {
+    return this.storeRepository
+      .findOne({
+        where: { name: In([store_name]) },
+        select: ['name'],
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: store_name,
+          property: 'Nama store tidak tersedia mohon di periksa kembali!',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  //** Bulk Insert Stores */
+  async bulkinsertStores(objectExcel: string): Promise<any> {
+    try {
+      for (const value of Object.values(objectExcel)) {
+        // get merchant id by name
+        const isGetMerchantsId = await this.findMerchantsIdByNames(
+          value['merchant_name'],
+        );
+        const merchant_id = Object.values(isGetMerchantsId).shift();
+
+        // get merchant id by name
+        const isDefaultPhoto = await this.findDefaultPhotoByMerchantName(
+          value['merchant_name'],
+        );
+        const defaultPhoto = Object.values(isDefaultPhoto).shift();
+
+        // check store name by name
+        const checkStoreNameExits = await this.findStoreNameByName(
+          value['store_name'],
+        );
+
+        // create array from excel value
+        const storeData: Partial<StoreDocument>[] = [];
+        storeData.push({
+          merchant_id: merchant_id,
+          name: value['store_name'],
+          phone: value['phone'],
+          email: value['email'],
+          city_id: 'ba9613ec-3d67-4df4-8a84-a45e7006edb8',
+          address: value['address'],
+          location_longitude: value['location_longitude'],
+          location_latitude: value['location_latitude'],
+          gmt_offset: 0,
+          is_store_open: false,
+          is_open_24h: false,
+          average_price: 0,
+          platform: true,
+          photo: defaultPhoto,
+          banner: defaultPhoto,
+          delivery_type: enumDeliveryType.delivery_and_pickup,
+          bank_id: value['bank_name'].slice(0, 36),
+          bank_account_no: value['bank_account_no'],
+          rating: 0,
+          numrating: 0,
+          numorders: 0,
+          bank_account_name: value['bank_account_name'],
+          auto_accept_order: false,
+          status: enumStoreStatus.active,
+        });
+
+        // check merchant id existing
+        if (isGetMerchantsId == undefined) {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: merchant_id,
+                property: 'Nama merchant tidak dapat di temukan!.',
+                constraint: [
+                  this.messageService.get(
+                    'merchant.createstore.merchantid_notactive',
+                  ),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        }
+
+        // execute insert db store
+        if (checkStoreNameExits == undefined) {
+          const create_bulk_stores = await this.storeRepository.save(storeData);
+          create_bulk_stores.push();
+        } else if (checkStoreNameExits != value['store_name']) {
+          // check store name existing
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: value['store_name'],
+                property: 'Nama store sudah di gunakan!.',
+                constraint: [
+                  this.messageService.get('merchant.createstore.fail'),
+                ],
+              },
+              'Bad Request',
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //** Download template bulk upload store  */
+  async downloadBulkInsertStoreTemplate(
+    user: any,
+  ): Promise<any> {
+    try {
+
+      //** get merchant data for create validation */
+      const getMerchantDataRow: any = await this.merchantRepository
+      .find({
+        where: {status: 'ACTIVE'},
+        select: ['id', 'name']
+      })
+
+      if (!getMerchantDataRow.length) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: '',
+              property: getMerchantDataRow,
+              constraint: [
+                this.messageService.get(
+                  'merchant.dataNotFound',
+                ),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+
+      //** create array merchants */
+      const merchantsData = getMerchantDataRow.map(
+        (merchants: any) => ({
+          id: merchants.id,
+          name: merchants.name,
+        })
+      );
+
+      //** get bank data for create validation */
+      const url = `${process.env.BASEURL_PAYMENTS_SERVICE}/api/v1/payments/disbursements/methods?page=1&limit=999&statuses[]=ACTIVE&type=BANK_ACCOUNT`;
+      const getResponseByUrl = await this.commonService.getHttp(url);
+      const getBankDdataRow = getResponseByUrl.data.items;
+
+      //** create array bank */
+      const bankData = getBankDdataRow.map(
+        (bank: any) => ({
+          id: bank.id,
+          name: bank.name,
+        })
+      );
+
+      //=> create workbook
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'Efood';
+      const row2: any[] = [
+        null, 
+        null, 
+        null, 
+        null, 
+        null, 
+        null, 
+        null, 
+        null,
+        null,
+        null
+      ];
+
+      //=> create sheetEfood
+      const sheetEfood = workbook.addWorksheet('Efood', {
+        properties: { defaultColWidth: 20 },
+      });
+
+      const sheetEfoodColumns: any[] = [
+        {
+          header: 'Nama Brand (optional)',
+          key: 'merchant_name',
+          width: 25,
+        },
+        {
+          header: 'Nama Store*',
+          key: 'store_name',
+          width: 25,
+        },
+        {
+          header: 'Phone*',
+          key: 'phone',
+          width: 25,
+        },
+        {
+          header: 'Email*',
+          key: 'email',
+          width: 20,
+        },
+        {
+          header: 'Alamat*',
+          key: 'address',
+          width: 25,
+        },
+        {
+          header: 'Lokasi Longitude*',
+          key: 'location_longitude',
+          width: 25,
+        },
+        {
+          header: 'Lokasi Latitude*',
+          key: 'location_latitude',
+          width: 25,
+        },
+        {
+          header: 'Nama Bank Pemilik (optional)',
+          key: 'bank_name',
+          width: 25,
+        },
+        {
+          header: 'Nomor Rekening Bank Pemilik*',
+          key: 'bank_account_no',
+          width: 25,
+        },
+        {
+          header: 'Nama Pemilik*',
+          key: 'bank_account_name',
+          width: 25,
+        },
+      ];
+
+      sheetEfood.columns = sheetEfoodColumns;
+
+      //=> insert row 2
+      sheetEfood.addRow(row2);
+
+      //=> merge cells
+      sheetEfood.mergeCellsWithoutStyle(1, 1, 2, 1);
+      sheetEfood.mergeCellsWithoutStyle(1, 2, 2, 2);
+      sheetEfood.mergeCellsWithoutStyle(1, 3, 2, 3);
+      sheetEfood.mergeCellsWithoutStyle(1, 4, 2, 4);
+      sheetEfood.mergeCellsWithoutStyle(1, 5, 2, 5);
+      sheetEfood.mergeCellsWithoutStyle(1, 6, 2, 6);
+      sheetEfood.mergeCellsWithoutStyle(1, 7, 2, 7);
+      sheetEfood.mergeCellsWithoutStyle(1, 8, 2, 8);
+      sheetEfood.mergeCellsWithoutStyle(1, 9, 2, 9);
+      sheetEfood.mergeCellsWithoutStyle(1, 10, 2, 10);
+
+      //=> Formating row 1 - 2
+      sheetEfood.getRow(1).font = { bold: true };
+      sheetEfood.getRow(1).alignment = { horizontal: 'center', wrapText: true };
+      sheetEfood.getRow(2).font = { bold: true };
+      sheetEfood.getRow(2).alignment = { horizontal: 'center', wrapText: true };
+
+      //** create validation sheets merchants */
+      const sheetsMerchantData = workbook.addWorksheet('Merchant_Data', {
+        properties: { defaultColWidth: 50 },
+      });
+
+      for (const merchantsDatas of merchantsData) {
+        sheetsMerchantData.addRow(Object.values(merchantsDatas));
+      }
+
+      //** create validation sheets bank */
+      const sheetBankData = workbook.addWorksheet('Bank_Data', {
+        properties: { defaultColWidth: 50 },
+      });
+
+      for (const bankDatas of bankData) {
+        sheetBankData.addRow(Object.values(bankDatas));
+      }
+
+      //** Loop create data validations */
+      for (let i = 3; i <= 50; i++) {
+        const selectedRow = sheetEfood.getRow(i);
+
+        //** validation merchant */
+        if (merchantsData.length) {
+          selectedRow.getCell(9).dataValidation = {
+            type: 'list',
+            allowBlank: false,
+            formulae: [`Merchant_Data!$B$1:$B$${merchantsData.length}`],
+          };
+        }
+
+        //** validation bank */
+        if (bankData.length) {
+          selectedRow.getCell(8).dataValidation = {
+            type: 'list',
+            allowBlank: false,
+            formulae: [`Bank_Data!$B$2:$B$${bankData.length}`],
+          };
+        }
+      }
+
+      //=> write workbook
+      await workbook.xlsx.writeFile(`template_bulk_upload_store.xlsx`);
+      await this.storage.store(`template_bulk_upload_store.xlsx`);
+
+      const download_url = `${process.env.BASEURL_API}/api/v1/merchant/file/template_bulk_upload_store.xlsx`;
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('Template bulk upload store berhasil di buat.'),
+        { bulk_upload_store_template: download_url },
+      );
+    } catch (error) {
+      if (error.message != 'Bad Request Exception') {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: error.value || '',
+              property: error.property || '',
+              constraint: error.constraint || [
+                this.messageService.get(
+                  'Gagal membuat template bulk upload store.',
+                ),
+                error.message,
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      } else {
+        throw error;
+      }
+    }
+  } 
+
 }
