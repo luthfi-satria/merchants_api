@@ -371,7 +371,6 @@ export class StoresController {
       });
 
       const objectExcel = JSON.parse(JSON.stringify(jsonData));
-      console.log(objectExcel);
       await this.storesService.bulkinsertStores(objectExcel);
 
       if (!objectExcel) {
