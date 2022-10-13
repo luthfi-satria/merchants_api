@@ -19,7 +19,6 @@ import {
   HttpException,
   UploadedFile,
 } from '@nestjs/common';
-import * as XLSX from 'xlsx';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
@@ -53,6 +52,8 @@ import { ResponseExcludeData } from 'src/response/response_exclude_param.interce
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 import { Response } from 'express';
 import etag from 'etag';
+import * as XLSX from 'xlsx';
+
 @Controller('api/v1/merchants')
 export class StoresController {
   constructor(
@@ -370,6 +371,7 @@ export class StoresController {
       });
 
       const objectExcel = JSON.parse(JSON.stringify(jsonData));
+      console.log(objectExcel);
       await this.storesService.bulkinsertStores(objectExcel);
 
       if (!objectExcel) {
@@ -394,5 +396,14 @@ export class StoresController {
     } catch (error) {
       throw error;
     }
+  }
+
+  //** Download template bulk insert store */
+  @Get('/template/stores')
+  @UseGuards()
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @ResponseStatusCode()
+  async downloadBulkInsertStoreTemplate(): Promise<any> {
+    return this.storesService.downloadBulkInsertStoreTemplate();
   }
 }
