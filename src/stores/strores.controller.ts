@@ -398,7 +398,7 @@ export class StoresController {
   }
 
   //** Download template bulk insert store */
-  @Get('/template/stores/:merchant-id')
+  @Get('/template/stores/:merchant_id')
   @UseGuards()
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @ResponseStatusCode()
@@ -411,7 +411,7 @@ export class StoresController {
         value: 'merchant_id not_found',
         property: 'merchant_id',
         constraint: [
-          this.messageService.get('Gagal membuat template bulk upload store.')
+          this.messageService.get('Gagal mengambil data merchant.')
         ],
       };
       throw new BadRequestException(
@@ -424,7 +424,7 @@ export class StoresController {
     }
     return this.storesService.downloadBulkInsertStoreTemplate(
       merchant_id,
-    )
+    );
   } catch (error) {
     throw error;
   }

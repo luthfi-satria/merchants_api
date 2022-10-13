@@ -2058,10 +2058,10 @@ export class StoresService {
       }
 
       //=> write workbook
-      await workbook.xlsx.writeFile(`template_bulk_upload_store.xlsx`);
-      await this.storage.store(`template_bulk_upload_store.xlsx`);
+      await workbook.xlsx.writeFile(`template_bulk_upload_store_${merchant_id}.xlsx`);
+      await this.storage.store(`template_bulk_upload_store_${merchant_id}.xlsx`);
 
-      const download_url = `${process.env.BASEURL_API}/api/v1/merchant/file/template_bulk_upload_store.xlsx`;
+      const download_url = `${process.env.BASEURL_API}/api/v1/merchant/${merchant_id}/file/template_bulk_upload_store.xlsx`;
 
       return this.responseService.success(
         true,
