@@ -357,6 +357,7 @@ export class StoresController {
 
   //** Bulk Insert Stores */
   @Post('bulk')
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @ResponseStatusCode()
   @UseInterceptors(FileInterceptor('file'))
   async uploadBulkStore(
