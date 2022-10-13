@@ -398,11 +398,34 @@ export class StoresController {
   }
 
   //** Download template bulk insert store */
-  @Get('/template/stores')
+  @Get('/template/stores/:merchant-id')
   @UseGuards()
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @ResponseStatusCode()
-  async downloadBulkInsertStoreTemplate(): Promise<any> {
-    return this.storesService.downloadBulkInsertStoreTemplate();
+  async downloadBulkInsertStoreTemplate(
+    @Param('merchant_id') merchant_id: string,
+  ): Promise<any> {
+    
+    if(!merchant_id.length) {
+      const errors: RMessage = {
+        value: 'merchant_id not_found',
+        property: 'merchant_id',
+        constraint: [
+          this.messageService.get('Gagal membuat template bulk upload store.')
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return this.storesService.downloadBulkInsertStoreTemplate(
+      merchant_id,
+    )
+  } catch (error) {
+    throw error;
   }
 }

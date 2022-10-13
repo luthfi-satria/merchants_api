@@ -1864,11 +1864,13 @@ export class StoresService {
   }
 
   //** Download template bulk upload store  */
-  async downloadBulkInsertStoreTemplate(): Promise<any> {
+  async downloadBulkInsertStoreTemplate(
+    merchant_id: string,
+  ): Promise<any> {
     try {
       //** get merchant data for create validation */
       const getMerchantDataRow: any = await this.merchantRepository.find({
-        where: { status: 'ACTIVE' },
+        where: { id: merchant_id},
         select: ['id', 'name'],
       });
 
@@ -1877,9 +1879,9 @@ export class StoresService {
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
             {
-              value: '',
+              value: 'merchant_not_found',
               property: getMerchantDataRow,
-              constraint: [this.messageService.get('merchant.dataNotFound')],
+              constraint: [this.messageService.get('Data brand tidak dapat ditemukan.')],
             },
             'Bad Request',
           ),
@@ -1896,6 +1898,20 @@ export class StoresService {
       const url = `${process.env.BASEURL_PAYMENTS_SERVICE}/api/v1/payments/disbursements/methods?page=1&limit=999&statuses[]=ACTIVE&type=BANK_ACCOUNT`;
       const getResponseByUrl = await this.commonService.getHttp(url);
       const getBankDdataRow = getResponseByUrl.data.items;
+
+      if (!getBankDdataRow.length) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: 'data_bank_not_found',
+              property: getBankDdataRow,
+              constraint: [this.messageService.get('Data bank tidak dapat ditemukan.')],
+            },
+            'Bad Request',
+          ),
+        );
+      }
 
       //** create array bank */
       const bankData = getBankDdataRow.map((bank: any) => ({
