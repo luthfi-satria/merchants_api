@@ -1864,17 +1864,13 @@ export class StoresService {
   }
 
   //** Download template bulk upload store  */
-  async downloadBulkInsertStoreTemplate(
-    user: any,
-  ): Promise<any> {
+  async downloadBulkInsertStoreTemplate(): Promise<any> {
     try {
-
       //** get merchant data for create validation */
-      const getMerchantDataRow: any = await this.merchantRepository
-      .find({
-        where: {status: 'ACTIVE'},
-        select: ['id', 'name']
-      })
+      const getMerchantDataRow: any = await this.merchantRepository.find({
+        where: { status: 'ACTIVE' },
+        select: ['id', 'name'],
+      });
 
       if (!getMerchantDataRow.length) {
         throw new BadRequestException(
@@ -1883,11 +1879,7 @@ export class StoresService {
             {
               value: '',
               property: getMerchantDataRow,
-              constraint: [
-                this.messageService.get(
-                  'merchant.dataNotFound',
-                ),
-              ],
+              constraint: [this.messageService.get('merchant.dataNotFound')],
             },
             'Bad Request',
           ),
@@ -1895,12 +1887,10 @@ export class StoresService {
       }
 
       //** create array merchants */
-      const merchantsData = getMerchantDataRow.map(
-        (merchants: any) => ({
-          id: merchants.id,
-          name: merchants.name,
-        })
-      );
+      const merchantsData = getMerchantDataRow.map((merchants: any) => ({
+        id: merchants.id,
+        name: merchants.name,
+      }));
 
       //** get bank data for create validation */
       const url = `${process.env.BASEURL_PAYMENTS_SERVICE}/api/v1/payments/disbursements/methods?page=1&limit=999&statuses[]=ACTIVE&type=BANK_ACCOUNT`;
@@ -1908,27 +1898,25 @@ export class StoresService {
       const getBankDdataRow = getResponseByUrl.data.items;
 
       //** create array bank */
-      const bankData = getBankDdataRow.map(
-        (bank: any) => ({
-          id: bank.id,
-          name: bank.name,
-        })
-      );
+      const bankData = getBankDdataRow.map((bank: any) => ({
+        id: bank.id,
+        name: bank.name,
+      }));
 
       //=> create workbook
       const workbook = new ExcelJS.Workbook();
       workbook.creator = 'Efood';
       const row2: any[] = [
-        null, 
-        null, 
-        null, 
-        null, 
-        null, 
-        null, 
-        null, 
         null,
         null,
-        null
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
       ];
 
       //=> create sheetEfood
@@ -2086,6 +2074,5 @@ export class StoresService {
         throw error;
       }
     }
-  } 
-
+  }
 }

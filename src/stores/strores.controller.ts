@@ -17,7 +17,6 @@ import {
   NotFoundException,
   Res,
   HttpException,
-  Headers,
   UploadedFile,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
@@ -404,15 +403,7 @@ export class StoresController {
   @UseGuards()
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @ResponseStatusCode()
-  async downloadBulkInsertStoreTemplate(
-    @Req() req: any,
-    @Param('merchant_id') merchant_id: string,
-    @Param('sales_channel_id') sales_channel_id: string,
-    @Headers('Authorization') token: string,
-  ): Promise<any> {
-    
-    return this.storesService.downloadBulkInsertStoreTemplate(
-      req.user,
-    );
+  async downloadBulkInsertStoreTemplate(): Promise<any> {
+    return this.storesService.downloadBulkInsertStoreTemplate();
   }
 }
