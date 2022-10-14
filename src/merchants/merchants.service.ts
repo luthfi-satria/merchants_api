@@ -865,8 +865,12 @@ export class MerchantsService {
 
     if (data?.store_id && priceCategory.data?.id) {
       Object.assign(scdata, {
-        store_id: data.store_id,
-        category_price_id: priceCategory.data?.id,
+        pricing_templates: [
+          {
+            store_id: data.store_id,
+            category_price_id: priceCategory.data?.id,
+          },
+        ],
       });
     }
 
