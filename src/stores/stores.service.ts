@@ -1627,20 +1627,44 @@ export class StoresService {
       const limit = data.limit || 10;
       const offset = (page - 1) * limit;
 
-      const query = this.storeRepository.createQueryBuilder();
+      const query = this.storeRepository
+        .createQueryBuilder('ms')
+        .select([
+          'ms.id',
+          'ms.merchant_id',
+          'ms.name',
+          'ms.phone',
+          'ms.city_id',
+          'ms.address',
+          'ms.is_store_open',
+          'ms.is_open_24h',
+          'ms.status',
+          'merchant.id',
+          'merchant.group_id',
+          'merchant.type',
+          'merchant.name',
+          'merchant.phone',
+          'corporate.id',
+          'corporate.category',
+          'corporate.name',
+          'corporate.phone',
+          'corporate.status',
+        ])
+        .innerJoin('ms.merchant', 'merchant')
+        .innerJoin('merchant.group', 'corporate');
 
       if (data.merchant_id) {
-        query.where('merchant_id = :merchant_id', {
+        query.where('ms.merchant_id = :merchant_id', {
           merchant_id: data.merchant_id,
         });
       }
 
       if (typeof data.search != 'undefined' && data.search != '') {
-        query.andWhere('name like :src', { src: `%${data.search}%` });
+        query.andWhere('ms.name like :src', { src: `%${data.search}%` });
       }
 
       if (typeof data.status != 'undefined' && data.status != '') {
-        query.andWhere('status = :status', { status: data.status });
+        query.andWhere('ms.status = :status', { status: data.status });
       }
 
       if (
@@ -1648,7 +1672,7 @@ export class StoresService {
         data.store_id.length > 0 &&
         data.target == 'assigned'
       ) {
-        query.andWhere('id IN (:...ids)', { ids: data.store_id });
+        query.andWhere('ms.id IN (:...ids)', { ids: data.store_id });
       }
 
       if (
@@ -1656,10 +1680,10 @@ export class StoresService {
         data.store_id.length > 0 &&
         data.target == 'unassigned'
       ) {
-        query.andWhere('id NOT IN (:...ids)', { ids: data.store_id });
+        query.andWhere('ms.id NOT IN (:...ids)', { ids: data.store_id });
       }
 
-      query.orderBy('name', 'DESC').take(limit).skip(offset);
+      query.orderBy('ms.name', 'DESC').take(limit).skip(offset);
 
       const items = await query.getMany();
       const count = await query.getCount();
