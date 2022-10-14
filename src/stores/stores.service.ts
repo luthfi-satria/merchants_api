@@ -2040,7 +2040,7 @@ export class StoresService {
 
         //** validation merchant */
         if (merchantsData.length) {
-          selectedRow.getCell(9).dataValidation = {
+          selectedRow.getCell(1).dataValidation = {
             type: 'list',
             allowBlank: false,
             formulae: [`Merchant_Data!$B$1:$B$${merchantsData.length}`],
