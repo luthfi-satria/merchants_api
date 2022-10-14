@@ -881,6 +881,8 @@ export class MerchantsService {
     const result = await this.commonService.postHttp(url, data, headers);
     const logger = new Logger();
     logger.log(result, 'Reg Catalog Merchant');
+
+    return result;
   }
 
   async extendValidateImageCreate(
