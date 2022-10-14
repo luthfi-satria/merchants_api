@@ -676,7 +676,7 @@ export class RegistersService {
 
       const pclogdata = {
         id: resultInsertMerchant.id,
-        store_id: execInsertStore.identifiers[0],
+        store_id: execInsertStore.identifiers[0].id,
       };
 
       const createCatalog = await this.merchantService.createCatalogs(
