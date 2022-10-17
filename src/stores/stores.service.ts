@@ -1696,17 +1696,43 @@ export class StoresService {
   }
 
   //** Get Merchants ID By Names */
-  async findMerchantsIdByNames(
-    merchant_name: string,
+  async findMerchantByMerchantId(
+    merchant_id: string,
+    token: string,
   ): Promise<MerchantDocument> {
     return this.merchantRepository
       .findOne({
-        where: { name: In([merchant_name]) },
+        where: { id: In([merchant_id]) },
         select: ['id'],
       })
       .catch((err) => {
         const errors: RMessage = {
-          value: merchant_name,
+          value: merchant_id,
+          property: 'Nama merchant tidak tersedia mohon di periksa kembali!',
+          constraint: [err.message],
+        };
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            errors,
+            'Bad Request',
+          ),
+        );
+      });
+  }
+
+  //** Get Merchants ID By ID non token */
+  async findMerchantByMerchantIds(
+    merchant_id: string,
+  ): Promise<MerchantDocument> {
+    return this.merchantRepository
+      .findOne({
+        where: { id: merchant_id },
+        select: ['id'],
+      })
+      .catch((err) => {
+        const errors: RMessage = {
+          value: merchant_id,
           property: 'Nama merchant tidak tersedia mohon di periksa kembali!',
           constraint: [err.message],
         };
@@ -1721,17 +1747,17 @@ export class StoresService {
   }
 
   //** Get Merchants ID By Names */
-  async findDefaultPhotoByMerchantName(
-    merchant_name: string,
+  async findDefaultPhotoByMerchantId(
+    merchant_id: string,
   ): Promise<MerchantDocument> {
     return this.merchantRepository
       .findOne({
-        where: { name: In([merchant_name]) },
+        where: { id: merchant_id },
         select: ['profile_store_photo'],
       })
       .catch((err) => {
         const errors: RMessage = {
-          value: merchant_name,
+          value: merchant_id,
           property: 'Nama merchant tidak tersedia mohon di periksa kembali!',
           constraint: [err.message],
         };
@@ -1746,15 +1772,15 @@ export class StoresService {
   }
 
   //** Check Exists Name Store */
-  async findStoreNameByName(store_name: string): Promise<StoreDocument> {
+  async findStoreNameByName(store_name: string[]): Promise<StoreDocument[]> {
     return this.storeRepository
-      .findOne({
-        where: { name: In([store_name]) },
+      .find({
+        where: { name: store_name },
         select: ['name'],
       })
       .catch((err) => {
         const errors: RMessage = {
-          value: store_name,
+          value: '',
           property: 'Nama store tidak tersedia mohon di periksa kembali!',
           constraint: [err.message],
         };
@@ -1769,38 +1795,191 @@ export class StoresService {
   }
 
   //** Bulk Insert Stores */
-  async bulkinsertStores(objectExcel: string): Promise<any> {
+  async uploadStore(
+    path: string,
+    merchant: any,
+  ): Promise <any> {
     try {
-      for (const value of Object.values(objectExcel)) {
-        // get merchant id by name
-        const isGetMerchantsId = await this.findMerchantsIdByNames(
-          value['merchant_name'],
-        );
-        const merchant_id = Object.values(isGetMerchantsId).shift();
+      const merchant_id: string = merchant.id;
 
-        // get merchant id by name
-        const isDefaultPhoto = await this.findDefaultPhotoByMerchantName(
-          value['merchant_name'],
-        );
-        const defaultPhoto = Object.values(isDefaultPhoto).shift();
+      //=> Extract data dari excel
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.readFile(path);
+      const sheetEfood = workbook.getWorksheet('Efood');
 
-        // check store name by name
-        const checkStoreNameExits = await this.findStoreNameByName(
-          value['store_name'],
-        );
+      const storeData: Partial<StoreDocument>[] = [];
+      const errorMessage: any[] = [];
 
-        // create array from excel value
-        const storeData: Partial<StoreDocument>[] = [];
+      // Recheck again for merchant id
+      this.findMerchantByMerchantIds(merchant_id).catch(() => {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: merchant_id,
+              property: 'merchant_id',
+              constraint: [
+                this.messageService.get('merchantid_notfound'),
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      });
+
+      //=> Validasi Data
+    sheetEfood.eachRow((row, rowNumber) => {
+      const errorLine = {
+        value: rowNumber,
+        property: 'line',
+        constraints: [],
+      };
+      
+      if (rowNumber > 1) {
+        if (!row.values[1] || row.values[1] == '') {
+          errorLine.constraints.push({
+            value: row.values[1],
+            column: 'Nama Store',
+            message: 'Nama store tidak boleh kosong',
+          });
+        }
+
+        if (!row.values[1] || row.values[1] == '') {
+          errorLine.constraints.push({
+            value: row.values[1],
+            column: 'Nama Store',
+            message: 'Nama store tidak boleh kosong',
+          });
+        } else if (typeof row.values[1] !== 'string') {
+          errorLine.constraints.push({
+            value: row.values[1],
+            column: 'Nama Store',
+            message: 'Nama store harus string',
+          });
+        }
+
+        if (!row.values[2] || row.values[2] == '') {
+          errorLine.constraints.push({
+            value: row.values[2],
+            column: 'Phone',
+            message: 'Phone number tidak boleh kosong',
+          });
+        } else if (typeof row.values[2] !== 'number') {
+          errorLine.constraints.push({
+            value: row.values[2],
+            column: 'Phone',
+            message: 'Phone number harus number',
+          });
+        }
+
+        if (!row.values[3] || row.values[3] == '') {
+          errorLine.constraints.push({
+            value: row.values[3],
+            column: 'Email',
+            message: 'Email tidak boleh kosong',
+          });
+        }
+
+        if (!row.values[4] || row.values[4] == '') {
+          errorLine.constraints.push({
+            value: row.values[4],
+            column: 'Alamat',
+            message: 'Alamat tidak boleh kosong',
+          });
+        } 
+
+        if (!'1' || row.values[5] == '') {
+          errorLine.constraints.push({
+            value: row.values[5],
+            column: 'Location Longitude',
+            message: 'Location longitude tidak boleh kosong',
+          });
+        } 
+
+        if (!row.values[6] || row.values[6] == '') {
+          errorLine.constraints.push({
+            value: row.values[6],
+            column: 'Location Latitude',
+            message: 'Location latitude tidak boleh kosong',
+          });
+        }
+
+        if (!row.values[7] || row.values[7] == '') {
+          errorLine.constraints.push({
+            value: row.values[7],
+            column: 'Nama Bank',
+            message: 'Nama bank tidak boleh kosong',
+          });
+        } else if (typeof row.values[7] !== 'string') {
+          errorLine.constraints.push({
+            value: row.values[7],
+            column: 'Nama Bank',
+            message: 'Nama bank harus string',
+          });
+        }
+
+        if (!row.values[8] || row.values[8] == '') {
+          errorLine.constraints.push({
+            value: row.values[8],
+            column: 'Nomor Rekening Pemilik Bank',
+            message: 'Nomor rekening pemilik bank tidak boleh kosong',
+          });
+        } else if (typeof row.values[8] !== 'number') {
+          errorLine.constraints.push({
+            value: row.values[8],
+            column: 'Nomor Rekening Pemilik Bank',
+            message: 'Nomor rekening pemilik bank harus string',
+          });
+        }
+
+        if (!row.values[9] || row.values[9] == '') {
+          errorLine.constraints.push({
+            value: row.values[9],
+            column: 'Nama Pemilik Rekening Bank',
+            message: 'Name pemilik rekening bank tidak boleh kosong',
+          });
+        } else if (typeof row.values[9] !== 'string') {
+          errorLine.constraints.push({
+            value: row.values[9],
+            column: 'Nama Pemilik Rekening Bank',
+            message: 'Name pemilik rekening bank harus string',
+          });
+        }
+        
+        if (errorLine.constraints.length) {
+          errorMessage.push(errorLine);
+        }
+      } 
+    });
+
+    //=> Throw jika terdapat error
+    if (errorMessage.length) {
+      throw new BadRequestException(
+        {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: errorMessage,
+        },
+        'Bad Request',
+      );
+    }
+
+    // Get default photo from merchant ID
+    const isDefaultPhoto = await this.findDefaultPhotoByMerchantId(merchant_id);
+    const defaultPhoto = Object.values(isDefaultPhoto).shift();
+
+    //=> Proses data jika data lengkap
+    sheetEfood.eachRow(async (row, rowNumber) => {
+      if(rowNumber > 1){
         storeData.push({
           merchant_id: merchant_id,
-          name: value['store_name'],
-          phone: value['phone'],
-          email: value['email'],
-          city_id: 'ba9613ec-3d67-4df4-8a84-a45e7006edb8',
-          address: value['address'],
-          location_longitude: value['location_longitude'],
-          location_latitude: value['location_latitude'],
-          gmt_offset: 0,
+          name: row.values[1],
+          phone: row.values[2],
+          email: row.values[3].text,
+          city_id: 'ba9613ec-3d67-4df4-8a84-a45e7006edb8', // default city bandung
+          address: row.values[4],
+          location_longitude: row.values[5],
+          location_latitude: row.values[6],
+          gmt_offset: null,
           is_store_open: false,
           is_open_24h: false,
           average_price: 0,
@@ -1808,58 +1987,97 @@ export class StoresService {
           photo: defaultPhoto,
           banner: defaultPhoto,
           delivery_type: enumDeliveryType.delivery_and_pickup,
-          bank_id: value['bank_name'].slice(0, 36),
-          bank_account_no: value['bank_account_no'],
-          rating: 0,
-          numrating: 0,
+          bank_id: row.values[7].slice(0, 36),
+          bank_account_no: row.values[8],
+          rating: null,
+          numrating: null,
           numorders: 0,
-          bank_account_name: value['bank_account_name'],
+          bank_account_name: row.values[9],
           auto_accept_order: false,
           status: enumStoreStatus.active,
         });
-
-        // check merchant id existing
-        if (isGetMerchantsId == undefined) {
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: merchant_id,
-                property: 'Nama merchant tidak dapat di temukan!.',
-                constraint: [
-                  this.messageService.get(
-                    'merchant.createstore.merchantid_notactive',
-                  ),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        }
-
-        // execute insert db store
-        if (checkStoreNameExits == undefined) {
-          const create_bulk_stores = await this.storeRepository.save(storeData);
-          create_bulk_stores.push();
-        } else if (checkStoreNameExits != value['store_name']) {
-          // check store name existing
-          throw new BadRequestException(
-            this.responseService.error(
-              HttpStatus.BAD_REQUEST,
-              {
-                value: value['store_name'],
-                property: 'Nama store sudah di gunakan!.',
-                constraint: [
-                  this.messageService.get('merchant.createstore.fail'),
-                ],
-              },
-              'Bad Request',
-            ),
-          );
-        }
       }
+    });
+
+    // Looping tiap menu, create menu ke DB
+    const stores: StoreDocument[] = [];
+    const promises = storeData.map(
+      async (store: Partial<StoreDocument>) => {
+        
+        // This for check store name Existing
+        const store_name = store.name;
+        const checkExistingStore = await this.storeRepository.find({
+          where: {name: store_name},
+          select: ['name'],
+        });
+        const jsonStoreData = JSON.parse(JSON.stringify(checkExistingStore));
+        
+        // Error if store name already
+        for (const value of Object.values(jsonStoreData)) {
+          if (store_name == value['name']) {
+            throw new Error('Periksa kembali nama store sudah ada yang gunakan.');
+          } 
+        }
+
+        // save if name store null
+        const create_store = await this.storeRepository.save(store);
+        stores.push(create_store);
+
+        return create_store;
+      },
+    );  
+    return Promise.all(promises)
+    .then(async (result_save) => {
+      if (!result_save.length) {
+        throw new Error('Tidak ada store yang disimpan');
+      }
+
+      result_save = result_save.map((val) => {
+        dbOutputTime(val);
+        return val;
+      });
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('merchant.createstore.success'),
+        { menus: result_save },
+      );
+    })
+    .catch((err) => {
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          {
+            value: '',
+            property: err.column,
+            constraint: [err.message],
+          },
+          'Bad Request',
+        ),
+      );
+    });
+
     } catch (error) {
-      throw error;
+      if (error.message != 'Bad Request Exception') {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: error.value || '',
+              property: error.property || '',
+              constraint: error.constraint || [
+                this.messageService.get(
+                  'merchant.createstore.fail',
+                ),
+                error.message,
+              ],
+            },
+            'Bad Request',
+          ),
+        );
+      } else {
+        throw error;
+      }
     }
   }
 
@@ -1942,11 +2160,6 @@ export class StoresService {
 
       const sheetEfoodColumns: any[] = [
         {
-          header: 'Nama Brand (optional)',
-          key: 'merchant_name',
-          width: 25,
-        },
-        {
           header: 'Nama Store*',
           key: 'store_name',
           width: 25,
@@ -2016,15 +2229,6 @@ export class StoresService {
       sheetEfood.getRow(2).font = { bold: true };
       sheetEfood.getRow(2).alignment = { horizontal: 'center', wrapText: true };
 
-      //** create validation sheets merchants */
-      const sheetsMerchantData = workbook.addWorksheet('Merchant_Data', {
-        properties: { defaultColWidth: 50 },
-      });
-
-      for (const merchantsDatas of merchantsData) {
-        sheetsMerchantData.addRow(Object.values(merchantsDatas));
-      }
-
       //** create validation sheets bank */
       const sheetBankData = workbook.addWorksheet('Bank_Data', {
         properties: { defaultColWidth: 50 },
@@ -2038,21 +2242,12 @@ export class StoresService {
       for (let i = 3; i <= 50; i++) {
         const selectedRow = sheetEfood.getRow(i);
 
-        //** validation merchant */
-        if (merchantsData.length) {
-          selectedRow.getCell(1).dataValidation = {
-            type: 'list',
-            allowBlank: false,
-            formulae: [`Merchant_Data!$B$1:$B$${merchantsData.length}`],
-          };
-        }
-
         //** validation bank */
         if (bankData.length) {
           selectedRow.getCell(8).dataValidation = {
             type: 'list',
             allowBlank: false,
-            formulae: [`Bank_Data!$B$2:$B$${bankData.length}`],
+            formulae: [`Bank_Data!$B$1:$B$${bankData.length}`],
           };
         }
       }

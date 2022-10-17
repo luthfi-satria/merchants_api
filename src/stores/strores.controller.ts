@@ -18,6 +18,7 @@ import {
   Res,
   HttpException,
   UploadedFile,
+  Headers,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
@@ -32,6 +33,7 @@ import {
 } from 'src/database/entities/store.entity';
 import {
   editFileName,
+  excelFileFilter,
   imageFileFilter,
   imageJpgPngFileFilter,
 } from 'src/utils/general-utils';
@@ -355,44 +357,55 @@ export class StoresController {
     images.stream.pipe(res);
   }
 
-  //** Bulk Insert Stores */
-  @Post('bulk')
+  @Post('bulk/:merchant_id/upload')
+  @UseGuards()
   @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
   @ResponseStatusCode()
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadBulkStore(
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './upload_stores',
+        filename: editFileName,
+      }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
+      fileFilter: excelFileFilter,
+    }),
+  )
+  async bulkCreateMenus(
+    @Req() req: any,
+    @Param('merchant_id') merchant_id: string,
     @UploadedFile() file: Express.Multer.File,
+    @Headers('Authorization') token: string,
   ): Promise<any> {
     try {
-      const workbook: XLSX.WorkBook = XLSX.read(file.buffer);
-      const sheetname = workbook?.SheetNames[0];
-      const sheet: XLSX.WorkSheet = workbook.Sheets[sheetname];
-      const jsonData = XLSX.utils.sheet_to_json(sheet, {
-        dateNF: 'YYYY-MM-DD',
-      });
+      await this.imageValidationService.validate(req);
 
-      const objectExcel = JSON.parse(JSON.stringify(jsonData));
-      await this.storesService.bulkinsertStores(objectExcel);
+      // Get merchant data from Merchant Service
+      const isMerchantExist = await this.storesService.findMerchantByMerchantId(
+        merchant_id,
+        token,
+      );
 
-      if (!objectExcel) {
-        const errors: RMessage = {
-          value: '',
-          property: 'objectExcel',
-          constraint: [this.messageService.get('merchant.createstore.fail')],
-        };
+      if (!file) {
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,
-            errors,
+            {
+              value: null,
+              property: 'file',
+              constraint: [this.messageService.get('File kosong.')],
+            },
             'Bad Request',
           ),
         );
       }
-      return this.responseService.success(
-        true,
-        this.messageService.get('merchant.createstore.success'),
-        objectExcel,
+      return this.storesService.uploadStore(
+        file.path,
+        isMerchantExist,
       );
+
     } catch (error) {
       throw error;
     }
