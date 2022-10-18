@@ -17,12 +17,14 @@ import {
   NotFoundException,
   Res,
   HttpException,
+  UploadedFile,
+  Headers,
 } from '@nestjs/common';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { RMessage } from 'src/response/response.interface';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { CreateMerchantStoreValidation } from './validation/create-merchant-stores.validation';
 import {
@@ -31,6 +33,7 @@ import {
 } from 'src/database/entities/store.entity';
 import {
   editFileName,
+  excelFileFilter,
   imageFileFilter,
   imageJpgPngFileFilter,
 } from 'src/utils/general-utils';
@@ -51,6 +54,8 @@ import { ResponseExcludeData } from 'src/response/response_exclude_param.interce
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 import { Response } from 'express';
 import etag from 'etag';
+import * as XLSX from 'xlsx';
+
 @Controller('api/v1/merchants')
 export class StoresController {
   constructor(
@@ -350,5 +355,118 @@ export class StoresController {
     });
 
     images.stream.pipe(res);
+  }
+
+  @Post('bulk/:merchant_id/upload')
+  @UseGuards()
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @ResponseStatusCode()
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './upload_stores',
+        filename: editFileName,
+      }),
+      limits: {
+        fileSize: 2000000, //2MB
+      },
+      fileFilter: excelFileFilter,
+    }),
+  )
+  async bulkCreateMenus(
+    @Req() req: any,
+    @Param('merchant_id') merchant_id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Headers('Authorization') token: string,
+  ): Promise<any> {
+    try {
+      await this.imageValidationService.validate(req);
+
+      // Get merchant data from Merchant Service
+      const isMerchantExist = await this.storesService.findMerchantByMerchantId(
+        merchant_id,
+        token,
+      );
+
+      if (!file) {
+        throw new BadRequestException(
+          this.responseService.error(
+            HttpStatus.BAD_REQUEST,
+            {
+              value: null,
+              property: 'file',
+              constraint: [this.messageService.get('File kosong.')],
+            },
+            'Bad Request',
+          ),
+        );
+      }
+      return this.storesService.uploadStore(
+        file.path,
+        isMerchantExist,
+      );
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //** Download template bulk insert store */
+  @Get('/template/stores/:merchant_id')
+  @UseGuards()
+  @UserTypeAndLevel('admin.*', 'merchant.group', 'merchant.merchant')
+  @ResponseStatusCode()
+  async downloadBulkInsertStoreTemplate(
+    @Param('merchant_id') merchant_id: string,
+  ): Promise<any> {
+    
+    if(!merchant_id.length) {
+      const errors: RMessage = {
+        value: 'merchant_id not_found',
+        property: 'merchant_id',
+        constraint: [
+          this.messageService.get('Gagal mengambil data merchant.')
+        ],
+      };
+      throw new BadRequestException(
+        this.responseService.error(
+          HttpStatus.BAD_REQUEST,
+          errors,
+          'Bad Request',
+        ),
+      );
+    }
+    return this.storesService.downloadBulkInsertStoreTemplate(
+      merchant_id,
+    );
+  } catch (error) {
+    throw error;
+  }
+
+  //** Dowmload file store upload */
+  @Get('stores/:merchant_id/file/:file_id')
+  async streamFiles(
+    @Param('merchant_id') merchant_id: string,
+    @Param('file_id') file_id: string,
+    @Res() res: Response,
+  ) {
+    const data: any = { merchant_id, file_id };
+
+    let buffer = null;
+    let stream = null;
+    try {
+      buffer = await this.storesService.getBufferS3Xlsx(data);
+      stream = await this.storesService.getReadableStream(buffer);
+    } catch (error) {
+      console.log(error);
+    }
+
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Length': buffer.length,
+    });
+
+    stream.pipe(res);
   }
 }
