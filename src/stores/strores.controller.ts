@@ -442,4 +442,31 @@ export class StoresController {
   } catch (error) {
     throw error;
   }
+
+  //** Dowmload file store upload */
+  @Get('stores/:merchant_id/file/:file_id')
+  async streamFiles(
+    @Param('merchant_id') merchant_id: string,
+    @Param('file_id') file_id: string,
+    @Res() res: Response,
+  ) {
+    const data: any = { merchant_id, file_id };
+
+    let buffer = null;
+    let stream = null;
+    try {
+      buffer = await this.storesService.getBufferS3Xlsx(data);
+      stream = await this.storesService.getReadableStream(buffer);
+    } catch (error) {
+      console.log(error);
+    }
+
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Length': buffer.length,
+    });
+
+    stream.pipe(res);
+  }
 }

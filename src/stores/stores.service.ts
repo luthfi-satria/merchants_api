@@ -61,6 +61,7 @@ import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
 import { StoreOperationalHoursDocument } from '../database/entities/store_operational_hours.entity';
 import moment from 'moment';
 import ExcelJS from 'exceljs';
+import { Readable } from 'typeorm/platform/PlatformTools';
 
 @Injectable()
 export class StoresService {
@@ -2086,6 +2087,13 @@ export class StoresService {
     merchant_id: string,
   ): Promise<any> {
     try {
+      const bankDataArgs: any = {
+        limit: 999,
+        page: 1,
+        merchant_id,
+        status: 'ACTIVE',
+      };
+
       //** get merchant data for create validation */
       const getMerchantDataRow: any = await this.merchantRepository.find({
         where: { id: merchant_id},
@@ -2105,12 +2113,6 @@ export class StoresService {
           ),
         );
       }
-
-      //** create array merchants */
-      const merchantsData = getMerchantDataRow.map((merchants: any) => ({
-        id: merchants.id,
-        name: merchants.name,
-      }));
 
       //** get bank data for create validation */
       const url = `${process.env.BASEURL_PAYMENTS_SERVICE}/api/v1/payments/disbursements/methods?page=1&limit=999&statuses[]=ACTIVE&type=BANK_ACCOUNT`;
@@ -2132,10 +2134,12 @@ export class StoresService {
       }
 
       //** create array bank */
-      const bankData = getBankDdataRow.map((bank: any) => ({
-        id: bank.id,
-        name: bank.name,
-      }));
+      const bankData = getBankDdataRow.data.items.map(
+        (bankData: any) => {
+          const catIndex = `${bankData.name} (${bankData.id})`;
+          return { id: bankData.id, name: catIndex };
+        },
+      );
 
       //=> create workbook
       const workbook = new ExcelJS.Workbook();
@@ -2149,8 +2153,7 @@ export class StoresService {
         null,
         null,
         null,
-        null,
-        null,
+        null
       ];
 
       //=> create sheetEfood
@@ -2221,7 +2224,6 @@ export class StoresService {
       sheetEfood.mergeCellsWithoutStyle(1, 7, 2, 7);
       sheetEfood.mergeCellsWithoutStyle(1, 8, 2, 8);
       sheetEfood.mergeCellsWithoutStyle(1, 9, 2, 9);
-      sheetEfood.mergeCellsWithoutStyle(1, 10, 2, 10);
 
       //=> Formating row 1 - 2
       sheetEfood.getRow(1).font = { bold: true };
@@ -2256,7 +2258,7 @@ export class StoresService {
       await workbook.xlsx.writeFile(`template_bulk_upload_store_${merchant_id}.xlsx`);
       await this.storage.store(`template_bulk_upload_store_${merchant_id}.xlsx`);
 
-      const download_url = `${process.env.BASEURL_API}/api/v1/merchant/${merchant_id}/file/template_bulk_upload_store.xlsx`;
+      const download_url = `${process.env.BASEURL_API}/api/v1/merchant/stores/${merchant_id}/file/template_bulk_upload_store_${merchant_id}.xlsx`;
 
       return this.responseService.success(
         true,
@@ -2285,5 +2287,24 @@ export class StoresService {
         throw error;
       }
     }
+  }
+
+  //** Download file store upload */
+  async getBufferS3Xlsx(data: any) {
+    const url = `${process.env.STORAGE_S3_BUCKET}/${data.file_id}`;
+
+    const bufferurl = await this.storage.getBuff(url);
+
+    return bufferurl;
+  }
+
+  async getReadableStream(buffer: Buffer) {
+    const stream = new Readable();
+
+    // stream._read = () => {};;;
+    stream.push(buffer);
+    stream.push(null);
+
+    return stream;
   }
 }
