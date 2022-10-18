@@ -12,6 +12,22 @@ export function CreateRandomNumber(pjg: number): string {
   return random_number.substring(random_number.length - 6);
 }
 
+export const excelFileFilter = (req: any, file: any, callback) => {
+  if (!file.originalname.match(/\.(xlsx)$/)) {
+    if (!req.fileValidationError) {
+      req.fileValidationError = [];
+    }
+    const error = {
+      value: file.originalname,
+      property: file.fieldname,
+      constraint: 'file.image.not_allowed',
+    };
+    req.fileValidationError.push(error);
+    callback(null, false);
+  }
+  callback(null, true);
+};
+
 export const editFileName = (req: any, file: any, callback: any) => {
   // const random_number = parseInt('0.' + randomBytes(8).toString('hex'), 16);
   const name = file.originalname.split('.')[0];
