@@ -2134,7 +2134,7 @@ export class StoresService {
       }
 
       //** create array bank */
-      const bankData = getBankDdataRow.data.items.map(
+      const bankData = getBankDdataRow.map(
         (bankData: any) => {
           const catIndex = `${bankData.name} (${bankData.id})`;
           return { id: bankData.id, name: catIndex };
@@ -2258,7 +2258,7 @@ export class StoresService {
       await workbook.xlsx.writeFile(`template_bulk_upload_store_${merchant_id}.xlsx`);
       await this.storage.store(`template_bulk_upload_store_${merchant_id}.xlsx`);
 
-      const download_url = `${process.env.BASEURL_API}/api/v1/merchant/stores/${merchant_id}/file/template_bulk_upload_store_${merchant_id}.xlsx`;
+      const download_url = `${process.env.BASEURL_API}/api/v1/merchants/stores/${merchant_id}/file/template_bulk_upload_store_${merchant_id}.xlsx`;
 
       return this.responseService.success(
         true,
