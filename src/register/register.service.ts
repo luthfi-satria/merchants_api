@@ -577,14 +577,6 @@ export class RegistersService {
         deleteCredParam(resultInsertMerchant);
       }
 
-      const pclogdata = {
-        id: resultInsertMerchant.id,
-      };
-      const createCatalog = await this.merchantService.createCatalogs(
-        pclogdata,
-      );
-      console.log(createCatalog);
-
       await this.merchantService.manipulateMerchantUrl(resultInsertMerchant);
       if (resultInsertMerchant.group)
         await this.groupsService.manipulateGroupUrl(resultInsertMerchant.group);
@@ -595,7 +587,10 @@ export class RegistersService {
       );
       const store_document: Partial<StoreDocument> = {};
       Object.assign(store_document, registerCorporateData);
+
       store_document.photo = createMerchantData.profile_store_photo;
+
+      store_document.status = enumStoreStatus.waiting_for_brand_approval;
 
       console.log(
         '===========================Start Debug registerCorporateData2=================================\n',
@@ -644,23 +639,19 @@ export class RegistersService {
 
       store_document.location_latitude =
         registerCorporateData.location_latitude;
+
       store_document.location_longitude =
         registerCorporateData.location_longitude;
+
       store_document.merchant_id = createMerchantUser.merchant_id;
+
       const store_categories = await this.storeService.getCategoriesByIds(
         registerCorporateData.category_ids,
       );
+
       const store_addons = await this.storeService.getAddonssBtIds(
         registerCorporateData.service_addons,
       );
-
-      if (createMerchantUser.status == 'WAITING_FOR_APPROVAL') {
-        store_document.status = enumStoreStatus.waiting_for_brand_approval;
-      }
-      if (store_document.status == 'ACTIVE')
-        store_document.approved_at = new Date();
-      if (store_document.status == 'REJECTED')
-        store_document.rejected_at = new Date();
 
       store_document.auto_accept_order =
         registerCorporateData.auto_accept_order == 'true' ? true : false;
@@ -680,7 +671,19 @@ export class RegistersService {
         .into(StoreDocument)
         .values(store_document)
         .execute();
+
       console.log('execInsertstore', execInsertStore);
+
+      const pclogdata = {
+        id: resultInsertMerchant.id,
+        store_id: execInsertStore.identifiers[0].id,
+      };
+
+      const createCatalog = await this.merchantService.createCatalogs(
+        pclogdata,
+      );
+
+      console.log(createCatalog);
 
       await queryRunner.manager
         .createQueryBuilder()
