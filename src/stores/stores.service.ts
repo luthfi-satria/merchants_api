@@ -1826,14 +1826,14 @@ export class StoresService {
   ): Promise <any> {
     try {
       const merchant_id: string = merchant.id;
+      const storeData: Partial<StoreDocument>[] = [];
+      const errorMessage: any[] = [];
 
       //=> Extract data dari excel
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.readFile(path);
       const sheetEfood = workbook.getWorksheet('Efood');
-
-      const storeData: Partial<StoreDocument>[] = [];
-      const errorMessage: any[] = [];
+      //const sheetBankData = workbook.getWorksheet('Bank_Data');
 
       // Recheck again for merchant id
       this.findMerchantByMerchantIds(merchant_id).catch(() => {
@@ -1853,14 +1853,14 @@ export class StoresService {
       });
 
       //=> Validasi Data
-    sheetEfood.eachRow((row, rowNumber) => {
+      sheetEfood.eachRow((row, rowNumber) => {
       const errorLine = {
         value: rowNumber,
         property: 'line',
         constraints: [],
       };
       
-      if (rowNumber > 1) {
+      if (rowNumber > 2) {
         if (!row.values[1] || row.values[1] == '') {
           errorLine.constraints.push({
             value: row.values[1],
@@ -1994,7 +1994,7 @@ export class StoresService {
 
     //=> Proses data jika data lengkap
     sheetEfood.eachRow(async (row, rowNumber) => {
-      if(rowNumber > 1){
+      if(rowNumber > 2){
         storeData.push({
           merchant_id: merchant_id,
           name: row.values[1],
@@ -2160,7 +2160,7 @@ export class StoresService {
       //** create array bank */
       const bankData = getBankDdataRow.map(
         (bankData: any) => {
-          const catIndex = `${bankData.name} (${bankData.id})`;
+          const catIndex = `${bankData.id}, (${bankData.name})`;
           return { id: bankData.id, name: catIndex };
         },
       );
@@ -2270,7 +2270,7 @@ export class StoresService {
 
         //** validation bank */
         if (bankData.length) {
-          selectedRow.getCell(8).dataValidation = {
+          selectedRow.getCell(7).dataValidation = {
             type: 'list',
             allowBlank: false,
             formulae: [`Bank_Data!$B$1:$B$${bankData.length}`],
