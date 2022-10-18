@@ -2246,7 +2246,7 @@ export class StoresService {
 
         //** validation bank */
         if (bankData.length) {
-          selectedRow.getCell(8).dataValidation = {
+          selectedRow.getCell(7).dataValidation = {
             type: 'list',
             allowBlank: false,
             formulae: [`Bank_Data!$B$1:$B$${bankData.length}`],
