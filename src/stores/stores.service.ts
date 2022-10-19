@@ -1809,7 +1809,7 @@ export class StoresService {
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.readFile(path);
       const sheetEfood = workbook.getWorksheet('Efood');
-      //const sheetBankData = workbook.getWorksheet('Bank_Data');
+      const sheetBankData = workbook.getWorksheet('Bank_Data');
 
       // Recheck again for merchant id
       this.findMerchantByMerchantIds(merchant_id).catch(() => {
@@ -2016,7 +2016,7 @@ export class StoresService {
         // Error if store name already
         for (const value of Object.values(jsonStoreData)) {
           if (store_name == value['name']) {
-            throw new Error('Periksa kembali nama store sudah ada yang gunakan.');
+            throw new Error(`Nama store (${store_name}!) ini tidak dapat di insert atau sudah digunakan.`);
           } 
         }
 
