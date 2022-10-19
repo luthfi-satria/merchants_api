@@ -12,14 +12,21 @@ export class ValidationMiddleware implements NestMiddleware {
   constructor(private readonly responseService: ResponseService) {}
 
   use(req: Request, res: Response, next: NextFunction) {
-    if (this.undefinedPathValidation(req)) {
+    const condition =
+      this.undefinedPathValidation(req) || this.nullPathValidation(req);
+
+    const message = this.undefinedPathValidation(req)
+      ? 'Contain undefined value on path.'
+      : 'Contain null value on path.';
+
+    if (condition) {
       throw new BadRequestException(
         this.responseService.error(
           HttpStatus.BAD_REQUEST,
           {
             value: null,
             property: null,
-            constraint: ['Contain undefined value on path.'],
+            constraint: [message],
           },
           'Bad Request',
         ),
@@ -33,5 +40,11 @@ export class ValidationMiddleware implements NestMiddleware {
     const lowerCaseUrl = req.path.toLowerCase();
 
     return lowerCaseUrl.includes('undefined');
+  }
+
+  nullPathValidation(req: Request) {
+    const lowerCaseUrl = req.path.toLowerCase();
+
+    return lowerCaseUrl.includes('null');
   }
 }
