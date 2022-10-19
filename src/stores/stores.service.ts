@@ -1809,7 +1809,7 @@ export class StoresService {
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.readFile(path);
       const sheetEfood = workbook.getWorksheet('Efood');
-      const sheetBankData = workbook.getWorksheet('Bank_Data');
+      //const sheetBankData = workbook.getWorksheet('Bank_Data');
 
       // Recheck again for merchant id
       this.findMerchantByMerchantIds(merchant_id).catch(() => {
