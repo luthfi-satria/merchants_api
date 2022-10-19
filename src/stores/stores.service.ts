@@ -1988,7 +1988,7 @@ export class StoresService {
           photo: defaultPhoto,
           banner: defaultPhoto,
           delivery_type: enumDeliveryType.delivery_and_pickup,
-          bank_id: row.values[7].slice(0),
+          bank_id: row.values[7].slice(0, 36),
           bank_account_no: row.values[8],
           rating: null,
           numrating: null,
