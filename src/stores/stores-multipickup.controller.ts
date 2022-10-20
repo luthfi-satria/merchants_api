@@ -1,4 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { StoresMultipickupDto } from 'src/internal/dto/store-multipickup.dto';
 import { ResponseStatusCode } from 'src/response/response.decorator';
 import { StoreMultipickupService } from './stores-multipickup.service';
 
@@ -10,7 +11,7 @@ export class StoreMultipickupsController {
 
   @Get('/find-merchant-by-radius')
   @ResponseStatusCode()
-  async findStoresByRadius(@Query() queryParam) {
+  async findStoresByRadius(@Query() queryParam: StoresMultipickupDto) {
     try {
       const findStores = await this.storeMultipickupService.findStoresByRadius(
         queryParam,
