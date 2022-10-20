@@ -76,6 +76,10 @@ export class StoreMultipickupService {
       const currTime = DateTimeUtils.DateTimeToUTC(new Date());
       const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
       const lang = param.lang || 'id';
+      const price_low = param.price_low || null;
+      const price_high = param.price_high || null;
+      const rating = param.rating || null;
+      const sort_by = param.sort_by || 'distance_in_km';
 
       // Getting setting radius dari table deliveries_settings
       // prefix: elog_
@@ -142,13 +146,29 @@ export class StoreMultipickupService {
           }),
         );
 
+      if (price_low) {
+        query.andWhere('merchant_store.average_price >= :price_low', {
+          price_low: price_low,
+        });
+      }
+
+      if (price_high) {
+        query.andWhere('merchant_store.average_price <= :price_high', {
+          price_high: price_high,
+        });
+      }
+
+      if (rating) {
+        query.andWhere('merchant_store.rating >= :rating', { rating: rating });
+      }
+
       if (store_category_id) {
         query.andWhere('merchant_store_categories.id = :storeCat', {
           storeCat: store_category_id,
         });
       }
 
-      query.orderBy('distance_in_km', 'ASC').limit(limit).offset(offset);
+      query.orderBy(sort_by, 'ASC').limit(limit).offset(offset);
 
       const queryResult = await query.getRawMany().catch(() => {
         throw new BadRequestException(
@@ -165,10 +185,12 @@ export class StoreMultipickupService {
           ),
         );
       });
+
       const items = await this.queryService.manipulateStoreDistance2(
         queryResult,
         lang,
       );
+
       queryResult.forEach((row) => {
         dbOutputTime(row);
         delete row.owner_password;
