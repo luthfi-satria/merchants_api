@@ -20,7 +20,7 @@ export class OrdersService {
       const headerRequest = {
         'Content-Type': 'application/json',
       };
-      const url = `${process.env.BASEURL_ORDERS_SERVICE}/api/v1/orders/internal/most-order-store-this-week`;
+      const url = `${process.env.BASEURL_ORDERS_SERVICE}/master/area/province?name=&page=1&limit=1000`;
       const post_request = this.httpService
         .post(url, null, { headers: headerRequest })
         .pipe(
@@ -37,7 +37,7 @@ export class OrdersService {
       return response.data;
     } catch (e) {
       this.logger.error(
-        `${process.env.BASEURL_ORDERS_SERVICE}/api/v1/orders/internal/most-order-store-this-week`,
+        `https://dev-api.elog.co.id/master/area/province?name=&page=1&limit=1000`,
       );
       if (e.response) {
         throw new HttpException(
@@ -55,7 +55,7 @@ export class OrdersService {
       const headerRequest = {
         'Content-Type': 'application/json',
       };
-      const url = `${process.env.BASEURL_ORDERS_SERVICE}/api/v1/orders/internal/cashier/inuse-status`;
+      const url = `https://dev-api.elog.co.id/api/v1/orders/internal/cashier/inuse-status`;
       const post_request = this.httpService
         .post(url, user, { headers: headerRequest })
         .pipe(
@@ -66,7 +66,7 @@ export class OrdersService {
       return await lastValueFrom(post_request);
     } catch (e) {
       this.logger.error(
-        `${process.env.BASEURL_ORDERS_SERVICE}/api/v1/orders/internal/cashier/inuse-status`,
+        `https://dev-api.elog.co.id/api/v1/orders/internal/cashier/inuse-status`,
       );
       if (e.response) {
         throw new HttpException(
