@@ -188,7 +188,7 @@ export class GetStoreFilter {
           ')) * SIN(RADIANS(model.location_latitude))))',
         'distance_in_km',
       )
-      .leftJoinAndSelect('model.service_addons', 'merchant_addon')
+      // .leftJoinAndSelect('model.service_addons', 'merchant_addon')
       .leftJoinAndSelect(
         'model.operational_hours',
         'operational_hours',

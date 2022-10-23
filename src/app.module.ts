@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
@@ -26,6 +31,8 @@ import { SeederModule } from './database/seeders/seeder.module';
 import { NatsModule } from './nats/nats.module';
 import { LoginMultilevelModule } from './login-multilevel/login-multilevel.module';
 import { RegistersModule } from './register/register.module';
+import { ResponseService } from './response/response.service';
+import { ValidationMiddleware } from './middleware/validation.middleware';
 import { UsersValidationModule } from './users_validation/users_validation.module';
 
 @Module({
@@ -60,6 +67,12 @@ import { UsersValidationModule } from './users_validation/users_validation.modul
     UsersValidationModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ResponseService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer
+      .apply(ValidationMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}
