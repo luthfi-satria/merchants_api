@@ -54,7 +54,6 @@ import { ResponseExcludeData } from 'src/response/response_exclude_param.interce
 import { ViewStoreDetailDTO } from './validation/view-store-detail.validation';
 import { Response } from 'express';
 import etag from 'etag';
-import * as XLSX from 'xlsx';
 
 @Controller('api/v1/merchants')
 export class StoresController {
@@ -401,11 +400,7 @@ export class StoresController {
           ),
         );
       }
-      return this.storesService.uploadStore(
-        file.path,
-        isMerchantExist,
-      );
-
+      return this.storesService.uploadStore(file.path, isMerchantExist);
     } catch (error) {
       throw error;
     }
@@ -419,14 +414,11 @@ export class StoresController {
   async downloadBulkInsertStoreTemplate(
     @Param('merchant_id') merchant_id: string,
   ): Promise<any> {
-    
-    if(!merchant_id.length) {
+    if (!merchant_id.length) {
       const errors: RMessage = {
         value: 'merchant_id not_found',
         property: 'merchant_id',
-        constraint: [
-          this.messageService.get('Gagal mengambil data merchant.')
-        ],
+        constraint: [this.messageService.get('Gagal mengambil data merchant.')],
       };
       throw new BadRequestException(
         this.responseService.error(
@@ -436,10 +428,9 @@ export class StoresController {
         ),
       );
     }
-    return this.storesService.downloadBulkInsertStoreTemplate(
-      merchant_id,
-    );
-  } catch (error) {
+    return this.storesService.downloadBulkInsertStoreTemplate(merchant_id);
+  }
+  catch(error) {
     throw error;
   }
 
