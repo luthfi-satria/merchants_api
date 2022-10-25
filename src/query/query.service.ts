@@ -1629,7 +1629,7 @@ export class QueryService {
 
     let totalItems = result[1];
 
-    console.log(totalItems, 'totalItem');
+    // console.log(totalItems, 'totalItem');
 
     const favoriteStore = params.favorite_this_week
       ? await this.ordersService.getFavoriteStoreThisWeek()
@@ -1650,7 +1650,7 @@ export class QueryService {
 
     if (params.platform) is_online_platform = params.platform == 'ONLINE';
 
-    console.log(storeItems, 'storeItem');
+    // console.log(storeItems, 'storeItem');
 
     const formattedStoredItems = await Promise.all(
       storeItems.map(async (row) => {
@@ -1764,7 +1764,7 @@ export class QueryService {
       }),
     );
 
-    console.log(formattedStoredItems, 'formatted');
+    // console.log(formattedStoredItems, 'formatted');
 
     const formattedArr = [];
 
