@@ -6,9 +6,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, firstValueFrom, map } from 'rxjs';
-import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
 import { QueryService } from 'src/query/query.service';
 import { ResponseService } from 'src/response/response.service';
@@ -18,7 +16,6 @@ export class StoreMultipickupService {
   constructor(
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
-    @InjectRepository(StoreDocument)
     private readonly httpService: HttpService,
     private readonly queryService: QueryService,
   ) {}
@@ -70,6 +67,7 @@ export class StoreMultipickupService {
       const multipickupRadius = elogSettings
         ? parseInt(elogSettings['elog_multipickup_radius'][0])
         : 500;
+      // const multipickupRadius = 1000;
 
       param.distance = multipickupRadius;
 
