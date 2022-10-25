@@ -12,7 +12,7 @@ export class LocationQuery implements FilterQueryInterface {
 
   public getQuery(): SelectQueryBuilder<any> {
     return this.query.andWhere(
-      '(6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(model.location_latitude)) * COS(RADIANS(model.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(model.location_latitude)))) <= :radius',
+      '(6371 * ACOS(COS(RADIANS(:lat)) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(:long)) + SIN(RADIANS(:lat)) * SIN(RADIANS(merchant_store.location_latitude)))) <= :radius',
       {
         radius: this.radius,
         lat: this.lat,
