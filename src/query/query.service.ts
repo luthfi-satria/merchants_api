@@ -1593,10 +1593,13 @@ export class QueryService {
         await this.getBudgetMealMaxValue(params.budget_meal),
       ]);
 
+      const filterPriceRange = await this.priceRangeService.findPricesByIds(
+        params.price_range_id,
+      );
+
       const priceParams = {
         is_filter_price,
-        priceLow,
-        priceHigh,
+        price_range_filter: filterPriceRange,
         isBudgetEnable,
         budgetMaxValue,
       };

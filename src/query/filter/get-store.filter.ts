@@ -137,8 +137,7 @@ export class GetStoreFilter {
         query,
         this.moduleName,
         this.priceParam.is_filter_price,
-        this.priceParam.priceLow,
-        this.priceParam.priceHigh,
+        this.priceParam.price_range_filter,
       ),
       new DiscountQuery(query, this.moduleName, this.params.promo),
       new OperationalStatusQuery(
