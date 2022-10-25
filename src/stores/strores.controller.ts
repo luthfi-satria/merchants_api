@@ -372,7 +372,7 @@ export class StoresController {
       fileFilter: excelFileFilter,
     }),
   )
-  async bulkCreateMenus(
+  async bulkCreateStores(
     @Req() req: any,
     @Param('merchant_id') merchant_id: string,
     @UploadedFile() file: Express.Multer.File,
