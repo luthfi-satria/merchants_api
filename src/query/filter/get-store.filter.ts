@@ -177,35 +177,68 @@ export class GetStoreFilter {
   getJoin(
     query: SelectQueryBuilder<StoreDocument>,
   ): SelectQueryBuilder<StoreDocument> {
-    return query
-      .addSelect(
-        '(6371 * ACOS(COS(RADIANS(' +
-          this.params.location_latitude +
-          ')) * COS(RADIANS(model.location_latitude)) * COS(RADIANS(model.location_longitude) - RADIANS(' +
-          this.params.location_longitude +
-          ')) + SIN(RADIANS(' +
-          this.params.location_latitude +
-          ')) * SIN(RADIANS(model.location_latitude))))',
-        'distance_in_km',
-      )
-      .leftJoinAndSelect('model.service_addons', 'merchant_addon')
-      .leftJoinAndSelect(
-        'model.operational_hours',
-        'operational_hours',
-        'operational_hours.merchant_store_id = model.id',
-      )
-      .leftJoinAndSelect('model.merchant', 'merchant')
-      .leftJoinAndSelect(
-        'operational_hours.shifts',
-        'operational_shifts',
-        'operational_shifts.store_operational_id = operational_hours.id',
-      )
-      .leftJoinAndSelect('model.store_categories', 'merchant_store_categories')
-      .leftJoinAndSelect(
-        'merchant_store_categories.languages',
-        'merchant_store_categories_languages',
-      )
-      .leftJoin('model.menus', 'menus');
+    return (
+      query
+        .select([
+          'model.id',
+          'model.name',
+          'model.location_longitude',
+          'model.location_latitude',
+          'model.average_price',
+          'model.platform',
+          'model.photo',
+          'model.banner',
+          'model.rating',
+          'model.numrating',
+          'model.status',
+          'operational_hours.id',
+          'operational_hours.day_of_week',
+          'merchant.id',
+          'merchant.profile_store_photo',
+          'merchant.recommended_promo_type',
+          'merchant.recommended_discount_type',
+          'merchant.recommended_discount_value',
+          'merchant.recommended_shopping_discount_type',
+          'merchant.recommended_shopping_discount_value',
+          'merchant.recommended_delivery_discount_type',
+          'merchant.recommended_delivery_discount_value',
+          'operational_shifts.id',
+          'operational_shifts.open_hour',
+          'operational_shifts.close_hour',
+          'merchant_store_categories.id',
+          'merchant_store_categories_languages.id',
+          'merchant_store_categories_languages.lang',
+          'merchant_store_categories_languages.name',
+        ])
+        .addSelect(
+          '(6371 * ACOS(COS(RADIANS(' +
+            this.params.location_latitude +
+            ')) * COS(RADIANS(model.location_latitude)) * COS(RADIANS(model.location_longitude) - RADIANS(' +
+            this.params.location_longitude +
+            ')) + SIN(RADIANS(' +
+            this.params.location_latitude +
+            ')) * SIN(RADIANS(model.location_latitude))))',
+          'distance_in_km',
+        )
+        // .leftJoinAndSelect('model.service_addons', 'merchant_addon')
+        .leftJoin(
+          'model.operational_hours',
+          'operational_hours',
+          'operational_hours.merchant_store_id = model.id',
+        )
+        .leftJoin('model.merchant', 'merchant')
+        .leftJoin(
+          'operational_hours.shifts',
+          'operational_shifts',
+          'operational_shifts.store_operational_id = operational_hours.id',
+        )
+        .leftJoin('model.store_categories', 'merchant_store_categories')
+        .leftJoin(
+          'merchant_store_categories.languages',
+          'merchant_store_categories_languages',
+        )
+        .leftJoin('model.menus', 'menus')
+    );
   }
 
   async getFavoriteStoreIds() {
