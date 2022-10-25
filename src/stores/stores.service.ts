@@ -1725,6 +1725,7 @@ export class StoresService {
     merchant_id: string,
     token: string,
   ): Promise<MerchantDocument> {
+    console.log(token);
     return this.merchantRepository
       .findOne({
         where: { id: In([merchant_id]) },
@@ -1820,10 +1821,7 @@ export class StoresService {
   }
 
   //** Bulk Insert Stores */
-  async uploadStore(
-    path: string,
-    merchant: any,
-  ): Promise <any> {
+  async uploadStore(path: string, merchant: any): Promise<any> {
     try {
       const merchant_id: string = merchant.id;
       const storeData: Partial<StoreDocument>[] = [];
@@ -1843,9 +1841,7 @@ export class StoresService {
             {
               value: merchant_id,
               property: 'merchant_id',
-              constraint: [
-                this.messageService.get('merchantid_notfound'),
-              ],
+              constraint: [this.messageService.get('merchantid_notfound')],
             },
             'Bad Request',
           ),
@@ -1854,194 +1850,196 @@ export class StoresService {
 
       //=> Validasi Data
       sheetEfood.eachRow((row, rowNumber) => {
-      const errorLine = {
-        value: rowNumber,
-        property: 'line',
-        constraints: [],
-      };
-      
-      if (rowNumber > 2) {
-        if (!row.values[1] || row.values[1] == '') {
-          errorLine.constraints.push({
-            value: row.values[1],
-            column: 'Nama Store',
-            message: 'Nama store tidak boleh kosong',
-          });
+        const errorLine = {
+          value: rowNumber,
+          property: 'line',
+          constraints: [],
+        };
+
+        if (rowNumber > 2) {
+          if (!row.values[1] || row.values[1] == '') {
+            errorLine.constraints.push({
+              value: row.values[1],
+              column: 'Nama Store',
+              message: 'Nama store tidak boleh kosong',
+            });
+          }
+
+          if (!row.values[1] || row.values[1] == '') {
+            errorLine.constraints.push({
+              value: row.values[1],
+              column: 'Nama Store',
+              message: 'Nama store tidak boleh kosong',
+            });
+          } else if (typeof row.values[1] !== 'string') {
+            errorLine.constraints.push({
+              value: row.values[1],
+              column: 'Nama Store',
+              message: 'Nama store harus string',
+            });
+          }
+
+          if (!row.values[2] || row.values[2] == '') {
+            errorLine.constraints.push({
+              value: row.values[2],
+              column: 'Phone',
+              message: 'Phone number tidak boleh kosong',
+            });
+          } else if (typeof row.values[2] !== 'number') {
+            errorLine.constraints.push({
+              value: row.values[2],
+              column: 'Phone',
+              message: 'Phone number harus number',
+            });
+          }
+
+          if (!row.values[3] || row.values[3] == '') {
+            errorLine.constraints.push({
+              value: row.values[3],
+              column: 'Email',
+              message: 'Email tidak boleh kosong',
+            });
+          }
+
+          if (!row.values[4] || row.values[4] == '') {
+            errorLine.constraints.push({
+              value: row.values[4],
+              column: 'Alamat',
+              message: 'Alamat tidak boleh kosong',
+            });
+          }
+
+          if (!'1' || row.values[5] == '') {
+            errorLine.constraints.push({
+              value: row.values[5],
+              column: 'Location Longitude',
+              message: 'Location longitude tidak boleh kosong',
+            });
+          }
+
+          if (!row.values[6] || row.values[6] == '') {
+            errorLine.constraints.push({
+              value: row.values[6],
+              column: 'Location Latitude',
+              message: 'Location latitude tidak boleh kosong',
+            });
+          }
+
+          if (!row.values[7] || row.values[7] == '') {
+            errorLine.constraints.push({
+              value: row.values[7],
+              column: 'Nama Bank',
+              message: 'Nama bank tidak boleh kosong',
+            });
+          } else if (typeof row.values[7] !== 'string') {
+            errorLine.constraints.push({
+              value: row.values[7],
+              column: 'Nama Bank',
+              message: 'Nama bank harus string',
+            });
+          }
+
+          if (!row.values[8] || row.values[8] == '') {
+            errorLine.constraints.push({
+              value: row.values[8],
+              column: 'Nomor Rekening Pemilik Bank',
+              message: 'Nomor rekening pemilik bank tidak boleh kosong',
+            });
+          } else if (typeof row.values[8] !== 'number') {
+            errorLine.constraints.push({
+              value: row.values[8],
+              column: 'Nomor Rekening Pemilik Bank',
+              message: 'Nomor rekening pemilik bank harus string',
+            });
+          }
+
+          if (!row.values[9] || row.values[9] == '') {
+            errorLine.constraints.push({
+              value: row.values[9],
+              column: 'Nama Pemilik Rekening Bank',
+              message: 'Name pemilik rekening bank tidak boleh kosong',
+            });
+          } else if (typeof row.values[9] !== 'string') {
+            errorLine.constraints.push({
+              value: row.values[9],
+              column: 'Nama Pemilik Rekening Bank',
+              message: 'Name pemilik rekening bank harus string',
+            });
+          }
+
+          if (errorLine.constraints.length) {
+            errorMessage.push(errorLine);
+          }
         }
+      });
 
-        if (!row.values[1] || row.values[1] == '') {
-          errorLine.constraints.push({
-            value: row.values[1],
-            column: 'Nama Store',
-            message: 'Nama store tidak boleh kosong',
-          });
-        } else if (typeof row.values[1] !== 'string') {
-          errorLine.constraints.push({
-            value: row.values[1],
-            column: 'Nama Store',
-            message: 'Nama store harus string',
-          });
-        }
-
-        if (!row.values[2] || row.values[2] == '') {
-          errorLine.constraints.push({
-            value: row.values[2],
-            column: 'Phone',
-            message: 'Phone number tidak boleh kosong',
-          });
-        } else if (typeof row.values[2] !== 'number') {
-          errorLine.constraints.push({
-            value: row.values[2],
-            column: 'Phone',
-            message: 'Phone number harus number',
-          });
-        }
-
-        if (!row.values[3] || row.values[3] == '') {
-          errorLine.constraints.push({
-            value: row.values[3],
-            column: 'Email',
-            message: 'Email tidak boleh kosong',
-          });
-        }
-
-        if (!row.values[4] || row.values[4] == '') {
-          errorLine.constraints.push({
-            value: row.values[4],
-            column: 'Alamat',
-            message: 'Alamat tidak boleh kosong',
-          });
-        } 
-
-        if (!'1' || row.values[5] == '') {
-          errorLine.constraints.push({
-            value: row.values[5],
-            column: 'Location Longitude',
-            message: 'Location longitude tidak boleh kosong',
-          });
-        } 
-
-        if (!row.values[6] || row.values[6] == '') {
-          errorLine.constraints.push({
-            value: row.values[6],
-            column: 'Location Latitude',
-            message: 'Location latitude tidak boleh kosong',
-          });
-        }
-
-        if (!row.values[7] || row.values[7] == '') {
-          errorLine.constraints.push({
-            value: row.values[7],
-            column: 'Nama Bank',
-            message: 'Nama bank tidak boleh kosong',
-          });
-        } else if (typeof row.values[7] !== 'string') {
-          errorLine.constraints.push({
-            value: row.values[7],
-            column: 'Nama Bank',
-            message: 'Nama bank harus string',
-          });
-        }
-
-        if (!row.values[8] || row.values[8] == '') {
-          errorLine.constraints.push({
-            value: row.values[8],
-            column: 'Nomor Rekening Pemilik Bank',
-            message: 'Nomor rekening pemilik bank tidak boleh kosong',
-          });
-        } else if (typeof row.values[8] !== 'number') {
-          errorLine.constraints.push({
-            value: row.values[8],
-            column: 'Nomor Rekening Pemilik Bank',
-            message: 'Nomor rekening pemilik bank harus string',
-          });
-        }
-
-        if (!row.values[9] || row.values[9] == '') {
-          errorLine.constraints.push({
-            value: row.values[9],
-            column: 'Nama Pemilik Rekening Bank',
-            message: 'Name pemilik rekening bank tidak boleh kosong',
-          });
-        } else if (typeof row.values[9] !== 'string') {
-          errorLine.constraints.push({
-            value: row.values[9],
-            column: 'Nama Pemilik Rekening Bank',
-            message: 'Name pemilik rekening bank harus string',
-          });
-        }
-        
-        if (errorLine.constraints.length) {
-          errorMessage.push(errorLine);
-        }
-      } 
-    });
-
-    //=> Throw jika terdapat error
-    if (errorMessage.length) {
-      throw new BadRequestException(
-        {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: errorMessage,
-        },
-        'Bad Request',
-      );
-    }
-
-    // Get default photo from merchant ID
-    const isDefaultPhoto = await this.findDefaultPhotoByMerchantId(merchant_id);
-    const defaultPhoto = Object.values(isDefaultPhoto).shift();
-
-    //=> Proses data jika data lengkap
-    sheetEfood.eachRow(async (row, rowNumber) => {
-      if(rowNumber > 2){
-        storeData.push({
-          merchant_id: merchant_id,
-          name: row.values[1],
-          phone: row.values[2],
-          email: row.values[3].text,
-          city_id: 'ba9613ec-3d67-4df4-8a84-a45e7006edb8', // default city bandung
-          address: row.values[4],
-          location_longitude: row.values[5],
-          location_latitude: row.values[6],
-          gmt_offset: null,
-          is_store_open: false,
-          is_open_24h: false,
-          average_price: 0,
-          platform: true,
-          photo: defaultPhoto,
-          banner: defaultPhoto,
-          delivery_type: enumDeliveryType.delivery_and_pickup,
-          bank_id: row.values[7].slice(0, 36),
-          bank_account_no: row.values[8],
-          rating: null,
-          numrating: null,
-          numorders: 0,
-          bank_account_name: row.values[9],
-          auto_accept_order: false,
-          status: enumStoreStatus.active,
-        });
+      //=> Throw jika terdapat error
+      if (errorMessage.length) {
+        throw new BadRequestException(
+          {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: errorMessage,
+          },
+          'Bad Request',
+        );
       }
-    });
 
-    // Looping tiap menu, create menu ke DB
-    const stores: StoreDocument[] = [];
-    const promises = storeData.map(
-      async (store: Partial<StoreDocument>) => {
-        
+      // Get default photo from merchant ID
+      const isDefaultPhoto = await this.findDefaultPhotoByMerchantId(
+        merchant_id,
+      );
+      const defaultPhoto = Object.values(isDefaultPhoto).shift();
+
+      //=> Proses data jika data lengkap
+      sheetEfood.eachRow(async (row, rowNumber) => {
+        if (rowNumber > 2) {
+          storeData.push({
+            merchant_id: merchant_id,
+            name: row.values[1],
+            phone: row.values[2],
+            email: row.values[3].text,
+            city_id: 'ba9613ec-3d67-4df4-8a84-a45e7006edb8', // default city bandung
+            address: row.values[4],
+            location_longitude: row.values[5],
+            location_latitude: row.values[6],
+            gmt_offset: null,
+            is_store_open: false,
+            is_open_24h: false,
+            average_price: 0,
+            platform: true,
+            photo: defaultPhoto,
+            banner: defaultPhoto,
+            delivery_type: enumDeliveryType.delivery_and_pickup,
+            bank_id: row.values[7].slice(0, 36),
+            bank_account_no: row.values[8],
+            rating: null,
+            numrating: null,
+            numorders: 0,
+            bank_account_name: row.values[9],
+            auto_accept_order: false,
+            status: enumStoreStatus.active,
+          });
+        }
+      });
+
+      // Looping tiap menu, create menu ke DB
+      const stores: StoreDocument[] = [];
+      const promises = storeData.map(async (store: Partial<StoreDocument>) => {
         // This for check store name Existing
         const store_name = store.name;
         const checkExistingStore = await this.storeRepository.find({
-          where: {name: store_name},
+          where: { name: store_name },
           select: ['name'],
         });
         const jsonStoreData = JSON.parse(JSON.stringify(checkExistingStore));
-        
+
         // Error if store name already
         for (const value of Object.values(jsonStoreData)) {
           if (store_name == value['name']) {
-            throw new Error(`Nama store (${store_name}!) ini tidak dapat di insert atau sudah digunakan.`);
-          } 
+            throw new Error(
+              `Nama store (${store_name}!) ini tidak dapat di insert atau sudah digunakan.`,
+            );
+          }
         }
 
         // save if name store null
@@ -2049,39 +2047,37 @@ export class StoresService {
         stores.push(create_store);
 
         return create_store;
-      },
-    );  
-    return Promise.all(promises)
-    .then(async (result_save) => {
-      if (!result_save.length) {
-        throw new Error('Tidak ada store yang disimpan');
-      }
-
-      result_save = result_save.map((val) => {
-        dbOutputTime(val);
-        return val;
       });
+      return Promise.all(promises)
+        .then(async (result_save) => {
+          if (!result_save.length) {
+            throw new Error('Tidak ada store yang disimpan');
+          }
 
-      return this.responseService.success(
-        true,
-        this.messageService.get('merchant.createstore.success'),
-        { menus: result_save },
-      );
-    })
-    .catch((err) => {
-      throw new BadRequestException(
-        this.responseService.error(
-          HttpStatus.BAD_REQUEST,
-          {
-            value: '',
-            property: err.column,
-            constraint: [err.message],
-          },
-          'Bad Request',
-        ),
-      );
-    });
+          result_save = result_save.map((val) => {
+            dbOutputTime(val);
+            return val;
+          });
 
+          return this.responseService.success(
+            true,
+            this.messageService.get('merchant.createstore.success'),
+            { menus: result_save },
+          );
+        })
+        .catch((err) => {
+          throw new BadRequestException(
+            this.responseService.error(
+              HttpStatus.BAD_REQUEST,
+              {
+                value: '',
+                property: err.column,
+                constraint: [err.message],
+              },
+              'Bad Request',
+            ),
+          );
+        });
     } catch (error) {
       if (error.message != 'Bad Request Exception') {
         throw new BadRequestException(
@@ -2091,9 +2087,7 @@ export class StoresService {
               value: error.value || '',
               property: error.property || '',
               constraint: error.constraint || [
-                this.messageService.get(
-                  'merchant.createstore.fail',
-                ),
+                this.messageService.get('merchant.createstore.fail'),
                 error.message,
               ],
             },
@@ -2107,20 +2101,11 @@ export class StoresService {
   }
 
   //** Download template bulk upload store  */
-  async downloadBulkInsertStoreTemplate(
-    merchant_id: string,
-  ): Promise<any> {
+  async downloadBulkInsertStoreTemplate(merchant_id: string): Promise<any> {
     try {
-      const bankDataArgs: any = {
-        limit: 999,
-        page: 1,
-        merchant_id,
-        status: 'ACTIVE',
-      };
-
       //** get merchant data for create validation */
       const getMerchantDataRow: any = await this.merchantRepository.find({
-        where: { id: merchant_id},
+        where: { id: merchant_id },
         select: ['id', 'name'],
       });
 
@@ -2131,7 +2116,9 @@ export class StoresService {
             {
               value: 'merchant_not_found',
               property: getMerchantDataRow,
-              constraint: [this.messageService.get('Data brand tidak dapat ditemukan.')],
+              constraint: [
+                this.messageService.get('Data brand tidak dapat ditemukan.'),
+              ],
             },
             'Bad Request',
           ),
@@ -2150,7 +2137,9 @@ export class StoresService {
             {
               value: 'data_bank_not_found',
               property: getBankDdataRow,
-              constraint: [this.messageService.get('Data bank tidak dapat ditemukan.')],
+              constraint: [
+                this.messageService.get('Data bank tidak dapat ditemukan.'),
+              ],
             },
             'Bad Request',
           ),
@@ -2158,12 +2147,10 @@ export class StoresService {
       }
 
       //** create array bank */
-      const bankData = getBankDdataRow.map(
-        (bankData: any) => {
-          const catIndex = `${bankData.id}, (${bankData.name})`;
-          return { id: bankData.id, name: catIndex };
-        },
-      );
+      const bankData = getBankDdataRow.map((bankData: any) => {
+        const catIndex = `${bankData.id}, (${bankData.name})`;
+        return { id: bankData.id, name: catIndex };
+      });
 
       //=> create workbook
       const workbook = new ExcelJS.Workbook();
@@ -2177,7 +2164,7 @@ export class StoresService {
         null,
         null,
         null,
-        null
+        null,
       ];
 
       //=> create sheetEfood
@@ -2279,8 +2266,12 @@ export class StoresService {
       }
 
       //=> write workbook
-      await workbook.xlsx.writeFile(`template_bulk_upload_store_${merchant_id}.xlsx`);
-      await this.storage.store(`template_bulk_upload_store_${merchant_id}.xlsx`);
+      await workbook.xlsx.writeFile(
+        `template_bulk_upload_store_${merchant_id}.xlsx`,
+      );
+      await this.storage.store(
+        `template_bulk_upload_store_${merchant_id}.xlsx`,
+      );
 
       const download_url = `${process.env.BASEURL_API}/api/v1/merchants/stores/${merchant_id}/file/template_bulk_upload_store_${merchant_id}.xlsx`;
 
