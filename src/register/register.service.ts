@@ -577,14 +577,6 @@ export class RegistersService {
         deleteCredParam(resultInsertMerchant);
       }
 
-      const pclogdata = {
-        id: resultInsertMerchant.id,
-      };
-      const createCatalog = await this.merchantService.createCatalogs(
-        pclogdata,
-      );
-      console.log(createCatalog);
-
       await this.merchantService.manipulateMerchantUrl(resultInsertMerchant);
       if (resultInsertMerchant.group)
         await this.groupsService.manipulateGroupUrl(resultInsertMerchant.group);
@@ -679,7 +671,19 @@ export class RegistersService {
         .into(StoreDocument)
         .values(store_document)
         .execute();
+
       console.log('execInsertstore', execInsertStore);
+
+      const pclogdata = {
+        id: resultInsertMerchant.id,
+        store_id: execInsertStore.identifiers[0].id,
+      };
+
+      const createCatalog = await this.merchantService.createCatalogs(
+        pclogdata,
+      );
+
+      console.log(createCatalog);
 
       await queryRunner.manager
         .createQueryBuilder()
