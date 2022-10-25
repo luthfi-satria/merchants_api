@@ -1612,7 +1612,7 @@ export class QueryService {
 
       const perPage = params.limit ?? 10;
 
-      const query = this.storeRepository.createQueryBuilder('model');
+      const query = this.storeRepository.createQueryBuilder('merchant_store');
 
       const orderBy = params.order || null;
 

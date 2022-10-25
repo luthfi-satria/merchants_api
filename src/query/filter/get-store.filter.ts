@@ -24,7 +24,7 @@ import { DiscountQuery } from './query/discount.query';
 import { OperationalStatusQuery } from './query/operational-status.query';
 
 export class GetStoreFilter {
-  protected moduleName = 'model';
+  protected moduleName = 'merchant_store';
 
   constructor(
     public params: QueryListStoreDto,
@@ -180,17 +180,17 @@ export class GetStoreFilter {
     return (
       query
         .select([
-          'model.id',
-          'model.name',
-          'model.location_longitude',
-          'model.location_latitude',
-          'model.average_price',
-          'model.platform',
-          'model.photo',
-          'model.banner',
-          'model.rating',
-          'model.numrating',
-          'model.status',
+          'merchant_store.id',
+          'merchant_store.name',
+          'merchant_store.location_longitude',
+          'merchant_store.location_latitude',
+          'merchant_store.average_price',
+          'merchant_store.platform',
+          'merchant_store.photo',
+          'merchant_store.banner',
+          'merchant_store.rating',
+          'merchant_store.numrating',
+          'merchant_store.status',
           'operational_hours.id',
           'operational_hours.day_of_week',
           'merchant.id',
@@ -213,31 +213,34 @@ export class GetStoreFilter {
         .addSelect(
           '(6371 * ACOS(COS(RADIANS(' +
             this.params.location_latitude +
-            ')) * COS(RADIANS(model.location_latitude)) * COS(RADIANS(model.location_longitude) - RADIANS(' +
+            ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
             this.params.location_longitude +
             ')) + SIN(RADIANS(' +
             this.params.location_latitude +
-            ')) * SIN(RADIANS(model.location_latitude))))',
+            ')) * SIN(RADIANS(merchant_store.location_latitude))))',
           'distance_in_km',
         )
-        // .leftJoinAndSelect('model.service_addons', 'merchant_addon')
+        // .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon')
         .leftJoin(
-          'model.operational_hours',
+          'merchant_store.operational_hours',
           'operational_hours',
-          'operational_hours.merchant_store_id = model.id',
+          'operational_hours.merchant_store_id = merchant_store.id',
         )
-        .leftJoin('model.merchant', 'merchant')
+        .leftJoin('merchant_store.merchant', 'merchant')
         .leftJoin(
           'operational_hours.shifts',
           'operational_shifts',
           'operational_shifts.store_operational_id = operational_hours.id',
         )
-        .leftJoin('model.store_categories', 'merchant_store_categories')
+        .leftJoin(
+          'merchant_store.store_categories',
+          'merchant_store_categories',
+        )
         .leftJoin(
           'merchant_store_categories.languages',
           'merchant_store_categories_languages',
         )
-        .leftJoin('model.menus', 'menus')
+        .leftJoin('merchant_store.menus', 'menus')
     );
   }
 
