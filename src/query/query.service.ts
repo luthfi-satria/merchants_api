@@ -1593,10 +1593,12 @@ export class QueryService {
         await this.getBudgetMealMaxValue(params.budget_meal),
       ]);
 
-      const filterPriceRange = [];
+      let filterPriceRange = [];
 
       if (params?.price_range_id?.length > 0) {
-        await this.priceRangeService.findPricesByIds(params.price_range_id);
+        filterPriceRange = await this.priceRangeService.findPricesByIds(
+          params.price_range_id,
+        );
       }
 
       const priceParams = {
