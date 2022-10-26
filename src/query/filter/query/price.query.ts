@@ -12,7 +12,7 @@ export class PriceQuery implements FilterQueryInterface {
   ) {}
 
   public getQuery(): SelectQueryBuilder<any> {
-    if (!this.priceRangeFilter || this.priceRangeFilter.length == 0) {
+    if (!this.priceRangeFilter || this.priceRangeFilter?.length == 0) {
       return this.query;
     }
 
