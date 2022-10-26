@@ -1599,7 +1599,7 @@ export class QueryService {
 
       const priceParams = {
         is_filter_price,
-        price_range_filter: filterPriceRange,
+        price_range_filter: filterPriceRange ?? [],
         isBudgetEnable,
         budgetMaxValue,
       };
