@@ -16,6 +16,8 @@ export class PriceQuery implements FilterQueryInterface {
       return this.query;
     }
 
+    console.log('PRICE RANGE FILTER', this.priceRangeFilter);
+
     this.query.andWhere(
       new Brackets((qb) => {
         // qb.where(
@@ -25,12 +27,35 @@ export class PriceQuery implements FilterQueryInterface {
         //     priceHigh: this.priceRangeFilter[0].price_high,
         //   },
         // );
-        for (let i = 0; i < this.priceRangeFilter.length; i++) {
-          const priceRange = this.priceRangeFilter[i];
-          qb.orWhere(
-            `( ${this.moduleName}.average_price >= ${priceRange.price_low} AND ${this.moduleName}.average_price >= ${priceRange.price_high})`,
-          );
-        }
+
+        this.priceRangeFilter.forEach((priceRange, index) => {
+          console.log('CURRENT PRICE RANGE FILTER', priceRange);
+
+          if (index > 0) {
+            qb.orWhere(
+              `( ${this.moduleName}.average_price >= :priceLow${index} AND ${this.moduleName}.average_price >= :priceHigh${index})`,
+              {
+                ['priceLow']: priceRange.price_low,
+                ['priceHigh']: priceRange.price_high,
+              },
+            );
+          } else {
+            qb.where(
+              `( ${this.moduleName}.average_price >= :priceLow${index} AND ${this.moduleName}.average_price >= :priceHigh${index})`,
+              {
+                ['priceLow' + index]: priceRange.price_low,
+                ['priceHigh' + index]: priceRange.price_high,
+              },
+            );
+          }
+        });
+
+        // for (let i = 0; i < this.priceRangeFilter.length; i++) {
+        //   const priceRange = this.priceRangeFilter[i];
+        //   qb.orWhere(
+        //     `( ${this.moduleName}.average_price >= ${priceRange.price_low} AND ${this.moduleName}.average_price >= ${priceRange.price_high})`,
+        //   );
+        // }
       }),
     );
 
