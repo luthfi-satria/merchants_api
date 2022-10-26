@@ -33,7 +33,7 @@ export class PriceQuery implements FilterQueryInterface {
 
           if (index > 0) {
             qb.orWhere(
-              `( ${this.moduleName}.average_price >= :priceLow${index} AND ${this.moduleName}.average_price >= :priceHigh${index})`,
+              `( ${this.moduleName}.average_price >= :priceLow${index} AND ${this.moduleName}.average_price <= :priceHigh${index})`,
               {
                 ['priceLow']: priceRange.price_low,
                 ['priceHigh']: priceRange.price_high,
@@ -41,7 +41,7 @@ export class PriceQuery implements FilterQueryInterface {
             );
           } else {
             qb.where(
-              `( ${this.moduleName}.average_price >= :priceLow${index} AND ${this.moduleName}.average_price >= :priceHigh${index})`,
+              `( ${this.moduleName}.average_price >= :priceLow${index} AND ${this.moduleName}.average_price <= :priceHigh${index})`,
               {
                 ['priceLow' + index]: priceRange.price_low,
                 ['priceHigh' + index]: priceRange.price_high,
