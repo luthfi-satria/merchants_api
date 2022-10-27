@@ -8,7 +8,7 @@ import {
 import { FilterHelper } from './helper/filter.helper';
 import { QueryBunlderHelper } from './helper/base-query/helpers/query-bunlder.helper';
 import { WhereQueryHelper } from './helper/base-query/helpers/where-query.helper';
-import { OrWhereQueryHelper } from './helper/base-query/helpers/or-where-query.helper';
+// import { OrWhereQueryHelper } from './helper/base-query/helpers/or-where-query.helper';
 import { LocationQuery } from './query/location.query';
 import { SettingsService } from '../../settings/settings.service';
 import { WhereInQueryHelper } from './helper/base-query/helpers/where-in-query.helper';
