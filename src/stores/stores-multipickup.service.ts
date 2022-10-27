@@ -69,7 +69,7 @@ export class StoreMultipickupService {
         : 500;
       // const multipickupRadius = 1000;
 
-      param.distance = multipickupRadius;
+      param.distance = multipickupRadius / 1000;
 
       const StoreList = await this.queryService.getStoreList(param);
       StoreList.data.items.forEach((row) => {
