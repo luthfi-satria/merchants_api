@@ -1018,7 +1018,7 @@
   dependencies:
     "@types/express" "*"
 
-"@types/node@*", "@types/node@^14.0.1", "@types/node@^14.0.26", "@types/node@^14.14.36":
+"@types/node@*", "@types/node@^14.0.1", "@types/node@^14.14.36":
   "integrity" "sha512-q4jlIR71hUpWTnGhXWcakgkZeHa3CCjcQcnuzU8M891BAWA2jHiziiWEPEkdS5pFsz7H9HJiy8BrK7tBRNrY7A=="
   "resolved" "https://registry.npmjs.org/@types/node/-/node-14.18.12.tgz"
   "version" "14.18.12"
@@ -4976,12 +4976,13 @@
     "snapdragon" "^0.8.1"
     "to-regex" "^3.0.1"
 
-"nats@^2.4.0":
-  "integrity" "sha512-58RwwuHNbFPNQK0qao2VdWaD9DSxmCcfqfflN0F9xI9WxGWC7TCHSwejUploq8xKQ9yLEVXf6HQeS6tISlCtBg=="
-  "resolved" "https://registry.npmjs.org/nats/-/nats-2.4.0.tgz"
-  "version" "2.4.0"
+"nats@^2.8.0":
+  "integrity" "sha512-FabrmbDYGH8x8iajdFqhr3RptxJ4qlK1uKuqaHf8EUNY3Zr8DtRw2naiJsIzex27GnSs0UqQG/upPU9Yh66zlA=="
+  "resolved" "https://registry.npmjs.org/nats/-/nats-2.8.0.tgz"
+  "version" "2.8.0"
   dependencies:
-    "nkeys.js" "^1.0.0-9"
+    "nkeys.js" "1.0.3"
+    "web-streams-polyfill" "^3.2.1"
 
 "natural-compare@^1.4.0":
   "integrity" "sha1-Sr6/7tdUHywnrPspvbvRXI1bpPc="
@@ -5003,13 +5004,12 @@
   "resolved" "https://registry.npmjs.org/nice-try/-/nice-try-1.0.5.tgz"
   "version" "1.0.5"
 
-"nkeys.js@^1.0.0-9":
-  "integrity" "sha512-m9O0NQT+3rUe1om6MWpxV77EuHql/LdorDH+FYQkoeARcM2V0sQ89kM36fArWaHWq/25EmNmQUW0MhLTcbqW1A=="
-  "resolved" "https://registry.npmjs.org/nkeys.js/-/nkeys.js-1.0.0-9.tgz"
-  "version" "1.0.0-9"
+"nkeys.js@1.0.3":
+  "integrity" "sha512-p5Bpb/acPaQmCrbe4gNmMBY/naZJV8Q7m2B9UkXT8BQRC6wjX8zqD2ya8eZu9mpSXQffodV46HCP9OckmxcwYA=="
+  "resolved" "https://registry.npmjs.org/nkeys.js/-/nkeys.js-1.0.3.tgz"
+  "version" "1.0.3"
   dependencies:
-    "@types/node" "^14.0.26"
-    "tweetnacl" "^1.0.3"
+    "tweetnacl" "1.0.3"
 
 "node-addon-api@^3.1.0":
   "integrity" "sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A=="
@@ -6802,7 +6802,7 @@
   dependencies:
     "tslib" "^1.8.1"
 
-"tweetnacl@^1.0.3":
+"tweetnacl@1.0.3":
   "integrity" "sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw=="
   "resolved" "https://registry.npmjs.org/tweetnacl/-/tweetnacl-1.0.3.tgz"
   "version" "1.0.3"
@@ -7067,6 +7067,11 @@
   "version" "1.0.1"
   dependencies:
     "defaults" "^1.0.3"
+
+"web-streams-polyfill@^3.2.1":
+  "integrity" "sha512-e0MO3wdXWKrLbL0DgGnUV7WHVuw9OUvL4hjgnPkIeEvESk74gAITi5G606JtZPp39cd8HA9VQzCIvA49LpPN5Q=="
+  "resolved" "https://registry.npmjs.org/web-streams-polyfill/-/web-streams-polyfill-3.2.1.tgz"
+  "version" "3.2.1"
 
 "webidl-conversions@^5.0.0":
   "integrity" "sha512-VlZwKPCkYKxQgeSbH5EyngOmRp7Ww7I9rQLERETtf5ofd9pGeswWiOtogpEO850jziPRarreGxn5QIiTqpb2wA=="
