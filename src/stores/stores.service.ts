@@ -2194,13 +2194,13 @@ export class StoresService {
           width: 25,
         },
         {
-          header: 'Lokasi Longitude*',
-          key: 'location_longitude',
+          header: 'Lokasi Latitude*',
+          key: 'location_latitude',
           width: 25,
         },
         {
-          header: 'Lokasi Latitude*',
-          key: 'location_latitude',
+          header: 'Lokasi Longitude*',
+          key: 'location_longitude',
           width: 25,
         },
         {
