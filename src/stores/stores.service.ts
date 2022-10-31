@@ -2000,8 +2000,8 @@ export class StoresService {
             email: row.values[3].text,
             city_id: 'ba9613ec-3d67-4df4-8a84-a45e7006edb8', // default city bandung
             address: row.values[4],
-            location_longitude: row.values[5],
-            location_latitude: row.values[6],
+            location_latitude: row.values[5],
+            location_longitude: row.values[6],
             gmt_offset: 7,
             is_store_open: true,
             is_open_24h: true,
