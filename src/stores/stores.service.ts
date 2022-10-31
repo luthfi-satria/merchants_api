@@ -2261,60 +2261,12 @@ export class StoresService {
       for (let i = 3; i <= 50; i++) {
         const selectedRow = sheetEfood.getRow(i);
 
-        selectedRow.getCell(1).value = {
-          richText: [
-            {
-              text: 'text',
-              font: { bold: false },
-            },
-          ],
-        };
-
-        selectedRow.getCell(2).value = {
-          richText: [
-            {
-              text: 'text',
-              font: { bold: false },
-            },
-          ],
-        };
-
-        selectedRow.getCell(3).value = {
-          richText: [
-            {
-              text: 'text',
-              font: { bold: false },
-            },
-          ],
-        };
-
-        selectedRow.getCell(4).value = {
-          richText: [
-            {
-              text: 'text',
-              font: { bold: false },
-            },
-          ],
-        };
-
-        selectedRow.getCell(5).value = {
-          richText: [
-            {
-              text: 'text',
-              font: { bold: false },
-            },
-          ],
-        };
-
-        selectedRow.getCell(6).value = {
-          richText: [
-            {
-              text: 'text',
-              font: { bold: false },
-            },
-          ],
-        };
-
+        selectedRow.getCell(1).font = { bold: false };
+        selectedRow.getCell(2).numFmt = '';
+        selectedRow.getCell(3).font = { bold: false };
+        selectedRow.getCell(4).font = { bold: false };
+        selectedRow.getCell(5).numFmt = '';
+        selectedRow.getCell(6).numFmt = '';
         //** validation bank */
         if (bankData.length) {
           selectedRow.getCell(7).dataValidation = {
@@ -2323,24 +2275,8 @@ export class StoresService {
             formulae: [`Bank_Data!$B$1:$B$${bankData.length}`],
           };
         }
-
-        selectedRow.getCell(8).value = {
-          richText: [
-            {
-              text: 'text',
-              font: { bold: false },
-            },
-          ],
-        };
-
-        selectedRow.getCell(9).value = {
-          richText: [
-            {
-              text: 'text',
-              font: { bold: false },
-            },
-          ],
-        };
+        selectedRow.getCell(8).font = { bold: false };
+        selectedRow.getCell(9).font = { bold: false };
       }
 
       //=> write workbook
