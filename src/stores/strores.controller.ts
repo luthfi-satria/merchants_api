@@ -119,7 +119,6 @@ export class StoresController {
       throw error;
     }
   }
-
   @Put('stores/:id')
   @UserTypeAndLevel(
     'admin.*',

@@ -2002,9 +2002,9 @@ export class StoresService {
             address: row.values[4],
             location_longitude: row.values[5],
             location_latitude: row.values[6],
-            gmt_offset: null,
-            is_store_open: false,
-            is_open_24h: false,
+            gmt_offset: 7,
+            is_store_open: true,
+            is_open_24h: true,
             average_price: 0,
             platform: true,
             photo: defaultPhoto,
@@ -2016,7 +2016,7 @@ export class StoresService {
             numrating: null,
             numorders: 0,
             bank_account_name: row.values[9],
-            auto_accept_order: false,
+            auto_accept_order: true,
             status: enumStoreStatus.active,
           });
         }
@@ -2045,6 +2045,12 @@ export class StoresService {
         // save if name store null
         const create_store = await this.storeRepository.save(store);
         stores.push(create_store);
+
+        await this.storeOperationalService
+          .createStoreOperationalHours(create_store.id, create_store.gmt_offset)
+          .catch((e) => {
+            throw e;
+          });
 
         return create_store;
       });
