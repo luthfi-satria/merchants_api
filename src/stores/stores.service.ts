@@ -2261,6 +2261,60 @@ export class StoresService {
       for (let i = 3; i <= 50; i++) {
         const selectedRow = sheetEfood.getRow(i);
 
+        selectedRow.getCell(1).value = {
+          richText: [
+            {
+              text: 'text',
+              font: { bold: false },
+            },
+          ],
+        };
+
+        selectedRow.getCell(2).value = {
+          richText: [
+            {
+              text: 'text',
+              font: { bold: false },
+            },
+          ],
+        };
+
+        selectedRow.getCell(3).value = {
+          richText: [
+            {
+              text: 'text',
+              font: { bold: false },
+            },
+          ],
+        };
+
+        selectedRow.getCell(4).value = {
+          richText: [
+            {
+              text: 'text',
+              font: { bold: false },
+            },
+          ],
+        };
+
+        selectedRow.getCell(5).value = {
+          richText: [
+            {
+              text: 'text',
+              font: { bold: false },
+            },
+          ],
+        };
+
+        selectedRow.getCell(6).value = {
+          richText: [
+            {
+              text: 'text',
+              font: { bold: false },
+            },
+          ],
+        };
+
         //** validation bank */
         if (bankData.length) {
           selectedRow.getCell(7).dataValidation = {
@@ -2269,6 +2323,24 @@ export class StoresService {
             formulae: [`Bank_Data!$B$1:$B$${bankData.length}`],
           };
         }
+
+        selectedRow.getCell(8).value = {
+          richText: [
+            {
+              text: 'text',
+              font: { bold: false },
+            },
+          ],
+        };
+
+        selectedRow.getCell(9).value = {
+          richText: [
+            {
+              text: 'text',
+              font: { bold: false },
+            },
+          ],
+        };
       }
 
       //=> write workbook
