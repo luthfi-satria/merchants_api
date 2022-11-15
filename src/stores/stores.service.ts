@@ -2000,11 +2000,11 @@ export class StoresService {
             email: row.values[3].text,
             city_id: 'ba9613ec-3d67-4df4-8a84-a45e7006edb8', // default city bandung
             address: row.values[4],
-            location_longitude: row.values[5],
-            location_latitude: row.values[6],
-            gmt_offset: null,
-            is_store_open: false,
-            is_open_24h: false,
+            location_latitude: row.values[5],
+            location_longitude: row.values[6],
+            gmt_offset: 7,
+            is_store_open: true,
+            is_open_24h: true,
             average_price: 0,
             platform: true,
             photo: defaultPhoto,
@@ -2016,7 +2016,7 @@ export class StoresService {
             numrating: null,
             numorders: 0,
             bank_account_name: row.values[9],
-            auto_accept_order: false,
+            auto_accept_order: true,
             status: enumStoreStatus.active,
           });
         }
@@ -2045,6 +2045,12 @@ export class StoresService {
         // save if name store null
         const create_store = await this.storeRepository.save(store);
         stores.push(create_store);
+
+        await this.storeOperationalService
+          .createStoreOperationalHours(create_store.id, create_store.gmt_offset)
+          .catch((e) => {
+            throw e;
+          });
 
         return create_store;
       });
@@ -2194,13 +2200,13 @@ export class StoresService {
           width: 25,
         },
         {
-          header: 'Lokasi Longitude*',
-          key: 'location_longitude',
+          header: 'Lokasi Latitude*',
+          key: 'location_latitude',
           width: 25,
         },
         {
-          header: 'Lokasi Latitude*',
-          key: 'location_latitude',
+          header: 'Lokasi Longitude*',
+          key: 'location_longitude',
           width: 25,
         },
         {
@@ -2255,6 +2261,12 @@ export class StoresService {
       for (let i = 3; i <= 50; i++) {
         const selectedRow = sheetEfood.getRow(i);
 
+        selectedRow.getCell(1).font = { bold: false };
+        selectedRow.getCell(2).numFmt = '';
+        selectedRow.getCell(3).font = { bold: false };
+        selectedRow.getCell(4).font = { bold: false };
+        selectedRow.getCell(5).numFmt = '';
+        selectedRow.getCell(6).numFmt = '';
         //** validation bank */
         if (bankData.length) {
           selectedRow.getCell(7).dataValidation = {
@@ -2263,6 +2275,8 @@ export class StoresService {
             formulae: [`Bank_Data!$B$1:$B$${bankData.length}`],
           };
         }
+        selectedRow.getCell(8).font = { bold: false };
+        selectedRow.getCell(9).font = { bold: false };
       }
 
       //=> write workbook

@@ -49,7 +49,7 @@
     "firebase-dynamic-links": "^1.1.0",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.33",
-    "nats": "^2.4.0",
+    "nats": "^2.8.0",
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "pg": "^8.6.0",
