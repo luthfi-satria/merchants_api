@@ -1654,7 +1654,7 @@ export class QueryService {
 
       let is_online_platform = true;
 
-    // console.log(storeItems, 'storeItem');
+      // console.log(storeItems, 'storeItem');
       if (params.platform) is_online_platform = params.platform == 'ONLINE';
 
       const priceRangeAll = await this.priceRangeService.getPriceRange();

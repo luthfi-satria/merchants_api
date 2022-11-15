@@ -119,7 +119,6 @@ export class StoresController {
       throw error;
     }
   }
-
   @Put('stores/:id')
   @UserTypeAndLevel(
     'admin.*',
@@ -372,7 +371,7 @@ export class StoresController {
       fileFilter: excelFileFilter,
     }),
   )
-  async bulkCreateMenus(
+  async bulkCreateStores(
     @Req() req: any,
     @Param('merchant_id') merchant_id: string,
     @UploadedFile() file: Express.Multer.File,
