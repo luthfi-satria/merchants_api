@@ -48,6 +48,7 @@ import { StoreCategoriesService } from 'src/store_categories/store_categories.se
 import { LanguageDocument } from 'src/database/entities/language.entity';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
+import { CorporateSapKeyDocument } from '../database/entities/corporate_sap_keys.entity';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { MenuOnlineService } from 'src/menu_online/menu_online.service';
       SettingDocument,
       LanguageDocument,
       MenuOnlineDocument,
+      CorporateSapKeyDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
