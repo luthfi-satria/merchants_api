@@ -46,7 +46,7 @@ export class GetStoreFilter {
       ? await this.getFavoriteStoreIds()
       : [];
 
-    //** DATE EXRACT FILTER */
+    //** DATE EXRACT */
     const defaultData = new Date();
     const date = ('0' + defaultData.getDate()).slice(-2);
     const month = ('0' + (defaultData.getMonth() + 1)).slice(-2);
