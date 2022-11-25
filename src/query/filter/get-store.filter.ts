@@ -46,6 +46,14 @@ export class GetStoreFilter {
       ? await this.getFavoriteStoreIds()
       : [];
 
+    //** DATE EXRACT */
+    const defaultData = new Date();
+    const date = ('0' + defaultData.getDate()).slice(-2);
+    const month = ('0' + (defaultData.getMonth() + 1)).slice(-2);
+    const year = defaultData.getFullYear();
+    const currentDates = year + '-' + month + '-' + date;
+    const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
+
     const queries: any[] = [
       new WhereQueryHelper(
         query,
@@ -114,16 +122,14 @@ export class GetStoreFilter {
         query,
         this.moduleName,
         'approved_at',
-        this.params.new_this_week
-          ? DateTimeUtils.getNewThisWeekDate(new Date()).toString()
-          : null,
+        this.params.new_this_week ? `'${startDates}'` : null,
         'newThisWeekFrom',
       ),
       new ToQueryHelper(
         query,
         this.moduleName,
         'approved_at',
-        this.params.new_this_week ? moment(new Date()).toString() : null,
+        this.params.new_this_week ? `'${currentDates}'` : null,
         'newThisWeekTo',
       ),
       new FromQueryHelper(
