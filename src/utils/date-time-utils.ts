@@ -112,7 +112,7 @@ export class DateTimeUtils {
   }
 
   //** FIXED */
-  static getNewThisWeekDatse(currentDate: any) {
+  static getNewThisWeekDates(currentDate: any) {
     return moment(currentDate)
       .subtract(1, 'week')
       .startOf('day')

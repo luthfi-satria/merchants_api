@@ -58,6 +58,13 @@ export class QueryController {
   async getstores(
     @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
   ): Promise<any> {
+    console.log(
+      '===========================Start Debug Query Param=================================\n',
+      new Date(Date.now()).toLocaleString(),
+      '\n',
+      data,
+      '\n============================End Debug Query Param==================================',
+    );
     return await this.queryService.getStoreList(data);
   }
 

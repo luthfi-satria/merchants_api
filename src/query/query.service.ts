@@ -1593,10 +1593,17 @@ export class QueryService {
         await this.getBudgetMealMaxValue(params.budget_meal),
       ]);
 
+      let filterPriceRange = [];
+
+      if (params?.price_range_id?.length > 0) {
+        filterPriceRange = await this.priceRangeService.findPricesByIds(
+          params.price_range_id,
+        );
+      }
+
       const priceParams = {
         is_filter_price,
-        priceLow,
-        priceHigh,
+        price_range_filter: filterPriceRange ?? [],
         isBudgetEnable,
         budgetMaxValue,
       };
@@ -1612,7 +1619,7 @@ export class QueryService {
 
       const perPage = params.limit ?? 10;
 
-      const query = this.storeRepository.createQueryBuilder('model');
+      const query = this.storeRepository.createQueryBuilder('merchant_store');
 
       const orderBy = params.order || null;
 
