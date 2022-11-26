@@ -27,7 +27,7 @@ export class OperationalStatusQuery implements FilterQueryInterface {
         } else {
           qb.where(
             `operational_hours.day_of_week = :weekOfDay
-              AND model.is_store_open = :is_open
+              AND merchant_store.is_store_open = :is_open
               AND operational_hours.merchant_store_id IS NOT NULL
               AND operational_hours.is_open = :isOpenOperational
             ${
