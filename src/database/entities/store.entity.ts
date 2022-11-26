@@ -67,13 +67,13 @@ export class StoreDocument {
   address: string;
 
   @Column('decimal', {
-    default: '106.827153', //monas
+    // default: '106.827153', //monas
     transformer: new ColumnNumericTransformer(),
   })
   location_longitude: number;
 
   @Column('decimal', {
-    default: '-6.175392', //monas
+    // default: '-6.175392', //monas
     transformer: new ColumnNumericTransformer(),
   })
   location_latitude: number;

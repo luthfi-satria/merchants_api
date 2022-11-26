@@ -24,7 +24,7 @@ import { DiscountQuery } from './query/discount.query';
 import { OperationalStatusQuery } from './query/operational-status.query';
 
 export class GetStoreFilter {
-  protected moduleName = 'model';
+  protected moduleName = 'merchant_store';
 
   constructor(
     public params: QueryListStoreDto,
@@ -45,6 +45,14 @@ export class GetStoreFilter {
     const favoriteStoreIds = this.params.favorite_this_week
       ? await this.getFavoriteStoreIds()
       : [];
+
+    //** DATE EXRACT */
+    const defaultData = new Date();
+    const date = ('0' + defaultData.getDate()).slice(-2);
+    const month = ('0' + (defaultData.getMonth() + 1)).slice(-2);
+    const year = defaultData.getFullYear();
+    const currentDates = year + '-' + month + '-' + date;
+    const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
 
     const queries: any[] = [
       new WhereQueryHelper(
@@ -114,16 +122,14 @@ export class GetStoreFilter {
         query,
         this.moduleName,
         'approved_at',
-        this.params.new_this_week
-          ? DateTimeUtils.getNewThisWeekDate(new Date()).toString()
-          : null,
+        this.params.new_this_week ? `'${startDates}'` : null,
         'newThisWeekFrom',
       ),
       new ToQueryHelper(
         query,
         this.moduleName,
         'approved_at',
-        this.params.new_this_week ? moment(new Date()).toString() : null,
+        this.params.new_this_week ? `'${currentDates}'` : null,
         'newThisWeekTo',
       ),
       new FromQueryHelper(
@@ -137,8 +143,7 @@ export class GetStoreFilter {
         query,
         this.moduleName,
         this.priceParam.is_filter_price,
-        this.priceParam.priceLow,
-        this.priceParam.priceHigh,
+        this.priceParam.price_range_filter,
       ),
       new DiscountQuery(query, this.moduleName, this.params.promo),
       new OperationalStatusQuery(
@@ -177,35 +182,75 @@ export class GetStoreFilter {
   getJoin(
     query: SelectQueryBuilder<StoreDocument>,
   ): SelectQueryBuilder<StoreDocument> {
-    return query
-      .addSelect(
-        '(6371 * ACOS(COS(RADIANS(' +
-          this.params.location_latitude +
-          ')) * COS(RADIANS(model.location_latitude)) * COS(RADIANS(model.location_longitude) - RADIANS(' +
-          this.params.location_longitude +
-          ')) + SIN(RADIANS(' +
-          this.params.location_latitude +
-          ')) * SIN(RADIANS(model.location_latitude))))',
-        'distance_in_km',
-      )
-      .leftJoinAndSelect('model.service_addons', 'merchant_addon')
-      .leftJoinAndSelect(
-        'model.operational_hours',
-        'operational_hours',
-        'operational_hours.merchant_store_id = model.id',
-      )
-      .leftJoinAndSelect('model.merchant', 'merchant')
-      .leftJoinAndSelect(
-        'operational_hours.shifts',
-        'operational_shifts',
-        'operational_shifts.store_operational_id = operational_hours.id',
-      )
-      .leftJoinAndSelect('model.store_categories', 'merchant_store_categories')
-      .leftJoinAndSelect(
-        'merchant_store_categories.languages',
-        'merchant_store_categories_languages',
-      )
-      .leftJoin('model.menus', 'menus');
+    return (
+      query
+        .select([
+          'merchant_store.id',
+          'merchant_store.name',
+          'merchant_store.location_longitude',
+          'merchant_store.location_latitude',
+          'merchant_store.is_store_open',
+          'merchant_store.is_open_24h',
+          'merchant_store.average_price',
+          'merchant_store.platform',
+          'merchant_store.photo',
+          'merchant_store.banner',
+          'merchant_store.rating',
+          'merchant_store.numrating',
+          'merchant_store.status',
+          'operational_hours.id',
+          'operational_hours.day_of_week',
+          'operational_hours.is_open',
+          'operational_hours.is_open_24h',
+          'merchant.id',
+          'merchant.profile_store_photo',
+          'merchant.recommended_promo_type',
+          'merchant.recommended_discount_type',
+          'merchant.recommended_discount_value',
+          'merchant.recommended_shopping_discount_type',
+          'merchant.recommended_shopping_discount_value',
+          'merchant.recommended_delivery_discount_type',
+          'merchant.recommended_delivery_discount_value',
+          'operational_shifts.id',
+          'operational_shifts.open_hour',
+          'operational_shifts.close_hour',
+          'merchant_store_categories.id',
+          'merchant_store_categories_languages.id',
+          'merchant_store_categories_languages.lang',
+          'merchant_store_categories_languages.name',
+        ])
+        .addSelect(
+          '(6371 * ACOS(COS(RADIANS(' +
+            this.params.location_latitude +
+            ')) * COS(RADIANS(merchant_store.location_latitude)) * COS(RADIANS(merchant_store.location_longitude) - RADIANS(' +
+            this.params.location_longitude +
+            ')) + SIN(RADIANS(' +
+            this.params.location_latitude +
+            ')) * SIN(RADIANS(merchant_store.location_latitude))))',
+          'distance_in_km',
+        )
+        // .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon')
+        .leftJoin(
+          'merchant_store.operational_hours',
+          'operational_hours',
+          'operational_hours.merchant_store_id = merchant_store.id',
+        )
+        .leftJoin('merchant_store.merchant', 'merchant')
+        .leftJoin(
+          'operational_hours.shifts',
+          'operational_shifts',
+          'operational_shifts.store_operational_id = operational_hours.id',
+        )
+        .leftJoin(
+          'merchant_store.store_categories',
+          'merchant_store_categories',
+        )
+        .leftJoin(
+          'merchant_store_categories.languages',
+          'merchant_store_categories_languages',
+        )
+        .leftJoin('merchant_store.menus', 'menus')
+    );
   }
 
   async getFavoriteStoreIds() {

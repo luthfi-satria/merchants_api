@@ -67,12 +67,6 @@ import { ValidationMiddleware } from './middleware/validation.middleware';
     UsersValidationModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ResponseService],
+  providers: [AppService],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer): void {
-    consumer
-      .apply(ValidationMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.ALL });
-  }
-}
+export class AppModule {}

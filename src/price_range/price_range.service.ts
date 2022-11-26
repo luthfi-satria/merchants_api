@@ -224,6 +224,17 @@ export class PriceRangeService {
     }
   }
 
+  async getPriceRange(): Promise<PriceRangeDocument[]> {
+    try {
+      return this.priceRangeRepository
+        .createQueryBuilder('pr')
+        .leftJoinAndSelect('pr.languages', 'languages')
+        .getMany();
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
   async viewDetailPriceRange(
     priceRangeId: string,
   ): Promise<PriceRangeDocument> {
