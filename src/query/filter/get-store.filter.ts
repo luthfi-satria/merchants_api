@@ -22,6 +22,7 @@ import { PriceQuery } from './query/price.query';
 import { SearchQueryHelper } from './helper/base-query/helpers/search-query.helper';
 import { DiscountQuery } from './query/discount.query';
 import { OperationalStatusQuery } from './query/operational-status.query';
+import { BetweenQueryHelper } from './helper/base-query/helpers/between-query.helper';
 
 export class GetStoreFilter {
   protected moduleName = 'merchant_store';
@@ -118,20 +119,37 @@ export class GetStoreFilter {
         this.priceParam.isBudgetEnable ? this.priceParam.budgetMaxValue : null,
         'budgetMax',
       ),
-      new FromQueryHelper(
+      //JIKA APPROVED MASIH BUG BISA GUNAKAN DENGAN CREATE AT
+      new BetweenQueryHelper(
         query,
         this.moduleName,
-        'approved_at',
-        this.params.new_this_week ? `'${startDates}'` : null,
-        'newThisWeekFrom',
+        'created_at',
+        this.params.new_this_week ? `${startDates}` : null,
+        this.params.new_this_week ? `${currentDates}` : null,
+        'newThisWeek',
       ),
-      new ToQueryHelper(
-        query,
-        this.moduleName,
-        'approved_at',
-        this.params.new_this_week ? `'${currentDates}'` : null,
-        'newThisWeekTo',
-      ),
+      // new BetweenQueryHelper(
+      //   query,
+      //   this.moduleName,
+      //   'approved_at',
+      //   this.params.new_this_week ? `${startDates}` : null,
+      //   this.params.new_this_week ? `${currentDates}` : null,
+      //   'newThisWeek',
+      // ),
+      // new FromQueryHelper(
+      //   query,
+      //   this.moduleName,
+      //   'approved_at',
+      //   this.params.new_this_week ? `'${startDates}'` : null,
+      //   'newThisWeekFrom',
+      // ),
+      // new ToQueryHelper(
+      //   query,
+      //   this.moduleName,
+      //   'approved_at',
+      //   this.params.new_this_week ? `'${currentDates}'` : null,
+      //   'newThisWeekTo',
+      // ),
       new FromQueryHelper(
         query,
         this.moduleName,
