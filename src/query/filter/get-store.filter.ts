@@ -52,8 +52,23 @@ export class GetStoreFilter {
     const date = ('0' + defaultData.getDate()).slice(-2);
     const month = ('0' + (defaultData.getMonth() + 1)).slice(-2);
     const year = defaultData.getFullYear();
-    const currentDates = year + '-' + month + '-' + date;
+    const hours = defaultData.getHours();
+    const minutes = defaultData.getMinutes();
+    const seconds = defaultData.getSeconds();
+    const currentDates =
+      year +
+      '-' +
+      month +
+      '-' +
+      date +
+      ' ' +
+      hours +
+      ':' +
+      minutes +
+      ':' +
+      seconds;
     const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
+    const startDateTime = startDates + ' 00:00:00';
 
     const queries: any[] = [
       new WhereQueryHelper(
@@ -124,7 +139,7 @@ export class GetStoreFilter {
         query,
         this.moduleName,
         'created_at',
-        this.params.new_this_week ? `${startDates}` : null,
+        this.params.new_this_week ? `${startDateTime}` : null,
         this.params.new_this_week ? `${currentDates}` : null,
         'newThisWeek',
       ),
