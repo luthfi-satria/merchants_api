@@ -143,14 +143,6 @@ export class GetStoreFilter {
         this.params.new_this_week ? `${currentDates}` : null,
         'newThisWeek',
       ),
-      // new BetweenQueryHelper(
-      //   query,
-      //   this.moduleName,
-      //   'approved_at',
-      //   this.params.new_this_week ? `${startDates}` : null,
-      //   this.params.new_this_week ? `${currentDates}` : null,
-      //   'newThisWeek',
-      // ),
       // new FromQueryHelper(
       //   query,
       //   this.moduleName,
