@@ -138,7 +138,7 @@ export class GetStoreFilter {
       new BetweenQueryHelper(
         query,
         this.moduleName,
-        'created_at',
+        'approved_at',
         this.params.new_this_week ? `${startDateTime}` : null,
         this.params.new_this_week ? `${currentDates}` : null,
         'newThisWeek',
