@@ -1032,7 +1032,7 @@ export class QueryService {
       isCurrentDay.is_open &&
       (isCurrentDay.is_open_24h || respectShiftTime)
       ? true
-      : false;
+      : true;
   }
 
   async listStoreCategories(
