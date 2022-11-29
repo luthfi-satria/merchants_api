@@ -52,23 +52,8 @@ export class GetStoreFilter {
     const date = ('0' + defaultData.getDate()).slice(-2);
     const month = ('0' + (defaultData.getMonth() + 1)).slice(-2);
     const year = defaultData.getFullYear();
-    const hours = defaultData.getHours();
-    const minutes = defaultData.getMinutes();
-    const seconds = defaultData.getSeconds();
-    const currentDates =
-      year +
-      '-' +
-      month +
-      '-' +
-      date +
-      ' ' +
-      hours +
-      ':' +
-      minutes +
-      ':' +
-      seconds;
+    const currentDates = year + '-' + month + '-' + date;
     const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
-    const startDateTime = startDates + ' 00:00:00';
 
     const queries: any[] = [];
 
@@ -81,15 +66,15 @@ export class GetStoreFilter {
           this.params.store_category_id,
           'storeCategoryId',
         ),
-        new WhereInQueryHelper(
-          query,
-          this.moduleName,
-          'status',
-          this.params.include_inactive_stores
-            ? [enumStoreStatus.active, enumStoreStatus.inactive]
-            : [enumStoreStatus.active],
-          'statuses',
-        ),
+        // new WhereInQueryHelper(
+        //   query,
+        //   this.moduleName,
+        //   'status',
+        //   this.params.include_inactive_stores
+        //     ? [enumStoreStatus.active, enumStoreStatus.inactive]
+        //     : [enumStoreStatus.active],
+        //   'statuses',
+        // ),
         new LocationQuery(
           query,
           this.params.distance || Number(settingRadius.value),
@@ -147,7 +132,7 @@ export class GetStoreFilter {
           query,
           this.moduleName,
           'approved_at',
-          this.params.new_this_week ? `${startDateTime}` : null,
+          this.params.new_this_week ? `${startDates}` : null,
           this.params.new_this_week ? `${currentDates}` : null,
           'newThisWeek',
         ),
@@ -255,7 +240,7 @@ export class GetStoreFilter {
           query,
           this.moduleName,
           'approved_at',
-          this.params.new_this_week ? `${startDateTime}` : null,
+          this.params.new_this_week ? `${startDates}` : null,
           this.params.new_this_week ? `${currentDates}` : null,
           'newThisWeek',
         ),
