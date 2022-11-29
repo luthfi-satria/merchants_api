@@ -171,11 +171,11 @@ export class GetStoreFilter {
         this.priceParam.price_range_filter,
       ),
       new DiscountQuery(query, this.moduleName, this.params.promo),
-      // new OperationalStatusQuery(
-      //   query,
-      //   this.params.include_closed_stores,
-      //   this.params.is_24hrs,
-      // ),
+      new OperationalStatusQuery(
+        query,
+        this.params.include_closed_stores,
+        this.params.is_24hrs,
+      ),
     ];
 
     if (this.params.search) {
