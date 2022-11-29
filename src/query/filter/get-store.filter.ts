@@ -78,15 +78,15 @@ export class GetStoreFilter {
         this.params.store_category_id,
         'storeCategoryId',
       ),
-      // new WhereInQueryHelper(
-      //   query,
-      //   this.moduleName,
-      //   'status',
-      //   this.params.include_inactive_stores
-      //     ? [enumStoreStatus.active, enumStoreStatus.inactive]
-      //     : [enumStoreStatus.active],
-      //   'statuses',
-      // ),
+      new WhereInQueryHelper(
+        query,
+        this.moduleName,
+        'status',
+        this.params.include_inactive_stores
+          ? [enumStoreStatus.active, enumStoreStatus.inactive]
+          : [enumStoreStatus.active],
+        'statuses',
+      ),
       new LocationQuery(
         query,
         this.params.distance || Number(settingRadius.value),

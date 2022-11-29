@@ -37,7 +37,7 @@ export class OperationalStatusQuery implements FilterQueryInterface {
                 : ''
             }`,
             {
-              is_open: true,
+              //is_open: true,
               weekOfDay: this.weekOfDay,
               currTime: this.currTime,
               all24h: true, //niel true for query all stores
