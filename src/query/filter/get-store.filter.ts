@@ -78,15 +78,15 @@ export class GetStoreFilter {
         this.params.store_category_id,
         'storeCategoryId',
       ),
-      new WhereInQueryHelper(
-        query,
-        this.moduleName,
-        'status',
-        this.params.include_inactive_stores
-          ? [enumStoreStatus.active, enumStoreStatus.inactive]
-          : [enumStoreStatus.active],
-        'statuses',
-      ),
+      // new WhereInQueryHelper(
+      //   query,
+      //   this.moduleName,
+      //   'status',
+      //   this.params.include_inactive_stores
+      //     ? [enumStoreStatus.active, enumStoreStatus.inactive]
+      //     : [enumStoreStatus.active],
+      //   'statuses',
+      // ),
       new LocationQuery(
         query,
         this.params.distance || Number(settingRadius.value),
@@ -138,7 +138,7 @@ export class GetStoreFilter {
       new BetweenQueryHelper(
         query,
         this.moduleName,
-        'created_at',
+        'approved_at',
         this.params.new_this_week ? `${startDateTime}` : null,
         this.params.new_this_week ? `${currentDates}` : null,
         'newThisWeek',
