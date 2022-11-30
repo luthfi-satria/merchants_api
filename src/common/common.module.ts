@@ -47,6 +47,7 @@ import { PriceRangeLanguageDocument } from 'src/database/entities/price_range_la
 import { SettingDocument } from 'src/database/entities/setting.entity';
 import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
 import { LanguageDocument } from 'src/database/entities/language.entity';
+import { CorporateSapKeyDocument } from '../database/entities/corporate_sap_keys.entity';
 
 @Global()
 @Module({
@@ -89,6 +90,7 @@ import { LanguageDocument } from 'src/database/entities/language.entity';
       PriceRangeLanguageDocument,
       SettingDocument,
       LanguageDocument,
+      CorporateSapKeyDocument,
     ]),
   ],
   providers: [

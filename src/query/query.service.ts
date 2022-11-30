@@ -1788,7 +1788,6 @@ export class QueryService {
       );
 
       // console.log(formattedStoredItems, 'formatted');
-
       const formattedArr = [];
 
       if (params.favorite_this_week) {

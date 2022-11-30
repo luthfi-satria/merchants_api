@@ -27,6 +27,7 @@ import { MerchantsService } from 'src/merchants/merchants.service';
 import { GroupsService } from 'src/groups/groups.service';
 import { CityService } from 'src/common/services/admins/city.service';
 import { GetMerchantBulkDataDTO } from './dto/get-merchant-bulk-data.dto';
+import { CorporateSapKeyDocument } from '../database/entities/corporate_sap_keys.entity';
 
 @Injectable()
 export class InternalService {
@@ -37,7 +38,8 @@ export class InternalService {
     private readonly merchantRepository: Repository<MerchantDocument>,
     @InjectRepository(MerchantUsersDocument)
     private readonly merchantUsersRepository: Repository<MerchantUsersDocument>,
-    @InjectRepository(MerchantUsersDocument)
+    @InjectRepository(CorporateSapKeyDocument)
+    private readonly corporateSapKeyDocumentRepository: Repository<CorporateSapKeyDocument>,
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
     private readonly storeService: StoresService,
@@ -580,5 +582,20 @@ export class InternalService {
     storeCategoryIds: string[],
   ): Promise<StoreCategoriesDocument[]> {
     return this.storeCategoryService.getStoreCategoryByIds(storeCategoryIds);
+  }
+
+  async getSapKeyByStore(storeId: string) {
+    const store: StoreDocument = await this.storeRepository
+      .createQueryBuilder('store')
+      .where('store.id = :storeId', { storeId })
+      .leftJoinAndSelect('store.merchant', 'store_merchant')
+      .getOne();
+
+    return await this.corporateSapKeyDocumentRepository
+      .createQueryBuilder('sap_key')
+      .where('sap_key.group_id = :groupId', {
+        groupId: store.merchant.group_id,
+      })
+      .getOne();
   }
 }
