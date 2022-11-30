@@ -8,7 +8,7 @@ import {
 import { FilterHelper } from './helper/filter.helper';
 import { QueryBunlderHelper } from './helper/base-query/helpers/query-bunlder.helper';
 import { WhereQueryHelper } from './helper/base-query/helpers/where-query.helper';
-import { OrWhereQueryHelper } from './helper/base-query/helpers/or-where-query.helper';
+// import { OrWhereQueryHelper } from './helper/base-query/helpers/or-where-query.helper';
 import { LocationQuery } from './query/location.query';
 import { SettingsService } from '../../settings/settings.service';
 import { WhereInQueryHelper } from './helper/base-query/helpers/where-in-query.helper';
@@ -22,6 +22,7 @@ import { PriceQuery } from './query/price.query';
 import { SearchQueryHelper } from './helper/base-query/helpers/search-query.helper';
 import { DiscountQuery } from './query/discount.query';
 import { OperationalStatusQuery } from './query/operational-status.query';
+import { BetweenQueryHelper } from './helper/base-query/helpers/between-query.helper';
 
 export class GetStoreFilter {
   protected moduleName = 'merchant_store';
@@ -45,6 +46,14 @@ export class GetStoreFilter {
     const favoriteStoreIds = this.params.favorite_this_week
       ? await this.getFavoriteStoreIds()
       : [];
+
+    //** DATE EXRACT */
+    const defaultData = new Date();
+    const date = ('0' + defaultData.getDate()).slice(-2);
+    const month = ('0' + (defaultData.getMonth() + 1)).slice(-2);
+    const year = defaultData.getFullYear();
+    const currentDates = year + '-' + month + '-' + date;
+    const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
 
     const queries: any[] = [
       new WhereQueryHelper(
@@ -110,22 +119,37 @@ export class GetStoreFilter {
         this.priceParam.isBudgetEnable ? this.priceParam.budgetMaxValue : null,
         'budgetMax',
       ),
-      new FromQueryHelper(
+      //JIKA APPROVED MASIH BUG BISA GUNAKAN DENGAN CREATE AT
+      new BetweenQueryHelper(
         query,
         this.moduleName,
-        'approved_at',
-        this.params.new_this_week
-          ? DateTimeUtils.getNewThisWeekDate(new Date()).toString()
-          : null,
-        'newThisWeekFrom',
+        'created_at',
+        this.params.new_this_week ? `${startDates}` : null,
+        this.params.new_this_week ? `${currentDates}` : null,
+        'newThisWeek',
       ),
-      new ToQueryHelper(
-        query,
-        this.moduleName,
-        'approved_at',
-        this.params.new_this_week ? moment(new Date()).toString() : null,
-        'newThisWeekTo',
-      ),
+      // new BetweenQueryHelper(
+      //   query,
+      //   this.moduleName,
+      //   'approved_at',
+      //   this.params.new_this_week ? `${startDates}` : null,
+      //   this.params.new_this_week ? `${currentDates}` : null,
+      //   'newThisWeek',
+      // ),
+      // new FromQueryHelper(
+      //   query,
+      //   this.moduleName,
+      //   'approved_at',
+      //   this.params.new_this_week ? `'${startDates}'` : null,
+      //   'newThisWeekFrom',
+      // ),
+      // new ToQueryHelper(
+      //   query,
+      //   this.moduleName,
+      //   'approved_at',
+      //   this.params.new_this_week ? `'${currentDates}'` : null,
+      //   'newThisWeekTo',
+      // ),
       new FromQueryHelper(
         query,
         this.moduleName,

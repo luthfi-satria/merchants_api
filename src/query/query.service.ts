@@ -1654,6 +1654,7 @@ export class QueryService {
 
       let is_online_platform = true;
 
+      // console.log(storeItems, 'storeItem');
       if (params.platform) is_online_platform = params.platform == 'ONLINE';
 
       const priceRangeAll = await this.priceRangeService.getPriceRange();
@@ -1786,7 +1787,6 @@ export class QueryService {
       );
 
       // console.log(formattedStoredItems, 'formatted');
-
       const formattedArr = [];
 
       if (params.favorite_this_week) {
@@ -2410,6 +2410,9 @@ export class QueryService {
           service_addon: [],
           operational_hours: [],
           store_categories: [],
+          rating: raw.merchant_store_rating,
+          numrating: raw.merchant_store_numrating,
+          average_price: raw.merchant_store_average_price,
         };
         if (raw.merchant_addon_id) {
           const addon = {
