@@ -1032,7 +1032,7 @@ export class QueryService {
       isCurrentDay.is_open &&
       (isCurrentDay.is_open_24h || respectShiftTime)
       ? true
-      : false;
+      : true;
   }
 
   async listStoreCategories(
@@ -2410,6 +2410,9 @@ export class QueryService {
           service_addon: [],
           operational_hours: [],
           store_categories: [],
+          rating: raw.merchant_store_rating,
+          numrating: raw.merchant_store_numrating,
+          average_price: raw.merchant_store_average_price,
         };
         if (raw.merchant_addon_id) {
           const addon = {
