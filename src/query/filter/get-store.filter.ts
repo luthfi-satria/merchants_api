@@ -63,9 +63,6 @@ export class GetStoreFilter {
     const currentDates = year + '-' + month + '-' + date;
     const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
 
-    console.log('Hari ini', startDates);
-    console.log('Hari Esok', nextDay);
-
     const queries: any[] = [];
 
     if (this.params.new_this_week == true) {

@@ -27,7 +27,7 @@ import {
   dbOutputTime,
   getDistanceInKilometers,
 } from 'src/utils/general-utils';
-import { Between, Brackets, OrderByCondition, Repository } from 'typeorm';
+import { Brackets, OrderByCondition, Repository } from 'typeorm';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import {
