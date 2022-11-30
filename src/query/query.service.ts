@@ -27,7 +27,7 @@ import {
   dbOutputTime,
   getDistanceInKilometers,
 } from 'src/utils/general-utils';
-import { Brackets, OrderByCondition, Repository } from 'typeorm';
+import { Between, Brackets, OrderByCondition, Repository } from 'typeorm';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { StoreCategoriesDocument } from 'src/database/entities/store-categories.entity';
 import {
@@ -1580,6 +1580,71 @@ export class QueryService {
       Logger.error(e.message, '', 'QUERY LIST STORE');
 
       throw e;
+    }
+  }
+
+  async getStoreNew(params: QueryListStoreDto) {
+    try {
+      if (
+        params.new_this_week &&
+        params.location_latitude &&
+        params.location_longitude
+      ) {
+        const [
+          [is_filter_price, priceLow, priceHigh], // Filter Price Range
+          [isBudgetEnable, budgetMaxValue], // Budget
+        ] = await Promise.all([
+          await this.getFilterPricesRange(params.price_range_id),
+          await this.getBudgetMealMaxValue(params.budget_meal),
+        ]);
+
+        let filterPriceRange = [];
+
+        if (params?.price_range_id?.length > 0) {
+          filterPriceRange = await this.priceRangeService.findPricesByIds(
+            params.price_range_id,
+          );
+        }
+
+        const priceParams = {
+          is_filter_price,
+          price_range_filter: filterPriceRange ?? [],
+          isBudgetEnable,
+          budgetMaxValue,
+        };
+
+        const currentDate = new Date();
+        const date = ('0' + currentDate.getDate()).slice(-2);
+        const month = ('0' + (currentDate.getMonth() + 1)).slice(-2);
+        const year = currentDate.getFullYear();
+        const currentDates = year + '-' + month + '-' + date;
+        const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
+
+        const query = this.storeRepository.createQueryBuilder('merchant_store');
+
+        const filter: GetStoreFilter = new GetStoreFilter(
+          params,
+          this.settingService,
+          this.ordersService,
+          'priceParams',
+        );
+
+        const result = await (await filter.apply(query)).getManyAndCount();
+
+        return this.responseService.success(
+          true,
+          this.messageService.get('merchant.liststore.success'),
+          result,
+        );
+      }
+    } catch (error) {
+      console.log(
+        '===========================Start Debug error=================================\n',
+        new Date(Date.now()).toLocaleString(),
+        '\n',
+        error,
+        '\n============================End Debug error==================================',
+      );
     }
   }
 

@@ -47,33 +47,125 @@ export class GetStoreFilter {
       ? await this.getFavoriteStoreIds()
       : [];
 
-    //** DATE EXRACT */
-    const defaultData = new Date();
-    const date = ('0' + defaultData.getDate()).slice(-2);
-    const month = ('0' + (defaultData.getMonth() + 1)).slice(-2);
-    const year = defaultData.getFullYear();
+    //** DATE EXRACT NEXT*/
+    const day = new Date();
+    day.setDate(day.getDate() + 1);
+    const dateNext = ('0' + day.getDate()).slice(-2);
+    const monthNext = ('0' + (day.getMonth() + 1)).slice(-2);
+    const yearNext = day.getFullYear();
+    const nextDay = yearNext + '-' + monthNext + '-' + dateNext;
+
+    //** DATE EXTRACT CURRENT */
+    const currents = new Date();
+    const date = ('0' + currents.getDate()).slice(-2);
+    const month = ('0' + (currents.getMonth() + 1)).slice(-2);
+    const year = currents.getFullYear();
     const currentDates = year + '-' + month + '-' + date;
     const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
+
+    console.log('Hari ini', startDates);
+    console.log('Hari Esok', nextDay);
 
     const queries: any[] = [];
 
     if (this.params.new_this_week == true) {
       queries.push(
+        new WhereQueryHelper(
+          query,
+          'merchant_store_categories',
+          'id',
+          this.params.store_category_id,
+          'storeCategoryId',
+        ),
+        new WhereInQueryHelper(
+          query,
+          this.moduleName,
+          'status',
+          this.params.include_inactive_stores
+            ? [enumStoreStatus.active, enumStoreStatus.inactive]
+            : [enumStoreStatus.active],
+          'statuses',
+        ),
         new LocationQuery(
           query,
           this.params.distance || Number(settingRadius.value),
           this.params.location_latitude,
           this.params.location_longitude,
         ),
-        //JIKA APPROVED MASIH BUG BISA GUNAKAN DENGAN CREATE AT
-        new BetweenQueryHelper(
+        new WhereInQueryHelper(
+          query,
+          this.moduleName,
+          'id',
+          favoriteStoreIds,
+          'favoriteStoreIds',
+        ),
+        new WhereBooleanQueryHelper(
+          query,
+          this.moduleName,
+          'is_open_24h',
+          this.params.is_24hrs,
+          'open24h',
+        ),
+        new WhereInQueryHelper(
+          query,
+          this.moduleName,
+          'delivery_type',
+          this.params.pickup
+            ? [
+                enumDeliveryType.delivery_and_pickup,
+                enumDeliveryType.pickup_only,
+              ]
+            : [
+                enumDeliveryType.delivery_and_pickup,
+                enumDeliveryType.pickup_only,
+                enumDeliveryType.delivery_only,
+              ],
+          'deliveryTypes',
+        ),
+        new WhereQueryHelper(
+          query,
+          this.moduleName,
+          'merchant_id',
+          this.params.merchant_id,
+          'merchantId',
+        ),
+        new ToQueryHelper(
+          query,
+          this.moduleName,
+          'average_price',
+          this.priceParam.isBudgetEnable
+            ? this.priceParam.budgetMaxValue
+            : null,
+          'budgetMax',
+        ),
+        new FromQueryHelper(
           query,
           this.moduleName,
           'approved_at',
-          this.params.new_this_week ? `${startDates}` : null,
-          this.params.new_this_week ? `${currentDates}` : null,
-          'newThisWeek',
+          this.params.new_this_week ? `'${startDates}'` : null,
+          'newThisWeekFrom',
         ),
+        new ToQueryHelper(
+          query,
+          this.moduleName,
+          'approved_at',
+          this.params.new_this_week ? `'${nextDay}'` : null,
+          'newThisWeekTo',
+        ),
+        new FromQueryHelper(
+          query,
+          this.moduleName,
+          'rating',
+          this.params.minimum_rating,
+          'minimumRating',
+        ),
+        new PriceQuery(
+          query,
+          this.moduleName,
+          this.priceParam.is_filter_price,
+          this.priceParam.price_range_filter,
+        ),
+        new DiscountQuery(query, this.moduleName, this.params.promo),
       );
     } else {
       queries.push(
@@ -145,29 +237,20 @@ export class GetStoreFilter {
             : null,
           'budgetMax',
         ),
-        //JIKA APPROVED MASIH BUG BISA GUNAKAN DENGAN CREATE AT
-        new BetweenQueryHelper(
+        new FromQueryHelper(
           query,
           this.moduleName,
           'approved_at',
-          this.params.new_this_week ? `${startDates}` : null,
-          this.params.new_this_week ? `${currentDates}` : null,
-          'newThisWeek',
+          this.params.new_this_week ? `'${startDates}'` : null,
+          'newThisWeekFrom',
         ),
-        // new FromQueryHelper(
-        //   query,
-        //   this.moduleName,
-        //   'approved_at',
-        //   this.params.new_this_week ? `'${startDates}'` : null,
-        //   'newThisWeekFrom',
-        // ),
-        // new ToQueryHelper(
-        //   query,
-        //   this.moduleName,
-        //   'approved_at',
-        //   this.params.new_this_week ? `'${currentDates}'` : null,
-        //   'newThisWeekTo',
-        // ),
+        new ToQueryHelper(
+          query,
+          this.moduleName,
+          'approved_at',
+          this.params.new_this_week ? `'${nextDay}'` : null,
+          'newThisWeekTo',
+        ),
         new FromQueryHelper(
           query,
           this.moduleName,

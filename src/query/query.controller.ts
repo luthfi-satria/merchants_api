@@ -52,6 +52,22 @@ export class QueryController {
     return res.download(path);
   }
 
+  @Get('query/stores/new')
+  @ResponseStatusCode()
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getNewStore(
+    @Query(new ValidationPipe({ transform: true })) data: QueryListStoreDto,
+  ): Promise<any> {
+    console.log(
+      '===========================Start Debug Query Param=================================\n',
+      new Date(Date.now()).toLocaleString(),
+      '\n',
+      data,
+      '\n============================End Debug Query Param==================================',
+    );
+    return await this.queryService.getStoreNew(data);
+  }
+
   @Get('query/stores')
   @ResponseStatusCode()
   @UseInterceptors(ClassSerializerInterceptor)
