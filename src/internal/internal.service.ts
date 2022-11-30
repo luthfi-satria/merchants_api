@@ -583,4 +583,19 @@ export class InternalService {
   ): Promise<StoreCategoriesDocument[]> {
     return this.storeCategoryService.getStoreCategoryByIds(storeCategoryIds);
   }
+
+  async getSapKeyByStore(storeId: string) {
+    const store: StoreDocument = await this.storeRepository
+      .createQueryBuilder('store')
+      .where('store.id = :storeId', { storeId })
+      .leftJoinAndSelect('store.merchant', 'store_merchant')
+      .getOne();
+
+    return await this.corporateSapKeyDocumentRepository
+      .createQueryBuilder('sap_key')
+      .where('sap_key.group_id = :groupId', {
+        groupId: store.merchant.group_id,
+      })
+      .getOne();
+  }
 }
