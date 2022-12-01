@@ -8,7 +8,6 @@ import {
 import { FilterHelper } from './helper/filter.helper';
 import { QueryBunlderHelper } from './helper/base-query/helpers/query-bunlder.helper';
 import { WhereQueryHelper } from './helper/base-query/helpers/where-query.helper';
-import { OrWhereQueryHelper } from './helper/base-query/helpers/or-where-query.helper';
 import { LocationQuery } from './query/location.query';
 import { SettingsService } from '../../settings/settings.service';
 import { WhereInQueryHelper } from './helper/base-query/helpers/where-in-query.helper';
@@ -17,7 +16,6 @@ import { WhereBooleanQueryHelper } from './helper/base-query/helpers/where-boole
 import { ToQueryHelper } from './helper/base-query/helpers/to-query.helper';
 import { FromQueryHelper } from './helper/base-query/helpers/from-query.helper';
 import { DateTimeUtils } from '../../utils/date-time-utils';
-import moment from 'moment';
 import { PriceQuery } from './query/price.query';
 import { SearchQueryHelper } from './helper/base-query/helpers/search-query.helper';
 import { DiscountQuery } from './query/discount.query';
