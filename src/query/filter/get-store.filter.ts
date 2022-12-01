@@ -22,7 +22,6 @@ import { PriceQuery } from './query/price.query';
 import { SearchQueryHelper } from './helper/base-query/helpers/search-query.helper';
 import { DiscountQuery } from './query/discount.query';
 import { OperationalStatusQuery } from './query/operational-status.query';
-import { BetweenQueryHelper } from './helper/base-query/helpers/between-query.helper';
 
 export class GetStoreFilter {
   protected moduleName = 'merchant_store';
@@ -46,22 +45,6 @@ export class GetStoreFilter {
     const favoriteStoreIds = this.params.favorite_this_week
       ? await this.getFavoriteStoreIds()
       : [];
-
-    //** DATE EXRACT NEXT*/
-    const day = new Date();
-    day.setDate(day.getDate() + 1);
-    const dateNext = ('0' + day.getDate()).slice(-2);
-    const monthNext = ('0' + (day.getMonth() + 1)).slice(-2);
-    const yearNext = day.getFullYear();
-    const nextDay = yearNext + '-' + monthNext + '-' + dateNext;
-
-    //** DATE EXTRACT CURRENT */
-    const currents = new Date();
-    const date = ('0' + currents.getDate()).slice(-2);
-    const month = ('0' + (currents.getMonth() + 1)).slice(-2);
-    const year = currents.getFullYear();
-    const currentDates = year + '-' + month + '-' + date;
-    const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
 
     const queries: any[] = [
       new WhereQueryHelper(
@@ -131,14 +114,16 @@ export class GetStoreFilter {
         query,
         this.moduleName,
         'approved_at',
-        this.params.new_this_week ? `'${startDates}'` : null,
+        this.params.new_this_week
+          ? DateTimeUtils.getNewThisWeekDate(new Date()).toString()
+          : null,
         'newThisWeekFrom',
       ),
       new ToQueryHelper(
         query,
         this.moduleName,
         'approved_at',
-        this.params.new_this_week ? `'${nextDay}'` : null,
+        this.params.new_this_week ? moment(new Date()).toString() : null,
         'newThisWeekTo',
       ),
       new FromQueryHelper(

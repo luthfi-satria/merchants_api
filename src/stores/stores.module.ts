@@ -48,8 +48,6 @@ import { StoreCategoriesService } from 'src/store_categories/store_categories.se
 import { LanguageDocument } from 'src/database/entities/language.entity';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
-import { StoreMultipickupsController } from './stores-multipickup.controller';
-import { StoreMultipickupService } from './stores-multipickup.service';
 
 @Module({
   imports: [
@@ -83,7 +81,6 @@ import { StoreMultipickupService } from './stores-multipickup.service';
     StoresController,
     StoreOperationalController,
     StoreUsersController,
-    StoreMultipickupsController,
   ],
   providers: [
     StoresService,
@@ -110,8 +107,7 @@ import { StoreMultipickupService } from './stores-multipickup.service';
     SettingsService,
     StoreCategoriesService,
     MenuOnlineService,
-    StoreMultipickupService,
   ],
-  exports: [StoresService, StoreOperationalService, StoreMultipickupService],
+  exports: [StoresService, StoreOperationalService],
 })
 export class StoresModule {}
