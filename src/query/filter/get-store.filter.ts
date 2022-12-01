@@ -46,6 +46,22 @@ export class GetStoreFilter {
       ? await this.getFavoriteStoreIds()
       : [];
 
+    //** DATE EXRACT NEXT*/
+    const day = new Date();
+    day.setDate(day.getDate() + 1);
+    const dateNext = ('0' + day.getDate()).slice(-2);
+    const monthNext = ('0' + (day.getMonth() + 1)).slice(-2);
+    const yearNext = day.getFullYear();
+    const nextDay = yearNext + '-' + monthNext + '-' + dateNext;
+
+    //** DATE EXTRACT CURRENT */
+    const currents = new Date();
+    const date = ('0' + currents.getDate()).slice(-2);
+    const month = ('0' + (currents.getMonth() + 1)).slice(-2);
+    const year = currents.getFullYear();
+    const currentDates = year + '-' + month + '-' + date;
+    const startDates = DateTimeUtils.getNewThisWeekDates(currentDates);
+
     const queries: any[] = [
       new WhereQueryHelper(
         query,
@@ -114,16 +130,14 @@ export class GetStoreFilter {
         query,
         this.moduleName,
         'approved_at',
-        this.params.new_this_week
-          ? DateTimeUtils.getNewThisWeekDate(new Date()).toString()
-          : null,
+        this.params.new_this_week ? `'${startDates}'` : null,
         'newThisWeekFrom',
       ),
       new ToQueryHelper(
         query,
         this.moduleName,
         'approved_at',
-        this.params.new_this_week ? moment(new Date()).toString() : null,
+        this.params.new_this_week ? `'${nextDay}'` : null,
         'newThisWeekTo',
       ),
       new FromQueryHelper(
