@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -40,6 +41,7 @@ export class StoreCategoriesDocument {
   updated_at: Date | string;
 
   @DeleteDateColumn({ nullable: true })
+  @Index()
   deleted_at: Date;
 
   constructor(init?: Partial<StoreCategoriesDocument>) {

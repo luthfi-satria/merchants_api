@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -11,6 +12,7 @@ import {
 import { StoreDocument } from './store.entity';
 
 @Entity({ name: 'merchants_menu_onlines' })
+@Index(['store_id', 'menu_id', 'deleted_at'])
 export class MenuOnlineDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -21,6 +23,7 @@ export class MenuOnlineDocument {
   @Column('uuid', { nullable: true })
   menu_price_id: string;
 
+  @Index()
   @Column('uuid', { nullable: true })
   menu_id: string;
 
@@ -33,6 +36,7 @@ export class MenuOnlineDocument {
   @Column()
   price: number;
 
+  @Index()
   @Column()
   store_id: string;
 
@@ -49,6 +53,7 @@ export class MenuOnlineDocument {
   @UpdateDateColumn({ type: 'timestamptz', default: () => 'LOCALTIMESTAMP' })
   updated_at: Date | string;
 
+  @Index()
   @DeleteDateColumn({ nullable: true, select: false })
   deleted_at: Date;
 }

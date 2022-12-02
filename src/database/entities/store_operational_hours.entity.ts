@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -16,15 +17,19 @@ export class StoreOperationalHoursDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column({ type: 'uuid', nullable: true })
   merchant_store_id: string;
 
+  @Index()
   @Column({ type: 'int8' }) //TODO niel- will remove this, change to day_of_weeks with verbose day ex 'mon, tue, etc.';
   day_of_week: number | string;
 
+  @Index()
   @Column({ type: 'boolean', default: true })
   is_open: boolean;
 
+  @Index()
   @Column({ type: 'boolean', default: false })
   is_open_24h: boolean;
 
