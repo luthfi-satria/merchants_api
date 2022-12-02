@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -40,10 +41,13 @@ export enum DiscountType {
 }
 
 @Entity({ name: 'merchants_merchants' })
+@Index(['group_id', 'id', 'deleted_at'])
+@Index(['id', 'deleted_at'])
 export class MerchantDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column('uuid')
   group_id: string;
 

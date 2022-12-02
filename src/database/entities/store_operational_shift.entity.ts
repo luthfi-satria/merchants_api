@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -16,13 +17,16 @@ export class StoreOperationalShiftDocument {
   @Exclude()
   id?: string;
 
+  @Index()
   @Column({ type: 'uuid', nullable: true })
   @Exclude()
   store_operational_id?: string;
 
+  @Index()
   @Column({ type: 'varchar', length: '7', default: '08:00' })
   open_hour: string;
 
+  @Index()
   @Column({ type: 'varchar', length: '7', default: '17:00' })
   close_hour: string;
 
