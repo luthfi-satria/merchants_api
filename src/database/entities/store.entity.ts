@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   JoinTable,
   ManyToMany,
@@ -38,6 +39,8 @@ export enum enumStoreStatus {
 }
 
 @Entity({ name: 'merchants_stores' })
+@Index(['location_latitude', 'location_longitude', 'status', 'deleted_at'])
+@Index(['location_latitude', 'location_longitude'])
 export class StoreDocument {
   //General Info
   @PrimaryGeneratedColumn('uuid')
@@ -66,12 +69,14 @@ export class StoreDocument {
   @Column()
   address: string;
 
+  @Index()
   @Column('decimal', {
     // default: '106.827153', //monas
     transformer: new ColumnNumericTransformer(),
   })
   location_longitude: number;
 
+  @Index()
   @Column('decimal', {
     // default: '-6.175392', //monas
     transformer: new ColumnNumericTransformer(),
@@ -158,6 +163,7 @@ export class StoreDocument {
   auto_accept_order: boolean;
 
   //Metadata
+  @Index()
   @Column({
     type: 'enum',
     enum: enumStoreStatus,
@@ -168,6 +174,7 @@ export class StoreDocument {
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date | string;
 
+  @Index()
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date | string;
 

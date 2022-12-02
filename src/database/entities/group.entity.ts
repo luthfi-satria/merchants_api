@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -32,6 +33,7 @@ export enum DirectorIdentityType {
   PASSPORT = 'PASSPORT',
 }
 @Entity({ name: 'merchants_groups' })
+@Index(['id', 'deleted_at'])
 export class GroupDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
