@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -24,6 +25,7 @@ export class LanguageDocument {
   name: string;
 
   @Column('uuid')
+  @Index()
   storeCategoriesId: string;
 
   @ManyToOne(() => StoreCategoriesDocument, (stocat) => stocat.languages)
