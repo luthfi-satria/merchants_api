@@ -41,8 +41,10 @@ export enum enumStoreStatus {
 @Entity({ name: 'merchants_stores' })
 @Index(['location_latitude', 'location_longitude', 'status', 'deleted_at'])
 @Index(['location_latitude', 'location_longitude'])
+@Index(['id', 'deleted_at'])
 export class StoreDocument {
   //General Info
+  @Index()
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -50,6 +52,7 @@ export class StoreDocument {
   @JoinColumn({ name: 'merchant_id' })
   merchant: MerchantDocument;
 
+  @Index()
   @Column('uuid')
   merchant_id: string;
 
