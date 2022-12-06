@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -10,6 +11,7 @@ import {
 @Entity({ name: 'merchants_addons' })
 export class AddonDocument {
   @PrimaryGeneratedColumn('uuid')
+  @Index()
   id: string;
 
   @Column()

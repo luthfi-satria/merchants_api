@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   JoinTable,
   ManyToMany,
@@ -23,6 +24,7 @@ export enum MerchantUsersStatus {
 }
 
 @Entity({ name: 'merchants_users' })
+@Index('rel_id_role_id_deleted_at_idx', ['id', 'role_id', 'deleted_at'])
 export class MerchantUsersDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -40,12 +42,15 @@ export class MerchantUsersDocument {
   @Exclude()
   password: string;
 
+  @Index()
   @Column('uuid', { nullable: true })
   group_id: string;
 
+  @Index()
   @Column('uuid', { nullable: true })
   merchant_id: string;
 
+  @Index()
   @Column('uuid', { nullable: true })
   store_id: string;
 
