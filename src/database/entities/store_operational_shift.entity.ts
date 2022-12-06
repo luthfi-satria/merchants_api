@@ -38,6 +38,7 @@ export class StoreOperationalShiftDocument {
   @Exclude()
   updated_at: Date | string;
 
+  @Index()
   @ManyToOne(
     () => StoreOperationalHoursDocument,
     (operational_day) => operational_day.shifts,
