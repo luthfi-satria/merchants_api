@@ -13,6 +13,7 @@ import {
 import { StoreDocument } from './store.entity';
 import { StoreOperationalShiftDocument } from './store_operational_shift.entity';
 @Entity({ name: 'merchants_store_operational_hours' })
+@Index(['merchant_store_id', 'day_of_week'])
 export class StoreOperationalHoursDocument {
   @PrimaryGeneratedColumn('uuid')
   @Index()
