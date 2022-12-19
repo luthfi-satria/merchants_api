@@ -1324,7 +1324,7 @@ export class GroupsService {
           where: { pic_phone: updateCorporateDto.pic_phone },
         });
 
-      if (updateCorporateDto.pic_phone !== checkphone.pic_phone) {
+      if (checkphone && checkphone.group_id !== group.id) {
         const errors: RMessage = {
           value: updateCorporateDto.pic_phone,
           property: 'pic_phone',
@@ -1332,6 +1332,7 @@ export class GroupsService {
             this.messageService.get('merchant.createmerchant.phoneExist'),
           ],
         };
+
         throw new BadRequestException(
           this.responseService.error(
             HttpStatus.BAD_REQUEST,

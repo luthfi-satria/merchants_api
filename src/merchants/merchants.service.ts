@@ -857,6 +857,12 @@ export class MerchantsService {
 
     const priceCategory = await this.requestToApi(pcurl, pcdata, headers);
 
+    console.log(priceCategory, 'test price category');
+
+    console.log(priceCategory?.data, 'test price category');
+
+    console.log(data, 'test data');
+
     if (data?.store_id && priceCategory.data?.id) {
       Object.assign(scdata, {
         pricing_templates: [

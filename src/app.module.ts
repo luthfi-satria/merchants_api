@@ -32,6 +32,8 @@ import { NatsModule } from './nats/nats.module';
 import { LoginMultilevelModule } from './login-multilevel/login-multilevel.module';
 import { RegistersModule } from './register/register.module';
 import { ReportsModule } from './reports/reports.module';
+import { ResponseService } from './response/response.service';
+import { ValidationMiddleware } from './middleware/validation.middleware';
 
 @Module({
   imports: [
@@ -65,6 +67,12 @@ import { ReportsModule } from './reports/reports.module';
     ReportsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ResponseService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer
+      .apply(ValidationMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}
