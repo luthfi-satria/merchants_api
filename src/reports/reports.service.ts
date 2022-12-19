@@ -140,6 +140,11 @@ export class ReportsService {
             'pic_name',
             'pic_phone',
             'pic_email',
+            'pic_profile_merchant',
+            'store_banner',
+            'total_recomended_menu',
+            'total_picture_menu',
+            'total_menu',
             'store_created',
             'status',
             'store_updated',
@@ -147,9 +152,9 @@ export class ReportsService {
           ];
 
       //** GET DATA FROM DATABASE */
-      const raw = await this.newMerchantEntities.listGenerateNewMerchantsData(
-        data,
-      );
+      const raw = await this.newMerchantEntities.generateNewMerchant(data, {
+        isGetAll: true,
+      });
 
       //** CREATE WORKBOOK */
       const workbook = new ExcelJS.Workbook();
@@ -279,11 +284,39 @@ export class ReportsService {
               column.header = 'PIC PHONE';
             }
             break;
-          case 'pic_email':
+          case 'pic_profile_merchant':
             if (splitString[1] && splitString[1] !== '') {
               column.header = splitString[1].toUpperCase();
             } else {
-              column.header = 'PIC EMAIL';
+              column.header = 'PIC PROFILE MERCHANT';
+            }
+            break;
+          case 'store_banner':
+            if (splitString[1] && splitString[1] !== '') {
+              column.header = splitString[1].toUpperCase();
+            } else {
+              column.header = 'STORE BANNER';
+            }
+            break;
+          case 'total_recomended_menu':
+            if (splitString[1] && splitString[1] !== '') {
+              column.header = splitString[1].toUpperCase();
+            } else {
+              column.header = 'COUNT RECOMENDATION MENU';
+            }
+            break;
+          case 'total_picture_menu':
+            if (splitString[1] && splitString[1] !== '') {
+              column.header = splitString[1].toUpperCase();
+            } else {
+              column.header = 'COUNT PICTURES MENU';
+            }
+            break;
+          case 'total_menu':
+            if (splitString[1] && splitString[1] !== '') {
+              column.header = splitString[1].toUpperCase();
+            } else {
+              column.header = 'COUNT TOTAL MENU';
             }
             break;
           case 'store_created':
@@ -325,6 +358,22 @@ export class ReportsService {
         for (const [idx, obj] of raw.items.entries()) {
           const row = [];
           row.push(idx + 1);
+
+          //** GET DATA MENUS BY STORE ID */
+          const getMenus = await this.commonCatalogService.getMenuByStoreId(
+            obj.ms_id,
+          );
+
+          // Get total item menus
+          const total_menus = getMenus.data.total_item;
+
+          // Get total recomendation
+          const countRecomendedMenu = getMenus.data.items.recommended;
+          const recomendation_menus = Object.keys(countRecomendedMenu).length;
+
+          // Get total image menu
+          const menu_image = getMenus.data.total_item;
+
           for (let key of columns) {
             const splitString = key.split('|');
             key = splitString[0];
@@ -402,6 +451,28 @@ export class ReportsService {
                   : '-';
                 row.push(namePE);
                 break;
+              case 'pic_profile_merchant':
+                const namePPM = obj.merchant_profile_store_photo
+                  ? obj.merchant_profile_store_photo
+                  : '-';
+                row.push(namePPM);
+                break;
+              case 'store_banner':
+                const nameSB = obj.ms_photo ? obj.ms_photo : '-';
+                row.push(nameSB);
+                break;
+              case 'total_recomended_menu':
+                const nameTRM = recomendation_menus ? recomendation_menus : '-';
+                row.push(nameTRM);
+                break;
+              case 'total_picture_menu':
+                const nameTPM = menu_image ? menu_image : '-';
+                row.push(nameTPM);
+                break;
+              case 'total_menu':
+                const nameTM = total_menus ? total_menus : '-';
+                row.push(nameTM);
+                break;
               case 'store_created':
                 const nameSCR = obj.ms_created_at ? obj.ms_created_at : '-';
                 row.push(nameSCR);
@@ -438,7 +509,7 @@ export class ReportsService {
       res.set({
         'Content-Type':
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-mssposition': `attachment; filename=${fileName}`,
+        'Content-Disposition': `attachment; filename=${fileName}`,
       });
       await workbook.xlsx.write(res);
 
