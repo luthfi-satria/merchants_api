@@ -8,7 +8,7 @@ import { ResponseService } from 'src/response/response.service';
 import { ListReprotNewMerchantDTO } from './dto/report.dto';
 import { ReportsService } from './reports.service';
 
-@Controller('api/v1/reports')
+@Controller('api/v1/merchants/reports')
 export class ReportsController {
   constructor(
     private readonly reportsService: ReportsService,
