@@ -31,6 +31,7 @@ import { SeederModule } from './database/seeders/seeder.module';
 import { NatsModule } from './nats/nats.module';
 import { LoginMultilevelModule } from './login-multilevel/login-multilevel.module';
 import { RegistersModule } from './register/register.module';
+import { ReportsModule } from './reports/reports.module';
 import { ResponseService } from './response/response.service';
 import { ValidationMiddleware } from './middleware/validation.middleware';
 import { UsersValidationModule } from './users_validation/users_validation.module';
@@ -64,7 +65,7 @@ import { UsersValidationModule } from './users_validation/users_validation.modul
     NatsModule,
     LoginMultilevelModule,
     RegistersModule,
-    UsersValidationModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService, ResponseService],
