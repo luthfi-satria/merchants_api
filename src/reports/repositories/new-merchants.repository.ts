@@ -121,15 +121,22 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
   }
 
   //** PROCCESS LIST */
-  async listGenerateNewMerchantsData(
+  async generateNewMerchant(
     data: ListReprotNewMerchantDTO,
-  ): Promise<any> {
+    options?: { isGetAll: boolean },
+  ): Promise<{
+    total_item: number;
+    limit: number;
+    current_page: number;
+    items: any[];
+  }> {
     const search = data.search || '';
     const currentPage = data.page || 1;
-    const perPage = Number(data.limit) || 10;
+    const perPage = data.limit || 10;
+    const indexPage = (Number(currentPage) - 1) * perPage;
+    const dateStart = data.date_start || null;
+    const dateEnd = data.date_end || null;
     const statuses = data.statuses || [];
-    const dateStart = data.date_start || '';
-    const dateEnd = data.date_end || '';
     const lang = '';
 
     //** QUERIES */
@@ -195,7 +202,7 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
     }
 
     const rawAll = await queries.getRawMany();
-    const raw = rawAll.slice(perPage, perPage + perPage);
+    const raw = rawAll.slice(indexPage, indexPage + perPage);
     const count = rawAll.length;
 
     raw.forEach((item) => {
@@ -215,7 +222,7 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
       return {
         total_item: count,
         limit: perPage,
-        current_page: currentPage,
+        current_page: Number(currentPage),
         items: raw,
       };
     } catch (error) {
