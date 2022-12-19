@@ -31,6 +31,7 @@ import { SeederModule } from './database/seeders/seeder.module';
 import { NatsModule } from './nats/nats.module';
 import { LoginMultilevelModule } from './login-multilevel/login-multilevel.module';
 import { RegistersModule } from './register/register.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { RegistersModule } from './register/register.module';
     NatsModule,
     LoginMultilevelModule,
     RegistersModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
