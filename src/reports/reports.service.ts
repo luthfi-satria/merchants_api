@@ -28,74 +28,74 @@ export class ReportsService {
   ) {}
 
   //** PROCCESS LIST */
-  async processListNewMerchants(data: ListReprotNewMerchantDTO): Promise<any> {
-    try {
-      //** GET DATA FROM DATABASE */
-      const raw = await this.newMerchantEntities.listNewMerchantsData(data);
+  // async processListNewMerchants(data: ListReprotNewMerchantDTO): Promise<any> {
+  //   try {
+  //     //** GET DATA FROM DATABASE */
+  //     const raw = await this.newMerchantEntities.listNewMerchantsData(data);
 
-      //** CREATE OBJECT DATA */
-      const cityIObj = {};
-      const menuIObj = {};
+  //     // //** CREATE OBJECT DATA */
+  //     const cityIObj = {};
+  //     const menuIObj = {};
 
-      // Data Cities
-      raw.items.forEach((ms) => {
-        if (ms.city_id) {
-          cityIObj[ms.city_id] = null;
-        }
-      });
+  //     // Data Cities
+  //     raw.items.forEach((ms) => {
+  //       if (ms.city_id) {
+  //         cityIObj[ms.city_id] = null;
+  //       }
+  //     });
 
-      // Data Menu
-      raw.items.forEach((ms) => {
-        if (ms.id) {
-          menuIObj[ms.id] = null;
-        }
-      });
+  //     // Data Menu
+  //     raw.items.forEach((ms) => {
+  //       if (ms.id) {
+  //         menuIObj[ms.id] = null;
+  //       }
+  //     });
 
-      const promises = [];
-      let cities = null;
-      let menus = null;
+  //     const promises = [];
+  //     let cities = null;
+  //     let menus = null;
 
-      raw.items.forEach((ms) => {
-        cities = this.cityService.getCity(ms.city_id);
-        promises.push(cities);
-      });
+  //     raw.items.forEach((ms) => {
+  //       cities = this.cityService.getCity(ms.city_id);
+  //       promises.push(cities);
+  //     });
 
-      raw.items.forEach((ms) => {
-        menus = this.commonCatalogService.getMenuByStoreId(ms.id);
-        promises.push(menus);
-      });
+  //     raw.items.forEach((ms) => {
+  //       menus = this.commonCatalogService.getMenuByStoreId(ms.id);
+  //       promises.push(menus);
+  //     });
 
-      await Promise.all(promises);
+  //     await Promise.all(promises);
 
-      if (cities) {
-        cities = await cities;
-        cities?.items?.forEach((city: any) => {
-          cityIObj[city.id] = city;
-        });
-      }
+  //     if (cities) {
+  //       cities = await cities;
+  //       cities?.items?.forEach((city: any) => {
+  //         cityIObj[city.id] = city;
+  //       });
+  //     }
 
-      if (menus) {
-        menus = await menus;
-        menus?.items?.forEach((menu: any) => {
-          menuIObj[menu.id] = menu;
-        });
-      }
+  //     if (menus) {
+  //       menus = await menus;
+  //       menus?.items?.forEach((menu: any) => {
+  //         menuIObj[menu.id] = menu;
+  //       });
+  //     }
 
-      //** RESULT NEW MERCHANTS STORES */
-      raw.items.forEach((ms) => {
-        ms.city_id = cities ? cities : cityIObj[ms.city_id];
-        ms.manu_id = menus ? menus : null;
-      });
+  //     //** RESULT NEW MERCHANTS STORES */
+  //     raw.items.forEach((ms) => {
+  //       ms.city_id = cities ? cities : cityIObj[ms.city_id];
+  //       ms.manu_id = menus ? menus : null;
+  //     });
 
-      return raw;
-    } catch (error) {
-      throw error;
-    }
-  }
+  //     return raw;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
 
   //** LIST NEW MERCHANTS */
   async listNewMerchants(data: ListReprotNewMerchantDTO): Promise<any> {
-    const raw = await this.processListNewMerchants(data);
+    const raw = await this.newMerchantEntities.listNewMerchantsData(data);
     //** EXECUTE QUERIES */
     try {
       return raw;
@@ -107,7 +107,7 @@ export class ReportsService {
             value: '',
             property: '',
             constraint: [
-              this.messageService.get('merchant.general.idNotFound'),
+              this.messageService.get('merchant.general.dataNotFound'),
             ],
           },
           'Bad Request',
@@ -142,9 +142,6 @@ export class ReportsService {
             'pic_email',
             'pic_profile_merchant',
             'store_banner',
-            'total_recomended_menu',
-            'total_picture_menu',
-            'total_menu',
             'store_created',
             'status',
             'store_updated',
@@ -152,9 +149,7 @@ export class ReportsService {
           ];
 
       //** GET DATA FROM DATABASE */
-      const raw = await this.newMerchantEntities.generateNewMerchant(data, {
-        isGetAll: true,
-      });
+      const raw = await this.newMerchantEntities.generateNewMerchant(data);
 
       //** CREATE WORKBOOK */
       const workbook = new ExcelJS.Workbook();
@@ -298,27 +293,6 @@ export class ReportsService {
               column.header = 'STORE BANNER';
             }
             break;
-          case 'total_recomended_menu':
-            if (splitString[1] && splitString[1] !== '') {
-              column.header = splitString[1].toUpperCase();
-            } else {
-              column.header = 'COUNT RECOMENDATION MENU';
-            }
-            break;
-          case 'total_picture_menu':
-            if (splitString[1] && splitString[1] !== '') {
-              column.header = splitString[1].toUpperCase();
-            } else {
-              column.header = 'COUNT PICTURES MENU';
-            }
-            break;
-          case 'total_menu':
-            if (splitString[1] && splitString[1] !== '') {
-              column.header = splitString[1].toUpperCase();
-            } else {
-              column.header = 'COUNT TOTAL MENU';
-            }
-            break;
           case 'store_created':
             if (splitString[1] && splitString[1] !== '') {
               column.header = splitString[1].toUpperCase();
@@ -358,21 +332,6 @@ export class ReportsService {
         for (const [idx, obj] of raw.items.entries()) {
           const row = [];
           row.push(idx + 1);
-
-          //** GET DATA MENUS BY STORE ID */
-          const getMenus = await this.commonCatalogService.getMenuByStoreId(
-            obj.ms_id,
-          );
-
-          // Get total item menus
-          const total_menus = getMenus.data.total_item;
-
-          // Get total recomendation
-          const countRecomendedMenu = getMenus.data.items.recommended;
-          const recomendation_menus = Object.keys(countRecomendedMenu).length;
-
-          // Get total image menu
-          const menu_image = getMenus.data.total_item;
 
           for (let key of columns) {
             const splitString = key.split('|');
@@ -461,18 +420,6 @@ export class ReportsService {
                 const nameSB = obj.ms_photo ? obj.ms_photo : '-';
                 row.push(nameSB);
                 break;
-              case 'total_recomended_menu':
-                const nameTRM = recomendation_menus ? recomendation_menus : '-';
-                row.push(nameTRM);
-                break;
-              case 'total_picture_menu':
-                const nameTPM = menu_image ? menu_image : '-';
-                row.push(nameTPM);
-                break;
-              case 'total_menu':
-                const nameTM = total_menus ? total_menus : '-';
-                row.push(nameTM);
-                break;
               case 'store_created':
                 const nameSCR = obj.ms_created_at ? obj.ms_created_at : '-';
                 row.push(nameSCR);
@@ -521,7 +468,9 @@ export class ReportsService {
           {
             value: '',
             property: '',
-            constraint: [this.messageService.get('merchant.general.NotFound')],
+            constraint: [
+              this.messageService.get('merchant.general.dataNotFound'),
+            ],
           },
           'Bad Request',
         ),

@@ -17,13 +17,13 @@ export class ReportsController {
   ) {}
 
   @Get('new-merchant')
-  // @UserTypeAndLevel(
-  //   'admin.*',
-  //   'merchant.group',
-  //   'merchant.merchant',
-  //   'merchant.store',
-  // )
-  // @AuthJwtGuard()
+  @UserTypeAndLevel(
+    'admin.*',
+    'merchant.group',
+    'merchant.merchant',
+    'merchant.store',
+  )
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async listNewMerchants(
     @Query() data: ListReprotNewMerchantDTO,
@@ -44,13 +44,13 @@ export class ReportsController {
 
   //** DOWNLOAD MERCHANTS LIST */
   @Get('new-merchant/generate')
-  // @UserTypeAndLevel(
-  //   'admin.*',
-  //   'merchant.group',
-  //   'merchant.merchant',
-  //   'merchant.store',
-  // )
-  // @AuthJwtGuard()
+  @UserTypeAndLevel(
+    'admin.*',
+    'merchant.group',
+    'merchant.merchant',
+    'merchant.store',
+  )
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async generateExcelNewMerchants(
     @Query() data: ListReprotNewMerchantDTO,
