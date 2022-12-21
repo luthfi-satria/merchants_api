@@ -17,13 +17,8 @@ export class ReportsController {
   ) {}
 
   @Get('new-merchant')
-  // @UserTypeAndLevel(
-  //   'admin.*',
-  //   'merchant.group',
-  //   'merchant.merchant',
-  //   'merchant.store',
-  // )
-  // @AuthJwtGuard()
+  @UserTypeAndLevel('admin.*', 'merchant.*')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async listNewMerchants(
     @Query() data: ListReprotNewMerchantDTO,
@@ -44,13 +39,8 @@ export class ReportsController {
 
   //** DOWNLOAD MERCHANTS LIST */
   @Get('new-merchant/generate')
-  // @UserTypeAndLevel(
-  //   'admin.*',
-  //   'merchant.group',
-  //   'merchant.merchant',
-  //   'merchant.store',
-  // )
-  // @AuthJwtGuard()
+  @UserTypeAndLevel('admin.*', 'merchant.*')
+  @AuthJwtGuard()
   @ResponseStatusCode()
   async generateExcelNewMerchants(
     @Query() data: ListReprotNewMerchantDTO,
@@ -61,6 +51,29 @@ export class ReportsController {
         data,
         res,
       );
+
+      return this.responseService.success(
+        true,
+        this.messageService.get('general.general.success'),
+        generateXlsx,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //** DOWNLOAD MERCHANTS LIST */
+  @Get('generate/menu')
+  @UserTypeAndLevel('admin.*', 'merchant.*')
+  @AuthJwtGuard()
+  @ResponseStatusCode()
+  async generateExcelMenyMerchants(
+    @Query() data: ListReprotNewMerchantDTO,
+    @Res() res: Response,
+  ) {
+    try {
+      const generateXlsx =
+        await this.reportsService.generateMenuXLSXMenuMerchants(data, res);
 
       return this.responseService.success(
         true,
