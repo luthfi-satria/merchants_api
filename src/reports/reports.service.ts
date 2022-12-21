@@ -34,7 +34,7 @@ export class ReportsService {
       const raw = await this.newMerchantEntities.listNewMerchantsData(data);
       // //** CREATE OBJECT DATA */
       const cityIObj = {};
-      const menuIObj = {};
+      // const menuIObj = {};
 
       // Data Cities
       raw.items.forEach((ms) => {
@@ -44,25 +44,25 @@ export class ReportsService {
       });
 
       // Data Menu
-      raw.items.forEach((ms) => {
-        if (ms.merchant_id) {
-          menuIObj[ms.merchant_id] = null;
-        }
-      });
+      // raw.items.forEach((ms) => {
+      //   if (ms.merchant_id) {
+      //     menuIObj[ms.merchant_id] = null;
+      //   }
+      // });
 
       const promises = [];
       let cities = null;
-      let menus = null;
+      // let menus = null;
 
       raw.items.forEach((ms) => {
         cities = this.cityService.getCity(ms.ms_city_id);
         promises.push(cities);
       });
 
-      raw.items.forEach((ms) => {
-        menus = this.commonCatalogService.getMenuOnlyByStoreId(ms.merchant_id);
-        promises.push(menus);
-      });
+      // raw.items.forEach((ms) => {
+      //   menus = this.commonCatalogService.getMenuOnlyByStoreId(ms.merchant_id);
+      //   promises.push(menus);
+      // });
 
       await Promise.all(promises);
 
@@ -73,17 +73,17 @@ export class ReportsService {
         });
       }
 
-      if (menus) {
-        menus = await menus;
-        menus?.items?.forEach((menu: any) => {
-          menuIObj[menu.merchant_id] = menu;
-        });
-      }
+      // if (menus) {
+      //   menus = await menus;
+      //   menus?.items?.forEach((menu: any) => {
+      //     menuIObj[menu.merchant_id] = menu;
+      //   });
+      // }
 
       //** RESULT NEW MERCHANTS STORES */
       raw.items.forEach((ms) => {
         ms.ms_city_id = cities ? cities : cityIObj[ms.ms_city_id];
-        ms.merchant_id = menus ? menus : menuIObj[ms.merchant_id];
+        // ms.merchant_id = menus ? menus : menuIObj[ms.merchant_id];
       });
 
       return raw;
