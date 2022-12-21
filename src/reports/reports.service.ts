@@ -28,74 +28,74 @@ export class ReportsService {
   ) {}
 
   //** PROCCESS LIST */
-  // async processListNewMerchants(data: ListReprotNewMerchantDTO): Promise<any> {
-  //   try {
-  //     //** GET DATA FROM DATABASE */
-  //     const raw = await this.newMerchantEntities.listNewMerchantsData(data);
+  async processListNewMerchants(data: ListReprotNewMerchantDTO): Promise<any> {
+    try {
+      //** GET DATA FROM DATABASE */
+      const raw = await this.newMerchantEntities.listNewMerchantsData(data);
 
-  //     // //** CREATE OBJECT DATA */
-  //     const cityIObj = {};
-  //     const menuIObj = {};
+      // //** CREATE OBJECT DATA */
+      const cityIObj = {};
+      // const menuIObj = {};
 
-  //     // Data Cities
-  //     raw.items.forEach((ms) => {
-  //       if (ms.city_id) {
-  //         cityIObj[ms.city_id] = null;
-  //       }
-  //     });
+      // Data Cities
+      raw.items.forEach((ms) => {
+        if (ms.ms_city_id) {
+          cityIObj[ms.ms_city_id] = null;
+        }
+      });
 
-  //     // Data Menu
-  //     raw.items.forEach((ms) => {
-  //       if (ms.id) {
-  //         menuIObj[ms.id] = null;
-  //       }
-  //     });
+      // Data Menu
+      // raw.items.forEach((ms) => {
+      //   if (ms.ms_id) {
+      //     menuIObj[ms.ms_id] = null;
+      //   }
+      // });
 
-  //     const promises = [];
-  //     let cities = null;
-  //     let menus = null;
+      const promises = [];
+      let cities = null;
+      // let menus = null;
 
-  //     raw.items.forEach((ms) => {
-  //       cities = this.cityService.getCity(ms.city_id);
-  //       promises.push(cities);
-  //     });
+      raw.items.forEach((ms) => {
+        cities = this.cityService.getCity(ms.ms_city_id);
+        promises.push(cities);
+      });
 
-  //     raw.items.forEach((ms) => {
-  //       menus = this.commonCatalogService.getMenuByStoreId(ms.id);
-  //       promises.push(menus);
-  //     });
+      // raw.items.forEach((ms) => {
+      //   menus = this.commonCatalogService.getMenuByStoreId(ms.ms_id);
+      //   promises.push(menus);
+      // });
 
-  //     await Promise.all(promises);
+      await Promise.all(promises);
 
-  //     if (cities) {
-  //       cities = await cities;
-  //       cities?.items?.forEach((city: any) => {
-  //         cityIObj[city.id] = city;
-  //       });
-  //     }
+      if (cities) {
+        cities = await cities;
+        cities?.items?.forEach((city: any) => {
+          cityIObj[city.id] = city;
+        });
+      }
 
-  //     if (menus) {
-  //       menus = await menus;
-  //       menus?.items?.forEach((menu: any) => {
-  //         menuIObj[menu.id] = menu;
-  //       });
-  //     }
+      // if (menus) {
+      //   menus = await menus;
+      //   menus?.items?.forEach((menu: any) => {
+      //     menuIObj[menu.ms_id] = menu;
+      //   });
+      // }
 
-  //     //** RESULT NEW MERCHANTS STORES */
-  //     raw.items.forEach((ms) => {
-  //       ms.city_id = cities ? cities : cityIObj[ms.city_id];
-  //       ms.manu_id = menus ? menus : null;
-  //     });
+      //** RESULT NEW MERCHANTS STORES */
+      raw.items.forEach((ms) => {
+        ms.ms_city_id = cities ? cities : cityIObj[ms.ms_city_id];
+        // ms.ms_id = menus ? menus : menuIObj[ms.ms_id];
+      });
 
-  //     return raw;
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
+      return raw;
+    } catch (error) {
+      throw error;
+    }
+  }
 
   //** LIST NEW MERCHANTS */
   async listNewMerchants(data: ListReprotNewMerchantDTO): Promise<any> {
-    const raw = await this.newMerchantEntities.listNewMerchantsData(data);
+    const raw = await this.processListNewMerchants(data);
     //** EXECUTE QUERIES */
     try {
       return raw;
@@ -279,6 +279,13 @@ export class ReportsService {
               column.header = 'PIC PHONE';
             }
             break;
+          case 'pic_email':
+            if (splitString[1] && splitString[1] !== '') {
+              column.header = splitString[1].toUpperCase();
+            } else {
+              column.header = 'PIC EMAIL';
+            }
+            break;
           case 'pic_profile_merchant':
             if (splitString[1] && splitString[1] !== '') {
               column.header = splitString[1].toUpperCase();
@@ -421,7 +428,18 @@ export class ReportsService {
                 row.push(nameSB);
                 break;
               case 'store_created':
-                const nameSCR = obj.ms_created_at ? obj.ms_created_at : '-';
+                const dateCr = new Date(obj.ms_created_at);
+                const yearCr = dateCr.toLocaleString('default', {
+                  year: 'numeric',
+                });
+                const monthCr = dateCr.toLocaleString('default', {
+                  month: '2-digit',
+                });
+                const dayCr = dateCr.toLocaleString('default', {
+                  day: '2-digit',
+                });
+                const formatDateCr = dayCr + '-' + monthCr + '-' + yearCr;
+                const nameSCR = formatDateCr ? formatDateCr : '-';
                 row.push(nameSCR);
                 break;
               case 'status':
@@ -429,11 +447,33 @@ export class ReportsService {
                 row.push(nameSST);
                 break;
               case 'store_updated':
-                const nameSSU = obj.ms_updated_at ? obj.ms_updated_at : '-';
+                const dateUp = new Date(obj.ms_updated_at);
+                const yearUp = dateUp.toLocaleString('default', {
+                  year: 'numeric',
+                });
+                const monthUp = dateUp.toLocaleString('default', {
+                  month: '2-digit',
+                });
+                const dayUp = dateUp.toLocaleString('default', {
+                  day: '2-digit',
+                });
+                const formatDateUp = dayUp + '-' + monthUp + '-' + yearUp;
+                const nameSSU = formatDateUp ? formatDateUp : '-';
                 row.push(nameSSU);
                 break;
               case 'store_approved':
-                const nameSSA = obj.ms_approved_at ? obj.ms_approved_at : '-';
+                const dateAp = new Date(obj.ms_updated_at);
+                const yearAp = dateAp.toLocaleString('default', {
+                  year: 'numeric',
+                });
+                const monthAp = dateAp.toLocaleString('default', {
+                  month: '2-digit',
+                });
+                const dayAp = dateAp.toLocaleString('default', {
+                  day: '2-digit',
+                });
+                const formatDateAp = dayAp + '-' + monthAp + '-' + yearAp;
+                const nameSSA = formatDateAp ? formatDateAp : '-';
                 row.push(nameSSA);
                 break;
             }

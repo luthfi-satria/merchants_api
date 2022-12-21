@@ -17,12 +17,7 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
     super();
   }
 
-  async listNewMerchantsData(data: ListReprotNewMerchantDTO): Promise<{
-    total_item: number;
-    limit: number;
-    current_page: number;
-    items: any[];
-  }> {
+  async listNewMerchantsData(data: ListReprotNewMerchantDTO): Promise<any> {
     const search = data.search || '';
     const currentPage = data.page || 1;
     const perPage = data.limit || 10;
@@ -30,9 +25,6 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
     const dateStart = data.date_start || null;
     const dateEnd = data.date_end || null;
     const statuses = data.statuses || [];
-    const groupId = data.group_id || '';
-    const merchantId = data.merchant_id || '';
-    const storeId = data.store_id || '';
     const lang = '';
 
     //** QUERIES */
@@ -46,7 +38,10 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
         'merchant_store_categories_languages',
         'merchant_store_categories_languages.lang = :lid',
         { lid: lang ? lang : 'id' },
-      );
+      )
+      .take(perPage)
+      .skip(indexPage)
+      .orderBy('ms.created_at', 'ASC');
 
     //** SEARCH BY DATE */
     if (dateStart && dateEnd) {
@@ -85,25 +80,6 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
           });
         }),
       );
-    }
-
-    //** SERACH BY ID or CORPORATE & BRAND & STORE */
-    if (groupId) {
-      queries.andWhere('group.id = :groupId', {
-        groupId,
-      });
-    }
-
-    if (merchantId) {
-      queries.andWhere('merchant.id = :merchantId', {
-        merchantId,
-      });
-    }
-
-    if (storeId) {
-      queries.andWhere('ms.id = :storeId', {
-        storeId,
-      });
     }
 
     //** STATUS STORES */
@@ -136,7 +112,7 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
     try {
       return {
         total_item: count,
-        limit: perPage,
+        limit: Number(perPage),
         current_page: Number(currentPage),
         items: raw,
       };
@@ -158,7 +134,10 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
   }
 
   //** PROCCESS LIST */
-  async generateNewMerchant(data: ListReprotNewMerchantDTO): Promise<{
+  async generateNewMerchant(
+    data: ListReprotNewMerchantDTO,
+    options?: { isGetAll: boolean },
+  ): Promise<{
     total_item: number;
     limit: number;
     current_page: number;
@@ -171,9 +150,6 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
     const dateStart = data.date_start || null;
     const dateEnd = data.date_end || null;
     const statuses = data.statuses || [];
-    const groupId = data.group_id || '';
-    const merchantId = data.merchant_id || '';
-    const storeId = data.store_id || '';
     const lang = '';
 
     //** QUERIES */
@@ -226,25 +202,6 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
           });
         }),
       );
-    }
-
-    //** SERACH BY ID or CORPORATE & BRAND & STORE */
-    if (groupId) {
-      queries.andWhere('group.id = :groupId', {
-        groupId,
-      });
-    }
-
-    if (merchantId) {
-      queries.andWhere('merchant.id = :merchantId', {
-        merchantId,
-      });
-    }
-
-    if (storeId) {
-      queries.andWhere('ms.id = :storeId', {
-        storeId,
-      });
     }
 
     //** STATUS STORES */
