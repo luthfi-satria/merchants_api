@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
-import { Brackets, EntityRepository, Repository } from 'typeorm';
+import { Brackets, EntityRepository, ObjectLiteral, Repository } from 'typeorm';
 import { ListReprotNewMerchantDTO } from '../dto/report.dto';
 
 @EntityRepository(StoreDocument)
@@ -150,6 +150,9 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
     const dateStart = data.date_start || null;
     const dateEnd = data.date_end || null;
     const statuses = data.statuses || [];
+    const groupId = data.group_id || null;
+    const merchantId = data.merchant_id || null;
+    const storeId = data.store_id || null;
     const lang = '';
 
     //** QUERIES */
@@ -202,6 +205,24 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
           });
         }),
       );
+    }
+
+    if (groupId) {
+      queries.andWhere('group.id = :groupId', {
+        groupId,
+      });
+    }
+
+    if (merchantId) {
+      queries.andWhere('merchant.id = :merchantId', {
+        merchantId,
+      });
+    }
+
+    if (storeId) {
+      queries.andWhere('ms.id = :storeId', {
+        storeId,
+      });
     }
 
     //** STATUS STORES */

@@ -35,7 +35,7 @@ export class ReportsService {
 
       // //** CREATE OBJECT DATA */
       const cityIObj = {};
-      // const menuIObj = {};
+      //const menuIObj = {};
 
       // Data Cities
       raw.items.forEach((ms) => {
@@ -53,7 +53,7 @@ export class ReportsService {
 
       const promises = [];
       let cities = null;
-      // let menus = null;
+      //let menus = null;
 
       raw.items.forEach((ms) => {
         cities = this.cityService.getCity(ms.ms_city_id);
