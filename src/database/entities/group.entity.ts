@@ -5,11 +5,13 @@ import {
   Entity,
   Index,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { MerchantDocument } from './merchant.entity';
 import { MerchantUsersDocument } from './merchant_users.entity';
+import { CorporateSapKeyDocument } from './corporate_sap_keys.entity';
 
 export enum CategoryGroup {
   COMPANY = 'COMPANY',
@@ -185,6 +187,9 @@ export class GroupDocument {
     (merchants_users) => merchants_users.group,
   )
   users: MerchantUsersDocument[];
+
+  @OneToOne(() => CorporateSapKeyDocument, (model) => model.group)
+  corporateSapKey: CorporateSapKeyDocument;
 
   constructor(init?: Partial<GroupDocument>) {
     Object.assign(this, init);

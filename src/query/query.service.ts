@@ -1635,6 +1635,7 @@ export class QueryService {
 
       let storeItems = result[0];
 
+      // console.log(totalItems, 'totalItem');
       let totalItems = result[1];
 
       const favoriteStore = params.favorite_this_week
