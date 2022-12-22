@@ -148,7 +148,7 @@ export class ReportsService {
           ];
 
       //** GET DATA FROM DATABASE */
-      const raw = await this.newMerchantEntities.generateNewMerchant(data);
+      const raw = await this.newMerchantEntities.listNewMerchantsData(data);
 
       //** CREATE WORKBOOK */
       const workbook = new ExcelJS.Workbook();
@@ -544,7 +544,7 @@ export class ReportsService {
           ];
 
       //** GET DATA FROM DATABASE */
-      const raw = await this.newMerchantEntities.generateNewMerchant(data);
+      const raw = await this.newMerchantEntities.listNewMerchantsData(data);
 
       //** CREATE WORKBOOK */
       const workbook = new ExcelJS.Workbook();
