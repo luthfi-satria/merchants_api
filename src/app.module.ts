@@ -34,6 +34,7 @@ import { RegistersModule } from './register/register.module';
 import { ReportsModule } from './reports/reports.module';
 import { ResponseService } from './response/response.service';
 import { ValidationMiddleware } from './middleware/validation.middleware';
+import { UsersValidationModule } from './users_validation/users_validation.module';
 
 @Module({
   imports: [
