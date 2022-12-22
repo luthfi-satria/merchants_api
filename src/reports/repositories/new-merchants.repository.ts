@@ -53,10 +53,10 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
           qb.where(
             new Brackets((iqb) => {
               iqb
-                .where('ms.created_at >= :start', {
+                .where('ms.created_at > :start', {
                   start,
                 })
-                .andWhere('ms.created_at <= :end', {
+                .andWhere('ms.created_at < :end', {
                   end,
                 });
             }),
