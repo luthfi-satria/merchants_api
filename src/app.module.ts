@@ -34,6 +34,7 @@ import { RegistersModule } from './register/register.module';
 import { ResponseService } from './response/response.service';
 import { ValidationMiddleware } from './middleware/validation.middleware';
 import { UsersValidationModule } from './users_validation/users_validation.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { UsersValidationModule } from './users_validation/users_validation.modul
     LoginMultilevelModule,
     RegistersModule,
     UsersValidationModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService, ResponseService],
