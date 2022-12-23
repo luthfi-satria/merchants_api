@@ -49,6 +49,72 @@ export class CatalogsService {
     }
   }
 
+  //** GET RECOMMENDED MENU ONLY */
+  async getMenuRecommendedByStoreId(id: string, opt: any = {}): Promise<any> {
+    try {
+      const urlInternal = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/recommeded/${id}`;
+      // const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/catalogs/query/menus/${id}`;
+      const options: any = {
+        limit: 100,
+      };
+      if (opt.search) {
+        options.search = opt.search;
+      }
+      return await firstValueFrom(
+        this.httpService
+          .get(urlInternal, {
+            params: options,
+          })
+          .pipe(map((resp) => resp.data)),
+      );
+    } catch (e) {
+      this.logger.error(
+        `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/recommeded/${id}`,
+      );
+      if (e.response) {
+        throw new HttpException(
+          e.response.data.message,
+          e.response.data.statusCode,
+        );
+      } else {
+        throw new InternalServerErrorException();
+      }
+    }
+  }
+
+  //** GET MENU ONLY */
+  async getMenuOnlyByStoreId(id: string, opt: any = {}): Promise<any> {
+    try {
+      const urlInternal = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menuonly/${id}`;
+      // const url = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/catalogs/query/menus/${id}`;
+      const options: any = {
+        limit: 100,
+      };
+      if (opt.search) {
+        options.search = opt.search;
+      }
+      return await firstValueFrom(
+        this.httpService
+          .get(urlInternal, {
+            params: options,
+          })
+          .pipe(map((resp) => resp.data)),
+      );
+    } catch (e) {
+      this.logger.error(
+        `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menuonly/${id}`,
+      );
+      if (e.response) {
+        throw new HttpException(
+          e.response.data.message,
+          e.response.data.statusCode,
+        );
+      } else {
+        throw new InternalServerErrorException();
+      }
+    }
+  }
+
   async getMenuByStoreId(id: string, opt: any = {}): Promise<any> {
     try {
       const urlInternal = `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu/${id}`;
