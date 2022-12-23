@@ -59,8 +59,14 @@ import {
 } from './validation/list-merchant.validation';
 import { UpdateMerchantDTO } from './validation/update_merchant.dto';
 import { SetFieldEmptyUtils } from '../utils/set-field-empty-utils';
+import { NatsClient } from '@alexy4744/nestjs-nats-jetstream-transporter';
 @Injectable()
 export class MerchantsService {
+  private readonly client = new NatsClient({
+    connection: {
+      servers: process.env.NATS_SERVERS.split(','),
+    },
+  });
   constructor(
     @InjectRepository(MerchantDocument)
     private readonly merchantRepository: Repository<MerchantDocument>,
@@ -283,7 +289,6 @@ export class MerchantsService {
       if (!create) {
         throw new Error('failed insert to merchant_group');
       }
-
       const specialRoles = await this.roleService.getSpecialRoleByCode(
         SpecialRoleCodes.brand_manager,
       );
@@ -322,7 +327,6 @@ export class MerchantsService {
         create.user = result;
         deleteCredParam(create);
       }
-
       const pclogdata = {
         id: create.id,
       };
@@ -831,18 +835,18 @@ export class MerchantsService {
   }
 
   async createCatalogs(data: Record<string, any>) {
-    const pcurl =
-      process.env.BASEURL_CATALOGS_SERVICE +
-      '/api/v1/internal/catalogs/menus-prices-categories';
+    // const pcurl =
+    //   process.env.BASEURL_CATALOGS_SERVICE +
+    //   '/api/v1/internal/catalogs/menus-prices-categories';
 
     const pcdata = {
       merchant_id: data.id,
       name: 'Kategori 1',
     };
 
-    const scurl =
-      process.env.BASEURL_CATALOGS_SERVICE +
-      '/api/v1/internal/catalogs/menus-sales-channels';
+    // const scurl =
+    //   process.env.BASEURL_CATALOGS_SERVICE +
+    //   '/api/v1/internal/catalogs/menus-sales-channels';
 
     const scdata = {
       merchant_id: data.id,
@@ -851,30 +855,18 @@ export class MerchantsService {
       status: 'ACTIVE',
     };
 
-    const headers: Record<string, any> = {
-      'Content-Type': 'application/json',
+    // const headers: Record<string, any> = {
+    //   'Content-Type': 'application/json',
+    // };
+
+    // const priceCategory = await this.requestToApi(pcurl, pcdata, headers);
+
+    // await this.requestToApi(scurl, scdata, headers);
+    const dataEmit = {
+      price_category: pcdata,
+      sales_channel: scdata,
     };
-
-    const priceCategory = await this.requestToApi(pcurl, pcdata, headers);
-
-    console.log(priceCategory, 'test price category');
-
-    console.log(priceCategory?.data, 'test price category');
-
-    console.log(data, 'test data');
-
-    if (data?.store_id && priceCategory.data?.id) {
-      Object.assign(scdata, {
-        pricing_templates: [
-          {
-            store_id: data.store_id,
-            category_price_id: priceCategory.data?.id,
-          },
-        ],
-      });
-    }
-
-    await this.requestToApi(scurl, scdata, headers);
+    this.client.emit('catalogs.common.createpricesaleschannel', dataEmit);
   }
 
   async requestToApi(
