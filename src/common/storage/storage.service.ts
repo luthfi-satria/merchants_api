@@ -34,7 +34,8 @@ export class CommonStorageService {
   }
 
   async getBuff(url: string) {
-    if (process.env.STORAGE_DRIVER === 's3') {
+    const testUrl = url.includes(process.env.STORAGE_S3_BUCKET);
+    if (process.env.STORAGE_DRIVER === 's3' && testUrl) {
       try {
         this.storage.registerDriver('s3', AmazonWebServicesS3Storage);
         url = url.split(process.env.STORAGE_S3_BUCKET)[1].substring(1);
@@ -47,28 +48,31 @@ export class CommonStorageService {
         throw new InternalServerErrorException(e.message);
       }
     }
+    return url;
   }
 
   async getImageProperties(url: string): Promise<any> {
     const buffer = await this.getBuff(url);
 
-    // async getReadableStream(buffer: Buffer) {
-    const stream = new Readable();
-    stream.push(buffer);
-    stream.push(null);
+    if (buffer) {
+      // async getReadableStream(buffer: Buffer) {
+      const stream = new Readable();
+      stream.push(buffer);
+      stream.push(null);
 
-    let type = null;
-    const ext = url.split('.')[url.split('.').length - 1].toLowerCase();
-    if (ext == 'png' || ext == 'jpg' || ext == 'jpeg' || ext == 'gif') {
-      type = 'image';
+      let type = null;
+      const ext = url.split('.')[url.split('.').length - 1].toLowerCase();
+      if (ext == 'png' || ext == 'jpg' || ext == 'jpeg' || ext == 'gif') {
+        type = 'image';
+      }
+
+      return {
+        buffer: buffer,
+        stream: stream,
+        type: type,
+        ext: ext,
+      };
     }
-
-    return {
-      buffer: buffer,
-      stream: stream,
-      type: type,
-      ext: ext,
-    };
     // return images;
   }
 }

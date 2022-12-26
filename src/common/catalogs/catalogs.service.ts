@@ -168,23 +168,37 @@ export class CatalogsService {
   }
 
   async getMenuIds(menuIds: string[]): Promise<any> {
-    if (!(menuIds?.length > 0)) {
-      return [];
-    }
+    try {
+      if (!(menuIds?.length > 0)) {
+        return [];
+      }
 
-    const response = await firstValueFrom(
-      this.httpService.get(
-        `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu/by/ids`,
-        {
-          params: {
-            ids: menuIds,
+      const response = await firstValueFrom(
+        this.httpService.get(
+          `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu/by/ids`,
+          {
+            params: {
+              ids: menuIds,
+            },
           },
-        },
-      ),
-    );
+        ),
+      );
 
-    console.log(response, 'RESPONSE GET MENU BY ID');
+      console.log(response.data, 'RESPONSE GET MENU BY ID');
 
-    return response?.data?.data;
+      return response?.data?.data;
+    } catch (e) {
+      this.logger.error(
+        `${process.env.BASEURL_CATALOGS_SERVICE}/api/v1/internal/catalogs/menu/by/ids`,
+      );
+      if (e.response) {
+        throw new HttpException(
+          e.response.data.message,
+          e.response.data.statusCode,
+        );
+      } else {
+        throw new InternalServerErrorException();
+      }
+    }
   }
 }
