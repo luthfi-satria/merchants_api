@@ -36,6 +36,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { GroupsModule } from 'src/groups/groups.module';
 import { ProfileModule } from 'src/merchants/profile/profile.module';
 import { NewMerchantEntity } from './repository/new-merchants.repository';
+import { NewMerchantEntity as NewMerchantRepository } from './repositories/new-merchants.repository';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { NewMerchantEntity } from './repository/new-merchants.repository';
     MenuOnlineService,
     ReportsService,
     NewMerchantEntity,
+    NewMerchantRepository,
   ],
 })
 export class ReportsModule {}

@@ -1635,6 +1635,7 @@ export class QueryService {
 
       let storeItems = result[0];
 
+      // console.log(totalItems, 'totalItem');
       let totalItems = result[1];
 
       const favoriteStore = params.favorite_this_week
@@ -1654,6 +1655,7 @@ export class QueryService {
 
       let is_online_platform = true;
 
+      // console.log(storeItems, 'storeItem');
       if (params.platform) is_online_platform = params.platform == 'ONLINE';
 
       const priceRangeAll = await this.priceRangeService.getPriceRange();
@@ -1786,7 +1788,6 @@ export class QueryService {
       );
 
       // console.log(formattedStoredItems, 'formatted');
-
       const formattedArr = [];
 
       if (params.favorite_this_week) {
