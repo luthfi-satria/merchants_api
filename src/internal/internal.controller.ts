@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -117,6 +118,17 @@ export class InternalController {
     await this.groupService.manipulateGroupUrl(result.merchant.group);
 
     return result;
+  }
+
+  @Get('merchants/stores/:id/sap-key')
+  async getSapKey(@Param('id') id: string): Promise<any> {
+    try {
+      return await this.internalService.getSapKeyByStore(id);
+    } catch (e) {
+      console.error(e);
+
+      throw new BadRequestException(e.message);
+    }
   }
 
   @Get('merchants/stores/level/:id')
