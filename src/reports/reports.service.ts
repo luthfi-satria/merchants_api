@@ -11,7 +11,7 @@ import { CityService } from 'src/common/services/admins/city.service';
 import { ListReprotNewMerchantDTO } from './dto/report.dto';
 import { Response } from 'express';
 import { CatalogsService } from 'src/common/catalogs/catalogs.service';
-import { NewMerchantEntity } from './repositories/new-merchants.repository';
+import { NewMerchantEntity } from './repository/new-merchants.repository';
 
 @Injectable()
 export class ReportsService {

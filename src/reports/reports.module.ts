@@ -30,12 +30,13 @@ import { GroupUsersService } from 'src/groups/group_users.service';
 import { NatsService } from 'src/nats/nats.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { UsersService } from 'src/users/users.service';
-import { NewMerchantEntity } from './repositories/new-merchants.repository';
 import { ResetPasswordService } from 'src/merchants/reset-password.service';
 import { NotificationService } from 'src/common/notification/notification.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { GroupsModule } from 'src/groups/groups.module';
 import { ProfileModule } from 'src/merchants/profile/profile.module';
+import { NewMerchantEntity } from './repository/new-merchants.repository';
+import { NewMerchantEntity as NewMerchantRepository } from './repositories/new-merchants.repository';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { ProfileModule } from 'src/merchants/profile/profile.module';
     MenuOnlineService,
     ReportsService,
     NewMerchantEntity,
+    NewMerchantRepository,
   ],
 })
 export class ReportsModule {}
