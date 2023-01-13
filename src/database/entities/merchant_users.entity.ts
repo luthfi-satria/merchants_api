@@ -24,6 +24,8 @@ export enum MerchantUsersStatus {
 }
 
 @Entity({ name: 'merchants_users' })
+@Index(['store_id', 'merchant_id', 'group_id'])
+@Index(['store_id', 'merchant_id', 'group_id', 'id', 'role_id', 'deleted_at'])
 @Index('rel_id_role_id_deleted_at_idx', ['id', 'role_id', 'deleted_at'])
 export class MerchantUsersDocument {
   @PrimaryGeneratedColumn('uuid')

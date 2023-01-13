@@ -12,6 +12,8 @@ import {
 import { LanguageDocument } from './language.entity';
 
 @Entity({ name: 'merchants_store_categories' })
+@Index(['active', 'deleted_at'])
+@Index(['active', 'created_at', 'deleted_at'])
 export class StoreCategoriesDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
