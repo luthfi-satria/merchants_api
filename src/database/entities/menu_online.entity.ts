@@ -12,6 +12,7 @@ import {
 import { StoreDocument } from './store.entity';
 
 @Entity({ name: 'merchants_menu_onlines' })
+@Index(['store_id', 'deleted_at'])
 @Index(['store_id', 'menu_id', 'deleted_at'])
 export class MenuOnlineDocument {
   @PrimaryGeneratedColumn('uuid')

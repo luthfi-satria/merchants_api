@@ -34,6 +34,7 @@ export enum DirectorIdentityType {
 }
 @Entity({ name: 'merchants_groups' })
 @Index(['id', 'deleted_at'])
+@Index(['status', 'deleted_at'])
 export class GroupDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
