@@ -50,6 +50,7 @@ import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { StoreMultipickupsController } from './stores-multipickup.controller';
 import { StoreMultipickupService } from './stores-multipickup.service';
+import { CorporateSapKeyDocument } from '../database/entities/corporate_sap_keys.entity';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { StoreMultipickupService } from './stores-multipickup.service';
       SettingDocument,
       LanguageDocument,
       MenuOnlineDocument,
+      CorporateSapKeyDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },

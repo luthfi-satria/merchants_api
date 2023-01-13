@@ -33,7 +33,8 @@ import { NatsService } from 'src/nats/nats.service';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { InternalModule } from '../internal/internal.module';
-import {CityService} from "../common/services/admins/city.service";
+import { CityService } from '../common/services/admins/city.service';
+import { CorporateSapKeyDocument } from '../database/entities/corporate_sap_keys.entity';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import {CityService} from "../common/services/admins/city.service";
       StoreOperationalHoursDocument,
       StoreOperationalShiftDocument,
       MenuOnlineDocument,
+      CorporateSapKeyDocument,
     ]),
     MulterModule.register({
       limits: { fileSize: 2 * 1000 * 1000 },
