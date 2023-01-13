@@ -39,6 +39,16 @@ export enum enumStoreStatus {
 }
 
 @Entity({ name: 'merchants_stores' })
+@Index([
+  'id',
+  'merchant_id',
+  'status',
+  'location_latitude',
+  'location_longitude',
+  'delivery_type',
+  'is_store_open',
+  'deleted_at',
+])
 @Index(['location_latitude', 'location_longitude', 'status', 'deleted_at'])
 @Index(['location_latitude', 'location_longitude'])
 @Index(['id', 'deleted_at'])
