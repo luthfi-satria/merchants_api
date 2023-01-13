@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -13,6 +14,9 @@ export enum LobStatus {
 }
 
 @Entity({ name: 'merchants_lobs' })
+@Index(['name', 'deleted_at'])
+@Index(['status', 'deleted_at'])
+@Index(['name', 'status', 'deleted_at'])
 export class LobDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -27,6 +31,7 @@ export class LobDocument {
   })
   status: string;
 
+  @Index()
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date | string;
 

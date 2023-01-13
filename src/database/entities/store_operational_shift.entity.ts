@@ -12,6 +12,7 @@ import { Exclude } from 'class-transformer';
 import { StoreOperationalHoursDocument } from './store_operational_hours.entity';
 
 @Entity({ name: 'merchants_store_operational_shifts' })
+@Index(['store_operational_id', 'open_hour', 'close_hour'])
 export class StoreOperationalShiftDocument {
   @PrimaryGeneratedColumn('uuid')
   @Exclude()
