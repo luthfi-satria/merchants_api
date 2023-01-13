@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'merchants_addons' })
+@Index(['id', 'deleted_at'])
 export class AddonDocument {
   @PrimaryGeneratedColumn('uuid')
   @Index()

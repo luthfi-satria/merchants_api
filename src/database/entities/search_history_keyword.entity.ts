@@ -3,11 +3,13 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 @Entity({ name: 'merchants_search_history_keywords' })
+@Index(['keyword', 'deleted_at'])
 export class SearchHistoryKeywordDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -18,6 +20,7 @@ export class SearchHistoryKeywordDocument {
   @Column()
   lang: string;
 
+  @Index()
   @Column()
   keyword: string;
 
