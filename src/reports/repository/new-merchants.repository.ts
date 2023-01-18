@@ -42,7 +42,13 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
         'merchant_store_categories_languages.lang = :lid',
         { lid: lang ? lang : 'id' },
       )
-      .orderBy('ms.created_at', 'ASC');
+      .groupBy('ms.id')
+      .addGroupBy('merchant.id')
+      .addGroupBy('group.id')
+      .addGroupBy('merchant_store_categories.id')
+      .addGroupBy('merchant_store_categories_languages.id')
+      .orderBy('ms.created_at', 'ASC')
+      .withDeleted();
 
     //** SEARCH BY DATE */
     if (dateStart && dateEnd) {
@@ -53,10 +59,10 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
           qb.where(
             new Brackets((iqb) => {
               iqb
-                .where('ms.created_at > :start', {
+                .where('ms.created_at >= :start', {
                   start,
                 })
-                .andWhere('ms.created_at < :end', {
+                .andWhere('ms.created_at <= :end', {
                   end,
                 });
             }),

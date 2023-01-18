@@ -1031,6 +1031,7 @@ export class StoresService {
         storeIds.push(element.id);
         if (data.sales_channel_id) list.price_category = null;
       });
+
       const priceCategories =
         await this.commonCatalogService.getPriceCategoryByStoreIds(storeIds);
 
