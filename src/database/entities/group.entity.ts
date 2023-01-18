@@ -33,6 +33,7 @@ export enum DirectorIdentityType {
   PASSPORT = 'PASSPORT',
 }
 @Entity({ name: 'merchants_groups' })
+@Index(['id', 'status', 'deleted_at'])
 @Index(['id', 'deleted_at'])
 @Index(['status', 'deleted_at'])
 export class GroupDocument {
