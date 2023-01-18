@@ -51,6 +51,8 @@ export enum enumStoreStatus {
 ])
 @Index(['location_latitude', 'location_longitude', 'status', 'deleted_at'])
 @Index(['location_latitude', 'location_longitude'])
+@Index(['merchant_id', 'status', 'deleted_at'])
+@Index(['id', 'status', 'deleted_at'])
 @Index(['id', 'deleted_at'])
 export class StoreDocument {
   //General Info
