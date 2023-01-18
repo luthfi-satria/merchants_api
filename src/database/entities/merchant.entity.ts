@@ -41,6 +41,8 @@ export enum DiscountType {
 }
 
 @Entity({ name: 'merchants_merchants' })
+@Index(['id', 'status', 'deleted_at'])
+@Index(['group_id', 'status', 'deleted_at'])
 @Index(['group_id', 'id', 'deleted_at'])
 @Index(['id', 'deleted_at'])
 export class MerchantDocument {
