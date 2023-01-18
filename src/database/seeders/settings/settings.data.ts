@@ -7,4 +7,8 @@ export const settings: { name: string; value: string }[] = [
     name: 'store_radius',
     value: '25',
   },
+  {
+    name: 'ElasticMerchants',
+    value: '0',
+  },
 ];

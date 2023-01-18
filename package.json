@@ -24,10 +24,12 @@
   "dependencies": {
     "@alexy4744/nestjs-nats-jetstream-transporter": "^1.0.2",
     "@codebrew/nestjs-storage": "^0.1.4",
+    "@elastic/elasticsearch": "7.1.0",
     "@nestjs/axios": "^0.0.1",
     "@nestjs/common": "^8.2.2",
     "@nestjs/config": "^1.0.0",
     "@nestjs/core": "^8.2.2",
+    "@nestjs/elasticsearch": "7.1.0",
     "@nestjs/jwt": "^8.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/microservices": "^8.2.2",

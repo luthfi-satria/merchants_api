@@ -33,6 +33,7 @@ import { LoginMultilevelModule } from './login-multilevel/login-multilevel.modul
 import { RegistersModule } from './register/register.module';
 import { UsersValidationModule } from './users_validation/users_validation.module';
 import { ReportsModule } from './reports/reports.module';
+import { ElasticsModule } from './elastics/elastics.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { ReportsModule } from './reports/reports.module';
     RegistersModule,
     UsersValidationModule,
     ReportsModule,
+    ElasticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
