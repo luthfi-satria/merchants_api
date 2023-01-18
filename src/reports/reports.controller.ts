@@ -18,8 +18,8 @@ export class ReportsController {
 
   @Get('new-merchant')
   @UserTypeAndLevel('admin.*', 'merchant.*')
-  // @AuthJwtGuard()
-  // @ResponseStatusCode()
+  @AuthJwtGuard()
+  @ResponseStatusCode()
   async listNewMerchants(
     @Query() data: ListReprotNewMerchantDTO,
   ): Promise<any> {
@@ -40,8 +40,8 @@ export class ReportsController {
   //** DOWNLOAD MERCHANTS LIST */
   @Get('new-merchant/generate')
   @UserTypeAndLevel('admin.*', 'merchant.*')
-  // @AuthJwtGuard()
-  // @ResponseStatusCode()
+  @AuthJwtGuard()
+  @ResponseStatusCode()
   async generateExcelNewMerchants(
     @Query() data: ListReprotNewMerchantDTO,
     @Res() res: Response,
@@ -65,8 +65,8 @@ export class ReportsController {
   //** DOWNLOAD MERCHANTS LIST */
   @Get('generate/menu')
   @UserTypeAndLevel('admin.*', 'merchant.*')
-  // @AuthJwtGuard()
-  // @ResponseStatusCode()
+  @AuthJwtGuard()
+  @ResponseStatusCode()
   async generateExcelMenyMerchants(
     @Query() data: ListReprotNewMerchantDTO,
     @Res() res: Response,
