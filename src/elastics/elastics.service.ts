@@ -3,7 +3,6 @@ import { HttpStatus } from '@nestjs/common/enums';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectRepository } from '@nestjs/typeorm';
-import { doc } from 'prettier';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { LanguageDocument } from 'src/database/entities/language.entity';
