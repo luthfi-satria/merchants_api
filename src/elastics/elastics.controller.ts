@@ -7,6 +7,12 @@ import { Post } from '@nestjs/common/decorators';
 export class ElasticsController {
   constructor(private readonly elasticsService: ElasticsService) {}
 
+  @Get('')
+  @ResponseStatusCode()
+  async syncAll() {
+    return this.elasticsService.syncAll();
+  }
+
   @Get('getAddons')
   @ResponseStatusCode()
   async getAddons() {

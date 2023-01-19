@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common/enums';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectRepository } from '@nestjs/typeorm';
+import { doc } from 'prettier';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
 import { LanguageDocument } from 'src/database/entities/language.entity';
@@ -63,7 +64,47 @@ export class ElasticsService {
     private readonly elasticsearchService: ElasticsearchService,
   ) {
     // auto initiate configuration
-    this.getMerchantsConfig();
+    // this.getMerchantsConfig();
+  }
+
+  logger = new Logger();
+
+  async syncAll() {
+    try {
+      await this.getMerchantsConfig();
+      const syncAddons = await this.getAddons();
+      const syncGroups = await this.getGroups();
+      const syncLobs = await this.getLobs();
+      const syncMenuOnlines = await this.getMenuOnlines();
+      const syncMerchants = await this.getMerchants();
+      const syncPriceRangeLanguages = await this.getPriceRangeLanguages();
+      const syncPriceRanges = await this.getPriceRanges();
+      const syncStoreCategories = await this.getStoreCategories();
+      const syncStoreCategoryLanguages = await this.getStoreCategoryLanguages();
+      const syncStoreOperationalHours = await this.getStoreOperationalHours();
+      const syncStoreOperationalShift = await this.getStoreOperationalShift();
+      const syncStores = await this.getStores();
+      const syncUsers = await this.getUsers();
+      await this.updateSettings();
+      return {
+        syncAddons: syncAddons,
+        syncGroups: syncGroups,
+        syncLobs: syncLobs,
+        syncMenuOnlines: syncMenuOnlines,
+        syncMerchants: syncMerchants,
+        syncPriceRangeLanguages: syncPriceRangeLanguages,
+        syncPriceRanges: syncPriceRanges,
+        syncStoreCategories: syncStoreCategories,
+        syncStoreCategoryLanguages: syncStoreCategoryLanguages,
+        syncStoreOperationalHours: syncStoreOperationalHours,
+        syncStoreOperationalShift: syncStoreOperationalShift,
+        syncStores: syncStores,
+        syncUsers: syncUsers,
+      };
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   /**
@@ -74,7 +115,7 @@ export class ElasticsService {
       name: 'ElasticMerchants',
     });
     this.lastDbUpdate = settings.value;
-    console.log(this.lastDbUpdate, '<= LAST DB UPDATE');
+    this.logger.log(this.lastDbUpdate, 'ELASTIC DB LAST UPDATE');
   }
 
   /**
@@ -87,20 +128,28 @@ export class ElasticsService {
     try {
       if (jsonData.length > 0) {
         index = `merchants_${index}`;
-        // initiate index name
-        const elasticMetadata = {
-          index: index,
-        };
-        // Create index
-        await this.elasticsearchService.indices.create(elasticMetadata);
-        // Mapping data into index
-        const body = jsonData.flatMap((doc) => [
-          { index: { _index: index } },
-          doc,
-        ]);
-
+        const body = [];
+        jsonData.forEach((element) => {
+          const elIndex = { _index: index, _id: element.id };
+          let operation = null;
+          if (
+            element.updated_at > element.created_at ||
+            element.deleted_at != null
+          ) {
+            operation = { update: elIndex };
+          } else {
+            operation = { create: elIndex };
+          }
+          body.push(operation, { doc: element });
+        });
+        // return body;
+        // return {
+        //   jsonData: jsonData,
+        //   body: body,
+        // };
         // insert mapping data into elastic
         const { body: bulkResponse } = await this.elasticsearchService.bulk({
+          filter_path: 'items.*.error',
           refresh: 'true',
           body,
         });
@@ -151,8 +200,15 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
+
     const elData = await this.createElasticIndex('addons', queryResult);
     return elData;
   }
@@ -167,8 +223,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex('groups', queryResult);
     return elData;
@@ -184,8 +246,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex('lobs', queryResult);
     return elData;
@@ -201,8 +269,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex('menu_onlines', queryResult);
     return elData;
@@ -218,8 +292,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex('merchants', queryResult);
     return elData;
@@ -235,8 +315,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex(
       'price_range_languages',
@@ -255,8 +341,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex('price_ranges', queryResult);
     return elData;
@@ -272,8 +364,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex(
       'store_categories',
@@ -292,8 +390,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex(
       'store_category_languages',
@@ -312,8 +416,11 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex(
       'store_operational_hours',
@@ -332,8 +439,11 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex(
       'store_operational_shifts',
@@ -352,8 +462,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex('stores', queryResult);
     return elData;
@@ -369,8 +485,14 @@ export class ElasticsService {
       queryData.where('updated_at > :lastUpdate', {
         lastUpdate: this.lastDbUpdate,
       });
+      queryData.orWhere('created_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
+      queryData.orWhere('deleted_at > :lastUpdate', {
+        lastUpdate: this.lastDbUpdate,
+      });
     }
-    const queryResult = await queryData.getMany();
+    const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex('users', queryResult);
     return elData;
