@@ -21,13 +21,14 @@ import { MessageService } from 'src/message/message.service';
 import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { generateDatabaseDateTime } from 'src/utils/general-utils';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 @Injectable()
 export class ElasticsService {
   indexName = 'merchants';
   lastDbUpdate = null;
   lastUpdate = generateDatabaseDateTime(new Date(), '+0700');
+  startingProcess = null;
 
   constructor(
     @InjectRepository(SettingDocument)
@@ -61,44 +62,49 @@ export class ElasticsService {
     private readonly messageService: MessageService,
     private readonly responseService: ResponseService,
     private readonly elasticsearchService: ElasticsearchService,
-  ) {
-    // auto initiate configuration
-    // this.getMerchantsConfig();
-  }
+  ) {}
 
   logger = new Logger();
 
   async syncAll() {
     try {
       await this.getMerchantsConfig();
-      const syncAddons = await this.getAddons();
-      const syncGroups = await this.getGroups();
-      const syncLobs = await this.getLobs();
-      const syncMenuOnlines = await this.getMenuOnlines();
-      const syncMerchants = await this.getMerchants();
-      const syncPriceRangeLanguages = await this.getPriceRangeLanguages();
-      const syncPriceRanges = await this.getPriceRanges();
-      const syncStoreCategories = await this.getStoreCategories();
-      const syncStoreCategoryLanguages = await this.getStoreCategoryLanguages();
-      const syncStoreOperationalHours = await this.getStoreOperationalHours();
-      const syncStoreOperationalShift = await this.getStoreOperationalShift();
-      const syncStores = await this.getStores();
-      const syncUsers = await this.getUsers();
-      await this.updateSettings();
+      this.logger.log(this.startingProcess, 'Elastic scheduller status: ');
+      if (this.startingProcess == '1') {
+        const syncAddons = await this.getAddons();
+        const syncGroups = await this.getGroups();
+        const syncLobs = await this.getLobs();
+        const syncMenuOnlines = await this.getMenuOnlines();
+        const syncMerchants = await this.getMerchants();
+        const syncPriceRangeLanguages = await this.getPriceRangeLanguages();
+        const syncPriceRanges = await this.getPriceRanges();
+        const syncStoreCategories = await this.getStoreCategories();
+        const syncStoreCategoryLanguages =
+          await this.getStoreCategoryLanguages();
+        const syncStoreOperationalHours = await this.getStoreOperationalHours();
+        const syncStoreOperationalShift = await this.getStoreOperationalShift();
+        const syncStores = await this.getStores();
+        const syncUsers = await this.getUsers();
+        await this.updateSettings();
+        return {
+          syncAddons: syncAddons,
+          syncGroups: syncGroups,
+          syncLobs: syncLobs,
+          syncMenuOnlines: syncMenuOnlines,
+          syncMerchants: syncMerchants,
+          syncPriceRangeLanguages: syncPriceRangeLanguages,
+          syncPriceRanges: syncPriceRanges,
+          syncStoreCategories: syncStoreCategories,
+          syncStoreCategoryLanguages: syncStoreCategoryLanguages,
+          syncStoreOperationalHours: syncStoreOperationalHours,
+          syncStoreOperationalShift: syncStoreOperationalShift,
+          syncStores: syncStores,
+          syncUsers: syncUsers,
+        };
+      }
       return {
-        syncAddons: syncAddons,
-        syncGroups: syncGroups,
-        syncLobs: syncLobs,
-        syncMenuOnlines: syncMenuOnlines,
-        syncMerchants: syncMerchants,
-        syncPriceRangeLanguages: syncPriceRangeLanguages,
-        syncPriceRanges: syncPriceRanges,
-        syncStoreCategories: syncStoreCategories,
-        syncStoreCategoryLanguages: syncStoreCategoryLanguages,
-        syncStoreOperationalHours: syncStoreOperationalHours,
-        syncStoreOperationalShift: syncStoreOperationalShift,
-        syncStores: syncStores,
-        syncUsers: syncUsers,
+        code: 400,
+        message: 'Process unable to start, please check system configuration',
       };
     } catch (error) {
       console.log(error);
@@ -110,10 +116,18 @@ export class ElasticsService {
    * Getting Last update
    */
   async getMerchantsConfig() {
-    const settings = await this.settingRepo.findOne({
-      name: 'ElasticMerchants',
+    const settings = await this.settingRepo.find({
+      where: {
+        name: In(['ElasticMerchants', 'ElasticProcess']),
+      },
     });
-    this.lastDbUpdate = settings.value;
+    settings.forEach((element) => {
+      if (element.name == 'ElasticMerchants') {
+        this.lastDbUpdate = element.value;
+      } else if (element.name == 'ElasticProcess') {
+        this.startingProcess = element.value;
+      }
+    });
     this.logger.log(this.lastDbUpdate, 'ELASTIC DB LAST UPDATE');
   }
 

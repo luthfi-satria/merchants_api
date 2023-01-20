@@ -11,4 +11,8 @@ export const settings: { name: string; value: string }[] = [
     name: 'ElasticMerchants',
     value: '0',
   },
+  {
+    name: 'ElasticProcess',
+    value: '0',
+  },
 ];
