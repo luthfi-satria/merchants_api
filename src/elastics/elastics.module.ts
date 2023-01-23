@@ -21,6 +21,7 @@ import { StoreCategoriesDocument } from 'src/database/entities/store-categories.
 import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ResponseService } from 'src/response/response.service';
       StoreCategoriesDocument,
       StoreDocument,
     ]),
+    ScheduleModule.forRoot(),
     ConfigModule,
     HttpModule,
     ElasticsearchModule.registerAsync({

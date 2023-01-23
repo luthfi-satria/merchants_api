@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common/enums';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { Cron } from '@nestjs/schedule/dist';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AddonDocument } from 'src/database/entities/addons.entity';
 import { GroupDocument } from 'src/database/entities/group.entity';
@@ -27,8 +28,12 @@ import { In, Repository } from 'typeorm';
 export class ElasticsService {
   indexName = 'merchants';
   lastDbUpdate = null;
+  // Generate last update time
   lastUpdate = generateDatabaseDateTime(new Date(), '+0700');
-  startingProcess = null;
+  // Disable or enabled process
+  startingProcess = 0;
+  // Sync Process time in minutes
+  elapsedTime = 1;
 
   constructor(
     @InjectRepository(SettingDocument)
@@ -64,13 +69,14 @@ export class ElasticsService {
     private readonly elasticsearchService: ElasticsearchService,
   ) {}
 
-  logger = new Logger();
+  logger = new Logger(ElasticsService.name);
 
+  @Cron('*/1 * * * *')
   async syncAll() {
     try {
       await this.getMerchantsConfig();
-      this.logger.log(this.startingProcess, 'Elastic scheduller status: ');
-      if (this.startingProcess == '1') {
+      this.logger.log('Elastic scheduller status: ' + this.startingProcess);
+      if (this.startingProcess) {
         const syncAddons = await this.getAddons();
         const syncGroups = await this.getGroups();
         const syncLobs = await this.getLobs();
@@ -118,17 +124,19 @@ export class ElasticsService {
   async getMerchantsConfig() {
     const settings = await this.settingRepo.find({
       where: {
-        name: In(['ElasticMerchants', 'ElasticProcess']),
+        name: In(['ElasticMerchants', 'ElasticProcess', 'ElasticTimeProcess']),
       },
     });
     settings.forEach((element) => {
       if (element.name == 'ElasticMerchants') {
         this.lastDbUpdate = element.value;
       } else if (element.name == 'ElasticProcess') {
-        this.startingProcess = element.value;
+        this.startingProcess = parseInt(element.value);
+      } else if (element.name == 'ElasticElapsedTime') {
+        this.elapsedTime = parseInt(element.value);
       }
     });
-    this.logger.log(this.lastDbUpdate, 'ELASTIC DB LAST UPDATE');
+    this.logger.log('ELASTIC DB LAST UPDATE: ' + this.lastDbUpdate);
   }
 
   /**
