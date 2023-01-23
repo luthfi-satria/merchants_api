@@ -92,7 +92,7 @@ export class ElasticsService {
         const syncStores = await this.getStores();
         const syncUsers = await this.getUsers();
         await this.updateSettings();
-        return {
+        const callback = {
           syncAddons: syncAddons,
           syncGroups: syncGroups,
           syncLobs: syncLobs,
@@ -107,6 +107,8 @@ export class ElasticsService {
           syncStores: syncStores,
           syncUsers: syncUsers,
         };
+        console.log(callback, '<= Sync status');
+        return callback;
       }
       return {
         code: 400,
