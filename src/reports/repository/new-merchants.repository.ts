@@ -42,7 +42,14 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
         'merchant_store_categories_languages.lang = :lid',
         { lid: lang ? lang : 'id' },
       )
-      .orderBy('ms.created_at', 'ASC');
+      .addSelect('merchant_store_categories_languages.name')
+      .groupBy('ms.id')
+      .addGroupBy('merchant.id')
+      .addGroupBy('group.id')
+      .addGroupBy('merchant_store_categories.id')
+      .addGroupBy('merchant_store_categories_languages.id')
+      .orderBy('merchant_store_categories_languages.name', 'ASC')
+      .withDeleted();
 
     //** SEARCH BY DATE */
     if (dateStart && dateEnd) {
