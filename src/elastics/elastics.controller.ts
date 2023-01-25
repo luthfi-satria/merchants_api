@@ -91,6 +91,12 @@ export class ElasticsController {
     return this.elasticsService.getUsers();
   }
 
+  @Get('restaurantList')
+  @ResponseStatusCode()
+  async restaurantList() {
+    return this.elasticsService.restaurantList();
+  }
+
   @Post('updateSettings')
   @ResponseStatusCode()
   async updateSettings() {

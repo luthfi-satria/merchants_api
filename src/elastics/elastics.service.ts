@@ -21,8 +21,9 @@ import { StoreOperationalShiftDocument } from 'src/database/entities/store_opera
 import { MessageService } from 'src/message/message.service';
 import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
+import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { generateDatabaseDateTime } from 'src/utils/general-utils';
-import { In, Repository } from 'typeorm';
+import { Brackets, In, Repository } from 'typeorm';
 
 @Injectable()
 export class ElasticsService {
@@ -32,7 +33,14 @@ export class ElasticsService {
   lastUpdate = generateDatabaseDateTime(new Date(), '+0700');
   // Disable or enabled process
   startingProcess = 0;
-  // Sync Process time in minutes
+  // Limit Data execution
+  limit = 20;
+  // data offset
+  offset = 0;
+  // total store data
+  totalData = 0;
+  // price range data
+  priceRange = [];
   elapsedTime = 1;
 
   constructor(
@@ -71,41 +79,43 @@ export class ElasticsService {
 
   logger = new Logger(ElasticsService.name);
 
-  @Cron('*/1 * * * *')
+  @Cron('1/20 * * * * *')
   async syncAll() {
     try {
       await this.getMerchantsConfig();
       this.logger.log('Elastic scheduller status: ' + this.startingProcess);
       if (this.startingProcess) {
-        const syncAddons = await this.getAddons();
-        const syncGroups = await this.getGroups();
-        const syncLobs = await this.getLobs();
-        const syncMenuOnlines = await this.getMenuOnlines();
-        const syncMerchants = await this.getMerchants();
-        const syncPriceRangeLanguages = await this.getPriceRangeLanguages();
-        const syncPriceRanges = await this.getPriceRanges();
-        const syncStoreCategories = await this.getStoreCategories();
-        const syncStoreCategoryLanguages =
-          await this.getStoreCategoryLanguages();
-        const syncStoreOperationalHours = await this.getStoreOperationalHours();
-        const syncStoreOperationalShift = await this.getStoreOperationalShift();
+        // const syncAddons = await this.getAddons();
+        // const syncGroups = await this.getGroups();
+        // const syncLobs = await this.getLobs();
+        // const syncMenuOnlines = await this.getMenuOnlines();
+        // const syncMerchants = await this.getMerchants();
+        // const syncPriceRangeLanguages = await this.getPriceRangeLanguages();
+        // const syncPriceRanges = await this.getPriceRanges();
+        // const syncStoreCategories = await this.getStoreCategories();
+        // const syncStoreCategoryLanguages =
+        //   await this.getStoreCategoryLanguages();
+        // const syncStoreOperationalHours = await this.getStoreOperationalHours();
+        // const syncStoreOperationalShift = await this.getStoreOperationalShift();
+        // const syncUsers = await this.getUsers();
         const syncStores = await this.getStores();
-        const syncUsers = await this.getUsers();
-        await this.updateSettings();
+        if (this.offset >= this.totalData) {
+          await this.updateSettings();
+        }
         const callback = {
-          syncAddons: syncAddons,
-          syncGroups: syncGroups,
-          syncLobs: syncLobs,
-          syncMenuOnlines: syncMenuOnlines,
-          syncMerchants: syncMerchants,
-          syncPriceRangeLanguages: syncPriceRangeLanguages,
-          syncPriceRanges: syncPriceRanges,
-          syncStoreCategories: syncStoreCategories,
-          syncStoreCategoryLanguages: syncStoreCategoryLanguages,
-          syncStoreOperationalHours: syncStoreOperationalHours,
-          syncStoreOperationalShift: syncStoreOperationalShift,
+          // syncAddons: syncAddons,
+          // syncGroups: syncGroups,
+          // syncLobs: syncLobs,
+          // syncMenuOnlines: syncMenuOnlines,
+          // syncMerchants: syncMerchants,
+          // syncPriceRangeLanguages: syncPriceRangeLanguages,
+          // syncPriceRanges: syncPriceRanges,
+          // syncStoreCategories: syncStoreCategories,
+          // syncStoreCategoryLanguages: syncStoreCategoryLanguages,
+          // syncStoreOperationalHours: syncStoreOperationalHours,
+          // syncStoreOperationalShift: syncStoreOperationalShift,
+          // syncUsers: syncUsers,
           syncStores: syncStores,
-          syncUsers: syncUsers,
         };
         console.log(callback, '<= Sync status');
         return callback;
@@ -150,31 +160,29 @@ export class ElasticsService {
   async createElasticIndex(index, jsonData) {
     try {
       if (jsonData.length > 0) {
-        index = `merchants_${index}`;
+        index = `efood_${index}`;
         const body = [];
         jsonData.forEach((element) => {
           const elIndex = { _index: index, _id: element.id };
           let operation = null;
           if (
-            element.updated_at > element.created_at ||
-            element.deleted_at != null
+            (element.updated_at > element.created_at ||
+              element.deleted_at != null) &&
+            this.lastDbUpdate !== null
           ) {
             operation = { update: elIndex };
+            body.push(operation, { doc: element });
           } else {
             operation = { create: elIndex };
+            body.push(operation, element);
           }
-          body.push(operation, { doc: element });
         });
-        // return body;
-        // return {
-        //   jsonData: jsonData,
-        //   body: body,
-        // };
+
         // insert mapping data into elastic
         const { body: bulkResponse } = await this.elasticsearchService.bulk({
           filter_path: 'items.*.error',
           refresh: 'true',
-          body,
+          body: body,
         });
         // if there is something error
         if (bulkResponse.errors) {
@@ -359,22 +367,12 @@ export class ElasticsService {
    * @returns
    */
   async getPriceRanges() {
-    const queryData = this.priceRangeRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
-      queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
-      });
-      queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
-      });
-      queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
-      });
-    }
-    const queryResult = await queryData.withDeleted().getMany();
+    const queryData = this.priceRangeRepo
+      .createQueryBuilder('priceRanges')
+      .leftJoinAndSelect('priceRanges.languages', 'languages');
 
-    const elData = await this.createElasticIndex('price_ranges', queryResult);
-    return elData;
+    const queryResult = await queryData.getMany();
+    return queryResult;
   }
 
   /**
@@ -480,24 +478,177 @@ export class ElasticsService {
    * @returns
    */
   async getStores() {
-    const queryData = this.storeRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
-      queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
-      });
-      queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
-      });
-      queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
-      });
+    if (this.offset == 0) {
+      this.priceRange = await this.getPriceRanges();
+      const queryCount = this.queryStatement();
+      this.totalData = await queryCount.getCount();
     }
-    const queryResult = await queryData.withDeleted().getMany();
 
-    const elData = await this.createElasticIndex('stores', queryResult);
-    return elData;
+    const currTime = DateTimeUtils.DateTimeToUTC(new Date());
+    const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
+
+    console.log({
+      limit: this.limit,
+      offset: this.offset,
+      totalData: this.totalData,
+      cond: this.offset < this.totalData,
+    });
+
+    if (this.offset < this.totalData) {
+      const queryData = this.queryStatement();
+      const queryResult = await queryData
+        .withDeleted()
+        .skip(this.offset)
+        .take(this.limit)
+        .getMany();
+
+      this.offset += this.limit;
+      queryResult.forEach((rows) => {
+        const store_operational_status = this.getStoreOperationalStatus(
+          rows.is_store_open,
+          currTime,
+          weekOfDay,
+          rows.operational_hours,
+        );
+
+        const priceRange = this.priceRange.find((pr) => {
+          if (
+            (pr.price_high >= rows.average_price &&
+              pr.price_low <= rows.average_price) ||
+            (pr.price_low <= rows.average_price && pr.price_high == 0)
+          ) {
+            return pr;
+          }
+        });
+
+        rows['price_symbol'] = priceRange ? priceRange.symbol : null;
+        rows['price_range'] = priceRange;
+        rows['store_operational_status'] = store_operational_status;
+      });
+      const elData = await this.createElasticIndex('stores', queryResult);
+      return elData;
+    }
+    this.offset = 0;
+    return {};
   }
 
+  queryStatement() {
+    const queryData = this.storeRepo
+      .createQueryBuilder('merchant_store')
+      .select([
+        'merchant_store.id',
+        'merchant_store.name',
+        'merchant_store.location_longitude',
+        'merchant_store.location_latitude',
+        'merchant_store.is_store_open',
+        'merchant_store.is_open_24h',
+        'merchant_store.average_price',
+        'merchant_store.platform',
+        'merchant_store.photo',
+        'merchant_store.banner',
+        'merchant_store.rating',
+        'merchant_store.numrating',
+        'merchant_store.status',
+        'merchant_store.created_at',
+        'merchant_store.updated_at',
+        'merchant_store.deleted_at',
+        'merchants.id',
+        'merchants.group_id',
+        'merchants.type',
+        'merchants.name',
+        'merchants.phone',
+        'merchants.logo',
+        'merchants.profile_store_photo',
+        'merchants.recommended_promo_type',
+        'merchants.recommended_discount_type',
+        'merchants.recommended_discount_value',
+        'merchants.recommended_shopping_discount_type',
+        'merchants.recommended_shopping_discount_value',
+        'merchants.recommended_delivery_discount_type',
+        'merchants.recommended_delivery_discount_value',
+        'operational_hours.id',
+        'operational_hours.merchant_store_id',
+        'operational_hours.day_of_week',
+        'operational_hours.is_open',
+        'operational_hours.is_open_24h',
+        'operational_hours.gmt_offset',
+        'operational_shifts.id',
+        'operational_shifts.store_operational_id',
+        'operational_shifts.open_hour',
+        'operational_shifts.close_hour',
+        'operational_shifts.created_at',
+        'operational_shifts.updated_at',
+      ])
+      .leftJoin('merchant_store.merchant', 'merchants')
+      .leftJoin(
+        'merchant_store.operational_hours',
+        'operational_hours',
+        'operational_hours.merchant_store_id = merchant_store.id',
+      )
+      .leftJoin(
+        'operational_hours.shifts',
+        'operational_shifts',
+        'operational_shifts.store_operational_id = operational_hours.id',
+      )
+      .leftJoinAndSelect(
+        'merchant_store.store_categories',
+        'merchant_store_categories',
+      )
+      .leftJoinAndSelect(
+        'merchant_store_categories.languages',
+        'merchant_store_categories_languages',
+      );
+    // .leftJoinAndSelect('merchant_store.menus', 'menus');
+    if (this.lastDbUpdate) {
+      queryData.where(
+        new Brackets((qb) => {
+          qb.where('merchant_store.updated_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+          qb.orWhere('merchant_store.created_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+          qb.orWhere('merchant_store.deleted_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+        }),
+      );
+      queryData.orWhere(
+        new Brackets((qb) => {
+          qb.where('merchants.updated_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+          qb.orWhere('merchants.created_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+          qb.orWhere('merchants.deleted_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+        }),
+      );
+      queryData.orWhere(
+        new Brackets((qb) => {
+          qb.where('operational_hours.updated_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+          qb.orWhere('operational_hours.created_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+        }),
+      );
+      queryData.orWhere(
+        new Brackets((qb) => {
+          qb.where('operational_shifts.updated_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+          qb.orWhere('operational_shifts.created_at > :lastUpdate', {
+            lastUpdate: this.lastDbUpdate,
+          });
+        }),
+      );
+    }
+    return queryData;
+  }
   /**
    * get users data
    * @returns
@@ -519,6 +670,44 @@ export class ElasticsService {
 
     const elData = await this.createElasticIndex('users', queryResult);
     return elData;
+  }
+
+  async restaurantList() {
+    const queryData = this.storeRepo
+      .createQueryBuilder('merchant_store')
+      .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
+      .leftJoinAndSelect(
+        'merchant_store.operational_hours',
+        'operational_hours',
+        'operational_hours.merchant_store_id = merchant_store.id',
+      )
+      .leftJoinAndSelect('merchant_store.merchant', 'merchant')
+      .leftJoinAndSelect(
+        'operational_hours.shifts',
+        'operational_shifts',
+        'operational_shifts.store_operational_id = operational_hours.id',
+      )
+      .leftJoinAndSelect(
+        'merchant_store.store_categories',
+        'merchant_store_categories',
+      )
+      .leftJoinAndSelect(
+        'merchant_store_categories.languages',
+        'merchant_store_categories_languages',
+      );
+    // .leftJoinAndSelect('merchant_store.menus', 'menus');
+    // if (this.lastDbUpdate) {
+    //   queryData.where('merchant_store.updated_at > :lastUpdate', {
+    //     lastUpdate: this.lastDbUpdate,
+    //   });
+    //   queryData.orWhere('merchant_store.created_at > :lastUpdate', {
+    //     lastUpdate: this.lastDbUpdate,
+    //   });
+    //   queryData.orWhere('merchant_store.deleted_at > :lastUpdate', {
+    //     lastUpdate: this.lastDbUpdate,
+    //   });
+    // }
+    return queryData.take(10).getMany();
   }
 
   /**
@@ -553,5 +742,28 @@ export class ElasticsService {
       .where({ name: 'ElasticMerchants' })
       .execute();
     return updateSettings;
+  }
+
+  getStoreOperationalStatus(
+    is_store_status: boolean,
+    currTime: string,
+    currWeekDay: number,
+    curShiftHour: StoreOperationalHoursDocument[],
+  ): boolean {
+    const isCurrentDay = curShiftHour.find(
+      (row) => row.day_of_week == String(currWeekDay),
+    );
+    let respectShiftTime = null;
+    if (isCurrentDay.shifts.length > 0) {
+      respectShiftTime = isCurrentDay.shifts.find((e) =>
+        DateTimeUtils.checkTimeBetween(currTime, e.open_hour, e.close_hour),
+      );
+    }
+
+    return is_store_status &&
+      isCurrentDay.is_open &&
+      (isCurrentDay.is_open_24h || respectShiftTime)
+      ? true
+      : false;
   }
 }
