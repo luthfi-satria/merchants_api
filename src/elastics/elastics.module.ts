@@ -22,6 +22,7 @@ import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { unescape } from 'querystring';
 
 @Module({
   imports: [
@@ -47,7 +48,24 @@ import { ScheduleModule } from '@nestjs/schedule';
     ElasticsearchModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        node: configService.get('ELASTICSEARCH_AUTH'),
+        node: configService.get('ELASTICSEARCH_NODE'),
+        auth: {
+          username: configService.get('ELASTICSEARCH_USERNAME'),
+          password: configService.get('ELASTICSEARCH_PASSWORD'),
+        },
+        headers: {
+          Authorization:
+            'basic ' +
+            btoa(
+              unescape(
+                encodeURIComponent(
+                  configService.get('ELASTICSEARCH_USERNAME') +
+                    ':' +
+                    configService.get('ELASTICSEARCH_PASSWORD'),
+                ),
+              ),
+            ),
+        },
       }),
       inject: [ConfigService],
     }),

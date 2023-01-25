@@ -34,7 +34,7 @@ export class ElasticsService {
   // Disable or enabled process
   startingProcess = 0;
   // Limit Data execution
-  limit = 20;
+  limit = 10;
   // data offset
   offset = 0;
   // total store data
@@ -160,7 +160,7 @@ export class ElasticsService {
   async createElasticIndex(index, jsonData) {
     try {
       if (jsonData.length > 0) {
-        index = `efood_${index}`;
+        index = `${process.env.ELASTICSEARCH_ENV}_efood_${index}`;
         const body = [];
         jsonData.forEach((element) => {
           const elIndex = { _index: index, _id: element.id };
