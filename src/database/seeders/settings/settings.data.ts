@@ -8,11 +8,23 @@ export const settings: { name: string; value: string }[] = [
     value: '25',
   },
   {
-    name: 'ElasticMerchants',
+    name: 'elastic_timespan',
+    value: '20',
+  },
+  {
+    name: 'elastic_refresh_config',
+    value: '60',
+  },
+  {
+    name: 'elastic_process',
     value: '0',
   },
   {
-    name: 'ElasticProcess',
-    value: '0',
+    name: 'elastic_lastupdate',
+    value: null,
+  },
+  {
+    name: 'elastic_data_limit',
+    value: '10',
   },
 ];

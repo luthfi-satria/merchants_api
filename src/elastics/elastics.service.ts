@@ -23,25 +23,32 @@ import { RMessage } from 'src/response/response.interface';
 import { ResponseService } from 'src/response/response.service';
 import { DateTimeUtils } from 'src/utils/date-time-utils';
 import { generateDatabaseDateTime } from 'src/utils/general-utils';
-import { Brackets, In, Repository } from 'typeorm';
+import { Brackets, Like, Repository } from 'typeorm';
 
 @Injectable()
 export class ElasticsService {
   indexName = 'merchants';
-  lastDbUpdate = null;
-  // Generate last update time
-  lastUpdate = generateDatabaseDateTime(new Date(), '+0700');
-  // Disable or enabled process
-  startingProcess = 0;
-  // Limit Data execution
-  limit = 10;
-  // data offset
-  offset = 0;
-  // total store data
-  totalData = 0;
+
+  cronConfigs = {
+    // enable or disabled process
+    elastic_process: 0,
+    // time range of sync execution
+    elastic_timespan: 1,
+    // last update of sync process
+    elastic_lastupdate: null,
+    // limit data execution
+    elastic_data_limit: 10,
+    elastic_refresh_config: 60,
+    // skip of data index
+    offset: 0,
+    // total sync data found
+    total_data: 0,
+    // iteration counter
+    iteration: 1,
+  };
+
   // price range data
   priceRange = [];
-  elapsedTime = 1;
 
   constructor(
     @InjectRepository(SettingDocument)
@@ -79,53 +86,79 @@ export class ElasticsService {
 
   logger = new Logger(ElasticsService.name);
 
-  @Cron('1/20 * * * * *')
+  @Cron('* * * * * *')
   async syncAll() {
     try {
-      await this.getMerchantsConfig();
-      this.logger.log('Elastic scheduller status: ' + this.startingProcess);
-      if (this.startingProcess) {
-        // const syncAddons = await this.getAddons();
-        // const syncGroups = await this.getGroups();
-        // const syncLobs = await this.getLobs();
-        // const syncMenuOnlines = await this.getMenuOnlines();
-        // const syncMerchants = await this.getMerchants();
-        // const syncPriceRangeLanguages = await this.getPriceRangeLanguages();
-        // const syncPriceRanges = await this.getPriceRanges();
-        // const syncStoreCategories = await this.getStoreCategories();
-        // const syncStoreCategoryLanguages =
-        //   await this.getStoreCategoryLanguages();
-        // const syncStoreOperationalHours = await this.getStoreOperationalHours();
-        // const syncStoreOperationalShift = await this.getStoreOperationalShift();
-        // const syncUsers = await this.getUsers();
-        const syncStores = await this.getStores();
-        if (this.offset >= this.totalData) {
-          await this.updateSettings();
+      if (this.cronConfigs.iteration % this.cronConfigs.elastic_timespan == 0) {
+        if (
+          this.cronConfigs.iteration %
+            this.cronConfigs.elastic_refresh_config ==
+          0
+        ) {
+          this.logger.log('ELASTIC -> ELASTIC CONFIGS');
+          await this.getMerchantsConfig();
         }
-        const callback = {
-          // syncAddons: syncAddons,
-          // syncGroups: syncGroups,
-          // syncLobs: syncLobs,
-          // syncMenuOnlines: syncMenuOnlines,
-          // syncMerchants: syncMerchants,
-          // syncPriceRangeLanguages: syncPriceRangeLanguages,
-          // syncPriceRanges: syncPriceRanges,
-          // syncStoreCategories: syncStoreCategories,
-          // syncStoreCategoryLanguages: syncStoreCategoryLanguages,
-          // syncStoreOperationalHours: syncStoreOperationalHours,
-          // syncStoreOperationalShift: syncStoreOperationalShift,
-          // syncUsers: syncUsers,
-          syncStores: syncStores,
+        this.cronConfigs.iteration++;
+        if (this.cronConfigs.elastic_process) {
+          this.logger.log('ELASTIC -> SYNC IS STARTED');
+          // const syncAddons = await this.getAddons();
+          // const syncGroups = await this.getGroups();
+          // const syncLobs = await this.getLobs();
+          // const syncMenuOnlines = await this.getMenuOnlines();
+          // const syncMerchants = await this.getMerchants();
+          // const syncPriceRangeLanguages = await this.getPriceRangeLanguages();
+          // const syncPriceRanges = await this.getPriceRanges();
+          // const syncStoreCategories = await this.getStoreCategories();
+          // const syncStoreCategoryLanguages =
+          //   await this.getStoreCategoryLanguages();
+          // const syncStoreOperationalHours = await this.getStoreOperationalHours();
+          // const syncStoreOperationalShift = await this.getStoreOperationalShift();
+          // const syncUsers = await this.getUsers();
+          const syncStores = await this.getStores();
+          if (
+            this.cronConfigs.total_data > 0 &&
+            this.cronConfigs.offset >= this.cronConfigs.total_data
+          ) {
+            this.logger.log('ELASTIC -> UPDATE CONFIGS');
+            await this.updateSettings();
+          }
+          const callback = {
+            // syncAddons: syncAddons,
+            // syncGroups: syncGroups,
+            // syncLobs: syncLobs,
+            // syncMenuOnlines: syncMenuOnlines,
+            // syncMerchants: syncMerchants,
+            // syncPriceRangeLanguages: syncPriceRangeLanguages,
+            // syncPriceRanges: syncPriceRanges,
+            // syncStoreCategories: syncStoreCategories,
+            // syncStoreCategoryLanguages: syncStoreCategoryLanguages,
+            // syncStoreOperationalHours: syncStoreOperationalHours,
+            // syncStoreOperationalShift: syncStoreOperationalShift,
+            // syncUsers: syncUsers,
+            syncStores: syncStores,
+          };
+          console.log(callback, '<= Sync status');
+          return callback;
+        }
+        return {
+          code: 400,
+          message: 'Process unable to start, please check system configuration',
         };
-        console.log(callback, '<= Sync status');
-        return callback;
       }
-      return {
-        code: 400,
-        message: 'Process unable to start, please check system configuration',
-      };
+
+      const maxIteration =
+        this.cronConfigs.elastic_refresh_config >
+        this.cronConfigs.elastic_timespan
+          ? this.cronConfigs.elastic_refresh_config
+          : this.cronConfigs.elastic_timespan;
+      if (this.cronConfigs.iteration >= maxIteration) {
+        this.cronConfigs.iteration = 1;
+      } else {
+        this.cronConfigs.iteration++;
+      }
     } catch (error) {
       console.log(error);
+      this.cronConfigs.iteration++;
       throw error;
     }
   }
@@ -136,19 +169,16 @@ export class ElasticsService {
   async getMerchantsConfig() {
     const settings = await this.settingRepo.find({
       where: {
-        name: In(['ElasticMerchants', 'ElasticProcess', 'ElasticTimeProcess']),
+        name: Like('elastic_%'),
       },
     });
     settings.forEach((element) => {
-      if (element.name == 'ElasticMerchants') {
-        this.lastDbUpdate = element.value;
-      } else if (element.name == 'ElasticProcess') {
-        this.startingProcess = parseInt(element.value);
-      } else if (element.name == 'ElasticElapsedTime') {
-        this.elapsedTime = parseInt(element.value);
+      if (element.name == 'elastic_lastupdate') {
+        this.cronConfigs[element.name] = element.value;
+      } else {
+        this.cronConfigs[element.name] = parseInt(element.value);
       }
     });
-    this.logger.log('ELASTIC DB LAST UPDATE: ' + this.lastDbUpdate);
   }
 
   /**
@@ -168,7 +198,7 @@ export class ElasticsService {
           if (
             (element.updated_at > element.created_at ||
               element.deleted_at != null) &&
-            this.lastDbUpdate !== null
+            this.cronConfigs.elastic_lastupdate !== null
           ) {
             operation = { update: elIndex };
             body.push(operation, { doc: element });
@@ -207,7 +237,6 @@ export class ElasticsService {
         const { body: count } = await this.elasticsearchService.count({
           index: index,
         });
-        console.log(count);
         return count;
       }
       return {
@@ -227,15 +256,15 @@ export class ElasticsService {
    */
   async getAddons() {
     const queryData = this.addonRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -250,15 +279,15 @@ export class ElasticsService {
    */
   async getGroups() {
     const queryData = this.groupRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -273,15 +302,15 @@ export class ElasticsService {
    */
   async getLobs() {
     const queryData = this.lobRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -296,15 +325,15 @@ export class ElasticsService {
    */
   async getMenuOnlines() {
     const queryData = this.menuOnlineRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -319,15 +348,15 @@ export class ElasticsService {
    */
   async getMerchants() {
     const queryData = this.merchantRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -342,15 +371,15 @@ export class ElasticsService {
    */
   async getPriceRangeLanguages() {
     const queryData = this.priceRangeLangRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -381,15 +410,15 @@ export class ElasticsService {
    */
   async getStoreCategories() {
     const queryData = this.storeCatRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -407,15 +436,15 @@ export class ElasticsService {
    */
   async getStoreCategoryLanguages() {
     const queryData = this.languageRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -433,12 +462,12 @@ export class ElasticsService {
    */
   async getStoreOperationalHours() {
     const queryData = this.operationHourRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -456,12 +485,12 @@ export class ElasticsService {
    */
   async getStoreOperationalShift() {
     const queryData = this.operationShiftRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
@@ -478,31 +507,34 @@ export class ElasticsService {
    * @returns
    */
   async getStores() {
-    if (this.offset == 0) {
+    // console.log(this.cronConfigs.offset, '<= initial offset');
+    if (this.cronConfigs.offset == 0) {
       this.priceRange = await this.getPriceRanges();
       const queryCount = this.queryStatement();
-      this.totalData = await queryCount.getCount();
+      this.cronConfigs.total_data = await queryCount.getCount();
     }
 
     const currTime = DateTimeUtils.DateTimeToUTC(new Date());
     const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
 
-    console.log({
-      limit: this.limit,
-      offset: this.offset,
-      totalData: this.totalData,
-      cond: this.offset < this.totalData,
-    });
-
-    if (this.offset < this.totalData) {
+    if (this.cronConfigs.total_data > 0) {
+      console.log(
+        {
+          configs: this.cronConfigs,
+          cond: this.cronConfigs.offset < this.cronConfigs.total_data,
+        },
+        '<= ELASTIC - CONFIG PROCESS',
+      );
+    }
+    if (this.cronConfigs.offset < this.cronConfigs.total_data) {
       const queryData = this.queryStatement();
       const queryResult = await queryData
         .withDeleted()
-        .skip(this.offset)
-        .take(this.limit)
+        .skip(this.cronConfigs.offset)
+        .take(this.cronConfigs.elastic_data_limit)
         .getMany();
 
-      this.offset += this.limit;
+      this.cronConfigs.offset += this.cronConfigs.elastic_data_limit;
       queryResult.forEach((rows) => {
         const store_operational_status = this.getStoreOperationalStatus(
           rows.is_store_open,
@@ -528,7 +560,7 @@ export class ElasticsService {
       const elData = await this.createElasticIndex('stores', queryResult);
       return elData;
     }
-    this.offset = 0;
+    this.cronConfigs.offset = 0;
     return {};
   }
 
@@ -599,50 +631,50 @@ export class ElasticsService {
         'merchant_store_categories_languages',
       );
     // .leftJoinAndSelect('merchant_store.menus', 'menus');
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where(
         new Brackets((qb) => {
           qb.where('merchant_store.updated_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
           qb.orWhere('merchant_store.created_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
           qb.orWhere('merchant_store.deleted_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
         }),
       );
       queryData.orWhere(
         new Brackets((qb) => {
           qb.where('merchants.updated_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
           qb.orWhere('merchants.created_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
           qb.orWhere('merchants.deleted_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
         }),
       );
       queryData.orWhere(
         new Brackets((qb) => {
           qb.where('operational_hours.updated_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
           qb.orWhere('operational_hours.created_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
         }),
       );
       queryData.orWhere(
         new Brackets((qb) => {
           qb.where('operational_shifts.updated_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
           qb.orWhere('operational_shifts.created_at > :lastUpdate', {
-            lastUpdate: this.lastDbUpdate,
+            lastUpdate: this.cronConfigs.elastic_lastupdate,
           });
         }),
       );
@@ -655,59 +687,21 @@ export class ElasticsService {
    */
   async getUsers() {
     const queryData = this.merchantUserRepo.createQueryBuilder();
-    if (this.lastDbUpdate) {
+    if (this.cronConfigs.elastic_lastupdate) {
       queryData.where('updated_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('created_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
       queryData.orWhere('deleted_at > :lastUpdate', {
-        lastUpdate: this.lastDbUpdate,
+        lastUpdate: this.cronConfigs.elastic_lastupdate,
       });
     }
     const queryResult = await queryData.withDeleted().getMany();
 
     const elData = await this.createElasticIndex('users', queryResult);
     return elData;
-  }
-
-  async restaurantList() {
-    const queryData = this.storeRepo
-      .createQueryBuilder('merchant_store')
-      .leftJoinAndSelect('merchant_store.service_addons', 'merchant_addon') //MANY TO MANY
-      .leftJoinAndSelect(
-        'merchant_store.operational_hours',
-        'operational_hours',
-        'operational_hours.merchant_store_id = merchant_store.id',
-      )
-      .leftJoinAndSelect('merchant_store.merchant', 'merchant')
-      .leftJoinAndSelect(
-        'operational_hours.shifts',
-        'operational_shifts',
-        'operational_shifts.store_operational_id = operational_hours.id',
-      )
-      .leftJoinAndSelect(
-        'merchant_store.store_categories',
-        'merchant_store_categories',
-      )
-      .leftJoinAndSelect(
-        'merchant_store_categories.languages',
-        'merchant_store_categories_languages',
-      );
-    // .leftJoinAndSelect('merchant_store.menus', 'menus');
-    // if (this.lastDbUpdate) {
-    //   queryData.where('merchant_store.updated_at > :lastUpdate', {
-    //     lastUpdate: this.lastDbUpdate,
-    //   });
-    //   queryData.orWhere('merchant_store.created_at > :lastUpdate', {
-    //     lastUpdate: this.lastDbUpdate,
-    //   });
-    //   queryData.orWhere('merchant_store.deleted_at > :lastUpdate', {
-    //     lastUpdate: this.lastDbUpdate,
-    //   });
-    // }
-    return queryData.take(10).getMany();
   }
 
   /**
@@ -737,9 +731,9 @@ export class ElasticsService {
       .createQueryBuilder()
       .update()
       .set({
-        value: this.lastUpdate,
+        value: generateDatabaseDateTime(new Date(), '+0700'),
       })
-      .where({ name: 'ElasticMerchants' })
+      .where({ name: 'elastic_lastupdate' })
       .execute();
     return updateSettings;
   }
