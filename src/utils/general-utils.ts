@@ -420,3 +420,7 @@ export const cleanSearchString = (search: string): string => {
   if (!search) return search;
   return search.toLowerCase().replace(/\s\s+/g, ' ');
 };
+
+export const generateDatabaseDateTime = (date: Date, gmtOffset: string) => {
+  return date.toISOString().replace('T', ' ').substring(0, 19) + gmtOffset;
+};

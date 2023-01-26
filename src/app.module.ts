@@ -35,6 +35,7 @@ import { ResponseService } from './response/response.service';
 import { ValidationMiddleware } from './middleware/validation.middleware';
 import { UsersValidationModule } from './users_validation/users_validation.module';
 import { ReportsModule } from './reports/reports.module';
+import { ElasticsModule } from './elastics/elastics.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { ReportsModule } from './reports/reports.module';
     RegistersModule,
     UsersValidationModule,
     ReportsModule,
+    ElasticsModule,
   ],
   controllers: [AppController],
   providers: [AppService, ResponseService],
