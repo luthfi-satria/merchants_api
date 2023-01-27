@@ -552,7 +552,10 @@ export class ElasticsService {
             return pr;
           }
         });
-
+        rows['coordinates'] = {
+          lat: rows.location_latitude,
+          lon: rows.location_longitude,
+        };
         rows['price_symbol'] = priceRange ? priceRange.symbol : null;
         rows['price_range'] = priceRange;
         rows['store_operational_status'] = store_operational_status;
