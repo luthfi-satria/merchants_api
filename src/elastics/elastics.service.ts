@@ -751,7 +751,11 @@ export class ElasticsService {
       (row) => row.day_of_week == String(currWeekDay),
     );
     let respectShiftTime = null;
-    if (isCurrentDay.shifts.length > 0) {
+    if (
+      isCurrentDay &&
+      typeof isCurrentDay.shifts != 'undefined' &&
+      isCurrentDay.shifts.length > 0
+    ) {
       respectShiftTime = isCurrentDay.shifts.find((e) =>
         DateTimeUtils.checkTimeBetween(currTime, e.open_hour, e.close_hour),
       );
