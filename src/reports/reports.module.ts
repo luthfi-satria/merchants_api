@@ -47,6 +47,7 @@ import { NewMerchantEntity as NewMerchantRepository } from './repositories/new-m
       MerchantUsersDocument,
       StoreDocument,
       StoreCategoriesDocument,
+      StoreDocument,
       AddonDocument,
       StoreOperationalHoursDocument,
       StoreOperationalShiftDocument,

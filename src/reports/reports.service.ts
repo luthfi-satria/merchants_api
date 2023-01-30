@@ -34,7 +34,7 @@ export class ReportsService {
       const raw = await this.newMerchantEntities.listNewMerchantsData(data);
       // //** CREATE OBJECT DATA */
       const cityIObj = {};
-      // const menuIObj = {};
+      const categoriesIObj = {};
 
       // Data Cities
       raw.items.forEach((ms) => {
@@ -44,25 +44,25 @@ export class ReportsService {
       });
 
       // Data Menu
-      // raw.items.forEach((ms) => {
-      //   if (ms.merchant_id) {
-      //     menuIObj[ms.merchant_id] = null;
-      //   }
-      // });
+      raw.items.forEach((ms) => {
+        if (ms.ms_id) {
+          categoriesIObj[ms.ms_id] = null;
+        }
+      });
 
       const promises = [];
       let cities = null;
-      // let menus = null;
+      let categories = null;
 
       raw.items.forEach((ms) => {
         cities = this.cityService.getCity(ms.ms_city_id);
         promises.push(cities);
       });
 
-      // raw.items.forEach((ms) => {
-      //   menus = this.commonCatalogService.getMenuOnlyByStoreId(ms.merchant_id);
-      //   promises.push(menus);
-      // });
+      raw.items.forEach((ms) => {
+        categories = this.newMerchantEntities.getCategoriesByStoredId(ms.ms_id);
+        promises.push(categories);
+      });
 
       await Promise.all(promises);
 
@@ -73,17 +73,17 @@ export class ReportsService {
         });
       }
 
-      // if (menus) {
-      //   menus = await menus;
-      //   menus?.items?.forEach((menu: any) => {
-      //     menuIObj[menu.merchant_id] = menu;
-      //   });
-      // }
+      if (categories) {
+        categories = await categories;
+        categories?.languages?.forEach((categori: any) => {
+          categoriesIObj[categori.name] = categori;
+        });
+      }
 
       //** RESULT NEW MERCHANTS STORES */
       raw.items.forEach((ms) => {
         ms.ms_city_id = cities ? cities : cityIObj[ms.ms_city_id];
-        // ms.merchant_id = menus ? menus : menuIObj[ms.merchant_id];
+        ms.categories_name = categories ? categories : categoriesIObj[ms.ms_id];
       });
 
       return raw;
@@ -148,7 +148,7 @@ export class ReportsService {
           ];
 
       //** GET DATA FROM DATABASE */
-      const raw = await this.newMerchantEntities.listNewMerchantsData(data);
+      const raw = await this.processListNewMerchants(data);
 
       //** CREATE WORKBOOK */
       const workbook = new ExcelJS.Workbook();
@@ -383,9 +383,7 @@ export class ReportsService {
                 row.push(nameSP);
                 break;
               case 'city_id':
-                const city = obj.ms_city_id;
-                const getCity = await this.cityService.getCity(city);
-                const nameCi = getCity.name ? getCity.name : '-';
+                const nameCi = obj.ms_city_id.name ? obj.ms_city_id.name : '-';
                 row.push(nameCi);
                 break;
               case 'store_address':
@@ -393,9 +391,7 @@ export class ReportsService {
                 row.push(nameMA);
                 break;
               case 'categories':
-                const nameSC = obj.merchant_store_categories_languages_name
-                  ? obj.merchant_store_categories_languages_name
-                  : '-';
+                const nameSC = obj.categories_name ? obj.categories_name : '-';
                 row.push(nameSC);
                 break;
               case 'pic_name':
@@ -544,7 +540,7 @@ export class ReportsService {
           ];
 
       //** GET DATA FROM DATABASE */
-      const raw = await this.newMerchantEntities.listNewMerchantsData(data);
+      const raw = await this.processListNewMerchants(data);
 
       //** CREATE WORKBOOK */
       const workbook = new ExcelJS.Workbook();
@@ -729,9 +725,7 @@ export class ReportsService {
                 row.push(nameS);
                 break;
               case 'categories':
-                const nameSC = obj.merchant_store_categories_languages_name
-                  ? obj.merchant_store_categories_languages_name
-                  : '-';
+                const nameSC = obj.categories_name ? obj.categories_name : '-';
                 row.push(nameSC);
                 break;
               case 'recommended':
