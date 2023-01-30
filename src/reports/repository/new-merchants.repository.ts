@@ -1,16 +1,16 @@
 import { BadRequestException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ReportStoreDocument } from 'src/database/entities/report_merchants.entity';
+import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { Brackets, EntityRepository, Repository } from 'typeorm';
 import { ListReprotNewMerchantDTO } from '../dto/report.dto';
 
-@EntityRepository(ReportStoreDocument)
-export class NewMerchantEntity extends Repository<ReportStoreDocument> {
+@EntityRepository(StoreDocument)
+export class NewMerchantEntity extends Repository<StoreDocument> {
   constructor(
-    @InjectRepository(ReportStoreDocument)
-    public readonly storeRepository: Repository<ReportStoreDocument>,
+    @InjectRepository(StoreDocument)
+    public readonly storeRepository: Repository<StoreDocument>,
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
   ) {

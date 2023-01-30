@@ -36,7 +36,6 @@ import { MulterModule } from '@nestjs/platform-express';
 import { GroupsModule } from 'src/groups/groups.module';
 import { ProfileModule } from 'src/merchants/profile/profile.module';
 import { NewMerchantEntity } from './repository/new-merchants.repository';
-import { ReportStoreDocument } from 'src/database/entities/report_merchants.entity';
 
 @Module({
   imports: [
@@ -45,7 +44,7 @@ import { ReportStoreDocument } from 'src/database/entities/report_merchants.enti
       GroupDocument,
       LobDocument,
       MerchantUsersDocument,
-      ReportStoreDocument,
+      StoreDocument,
       StoreCategoriesDocument,
       StoreDocument,
       AddonDocument,
