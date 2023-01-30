@@ -28,28 +28,13 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
     const groupId = data.group_id || null;
     const merchantId = data.merchant_id || null;
     const storeId = data.store_id || null;
-    const lang = '';
 
     //** QUERIES */
     const queries = this.storeRepository
       .createQueryBuilder('ms')
       .leftJoinAndSelect('ms.merchant', 'merchant')
       .leftJoinAndSelect('merchant.group', 'group')
-      .leftJoinAndSelect('ms.store_categories', 'merchant_store_categories')
-      .leftJoinAndSelect(
-        'merchant_store_categories.languages',
-        'merchant_store_categories_languages',
-        'merchant_store_categories_languages.lang = :lid',
-        { lid: lang ? lang : 'id' },
-      )
-      .addSelect('merchant_store_categories_languages.name')
-      .groupBy('ms.id')
-      .addGroupBy('merchant.id')
-      .addGroupBy('group.id')
-      .addGroupBy('merchant_store_categories.id')
-      .addGroupBy('merchant_store_categories_languages.id')
-      .orderBy('merchant_store_categories_languages.name', 'ASC')
-      .withDeleted();
+      .orderBy('ms.id', 'ASC');
 
     //** SEARCH BY DATE */
     if (dateStart && dateEnd) {
@@ -119,7 +104,6 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
         gstat: statuses,
       });
     }
-
     const rawAll = await queries.getRawMany();
     const raw = rawAll.slice(indexPage, indexPage + Number(perPage));
     const count = rawAll.length;
@@ -159,5 +143,21 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
         ),
       );
     }
+  }
+
+  async getCategoriesByStoredId(data: string): Promise<any> {
+    const queries = await this.storeRepository
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.store_categories', 'merchant_store_categories')
+      .leftJoinAndSelect(
+        'merchant_store_categories.languages',
+        'merchant_store_categories_languages',
+        'merchant_store_categories_languages.lang = :lid',
+        { lid: 'id' },
+      )
+      .where('ms.id =:merchant_id', { merchant_id: data })
+      .getMany();
+
+    return queries[0].store_categories[0].languages[0].name;
   }
 }
