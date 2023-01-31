@@ -391,7 +391,9 @@ export class ReportsService {
                 row.push(nameMA);
                 break;
               case 'categories':
-                const nameSC = obj.categories_name ? obj.categories_name : '-';
+                const nameSC = obj.merchant_store_categories_name
+                  ? obj.merchant_store_categories_name
+                  : '-';
                 row.push(nameSC);
                 break;
               case 'pic_name':
@@ -725,7 +727,9 @@ export class ReportsService {
                 row.push(nameS);
                 break;
               case 'categories':
-                const nameSC = obj.categories_name ? obj.categories_name : '-';
+                const nameSC = obj.merchant_store_categories_name
+                  ? obj.merchant_store_categories_name
+                  : '-';
                 row.push(nameSC);
                 break;
               case 'recommended':
