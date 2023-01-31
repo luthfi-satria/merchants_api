@@ -34,7 +34,7 @@ export class ReportsService {
       const raw = await this.newMerchantEntities.listNewMerchantsData(data);
       // //** CREATE OBJECT DATA */
       const cityIObj = {};
-      const categoriesIObj = {};
+      // const categoriesIObj = {};
 
       // Data Cities
       raw.items.forEach((ms) => {
@@ -44,25 +44,25 @@ export class ReportsService {
       });
 
       // Data Menu
-      raw.items.forEach((ms) => {
-        if (ms.ms_id) {
-          categoriesIObj[ms.ms_id] = null;
-        }
-      });
+      // raw.items.forEach((ms) => {
+      //   if (ms.ms_id) {
+      //     categoriesIObj[ms.ms_id] = null;
+      //   }
+      // });
 
       const promises = [];
       let cities = null;
-      let categories = null;
+      // let categories = null;
 
       raw.items.forEach((ms) => {
-        cities = this.cityService.getCity(ms.ms_city_id);
+        cities = this.cityService.getCity(ms.city_id);
         promises.push(cities);
       });
 
-      raw.items.forEach((ms) => {
-        categories = this.newMerchantEntities.getCategoriesByStoredId(ms.ms_id);
-        promises.push(categories);
-      });
+      // raw.items.forEach((ms) => {
+      //   categories = this.newMerchantEntities.getCategoriesByStoredId(ms.ms_id);
+      //   promises.push(categories);
+      // });
 
       await Promise.all(promises);
 
@@ -73,17 +73,17 @@ export class ReportsService {
         });
       }
 
-      if (categories) {
-        categories = await categories;
-        categories?.languages?.forEach((categori: any) => {
-          categoriesIObj[categori.name] = categori;
-        });
-      }
+      // if (categories) {
+      //   categories = await categories;
+      //   categories?.languages?.forEach((categori: any) => {
+      //     categoriesIObj[categori.name] = categori;
+      //   });
+      // }
 
       //** RESULT NEW MERCHANTS STORES */
       raw.items.forEach((ms) => {
-        ms.ms_city_id = cities ? cities : cityIObj[ms.ms_city_id];
-        ms.categories_name = categories ? categories : categoriesIObj[ms.ms_id];
+        ms.city_id = cities ? cities : cityIObj[ms.city_id];
+        // ms.categories_name = categories ? categories : categoriesIObj[ms.ms_id];
       });
 
       return raw;
@@ -391,7 +391,9 @@ export class ReportsService {
                 row.push(nameMA);
                 break;
               case 'categories':
-                const nameSC = obj.categories_name ? obj.categories_name : '-';
+                const nameSC = obj.merchant_store_categories_name
+                  ? obj.merchant_store_categories_name
+                  : '-';
                 row.push(nameSC);
                 break;
               case 'pic_name':
@@ -725,7 +727,9 @@ export class ReportsService {
                 row.push(nameS);
                 break;
               case 'categories':
-                const nameSC = obj.categories_name ? obj.categories_name : '-';
+                const nameSC = obj.merchant_store_categories_name
+                  ? obj.merchant_store_categories_name
+                  : '-';
                 row.push(nameSC);
                 break;
               case 'recommended':
