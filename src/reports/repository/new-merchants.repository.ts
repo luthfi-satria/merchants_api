@@ -135,7 +135,7 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
       .addGroupBy('group.id')
       .addGroupBy('merchant.id')
       .addGroupBy('merchant_store_categories.id')
-      .addGroupBy('merchant_store_categories_languages.name')
+      .addGroupBy('merchant_store_categories_languages.id')
       .orderBy('ms.name', 'ASC');
 
     //** SEARCH BY DATE */
