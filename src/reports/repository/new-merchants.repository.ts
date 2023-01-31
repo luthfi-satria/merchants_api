@@ -1,16 +1,16 @@
 import { BadRequestException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ReportNewMerchants } from 'src/database/entities/report_new_merchant.entity';
+import { StoreDocument } from 'src/database/entities/store.entity';
 import { MessageService } from 'src/message/message.service';
 import { ResponseService } from 'src/response/response.service';
 import { Brackets, EntityRepository, Repository } from 'typeorm';
 import { ListReprotNewMerchantDTO } from '../dto/report.dto';
 
-@EntityRepository(ReportNewMerchants)
-export class NewMerchantEntity extends Repository<ReportNewMerchants> {
+@EntityRepository(StoreDocument)
+export class NewMerchantEntity extends Repository<StoreDocument> {
   constructor(
-    @InjectRepository(ReportNewMerchants)
-    public readonly storeRepository: Repository<ReportNewMerchants>,
+    @InjectRepository(StoreDocument)
+    public readonly storeRepository: Repository<StoreDocument>,
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
   ) {
@@ -32,13 +32,6 @@ export class NewMerchantEntity extends Repository<ReportNewMerchants> {
     //** QUERIES */
     const queries = this.storeRepository
       .createQueryBuilder('ms')
-      .leftJoin('ms.merchant', 'merchant')
-      .leftJoin('merchant.group', 'group')
-      .leftJoin('ms.store_categories', 'merchant_store_categories')
-      .leftJoin(
-        'merchant_store_categories.languages',
-        'merchant_store_categories_languages',
-      )
       .select([
         'ms.*',
         'merchant.id',
@@ -126,8 +119,15 @@ export class NewMerchantEntity extends Repository<ReportNewMerchants> {
         'group.cancellation_reason_of_document',
         'group.cancellation_reason_of_type_and_service',
         'group.cancellation_reason_of_responsible_person',
-        'merchant_store_categories_languages.name',
+        'array_agg(merchant_store_categories_languages.name) AS merchant_store_categories_name',
       ])
+      .leftJoin('ms.merchant', 'merchant')
+      .leftJoin('merchant.group', 'group')
+      .leftJoin('ms.store_categories', 'merchant_store_categories')
+      .leftJoin(
+        'merchant_store_categories.languages',
+        'merchant_store_categories_languages',
+      )
       .where('merchant_store_categories_languages.lang =:langs', {
         langs: 'id',
       })
@@ -135,8 +135,8 @@ export class NewMerchantEntity extends Repository<ReportNewMerchants> {
       .addGroupBy('group.id')
       .addGroupBy('merchant.id')
       .addGroupBy('merchant_store_categories.id')
-      .addGroupBy('merchant_store_categories_languages.id')
-      .orderBy('ms.id', 'ASC');
+      .addGroupBy('merchant_store_categories_languages.name')
+      .orderBy('ms.name', 'ASC');
 
     //** SEARCH BY DATE */
     if (dateStart && dateEnd) {
