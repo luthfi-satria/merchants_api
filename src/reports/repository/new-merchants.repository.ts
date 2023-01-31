@@ -32,9 +32,111 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
     //** QUERIES */
     const queries = this.storeRepository
       .createQueryBuilder('ms')
-      .leftJoinAndSelect('ms.merchant', 'merchant')
-      .leftJoinAndSelect('merchant.group', 'group')
-      .orderBy('ms.id', 'ASC');
+      .select([
+        'ms.*',
+        'merchant.id',
+        'merchant.group.id',
+        'merchant.type',
+        'merchant.name',
+        'merchant.phone',
+        'merchant.logo',
+        'merchant.profile_store_photo',
+        'merchant.address',
+        'merchant.lob_id',
+        'merchant.pb1',
+        'merchant.pb1_tariff',
+        'merchant.npwp_no',
+        'merchant.npwp_name',
+        'merchant.npwp_file',
+        'merchant.is_pos_checkin_enabled',
+        'merchant.is_pos_endofday_enabled',
+        'merchant.is_pos_printer_enabled',
+        'merchant.is_manual_refund_enabled',
+        'merchant.is_pos_rounded_payment',
+        'merchant.pic_is_multilevel_login',
+        'merchant.pic_name',
+        'merchant.pic_nip',
+        'merchant.pic_phone',
+        'merchant.pic_email',
+        'merchant.pic_password',
+        'merchant.status',
+        'merchant.rejection_reason',
+        'merchant.approved_at',
+        'merchant.created_at',
+        'merchant.updated_at',
+        'merchant.deleted_at',
+        'merchant.rejected_at',
+        'merchant.recommended_promo_type',
+        'merchant.recommended_discount_type',
+        'merchant.recommended_discount_value',
+        'merchant.recommended_discount_id',
+        'merchant.recommended_shopping_discount_type',
+        'merchant.recommended_shopping_discount_value',
+        'merchant.recommended_shopping_discount_id',
+        'merchant.recommended_delivery_discount_type',
+        'merchant.recommended_delivery_discount_value',
+        'merchant.recommended_delivery_discount_id',
+        'group.id',
+        'group.category',
+        'group.name',
+        'group.phone',
+        'group.address',
+        'group.siup_no',
+        'group.siup_file',
+        'group.akta_pendirian_file',
+        'group.akta_perubahan_file',
+        'group.npwp_no',
+        'group.npwp_file',
+        'group.director_name',
+        'group.director_nip',
+        'group.director_phone',
+        'group.director_email',
+        'group.director_password',
+        'group.director_identity_type',
+        'group.director_id_no',
+        'group.director_id_file',
+        'group.director_id_face_file',
+        'group.director_is_multilevel_login',
+        'group.pic_operational_name',
+        'group.pic_operational_nip',
+        'group.pic_operational_email',
+        'group.pic_operational_phone',
+        'group.pic_operational_password',
+        'group.pic_operational_is_multilevel_login',
+        'group.pic_finance_name',
+        'group.pic_finance_nip',
+        'group.pic_finance_email',
+        'group.pic_finance_phone',
+        'group.pic_finance_password',
+        'group.pic_finance_is_multilevel_login',
+        'group.status',
+        'group.approved_at',
+        'group.created_at',
+        'group.updated_at',
+        'group.deleted_at',
+        'group.rejected_at',
+        'group.cancellation_reason_of_information',
+        'group.cancellation_reason_of_document',
+        'group.cancellation_reason_of_type_and_service',
+        'group.cancellation_reason_of_responsible_person',
+        'array_agg(merchant_store_categories_languages.name) AS merchant_store_categories_name',
+      ])
+      .leftJoin('ms.merchant', 'merchant')
+      .leftJoin('merchant.group', 'group')
+      .leftJoin('ms.store_categories', 'merchant_store_categories')
+      .leftJoin(
+        'merchant_store_categories.languages',
+        'merchant_store_categories_languages',
+      )
+      .where('merchant_store_categories_languages.lang =:langs', {
+        langs: 'id',
+      })
+      .groupBy('ms.id')
+      .addGroupBy('group.id')
+      .addGroupBy('merchant.id')
+      .addGroupBy('merchant_store_categories.id')
+      .addGroupBy('merchant_store_categories_languages.name')
+      .orderBy('ms.name', 'ASC');
 
     //** SEARCH BY DATE */
     if (dateStart && dateEnd) {
