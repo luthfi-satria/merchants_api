@@ -514,8 +514,8 @@ export class ElasticsService {
       this.cronConfigs.total_data = await queryCount.getCount();
     }
 
-    const currTime = DateTimeUtils.DateTimeToUTC(new Date());
-    const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
+    // const currTime = DateTimeUtils.DateTimeToUTC(new Date());
+    // const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
 
     if (this.cronConfigs.total_data > 0) {
       console.log(
@@ -536,13 +536,6 @@ export class ElasticsService {
 
       this.cronConfigs.offset += this.cronConfigs.elastic_data_limit;
       queryResult.forEach((rows) => {
-        const store_operational_status = this.getStoreOperationalStatus(
-          rows.is_store_open,
-          currTime,
-          weekOfDay,
-          rows.operational_hours,
-        );
-
         const priceRange = this.priceRange.find((pr) => {
           if (
             (pr.price_high >= rows.average_price &&
@@ -558,7 +551,7 @@ export class ElasticsService {
         };
         rows['price_symbol'] = priceRange ? priceRange.symbol : null;
         rows['price_range'] = priceRange;
-        rows['store_operational_status'] = store_operational_status;
+        rows['store_operational_status'] = false;
       });
       const elData = await this.createElasticIndex('stores', queryResult);
       return elData;

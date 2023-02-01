@@ -27,6 +27,7 @@ import {
 } from './validation/query_search.validation';
 import { AuthJwtGuard } from 'src/auth/auth.decorators';
 import { UserType } from 'src/auth/guard/user-type.decorator';
+import { QueryElasticService } from './query-elastic.service';
 
 @Controller('api/v1/merchants')
 export class QueryController {
@@ -35,6 +36,7 @@ export class QueryController {
     private readonly queryService: QueryService,
     private readonly responseService: ResponseService,
     private readonly messageService: MessageService,
+    private readonly queryElasticService: QueryElasticService,
   ) {}
 
   @Get('image/:id/:id2')
@@ -64,7 +66,7 @@ export class QueryController {
       data,
       '\n============================End Debug Query Param==================================',
     );
-    return await this.queryService.getStoreList(data);
+    return await this.queryElasticService.getStoreList(data);
   }
 
   @Get('query/stores/detail/:id')

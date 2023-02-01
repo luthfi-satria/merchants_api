@@ -38,6 +38,9 @@ import { MenuOnlineDocument } from 'src/database/entities/menu_online.entity';
 import { MenuOnlineService } from 'src/menu_online/menu_online.service';
 import { StoreCategoriesService } from 'src/store_categories/store_categories.service';
 import { LanguageDocument } from 'src/database/entities/language.entity';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { QueryElasticService } from './query-elastic.service';
 
 @Module({
   imports: [
@@ -63,6 +66,30 @@ import { LanguageDocument } from 'src/database/entities/language.entity';
     PriceRangeModule,
     SettingModule,
     HttpModule,
+    ElasticsearchModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        node: configService.get('ELASTICSEARCH_NODE'),
+        auth: {
+          username: configService.get('ELASTICSEARCH_USERNAME'),
+          password: configService.get('ELASTICSEARCH_PASSWORD'),
+        },
+        headers: {
+          Authorization:
+            'basic ' +
+            btoa(
+              unescape(
+                encodeURIComponent(
+                  configService.get('ELASTICSEARCH_USERNAME') +
+                    ':' +
+                    configService.get('ELASTICSEARCH_PASSWORD'),
+                ),
+              ),
+            ),
+        },
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [QueryController],
   providers: [
@@ -87,6 +114,7 @@ import { LanguageDocument } from 'src/database/entities/language.entity';
     OrdersService,
     MenuOnlineService,
     StoreCategoriesService,
+    QueryElasticService,
   ],
 })
 export class QueryModule {}
