@@ -19,30 +19,66 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
 
   async listNewMerchantsData(data: ListReprotNewMerchantDTO): Promise<any> {
     const search = data.search || '';
-    const currentPage = data.page || 1;
-    const perPage = data.limit || 10;
-    const indexPage = (Number(currentPage) - 1) * perPage;
+    const currentPage = Number(data.page) || 1;
+    const perPage = Number(data.limit) || 10;
+    const offset = (currentPage - 1) * perPage;
     const dateStart = data.date_start || null;
     const dateEnd = data.date_end || null;
     const statuses = data.statuses || [];
     const groupId = data.group_id || null;
     const merchantId = data.merchant_id || null;
     const storeId = data.store_id || null;
-    const lang = '';
 
     //** QUERIES */
     const queries = this.storeRepository
       .createQueryBuilder('ms')
-      .leftJoinAndSelect('ms.merchant', 'merchant')
-      .leftJoinAndSelect('merchant.group', 'group')
-      .leftJoinAndSelect('ms.store_categories', 'merchant_store_categories')
-      .leftJoinAndSelect(
+      .select([
+        'ms.id',
+        'ms.name',
+        'ms.city_id',
+        'ms.photo',
+        'ms.phone',
+        'ms.address',
+        'ms.banner',
+        'ms.status',
+        'ms.created_at',
+        'ms.updated_at',
+        'ms.approved_at',
+        'merchant.id',
+        'merchant.group.id',
+        'merchant.type',
+        'merchant.name',
+        'merchant.phone',
+        'merchant.address',
+        'merchant.lob_id',
+        'merchant.pic_name',
+        'merchant.pic_nip',
+        'merchant.pic_phone',
+        'merchant.pic_email',
+        'merchant.pic_password',
+        'merchant.status',
+        'group.id',
+        'group.category',
+        'group.name',
+        'group.phone',
+        'group.address',
+        'group.status',
+        `string_agg(merchant_store_categories_languages.name, ', ') AS merchant_store_categories_name`,
+      ])
+      .leftJoin('ms.merchant', 'merchant')
+      .leftJoin('merchant.group', 'group')
+      .leftJoin('ms.store_categories', 'merchant_store_categories')
+      .leftJoin(
         'merchant_store_categories.languages',
         'merchant_store_categories_languages',
-        'merchant_store_categories_languages.lang = :lid',
-        { lid: lang ? lang : 'id' },
       )
-      .orderBy('ms.created_at', 'ASC');
+      .where('merchant_store_categories_languages.lang =:langs', {
+        langs: 'id',
+      })
+      .groupBy('ms.id')
+      .addGroupBy('group.id')
+      .addGroupBy('merchant.id')
+      .orderBy('ms.name', 'ASC');
 
     //** SEARCH BY DATE */
     if (dateStart && dateEnd) {
@@ -53,10 +89,10 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
           qb.where(
             new Brackets((iqb) => {
               iqb
-                .where('ms.created_at > :start', {
+                .where('ms.created_at >= :start', {
                   start,
                 })
-                .andWhere('ms.created_at < :end', {
+                .andWhere('ms.created_at <= :end', {
                   end,
                 });
             }),
@@ -113,21 +149,9 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
       });
     }
 
-    const rawAll = await queries.getRawMany();
-    const raw = rawAll.slice(indexPage, indexPage + Number(perPage));
-    const count = rawAll.length;
-
-    raw.forEach((item) => {
-      for (const key in item) {
-        if (Object.prototype.hasOwnProperty.call(item, key)) {
-          const element = item[key];
-          if (key.startsWith('di_')) {
-            item[key.slice(3)] = element;
-            delete item[key];
-          }
-        }
-      }
-    });
+    const count = await queries.getCount();
+    queries.offset(offset).limit(perPage);
+    const raw = await queries.getRawMany();
 
     //** EXECUTE QUERIES */
     try {
@@ -152,5 +176,21 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
         ),
       );
     }
+  }
+
+  async getCategoriesByStoredId(data: string): Promise<any> {
+    const queries = await this.storeRepository
+      .createQueryBuilder('ms')
+      .leftJoinAndSelect('ms.store_categories', 'merchant_store_categories')
+      .leftJoinAndSelect(
+        'merchant_store_categories.languages',
+        'merchant_store_categories_languages',
+        'merchant_store_categories_languages.lang = :lid',
+        { lid: 'id' },
+      )
+      .where('ms.id =:merchant_id', { merchant_id: data })
+      .getMany();
+
+    return queries[0].store_categories[0].languages[0].name;
   }
 }
