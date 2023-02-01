@@ -32,60 +32,18 @@ export class ReportsService {
     try {
       //** GET DATA FROM DATABASE */
       const raw = await this.newMerchantEntities.listNewMerchantsData(data);
-      // //** CREATE OBJECT DATA */
-      const cityIObj = {};
-      // const categoriesIObj = {};
 
-      // Data Cities
-      raw.items.forEach((ms) => {
-        if (ms.ms_city_id) {
-          cityIObj[ms.ms_city_id] = null;
+      // Get City
+      if (raw && raw.items.length > 0) {
+        for (const rows in raw.items) {
+          const city = await this.cityService.getCity(
+            raw.items[rows].ms_city_id,
+          );
+          if (city) {
+            raw.items[rows].ms_city_id = city;
+          }
         }
-      });
-
-      // Data Menu
-      // raw.items.forEach((ms) => {
-      //   if (ms.ms_id) {
-      //     categoriesIObj[ms.ms_id] = null;
-      //   }
-      // });
-
-      const promises = [];
-      let cities = null;
-      // let categories = null;
-
-      raw.items.forEach((ms) => {
-        cities = this.cityService.getCity(ms.city_id);
-        promises.push(cities);
-      });
-
-      // raw.items.forEach((ms) => {
-      //   categories = this.newMerchantEntities.getCategoriesByStoredId(ms.ms_id);
-      //   promises.push(categories);
-      // });
-
-      await Promise.all(promises);
-
-      if (cities) {
-        cities = await cities;
-        cities?.items?.forEach((city: any) => {
-          cityIObj[city.id] = city;
-        });
       }
-
-      // if (categories) {
-      //   categories = await categories;
-      //   categories?.languages?.forEach((categori: any) => {
-      //     categoriesIObj[categori.name] = categori;
-      //   });
-      // }
-
-      //** RESULT NEW MERCHANTS STORES */
-      raw.items.forEach((ms) => {
-        ms.city_id = cities ? cities : cityIObj[ms.city_id];
-        // ms.categories_name = categories ? categories : categoriesIObj[ms.ms_id];
-      });
-
       return raw;
     } catch (error) {
       throw error;
@@ -733,7 +691,7 @@ export class ReportsService {
                 row.push(nameSC);
                 break;
               case 'recommended':
-                const recommended = obj.ms_merchant_id;
+                const recommended = obj.merchant_id;
                 const getRecom =
                   await this.commonCatalogService.getMenuRecommendedByStoreId(
                     recommended,
@@ -744,7 +702,7 @@ export class ReportsService {
                 row.push(nameRD);
                 break;
               case 'total_photo_menu':
-                const photo = obj.ms_merchant_id;
+                const photo = obj.merchant_id;
                 const getPohto =
                   await this.commonCatalogService.getMenuOnlyByStoreId(photo);
                 const namePM = getPohto.data.total_item
@@ -753,7 +711,7 @@ export class ReportsService {
                 row.push(namePM);
                 break;
               case 'total_menu':
-                const menus = obj.ms_merchant_id;
+                const menus = obj.merchant_id;
                 const getTotalMenu =
                   await this.commonCatalogService.getMenuOnlyByStoreId(menus);
                 const nameTM = getTotalMenu.data.total_item
