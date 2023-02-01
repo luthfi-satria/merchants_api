@@ -87,8 +87,8 @@ export class QueryElasticService {
     };
     const sort = [];
 
-    const currTime = DateTimeUtils.DateTimeToUTC(new Date());
-    const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
+    // const currTime = DateTimeUtils.DateTimeToUTC(new Date());
+    // const weekOfDay = DateTimeUtils.getDayOfWeekInWIB();
 
     // ===========================================================
     // SEARCH PARAMETERS
@@ -159,7 +159,7 @@ export class QueryElasticService {
       index: `${process.env.ELASTICSEARCH_ENV}_efood_stores`,
       from: findParams.offset,
       size: findParams.size,
-    //   explain: true,
+      //   explain: true,
       body: {
         _source: findParams.source ? findParams.source : [],
         query: {
