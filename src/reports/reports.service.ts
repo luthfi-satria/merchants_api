@@ -32,60 +32,18 @@ export class ReportsService {
     try {
       //** GET DATA FROM DATABASE */
       const raw = await this.newMerchantEntities.listNewMerchantsData(data);
-      // //** CREATE OBJECT DATA */
-      const cityIObj = {};
-      // const menuIObj = {};
 
-      // Data Cities
-      raw.items.forEach((ms) => {
-        if (ms.ms_city_id) {
-          cityIObj[ms.ms_city_id] = null;
+      // Get City
+      if (raw && raw.items.length > 0) {
+        for (const rows in raw.items) {
+          const city = await this.cityService.getCity(
+            raw.items[rows].ms_city_id,
+          );
+          if (city) {
+            raw.items[rows].ms_city_id = city;
+          }
         }
-      });
-
-      // Data Menu
-      // raw.items.forEach((ms) => {
-      //   if (ms.merchant_id) {
-      //     menuIObj[ms.merchant_id] = null;
-      //   }
-      // });
-
-      const promises = [];
-      let cities = null;
-      // let menus = null;
-
-      raw.items.forEach((ms) => {
-        cities = this.cityService.getCity(ms.ms_city_id);
-        promises.push(cities);
-      });
-
-      // raw.items.forEach((ms) => {
-      //   menus = this.commonCatalogService.getMenuOnlyByStoreId(ms.merchant_id);
-      //   promises.push(menus);
-      // });
-
-      await Promise.all(promises);
-
-      if (cities) {
-        cities = await cities;
-        cities?.items?.forEach((city: any) => {
-          cityIObj[city.id] = city;
-        });
       }
-
-      // if (menus) {
-      //   menus = await menus;
-      //   menus?.items?.forEach((menu: any) => {
-      //     menuIObj[menu.merchant_id] = menu;
-      //   });
-      // }
-
-      //** RESULT NEW MERCHANTS STORES */
-      raw.items.forEach((ms) => {
-        ms.ms_city_id = cities ? cities : cityIObj[ms.ms_city_id];
-        // ms.merchant_id = menus ? menus : menuIObj[ms.merchant_id];
-      });
-
       return raw;
     } catch (error) {
       throw error;
@@ -148,7 +106,7 @@ export class ReportsService {
           ];
 
       //** GET DATA FROM DATABASE */
-      const raw = await this.newMerchantEntities.listNewMerchantsData(data);
+      const raw = await this.processListNewMerchants(data);
 
       //** CREATE WORKBOOK */
       const workbook = new ExcelJS.Workbook();
@@ -383,9 +341,7 @@ export class ReportsService {
                 row.push(nameSP);
                 break;
               case 'city_id':
-                const city = obj.ms_city_id;
-                const getCity = await this.cityService.getCity(city);
-                const nameCi = getCity.name ? getCity.name : '-';
+                const nameCi = obj.ms_city_id.name ? obj.ms_city_id.name : '-';
                 row.push(nameCi);
                 break;
               case 'store_address':
@@ -393,8 +349,8 @@ export class ReportsService {
                 row.push(nameMA);
                 break;
               case 'categories':
-                const nameSC = obj.merchant_store_categories_languages_name
-                  ? obj.merchant_store_categories_languages_name
+                const nameSC = obj.merchant_store_categories_name
+                  ? obj.merchant_store_categories_name
                   : '-';
                 row.push(nameSC);
                 break;
@@ -544,7 +500,7 @@ export class ReportsService {
           ];
 
       //** GET DATA FROM DATABASE */
-      const raw = await this.newMerchantEntities.listNewMerchantsData(data);
+      const raw = await this.processListNewMerchants(data);
 
       //** CREATE WORKBOOK */
       const workbook = new ExcelJS.Workbook();
@@ -729,13 +685,13 @@ export class ReportsService {
                 row.push(nameS);
                 break;
               case 'categories':
-                const nameSC = obj.merchant_store_categories_languages_name
-                  ? obj.merchant_store_categories_languages_name
+                const nameSC = obj.merchant_store_categories_name
+                  ? obj.merchant_store_categories_name
                   : '-';
                 row.push(nameSC);
                 break;
               case 'recommended':
-                const recommended = obj.ms_merchant_id;
+                const recommended = obj.merchant_id;
                 const getRecom =
                   await this.commonCatalogService.getMenuRecommendedByStoreId(
                     recommended,
@@ -746,7 +702,7 @@ export class ReportsService {
                 row.push(nameRD);
                 break;
               case 'total_photo_menu':
-                const photo = obj.ms_merchant_id;
+                const photo = obj.merchant_id;
                 const getPohto =
                   await this.commonCatalogService.getMenuOnlyByStoreId(photo);
                 const namePM = getPohto.data.total_item
@@ -755,7 +711,7 @@ export class ReportsService {
                 row.push(namePM);
                 break;
               case 'total_menu':
-                const menus = obj.ms_merchant_id;
+                const menus = obj.merchant_id;
                 const getTotalMenu =
                   await this.commonCatalogService.getMenuOnlyByStoreId(menus);
                 const nameTM = getTotalMenu.data.total_item
