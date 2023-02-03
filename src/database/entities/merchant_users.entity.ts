@@ -128,4 +128,7 @@ export class MerchantUsersDocument {
     },
   })
   stores: StoreDocument[];
+
+  @Column({ nullable: true })
+  sso_id: number;
 }
