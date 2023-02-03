@@ -170,6 +170,7 @@ export class SsoService {
     if (loginSSO && loginSSO.data.length > 0) {
       const headerRequest = {
         'Content-Type': 'application/json',
+        'sso-token': loginSSO.data.token.token_code,
       };
       const syncUsers = await this.httpSsoRequests(
         UsersData,
