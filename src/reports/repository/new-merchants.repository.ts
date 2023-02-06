@@ -71,8 +71,12 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
       .leftJoin(
         'merchant_store_categories.languages',
         'merchant_store_categories_languages',
+        'merchant_store_categories_languages.lang = :langs',
+        {
+          langs: 'id',
+        },
       )
-      .where('merchant_store_categories_languages.lang =:langs', {
+      .where('merchant_store_categories_languages.lang = :langs', {
         langs: 'id',
       })
       .groupBy('ms.id')
@@ -82,23 +86,12 @@ export class NewMerchantEntity extends Repository<StoreDocument> {
 
     //** SEARCH BY DATE */
     if (dateStart && dateEnd) {
-      const start = dateStart + ' 00:00:00';
-      const end = dateEnd + ' 23:59:00';
-      queries.andWhere(
-        new Brackets((qb) => {
-          qb.where(
-            new Brackets((iqb) => {
-              iqb
-                .where('ms.created_at >= :start', {
-                  start,
-                })
-                .andWhere('ms.created_at <= :end', {
-                  end,
-                });
-            }),
-          );
-        }),
-      );
+      const start = dateStart + ' 00:00:00 +0700';
+      const end = dateEnd + ' 23:59:00 +0700';
+      queries.andWhere('ms.created_at BETWEEN :start AND :end', {
+        start: start,
+        end: end,
+      });
     }
 
     //** SERACH BY NAME or CORPORATE & BRAND & STORE */
