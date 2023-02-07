@@ -36,6 +36,8 @@ import { ResponseService } from './response/response.service';
 import { ValidationMiddleware } from './middleware/validation.middleware';
 import { UsersValidationModule } from './users_validation/users_validation.module';
 import { ElasticsModule } from './elastics/elastics.module';
+import { SsoController } from './sso/sso.controller';
+import { SsoModule } from './sso/sso.module';
 
 @Module({
   imports: [
@@ -69,6 +71,7 @@ import { ElasticsModule } from './elastics/elastics.module';
     UsersValidationModule,
     ReportsModule,
     ElasticsModule,
+    SsoModule,
   ],
   controllers: [AppController],
   providers: [AppService, ResponseService],
