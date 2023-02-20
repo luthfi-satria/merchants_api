@@ -11,7 +11,7 @@ import { ssoBusinessDocuments } from './sso-bussiness.dto';
 
 export class ssoDto {
   @IsUUID()
-  efood_id: string;
+  ext_id: string;
   @IsInt()
   sso_id: number;
   @IsEmail()
